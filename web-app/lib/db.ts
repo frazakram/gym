@@ -1,19 +1,23 @@
-import { sql } from '@vercel/postgres';
+import { Pool } from 'pg';
 import bcrypt from 'bcryptjs';
 import { User, Profile } from '@/types';
 
+const pool = new Pool({
+  connectionString: process.env.POSTGRES_URL,
+});
+
 export async function initializeDatabase() {
   try {
-    await sql`
+    await pool.query(`
       CREATE TABLE IF NOT EXISTS users (
         id SERIAL PRIMARY KEY,
         username VARCHAR(255) UNIQUE NOT NULL,
         password_hash VARCHAR(255) NOT NULL,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       );
-    `;
+    `);
 
-    await sql`
+    await pool.query(`
       CREATE TABLE IF NOT EXISTS profiles (
         id SERIAL PRIMARY KEY,
         user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
@@ -24,15 +28,15 @@ export async function initializeDatabase() {
         tenure TEXT,
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       );
-    `;
+    `);
 
-    await sql`
+    await pool.query(`
       CREATE TABLE IF NOT EXISTS sessions (
         id VARCHAR(255) PRIMARY KEY,
         user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
         expires_at TIMESTAMP NOT NULL
       );
-    `;
+    `);
 
     console.log('Database initialized successfully');
   } catch (error) {
@@ -44,11 +48,12 @@ export async function initializeDatabase() {
 export async function createUser(username: string, password: string): Promise<User | null> {
   try {
     const hashedPassword = await bcrypt.hash(password, 10);
-    const result = await sql<User>`
-      INSERT INTO users (username, password_hash)
-      VALUES (${username}, ${hashedPassword})
-      RETURNING id, username, password_hash, created_at;
-    `;
+    const result = await pool.query<User>(
+      `INSERT INTO users (username, password_hash)
+       VALUES ($1, $2)
+       RETURNING id, username, password_hash, created_at`,
+      [username, hashedPassword]
+    );
     return result.rows[0] || null;
   } catch (error: any) {
     if (error.code === '23505') {
@@ -60,17 +65,18 @@ export async function createUser(username: string, password: string): Promise<Us
 
 export async function authenticateUser(username: string, password: string): Promise<number | null> {
   try {
-    const result = await sql<User>`
-      SELECT id, password_hash FROM users WHERE username = ${username};
-    `;
-    
+    const result = await pool.query<User>(
+      'SELECT id, password_hash FROM users WHERE username = $1',
+      [username]
+    );
+
     if (result.rows.length === 0) {
       return null;
     }
 
     const user = result.rows[0];
     const isValid = await bcrypt.compare(password, user.password_hash);
-    
+
     return isValid ? user.id : null;
   } catch (error) {
     console.error('Authentication error:', error);
@@ -80,9 +86,10 @@ export async function authenticateUser(username: string, password: string): Prom
 
 export async function getProfile(userId: number): Promise<Profile | null> {
   try {
-    const result = await sql<Profile>`
-      SELECT * FROM profiles WHERE user_id = ${userId};
-    `;
+    const result = await pool.query<Profile>(
+      'SELECT * FROM profiles WHERE user_id = $1',
+      [userId]
+    );
     return result.rows[0] || null;
   } catch (error) {
     console.error('Error fetching profile:', error);
@@ -100,22 +107,24 @@ export async function saveProfile(
 ): Promise<Profile | null> {
   try {
     const existing = await getProfile(userId);
-    
+
     if (existing) {
-      const result = await sql<Profile>`
-        UPDATE profiles 
-        SET age = ${age}, weight = ${weight}, height = ${height}, 
-            level = ${level}, tenure = ${tenure}, updated_at = CURRENT_TIMESTAMP
-        WHERE user_id = ${userId}
-        RETURNING *;
-      `;
+      const result = await pool.query<Profile>(
+        `UPDATE profiles 
+         SET age = $2, weight = $3, height = $4, 
+             level = $5, tenure = $6, updated_at = CURRENT_TIMESTAMP
+         WHERE user_id = $1
+         RETURNING *`,
+        [userId, age, weight, height, level, tenure]
+      );
       return result.rows[0] || null;
     } else {
-      const result = await sql<Profile>`
-        INSERT INTO profiles (user_id, age, weight, height, level, tenure)
-        VALUES (${userId}, ${age}, ${weight}, ${height}, ${level}, ${tenure})
-        RETURNING *;
-      `;
+      const result = await pool.query<Profile>(
+        `INSERT INTO profiles (user_id, age, weight, height, level, tenure)
+         VALUES ($1, $2, $3, $4, $5, $6)
+         RETURNING *`,
+        [userId, age, weight, height, level, tenure]
+      );
       return result.rows[0] || null;
     }
   } catch (error) {
