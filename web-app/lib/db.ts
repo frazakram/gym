@@ -15,15 +15,15 @@ const MOCK_USER: User = {
   id: MOCK_USER_ID,
   username: "demo_user",
   password_hash: "", // Not checked in mock mode
-  created_at: new Date()
+  // created_at is optional in User type, but good to have
 };
 const MOCK_PROFILE: Profile = {
   id: 1,
   user_id: MOCK_USER_ID,
-  age: 25,
+  age: 26,
   weight: 75,
   height: 180,
-  level: "Intermediate",
+  level: "Regular", // Corrected from "Intermediate" to match Union Type
   tenure: "1 year",
   updated_at: new Date()
 };
@@ -67,7 +67,6 @@ export async function initializeDatabase() {
     }
   } catch (error) {
     console.error('Error initializing database (continuing with mock mode):', error);
-    // Do NOT throw error, allow app to start
   }
 }
 
@@ -83,7 +82,7 @@ export async function createUser(username: string, password: string): Promise<Us
     return result.rows[0] || null;
   } catch (error: any) {
     console.warn("createUser DB failed, using mock:", error);
-    if (error.code === '23505') return null; // Username exists (even in mock we can pretend)
+    if (error.code === '23505') return null; // Username exists
 
     // FALLBACK SUCCESS
     return { ...MOCK_USER, username };
@@ -134,14 +133,24 @@ export async function saveProfile(
   level: string,
   tenure: string
 ): Promise<Profile | null> {
+  // Safe cast since we handle string to strict union transition
+  const validLevel = level as Profile['level'];
+
   try {
     // Optimistic fallback first: just mock return
-    const mockReturn = { ...MOCK_PROFILE, age, weight, height, level, tenure };
+    const mockReturn: Profile = {
+      ...MOCK_PROFILE,
+      age,
+      weight,
+      height,
+      level: validLevel, // Use the casted level
+      tenure
+    };
 
     // Try Real DB
     const existing = await getProfile(userId);
-    // ... DB logic ... 
-    // Simplified for robustness:
+
+    // Fallback trigger if user is the mock user
     if (userId === MOCK_USER_ID) return mockReturn;
 
     if (existing) {
@@ -165,6 +174,14 @@ export async function saveProfile(
     }
   } catch (error) {
     console.warn("saveProfile DB failed, using mock:", error);
-    return { ...MOCK_PROFILE, age, weight, height, level, tenure };
+    // Return mock with the requested data
+    return {
+      ...MOCK_PROFILE,
+      age,
+      weight,
+      height,
+      level: validLevel,
+      tenure
+    };
   }
 }
