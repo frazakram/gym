@@ -20,34 +20,34 @@ const WeeklyRoutineSchema = z.object({
 });
 
 export async function generateRoutine(input: RoutineGenerationInput): Promise<WeeklyRoutine | null> {
-  try {
-    let model;
 
-    if (input.model_provider === 'Anthropic') {
-      const apiKey = input.apiKey || process.env.ANTHROPIC_API_KEY;
-      if (!apiKey) {
-        throw new Error('Anthropic API key is required');
-      }
-      model = new ChatAnthropic({
-        model: "claude-3-5-sonnet-20241022",
-        temperature: 0.7,
-        apiKey: apiKey,
-      });
-    } else {
-      const apiKey = input.apiKey || process.env.OPENAI_API_KEY;
-      if (!apiKey) {
-        throw new Error('OpenAI API key is required');
-      }
-      model = new ChatOpenAI({
-        model: "gpt-4o",
-        temperature: 0.7,
-        openAIApiKey: apiKey, // Explicit property name for OpenAI
-      });
+  let model;
+
+  if (input.model_provider === 'Anthropic') {
+    const apiKey = input.apiKey || process.env.ANTHROPIC_API_KEY;
+    if (!apiKey) {
+      throw new Error('Anthropic API key is required');
     }
+    model = new ChatAnthropic({
+      model: "claude-3-5-sonnet-20241022",
+      temperature: 0.7,
+      apiKey: apiKey,
+    });
+  } else {
+    const apiKey = input.apiKey || process.env.OPENAI_API_KEY;
+    if (!apiKey) {
+      throw new Error('OpenAI API key is required');
+    }
+    model = new ChatOpenAI({
+      model: "gpt-4o",
+      temperature: 0.7,
+      openAIApiKey: apiKey, // Explicit property name for OpenAI
+    });
+  }
 
-    const structuredModel = model.withStructuredOutput(WeeklyRoutineSchema);
+  const structuredModel = model.withStructuredOutput(WeeklyRoutineSchema);
 
-    const prompt = `You are an expert fitness trainer creating a personalized weekly gym routine.
+  const prompt = `You are an expert fitness trainer creating a personalized weekly gym routine.
 
 User Profile:
 - Age: ${input.age} years
@@ -76,10 +76,10 @@ Make sure to provide REAL YouTube URLs for exercises from channels like:
 
 Return the complete weekly routine.`;
 
-    const response = await structuredModel.invoke([
-      { role: "user", content: prompt }
-    ]);
+  const response = await structuredModel.invoke([
+    { role: "user", content: prompt }
+  ]);
 
-    return response as WeeklyRoutine;
-    // Removed try/catch to allow error propagation to the API route
-  }
+  return response as WeeklyRoutine;
+// Removed try/catch to allow error propagation to the API route
+
