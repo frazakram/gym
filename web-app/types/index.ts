@@ -45,4 +45,5 @@ export interface RoutineGenerationInput {
     level: 'Beginner' | 'Regular' | 'Expert';
     tenure: string;
     model_provider: 'Anthropic' | 'OpenAI';
+    apiKey?: string;
 }

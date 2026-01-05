@@ -20,13 +20,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Set the API key temporarily for this request
-    if (model_provider === 'Anthropic') {
-      process.env.ANTHROPIC_API_KEY = api_key;
-    } else {
-      process.env.OPENAI_API_KEY = api_key;
-    }
-
+    // Pass API key directly to the agent
     const routine = await generateRoutine({
       age,
       weight,
@@ -34,6 +28,7 @@ export async function POST(request: NextRequest) {
       level,
       tenure,
       model_provider,
+      apiKey: api_key, // Passed from client
     });
 
     if (!routine) {

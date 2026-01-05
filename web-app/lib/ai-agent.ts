@@ -22,22 +22,26 @@ const WeeklyRoutineSchema = z.object({
 export async function generateRoutine(input: RoutineGenerationInput): Promise<WeeklyRoutine | null> {
   try {
     let model;
-    
+
     if (input.model_provider === 'Anthropic') {
-      if (!process.env.ANTHROPIC_API_KEY) {
+      const apiKey = input.apiKey || process.env.ANTHROPIC_API_KEY;
+      if (!apiKey) {
         throw new Error('Anthropic API key is required');
       }
       model = new ChatAnthropic({
         model: "claude-3-5-sonnet-20241022",
         temperature: 0.7,
+        apiKey: apiKey,
       });
     } else {
-      if (!process.env.OPENAI_API_KEY) {
+      const apiKey = input.apiKey || process.env.OPENAI_API_KEY;
+      if (!apiKey) {
         throw new Error('OpenAI API key is required');
       }
       model = new ChatOpenAI({
         model: "gpt-4o",
         temperature: 0.7,
+        apiKey: apiKey,
       });
     }
 
