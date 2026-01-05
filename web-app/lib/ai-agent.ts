@@ -81,5 +81,6 @@ Return the complete weekly routine.`;
   ]);
 
   return response as WeeklyRoutine;
-// Removed try/catch to allow error propagation to the API route
+  // Removed try/catch to allow error propagation to the API route
+}
 
