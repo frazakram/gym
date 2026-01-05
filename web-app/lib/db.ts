@@ -4,6 +4,9 @@ import { User, Profile } from '@/types';
 
 const pool = new Pool({
   connectionString: process.env.POSTGRES_URL,
+  ssl: {
+    rejectUnauthorized: false, // Required for Supabase connection
+  },
 });
 
 export async function initializeDatabase() {
