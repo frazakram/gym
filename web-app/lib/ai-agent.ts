@@ -41,7 +41,7 @@ export async function generateRoutine(input: RoutineGenerationInput): Promise<We
       model = new ChatOpenAI({
         model: "gpt-4o",
         temperature: 0.7,
-        apiKey: apiKey,
+        openAIApiKey: apiKey, // Explicit property name for OpenAI
       });
     }
 
@@ -81,8 +81,5 @@ Return the complete weekly routine.`;
     ]);
 
     return response as WeeklyRoutine;
-  } catch (error) {
-    console.error('Error generating routine:', error);
-    return null;
+    // Removed try/catch to allow error propagation to the API route
   }
-}
