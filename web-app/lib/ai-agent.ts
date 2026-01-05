@@ -6,7 +6,7 @@ import { RoutineGenerationInput, WeeklyRoutine } from "@/types";
 const ExerciseSchema = z.object({
   name: z.string().describe("Name of the exercise"),
   sets_reps: z.string().describe("Sets and reps, e.g., '3 sets x 12 reps'"),
-  youtube_url: z.string().url().describe("YouTube tutorial URL for the exercise"),
+  youtube_url: z.string().describe("YouTube tutorial URL for the exercise"),
   form_tip: z.string().describe("Form and technique tips for proper execution"),
 });
 
