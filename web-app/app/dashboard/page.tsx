@@ -22,6 +22,10 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
+
+  // Collapsible sidebar
+  const [sidebarOpen, setSidebarOpen] = useState(true)
+  const [isMobileSidebar, setIsMobileSidebar] = useState(false)
   
   // Profile state
   const [profile, setProfile] = useState<Profile | null>(null)
@@ -75,6 +79,52 @@ export default function DashboardPage() {
       // ignore
     }
   }, [savedRoutines])
+
+  useEffect(() => {
+    // sidebar state persistence + responsive default
+    try {
+      const saved = localStorage.getItem('gymbro:sidebar-open:v1')
+      if (saved === '0' || saved === '1') {
+        setSidebarOpen(saved === '1')
+      } else if (typeof window !== 'undefined') {
+        setSidebarOpen(window.innerWidth >= 1280)
+      }
+    } catch {
+      // ignore
+    }
+  }, [])
+
+  useEffect(() => {
+    try {
+      localStorage.setItem('gymbro:sidebar-open:v1', sidebarOpen ? '1' : '0')
+    } catch {
+      // ignore
+    }
+  }, [sidebarOpen])
+
+  useEffect(() => {
+    const onResize = () => {
+      setIsMobileSidebar(window.innerWidth < 1280)
+    }
+    onResize()
+    window.addEventListener('resize', onResize)
+    return () => window.removeEventListener('resize', onResize)
+  }, [])
+
+  useEffect(() => {
+    // Lock scroll when mobile drawer is open
+    if (typeof document === 'undefined') return
+    if (isMobileSidebar && sidebarOpen) {
+      const prevBody = document.body.style.overflow
+      const prevHtml = document.documentElement.style.overflow
+      document.body.style.overflow = 'hidden'
+      document.documentElement.style.overflow = 'hidden'
+      return () => {
+        document.body.style.overflow = prevBody
+        document.documentElement.style.overflow = prevHtml
+      }
+    }
+  }, [isMobileSidebar, sidebarOpen])
 
   const routineStats = useMemo(() => {
     if (!routine) return null
@@ -443,12 +493,26 @@ export default function DashboardPage() {
   return (
     <div className="min-h-screen px-4 py-8 sm:py-12">
       <div className="max-w-7xl mx-auto">
-        <div className="grid grid-cols-1 xl:grid-cols-12 gap-6">
-          {/* Sidebar (desktop) */}
-          <aside className="hidden xl:block xl:col-span-3">
-            <div className="sticky top-6 space-y-6">
-              <div className="glass rounded-2xl p-5">
-          <div className="flex items-center gap-3">
+        {/* Mobile overlay */}
+        {isMobileSidebar && sidebarOpen && (
+          <button
+            type="button"
+            className="fixed inset-0 z-40 bg-slate-950/85 backdrop-blur-sm"
+            aria-label="Close sidebar"
+            onClick={() => setSidebarOpen(false)}
+          />
+        )}
+
+        {/* Collapsible sidebar */}
+        <aside
+          className={`fixed z-50 top-0 left-0 h-full w-[92vw] sm:w-[360px] max-w-none p-4 transition-transform ${
+            sidebarOpen ? 'translate-x-0' : '-translate-x-full'
+          }`}
+        >
+          <div className="h-full">
+            <div className="panel-solid rounded-2xl p-5 h-full flex flex-col overflow-hidden">
+              <div className="flex items-center justify-between gap-3">
+                <div className="flex items-center gap-3 min-w-0">
                   <BrandLogo size={44} />
                   <div className="min-w-0">
                     <div className="text-sm font-semibold tracking-tight bg-gradient-to-r from-cyan-200 via-sky-200 to-violet-200 bg-clip-text text-transparent truncate">
@@ -457,181 +521,126 @@ export default function DashboardPage() {
                     <div className="text-xs text-slate-300/70 truncate">Personalized routines.</div>
                   </div>
                 </div>
-
-                <div className="mt-4 glass-soft rounded-xl p-1 flex">
-                  <button
-                    onClick={() => setActiveTab('profile')}
-                    className={`flex-1 px-3 py-2 rounded-lg text-sm font-semibold transition-all ${
-                      activeTab === 'profile'
-                        ? 'bg-gradient-to-r from-cyan-500 to-blue-600 text-white shadow-lg'
-                        : 'text-slate-300/70 hover:text-white'
-                    }`}
-                  >
-                    Profile
-                  </button>
-                  <button
-                    onClick={() => setActiveTab('routine')}
-                    className={`flex-1 px-3 py-2 rounded-lg text-sm font-semibold transition-all ${
-                      activeTab === 'routine'
-                        ? 'bg-gradient-to-r from-cyan-500 to-blue-600 text-white shadow-lg'
-                        : 'text-slate-300/70 hover:text-white'
-                    }`}
-                  >
-                    Routine
-                  </button>
-                </div>
+                <button
+                  type="button"
+                  onClick={() => setSidebarOpen(false)}
+                  className="px-2 py-2 rounded-xl glass-soft text-slate-100 hover:text-white transition"
+                  aria-label="Close sidebar"
+                >
+                  ✕
+                </button>
               </div>
 
-              {/* Focus (Today + insights) */}
-              <div className="glass rounded-2xl overflow-hidden">
-                <div className="h-1 w-full bg-gradient-to-r from-cyan-400 via-sky-400 to-violet-400 opacity-80" />
-                <div className="p-5">
-                  <div className="flex items-center justify-between gap-3">
-                    <h3 className="text-sm font-semibold text-slate-100">Today</h3>
-                    <button
-                      type="button"
-                      onClick={handleJumpToToday}
-                      disabled={!todaysPlan}
-                      className="text-[11px] px-2 py-1 rounded-lg glass-soft text-slate-100/90 hover:text-white disabled:opacity-50 disabled:cursor-not-allowed transition"
-                    >
-                      Jump
-                    </button>
-                  </div>
-
-                  {!todaysPlan ? (
-                    <div className="mt-3 text-sm text-slate-200/70">
-                      Generate a routine to see today’s workout.
-                    </div>
-                  ) : (
-                    <div className="mt-4">
-                      <div className="text-sm text-slate-100 font-semibold line-clamp-1">
-                        {todaysPlan.day.day}
-                      </div>
-                      <div className="mt-2 text-xs text-slate-200/70">
-                        {todaysPlan.day.exercises.length} exercises • {routineStats?.avgPerDay ?? 0} avg/day
-                      </div>
-                      <div className="mt-3 space-y-2">
-                        {todaysPlan.day.exercises.slice(0, 3).map((ex, i) => (
-                          <div key={i} className="glass-soft rounded-xl px-3 py-2">
-                            <div className="text-xs font-semibold text-slate-100 line-clamp-1">
-                              {ex.name}
-                            </div>
-                            <div className="text-[11px] text-slate-200/70 line-clamp-1">{ex.sets_reps}</div>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-
-                  <div className="mt-5 grid grid-cols-2 gap-3">
-                    <div className="glass-soft rounded-xl p-3">
-                      <div className="text-[11px] text-slate-200/70">Days</div>
-                      <div className="text-lg font-semibold text-slate-100">{routineStats?.days ?? '—'}</div>
-                    </div>
-                    <div className="glass-soft rounded-xl p-3">
-                      <div className="text-[11px] text-slate-200/70">Exercises</div>
-                      <div className="text-lg font-semibold text-slate-100">{routineStats?.exercises ?? '—'}</div>
-                    </div>
-                  </div>
-                </div>
+              {/* Nav */}
+              <div className="mt-5 glass-soft rounded-xl p-1 flex">
+                <button
+                  onClick={() => {
+                    setActiveTab('profile')
+                    if (isMobileSidebar) setSidebarOpen(false)
+                  }}
+                  className={`flex-1 px-3 py-2 rounded-lg text-sm font-semibold transition-all ${
+                    activeTab === 'profile'
+                      ? 'bg-gradient-to-r from-cyan-500 to-blue-600 text-white shadow-lg'
+                      : 'text-slate-300/70 hover:text-white'
+                  }`}
+                >
+                  Profile
+                </button>
+                <button
+                  onClick={() => {
+                    setActiveTab('routine')
+                    if (isMobileSidebar) setSidebarOpen(false)
+                  }}
+                  className={`flex-1 px-3 py-2 rounded-lg text-sm font-semibold transition-all ${
+                    activeTab === 'routine'
+                      ? 'bg-gradient-to-r from-cyan-500 to-blue-600 text-white shadow-lg'
+                      : 'text-slate-300/70 hover:text-white'
+                  }`}
+                >
+                  Routine
+                </button>
               </div>
 
-              {/* Routine library */}
-              <div className="glass rounded-2xl overflow-hidden">
-                <div className="p-5">
-                  <div className="flex items-center justify-between gap-3">
-                    <h3 className="text-sm font-semibold text-slate-100">Routine Library</h3>
-                    <span className="text-[11px] text-slate-200/60">{savedRoutines.length}/25</span>
-                  </div>
+              {/* Scrollable content */}
+              <div className="mt-6 flex-1 overflow-auto pr-1">
+                {/* Push settings to bottom */}
+                <div className="flex-1" />
 
-                  <div className="mt-3">
-                    <div className="flex gap-2">
-                      <input
-                        value={saveNameDraft}
-                        onChange={(e) => setSaveNameDraft(e.target.value)}
-                        placeholder="Name this routine (optional)"
-                        className="flex-1 px-3 py-2 glass-soft rounded-xl text-sm text-white placeholder:text-slate-300/50 focus:outline-none focus:ring-2 focus:ring-cyan-400/60"
-                      />
-                      <button
-                        type="button"
-                        onClick={handleSaveCurrentRoutine}
-                        disabled={!routine}
-                        className="px-3 py-2 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 text-white text-sm font-semibold disabled:opacity-50 disabled:cursor-not-allowed transition"
-                      >
-                        Save
-                      </button>
-                    </div>
-                    <p className="mt-2 text-xs text-slate-200/60">
-                      Saved locally in your browser (no DB needed).
+                {/* Settings (bottom-left) */}
+                <div className="flex items-center justify-between">
+                  <div className="text-sm font-semibold text-slate-100">Settings</div>
+                  <div className="text-[11px] text-slate-200/60">AI</div>
+                </div>
+
+                <div className="mt-3 space-y-3">
+                  <GlassSelect
+                    label="AI Provider"
+                    value={modelProvider}
+                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                    options={providerOptions as any}
+                    onChange={(v) => setModelProvider(v as 'Anthropic' | 'OpenAI')}
+                  />
+                  <div>
+                    <label className="block text-sm font-medium text-slate-200/90 mb-2">
+                      {modelProvider} API Key
+                    </label>
+                    <input
+                      type="password"
+                      value={apiKey}
+                      onChange={(e) => {
+                        const v = e.target.value
+                        setApiKey(v)
+                        if (v.startsWith('sk-ant-')) setModelProvider('Anthropic')
+                        else if (v.startsWith('sk-')) setModelProvider('OpenAI')
+                      }}
+                      placeholder={`Enter your ${modelProvider} API key`}
+                      className="w-full px-4 py-3 glass-soft rounded-xl text-white placeholder:text-slate-300/50 focus:outline-none focus:ring-2 focus:ring-cyan-400/60"
+                    />
+                    <p className="text-xs text-slate-200/60 mt-2">
+                      Used only for requests. Not stored on the server.
                     </p>
                   </div>
-
-                  <div className="mt-4 space-y-2">
-                    {savedRoutines.length === 0 ? (
-                      <div className="text-sm text-slate-200/70 glass-soft rounded-xl p-3">
-                        Save routines here so you can compare and reuse them later.
-                      </div>
-                    ) : (
-                      savedRoutines.slice(0, 6).map((r) => (
-                        <div
-                          key={r.id}
-                          className={`glass-soft rounded-xl p-3 transition ${
-                            activeSavedId === r.id ? 'ring-1 ring-cyan-400/40' : ''
-                          }`}
-                        >
-                          <div className="flex items-start justify-between gap-3">
-                            <div className="min-w-0">
-                              <div className="text-sm font-semibold text-slate-100 truncate">{r.name}</div>
-                              <div className="text-[11px] text-slate-200/60">
-                                {new Date(r.createdAt).toLocaleString()} • {r.provider}
-                              </div>
-                            </div>
-                            <div className="flex gap-2 shrink-0">
-                              <button
-                                type="button"
-                                onClick={() => handleLoadSavedRoutine(r.id)}
-                                className="text-[11px] px-2 py-1 rounded-lg bg-white/10 hover:bg-white/15 text-white transition"
-                              >
-                                Load
-                              </button>
-                              <button
-                                type="button"
-                                onClick={() => handleDeleteSavedRoutine(r.id)}
-                                className="text-[11px] px-2 py-1 rounded-lg bg-red-500/15 hover:bg-red-500/20 text-red-100 transition"
-                              >
-                                Del
-                              </button>
-                            </div>
-                          </div>
-                        </div>
-                      ))
-                    )}
-                  </div>
                 </div>
               </div>
             </div>
-          </aside>
+          </div>
+        </aside>
 
-          {/* Main content */}
-          <main className="xl:col-span-9">
-            {/* Header */}
-            <div className="glass rounded-2xl px-5 py-4 mb-6 flex justify-between items-center">
-              <div className="flex items-center gap-3">
-                <BrandLogo size={44} />
-            <div>
-                  <h1 className="text-2xl sm:text-3xl font-semibold tracking-tight bg-gradient-to-r from-cyan-200 via-sky-200 to-violet-200 bg-clip-text text-transparent">
-                    GymBro AI
-                  </h1>
-                  <p className="text-sm text-slate-300/70">Personalized routines, tuned to your stats.</p>
+        {/* Main content */}
+        <main
+          className={`transition-[padding,filter,opacity] duration-300 ${
+            sidebarOpen ? 'xl:pl-[340px]' : 'xl:pl-0'
+          } ${isMobileSidebar && sidebarOpen ? 'pointer-events-none select-none blur-[1px] opacity-40' : ''}`}
+        >
+          {/* Header */}
+          <div className="glass rounded-2xl px-5 py-4 mb-6 flex justify-between items-center">
+            <div className="flex items-center gap-3">
+              {!sidebarOpen && (
+                <button
+                  type="button"
+                  onClick={() => setSidebarOpen(true)}
+                  className="px-3 py-2 rounded-xl glass-soft text-slate-100 hover:text-white transition"
+                  aria-label="Open sidebar"
+                >
+                  ☰
+                </button>
+              )}
+              <div>
+                <h1 className="text-2xl sm:text-3xl font-semibold tracking-tight bg-gradient-to-r from-cyan-200 via-sky-200 to-violet-200 bg-clip-text text-transparent">
+                  GymBro AI
+                </h1>
+                <p className="text-sm text-slate-300/70">Personalized routines, tuned to your stats.</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={handleLogout}
+                className="px-4 py-2 rounded-xl glass-soft text-red-200 hover:bg-red-500/10 border border-red-500/30 transition"
+              >
+                Logout
+              </button>
             </div>
           </div>
-          <button
-            onClick={handleLogout}
-                className="px-4 py-2 rounded-xl glass-soft text-red-200 hover:bg-red-500/10 border border-red-500/30 transition"
-          >
-            Logout
-          </button>
-        </div>
 
         {/* Status banners */}
         {(error || success) && (
@@ -649,29 +658,7 @@ export default function DashboardPage() {
           </div>
         )}
 
-            {/* Tabs (mobile/tablet) */}
-            <div className="xl:hidden inline-flex gap-2 mb-6 glass-soft rounded-xl p-1">
-          <button
-            onClick={() => setActiveTab('profile')}
-                className={`px-6 py-2.5 rounded-lg font-semibold transition-all ${
-              activeTab === 'profile'
-                    ? 'bg-gradient-to-r from-cyan-500 to-blue-600 text-white shadow-lg'
-                    : 'text-slate-300/70 hover:text-white'
-            }`}
-          >
-            My Profile
-          </button>
-          <button
-            onClick={() => setActiveTab('routine')}
-                className={`px-6 py-2.5 rounded-lg font-semibold transition-all ${
-              activeTab === 'routine'
-                    ? 'bg-gradient-to-r from-cyan-500 to-blue-600 text-white shadow-lg'
-                    : 'text-slate-300/70 hover:text-white'
-            }`}
-          >
-            My Routine
-          </button>
-        </div>
+            {/* Tabs moved to sidebar */}
 
         {/* Profile Tab */}
         {activeTab === 'profile' && (
@@ -933,36 +920,11 @@ export default function DashboardPage() {
                   </div>
                 )}
 
-                <div className="space-y-4 mb-6">
-                  <GlassSelect
-                    label="AI Provider"
-                      value={modelProvider}
-                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                    options={providerOptions as any}
-                    onChange={(v) => setModelProvider(v as 'Anthropic' | 'OpenAI')}
-                  />
-
-                  <div>
-                    <label className="block text-sm font-medium text-slate-200/90 mb-2">
-                      {modelProvider} API Key
-                    </label>
-                    <input
-                      type="password"
-                      value={apiKey}
-                      onChange={(e) => {
-                        const v = e.target.value
-                        setApiKey(v)
-                        // Helpful auto-detection: Anthropic keys start with "sk-ant-"
-                        if (v.startsWith('sk-ant-')) setModelProvider('Anthropic')
-                        else if (v.startsWith('sk-')) setModelProvider('OpenAI')
-                      }}
-                      placeholder={`Enter your ${modelProvider} API key`}
-                      className="w-full px-4 py-3 glass-soft rounded-xl text-white placeholder:text-slate-300/50 focus:outline-none focus:ring-2 focus:ring-cyan-400/60"
-                    />
-                    <p className="text-xs text-slate-300/50 mt-2">
-                      Your key is used only for this request and is not stored. If your server has an env key set, you can leave this blank.
-                    </p>
-                  </div>
+                <div className="mb-6 glass-soft rounded-xl p-4">
+                  <div className="text-sm font-semibold text-slate-100">AI settings</div>
+                  <p className="text-sm text-slate-200/70 mt-1">
+                    Provider + API key are now in the sidebar under <span className="text-slate-100">Settings</span>.
+                  </p>
                 </div>
 
                 <button
@@ -1131,7 +1093,6 @@ export default function DashboardPage() {
           </div>
         )}
           </main>
-        </div>
       </div>
     </div>
   )
