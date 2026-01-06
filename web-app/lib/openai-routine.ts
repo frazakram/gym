@@ -7,7 +7,7 @@ const ExerciseSchema = z.object({
   name: z.string(),
   sets_reps: z.string(),
   youtube_urls: z.array(z.string()).min(0).max(3),
-  tutorial_points: z.array(z.string()).min(0).max(5),
+  tutorial_points: z.array(z.string()).min(3).max(5),
   wikihow_url: z.string().optional(),
 });
 
@@ -65,7 +65,7 @@ Output format rules:
           "name": "Exercise name",
           "sets_reps": "3 sets x 10 reps (rest 90s)",
           "youtube_urls": ["https://www.youtube.com/watch?v=..."],
-          "tutorial_points": ["Point 1", "Point 2", "Point 3"],
+          "tutorial_points": ["Point 1", "Point 2", "Point 3", "Point 4 (optional)", "Point 5 (optional)"],
           "wikihow_url": "https://www.wikihow.com/..."
         }
       ]
@@ -73,6 +73,7 @@ Output format rules:
   ]
 }
 - Provide 1-3 REAL, currently available YouTube URLs from reputable channels (if available) like Athlean-X, Jeff Nippard, Jeremy Ethier, ScottHermanFitness. Ensure the videos exist.
+- Provide 3-5 tutorial_points per exercise (MIN 3, MAX 5). Keep them short and practical (setup, execution cues, mistakes to avoid).
 - Only return YouTube URLs from youtube.com or youtu.be (no other domains). If you're not sure a valid YouTube video exists, return an empty array for youtube_urls.
 - Provide a REAL, working WikiHow tutorial URL for each exercise if one exists.
 

@@ -222,8 +222,13 @@ export default function DashboardPage() {
   }
 
   const getExerciseTutorialPoints = (ex: any): string[] => {
-    const pts = Array.isArray(ex.tutorial_points) ? ex.tutorial_points.filter((x: any) => typeof x === 'string') : []
-    if (pts.length >= 3) return pts
+    const pts = Array.isArray(ex.tutorial_points)
+      ? ex.tutorial_points
+          .filter((x: any) => typeof x === 'string')
+          .map((s: string) => s.trim())
+          .filter(Boolean)
+      : []
+    if (pts.length >= 3) return pts.slice(0, 5)
     if (typeof ex.form_tip === 'string' && ex.form_tip.trim()) {
       const parts = ex.form_tip
         .split(/[\n•\-]+/g)

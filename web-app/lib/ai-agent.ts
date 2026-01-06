@@ -8,7 +8,7 @@ const ExerciseSchema = z.object({
   name: z.string().describe("Name of the exercise"),
   sets_reps: z.string().describe("Sets and reps, e.g., '3 sets x 12 reps'"),
   youtube_urls: z.array(z.string()).min(0).describe("0-3 YouTube tutorial URLs for the exercise"),
-  tutorial_points: z.array(z.string()).min(0).describe("Point-wise technique/tutorial cues (aim for 3 if possible)"),
+  tutorial_points: z.array(z.string()).min(3).max(5).describe("3-5 point-wise technique/tutorial cues (min 3, max 5)"),
   wikihow_url: z.string().optional().describe("A working WikiHow link for this exercise (if available)"),
 });
 
@@ -88,7 +88,7 @@ Output format rules:
   - name
   - sets_reps (include sets, reps, and optionally rest time)
   - youtube_urls (ARRAY of 1-3 REAL, currently available YouTube URLs from reputable channels like Athlean-X, Jeff Nippard, Jeremy Ethier, ScottHermanFitness)
-  - tutorial_points (ARRAY of 1-5 bullet-style points: setup, execution cues, common mistakes to avoid)
+  - tutorial_points (ARRAY of 3-5 bullet-style points: setup, execution cues, common mistakes to avoid)
   - wikihow_url (A working WikiHow link for the exercise if available)
 
 Structure the routine with:
