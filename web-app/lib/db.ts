@@ -2,10 +2,19 @@ import { Pool } from 'pg';
 import bcrypt from 'bcryptjs';
 import { User, Profile } from '@/types';
 
+function isPostgresUrl(value: string): boolean {
+  const v = value.trim();
+  return v.startsWith("postgres://") || v.startsWith("postgresql://");
+}
+
 function firstEnv(...keys: string[]): string {
   for (const k of keys) {
     const v = process.env[k];
-    if (typeof v === "string" && v.trim()) return v.trim();
+    if (typeof v !== "string") continue;
+    const trimmed = v.trim();
+    if (!trimmed) continue;
+    if (!isPostgresUrl(trimmed)) continue;
+    return trimmed;
   }
   return "";
 }
