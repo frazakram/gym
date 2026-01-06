@@ -138,6 +138,11 @@ web-app/
 | `JWT_SECRET` | Yes | Secret key for JWT encryption |
 | `ANTHROPIC_API_KEY` | No | Users enter in UI |
 | `OPENAI_API_KEY` | No | Users enter in UI |
+| `OPENAI_BASE_URL` | No | Override OpenAI API base URL (default `https://api.openai.com`) |
+| `OPENAI_MODEL` | No | Override OpenAI model (default `gpt-4o`) |
+| `OPENAI_TIMEOUT_MS` | No | Request timeout in ms (default `120000`) |
+| `OPENAI_PROXY` | No | Proxy URL for OpenAI requests (e.g. `http://proxy.mycorp:8080`). Falls back to `HTTPS_PROXY`/`HTTP_PROXY` |
+| `OPENAI_RETRY_ATTEMPTS` | No | Network retry attempts (default `2`) |
 
 ## Security
 
@@ -161,6 +166,21 @@ Check for TypeScript errors and fix before deploying
 ### API Key Errors
 - Verify users are entering valid API keys in the UI
 - Check AI provider is correctly selected
+
+### Connection errors (ECONNRESET / ETIMEDOUT)
+If you see `Connection error (ECONNRESET)` or similar, your network is likely blocking or resetting connections to the AI provider.
+
+- Try from a different network (mobile hotspot) to confirm.
+- If your company requires a proxy, set one of:
+  - `OPENAI_PROXY` (preferred), or
+  - `HTTPS_PROXY` / `HTTP_PROXY`
+- If your company does SSL interception, you may need to configure Node to trust your corporate CA via `NODE_EXTRA_CA_CERTS` (ask IT).
+
+### Next dev lock (Windows)
+If you see “Unable to acquire lock … `.next/dev/lock`”, another `next dev` is still running.
+
+- Stop the other terminal running `npm run dev`, then retry.
+- If a stale lock remains, delete `gym/web-app/.next/dev/lock` and restart.
 
 ## License
 

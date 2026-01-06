@@ -11,8 +11,12 @@ export interface Profile {
     age: number;
     weight: number;
     height: number;
+    gender: 'Male' | 'Female' | 'Non-binary' | 'Prefer not to say';
+    goal: 'Fat loss' | 'Muscle gain' | 'Strength' | 'Recomposition' | 'Endurance' | 'General fitness';
     level: 'Beginner' | 'Regular' | 'Expert';
     tenure: string;
+    goal_weight?: number;
+    notes?: string;
     updated_at?: Date;
 }
 
@@ -42,8 +46,12 @@ export interface RoutineGenerationInput {
     age: number;
     weight: number;
     height: number;
+    gender: Profile['gender'];
+    goal: Profile['goal'];
     level: 'Beginner' | 'Regular' | 'Expert';
     tenure: string;
+    goal_weight?: number;
+    notes?: string;
     model_provider: 'Anthropic' | 'OpenAI';
     apiKey?: string;
 }
