@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { BrandLogo } from '@/components/BrandLogo'
 
 export default function LoginPage() {
   const router = useRouter()
@@ -47,15 +48,22 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="flex items-center justify-center min-h-screen px-4">
+    <div className="min-h-screen flex items-center justify-center px-4 py-10">
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
-          <h1 className="text-5xl font-bold text-cyan-400 mb-2">💪 GymBro AI</h1>
-          <p className="text-gray-300">Your AI-Powered Fitness Companion</p>
+          <div className="flex justify-center mb-4">
+            <BrandLogo size={88} className="rounded-3xl" />
+          </div>
+          <h1 className="text-4xl sm:text-5xl font-semibold tracking-tight bg-gradient-to-r from-cyan-200 via-sky-200 to-violet-200 bg-clip-text text-transparent">
+            GymBro AI
+          </h1>
+          <p className="mt-2 text-sm text-slate-300/80">
+            Personalized fitness. Powered by intelligence.
+          </p>
         </div>
 
-        <div className="bg-gray-800/50 backdrop-blur-lg rounded-2xl shadow-2xl p-8 border border-gray-700">
-          <div className="flex mb-6 bg-gray-700/50 rounded-lg p-1">
+        <div className="glass glow-ring rounded-2xl p-6 sm:p-8">
+          <div className="flex mb-6 glass-soft rounded-xl p-1">
             <button
               onClick={() => {
                 setIsLogin(true)
@@ -63,8 +71,8 @@ export default function LoginPage() {
               }}
               className={`flex-1 py-2 rounded-md font-medium transition-all ${
                 isLogin
-                  ? 'bg-cyan-500 text-white shadow-lg'
-                  : 'text-gray-400 hover:text-white'
+                  ? 'bg-gradient-to-r from-cyan-500 to-blue-600 text-white shadow-lg'
+                  : 'text-slate-300/70 hover:text-white'
               }`}
             >
               Login
@@ -76,8 +84,8 @@ export default function LoginPage() {
               }}
               className={`flex-1 py-2 rounded-md font-medium transition-all ${
                 !isLogin
-                  ? 'bg-cyan-500 text-white shadow-lg'
-                  : 'text-gray-400 hover:text-white'
+                  ? 'bg-gradient-to-r from-cyan-500 to-blue-600 text-white shadow-lg'
+                  : 'text-slate-300/70 hover:text-white'
               }`}
             >
               Register
@@ -86,35 +94,83 @@ export default function LoginPage() {
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">
-                Username
+              <label className="block text-sm font-medium text-slate-200/90 mb-2">
+                Email / Username
               </label>
-              <input
-                type="text"
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
-                required
-                className="w-full px-4 py-3 bg-gray-700/50 border border-gray-600 rounded-lg focus:ring-2 focus:ring-cyan-500 focus:border-transparent text-white placeholder-gray-400 transition"
-                placeholder="Enter your username"
-              />
+              <div className="relative">
+                <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 text-slate-300/70">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                    <path
+                      d="M4 6.5v11A2.5 2.5 0 0 0 6.5 20h11A2.5 2.5 0 0 0 20 17.5v-11A2.5 2.5 0 0 0 17.5 4h-11A2.5 2.5 0 0 0 4 6.5Z"
+                      stroke="currentColor"
+                      strokeWidth="1.5"
+                      opacity="0.65"
+                    />
+                    <path
+                      d="m5.5 7.5 6.1 4.6a1 1 0 0 0 1.2 0l6.2-4.6"
+                      stroke="currentColor"
+                      strokeWidth="1.5"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                  </svg>
+                </div>
+                <input
+                  type="text"
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
+                  required
+                  className="w-full pl-10 pr-4 py-3 glass-soft rounded-xl focus:outline-none focus:ring-2 focus:ring-cyan-400/60 text-white placeholder:text-slate-300/50 transition"
+                  placeholder="Enter your email or username"
+                  autoComplete="username"
+                />
+              </div>
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">
-                Password
-              </label>
-              <input
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-                className="w-full px-4 py-3 bg-gray-700/50 border border-gray-600 rounded-lg focus:ring-2 focus:ring-cyan-500 focus:border-transparent text-white placeholder-gray-400 transition"
-                placeholder="Enter your password"
-              />
+              <div className="flex items-center justify-between mb-2">
+                <label className="block text-sm font-medium text-slate-200/90">
+                  Password
+                </label>
+                <button
+                  type="button"
+                  className="text-xs text-slate-300/70 hover:text-cyan-200 transition"
+                  onClick={() => setError('')}
+                >
+                  Forgot password?
+                </button>
+              </div>
+              <div className="relative">
+                <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 text-slate-300/70">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                    <path
+                      d="M7.5 11V8.8A4.5 4.5 0 0 1 12 4.3a4.5 4.5 0 0 1 4.5 4.5V11"
+                      stroke="currentColor"
+                      strokeWidth="1.5"
+                      strokeLinecap="round"
+                    />
+                    <path
+                      d="M7.2 11h9.6A2.2 2.2 0 0 1 19 13.2v4.6A2.2 2.2 0 0 1 16.8 20H7.2A2.2 2.2 0 0 1 5 17.8v-4.6A2.2 2.2 0 0 1 7.2 11Z"
+                      stroke="currentColor"
+                      strokeWidth="1.5"
+                      opacity="0.65"
+                    />
+                  </svg>
+                </div>
+                <input
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                  className="w-full pl-10 pr-4 py-3 glass-soft rounded-xl focus:outline-none focus:ring-2 focus:ring-cyan-400/60 text-white placeholder:text-slate-300/50 transition"
+                  placeholder="Enter your password"
+                  autoComplete={isLogin ? 'current-password' : 'new-password'}
+                />
+              </div>
             </div>
 
             {error && (
-              <div className="bg-red-500/20 border border-red-500 text-red-300 px-4 py-3 rounded-lg">
+              <div className="rounded-xl border border-red-500/40 bg-red-500/10 px-4 py-3 text-red-200 text-sm">
                 {error}
               </div>
             )}
@@ -122,10 +178,42 @@ export default function LoginPage() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-600 hover:to-blue-700 text-white font-bold py-3 rounded-lg transition-all transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none shadow-lg"
+              className="w-full bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-600 hover:to-blue-700 text-white font-semibold py-3 rounded-xl transition-all transform hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none shadow-lg shadow-cyan-500/10"
             >
               {loading ? 'Processing...' : isLogin ? 'Sign In' : 'Create Account'}
             </button>
+
+            <p className="text-center text-xs text-slate-300/70 pt-2">
+              {isLogin ? (
+                <>
+                  Don&apos;t have an account?{' '}
+                  <button
+                    type="button"
+                    className="text-cyan-200 hover:text-cyan-100 transition font-medium"
+                    onClick={() => {
+                      setIsLogin(false)
+                      setError('')
+                    }}
+                  >
+                    Register →
+                  </button>
+                </>
+              ) : (
+                <>
+                  Already have an account?{' '}
+                  <button
+                    type="button"
+                    className="text-cyan-200 hover:text-cyan-100 transition font-medium"
+                    onClick={() => {
+                      setIsLogin(true)
+                      setError('')
+                    }}
+                  >
+                    Login →
+                  </button>
+                </>
+              )}
+            </p>
           </form>
         </div>
       </div>

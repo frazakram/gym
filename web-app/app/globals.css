@@ -20,7 +20,177 @@
 }
 
 body {
-  background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji",
+    "Segoe UI Emoji";
+  background: transparent; /* background is handled by app layout */
+}
+
+html,
+body {
+  height: 100%;
+}
+
+/* --- App background: “space + glow” --- */
+.app-shell {
+  position: relative;
+  min-height: 100vh;
+  overflow: hidden;
+  isolation: isolate; /* ensures background layers stack correctly */
+}
+
+.app-bg {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  /* Brighter, industry-style “aurora” two-tone base (cyan + violet) */
+  background:
+    radial-gradient(900px 520px at 50% 0%, rgba(255, 255, 255, 0.10), rgba(0, 0, 0, 0) 60%),
+    radial-gradient(1200px 650px at 25% 25%, rgba(34, 211, 238, 0.30), rgba(0, 0, 0, 0) 60%),
+    radial-gradient(1200px 650px at 75% 30%, rgba(167, 139, 250, 0.24), rgba(0, 0, 0, 0) 62%),
+    radial-gradient(900px 550px at 55% 65%, rgba(56, 189, 248, 0.16), rgba(0, 0, 0, 0) 62%),
+    linear-gradient(135deg, #071026, #0b1a3a 40%, #070c1d);
+}
+
+.app-bg::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  /* soft star/noise texture */
+  background-image:
+    radial-gradient(rgba(255, 255, 255, 0.16) 1px, transparent 1px),
+    radial-gradient(rgba(255, 255, 255, 0.06) 1px, transparent 1px);
+  background-size: 140px 140px, 90px 90px;
+  background-position: 0 0, 40px 25px;
+  opacity: 0.18;
+  filter: blur(0.4px);
+}
+
+.app-bg::after {
+  content: "";
+  position: absolute;
+  inset: -30%;
+  background:
+    radial-gradient(closest-side at 20% 20%, rgba(34, 211, 238, 0.18), rgba(0, 0, 0, 0) 60%),
+    radial-gradient(closest-side at 80% 25%, rgba(167, 139, 250, 0.16), rgba(0, 0, 0, 0) 62%),
+    radial-gradient(closest-side at 55% 80%, rgba(56, 189, 248, 0.12), rgba(0, 0, 0, 0) 65%);
+  filter: blur(34px);
+  opacity: 0.85;
+  transform: translate3d(0, 0, 0);
+  animation: auroraShift 18s ease-in-out infinite alternate;
+}
+
+/* --- Smoky / dusty atmospheric layer --- */
+.app-atmos {
+  position: fixed;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  opacity: 0.7;
+  mix-blend-mode: screen;
+  filter: blur(10px);
+  background:
+    radial-gradient(600px 320px at 15% 30%, rgba(255, 255, 255, 0.08), rgba(0, 0, 0, 0) 65%),
+    radial-gradient(700px 420px at 80% 28%, rgba(34, 211, 238, 0.10), rgba(0, 0, 0, 0) 70%),
+    radial-gradient(760px 520px at 55% 78%, rgba(167, 139, 250, 0.09), rgba(0, 0, 0, 0) 70%);
+  transform: translate3d(0, 0, 0);
+  animation: smokeDrift 26s ease-in-out infinite alternate;
+}
+
+.app-content {
+  position: relative;
+  z-index: 2;
+}
+
+.app-atmos::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  opacity: 0.18;
+  background-image: radial-gradient(rgba(255, 255, 255, 0.25) 1px, transparent 1px);
+  background-size: 38px 38px;
+  background-position: 0 0;
+  filter: blur(0.6px);
+  mask-image: radial-gradient(circle at 50% 40%, rgba(0,0,0,1), rgba(0,0,0,0) 65%);
+}
+
+@keyframes smokeDrift {
+  0% {
+    transform: translate3d(-2%, -1%, 0) scale(1.02);
+  }
+  50% {
+    transform: translate3d(2%, 1%, 0) scale(1.04);
+  }
+  100% {
+    transform: translate3d(3%, -2%, 0) scale(1.06);
+  }
+}
+
+/* --- Glass primitives --- */
+.glass {
+  /* brighter glass so the UI doesn't feel “too dark” */
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  box-shadow:
+    0 10px 30px rgba(0, 0, 0, 0.35),
+    inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+}
+
+.glass-soft {
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+}
+
+.glass-menu {
+  /* More opaque than .glass so underlying form text doesn't show through */
+  background: rgba(10, 18, 32, 0.92);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  box-shadow:
+    0 18px 50px rgba(0, 0, 0, 0.55),
+    inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+}
+
+.panel-solid {
+  /* Opaque panel (no glass bleed-through) — ideal for sidebars/drawers */
+  background: rgba(10, 18, 32, 0.98);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  box-shadow:
+    0 18px 55px rgba(0, 0, 0, 0.65),
+    inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+
+.glow-ring {
+  box-shadow:
+    0 0 0 1px rgba(34, 211, 238, 0.18),
+    0 10px 30px rgba(0, 0, 0, 0.35),
+    0 0 40px rgba(56, 189, 248, 0.18);
+}
+
+@keyframes auroraShift {
+  0% {
+    transform: translate3d(-2%, -1%, 0) rotate(-2deg);
+  }
+  50% {
+    transform: translate3d(2%, 1%, 0) rotate(1deg);
+  }
+  100% {
+    transform: translate3d(4%, -2%, 0) rotate(3deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .app-bg::after {
+    animation: none;
+  }
+  .app-atmos {
+    animation: none;
+  }
 }

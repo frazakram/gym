@@ -11,8 +11,12 @@ export interface Profile {
     age: number;
     weight: number;
     height: number;
+    gender: 'Male' | 'Female' | 'Non-binary' | 'Prefer not to say';
+    goal: 'Fat loss' | 'Muscle gain' | 'Strength' | 'Recomposition' | 'Endurance' | 'General fitness';
     level: 'Beginner' | 'Regular' | 'Expert';
     tenure: string;
+    goal_weight?: number;
+    notes?: string;
     updated_at?: Date;
 }
 
@@ -25,8 +29,23 @@ export interface Session {
 export interface Exercise {
     name: string;
     sets_reps: string;
-    youtube_url: string;
-    form_tip: string;
+    /**
+     * New format (preferred): 3 tutorial video URLs.
+     * Kept optional for backward compatibility with saved routines.
+     */
+    youtube_urls?: string[];
+    /** Backward compatibility */
+    youtube_url?: string;
+
+    /**
+     * New format (preferred): bullet-style form/tutorial points (>= 3).
+     * Kept optional for backward compatibility with saved routines.
+     */
+    tutorial_points?: string[];
+    /** Backward compatibility */
+    form_tip?: string;
+    /** WikiHow tutorial link */
+    wikihow_url?: string;
 }
 
 export interface DayRoutine {
@@ -42,8 +61,12 @@ export interface RoutineGenerationInput {
     age: number;
     weight: number;
     height: number;
+    gender: Profile['gender'];
+    goal: Profile['goal'];
     level: 'Beginner' | 'Regular' | 'Expert';
     tenure: string;
+    goal_weight?: number;
+    notes?: string;
     model_provider: 'Anthropic' | 'OpenAI';
     apiKey?: string;
 }

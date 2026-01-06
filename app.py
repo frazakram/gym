@@ -142,13 +142,37 @@ else:
                 weight = st.number_input("Weight (kg)", min_value=30.0, max_value=300.0, value=current_profile['weight'] if current_profile else 70.0)
                 height = st.number_input("Height (cm)", min_value=100.0, max_value=250.0, value=current_profile['height'] if current_profile else 170.0)
             with col_b:
+                gender = st.selectbox(
+                    "Gender",
+                    ["Male", "Female", "Non-binary", "Prefer not to say"],
+                    index=["Male", "Female", "Non-binary", "Prefer not to say"].index(current_profile['gender']) if current_profile and current_profile.get('gender') in ["Male", "Female", "Non-binary", "Prefer not to say"] else 3
+                )
+                goal = st.selectbox(
+                    "Goal",
+                    ["General fitness", "Fat loss", "Muscle gain", "Strength", "Recomposition", "Endurance"],
+                    index=["General fitness", "Fat loss", "Muscle gain", "Strength", "Recomposition", "Endurance"].index(current_profile['goal']) if current_profile and current_profile.get('goal') in ["General fitness", "Fat loss", "Muscle gain", "Strength", "Recomposition", "Endurance"] else 0
+                )
+                goal_weight = st.number_input(
+                    "Goal Weight (kg) (optional)",
+                    min_value=30.0,
+                    max_value=300.0,
+                    value=float(current_profile['goal_weight']) if current_profile and current_profile.get('goal_weight') is not None else 0.0
+                )
                 level = st.selectbox("Experience Level", ["Beginner", "Regular", "Expert"], index=["Beginner", "Regular", "Expert"].index(current_profile['level']) if current_profile else 0)
                 tenure = st.text_input("How long have you been training?", value=current_profile['tenure'] if current_profile else "Just started")
+            
+            notes = st.text_area(
+                "Additional comments (injuries, preferences, schedule, equipment, etc.)",
+                value=current_profile['notes'] if current_profile and current_profile.get('notes') else "",
+                height=120
+            )
             
             submit = st.form_submit_button("Save Profile")
             
             if submit:
-                database.save_profile(st.session_state['user_id'], age, weight, height, level, tenure)
+                # Treat 0.0 as "not provided" for goal weight
+                gw = goal_weight if goal_weight and goal_weight > 0 else None
+                database.save_profile(st.session_state['user_id'], age, weight, height, gender, goal, gw, level, tenure, notes)
                 st.success("Profile updated successfully!")
                 time.sleep(1)
                 st.rerun()
@@ -172,8 +196,12 @@ else:
                                 "age": current_profile['age'],
                                 "weight": current_profile['weight'],
                                 "height": current_profile['height'],
+                                "gender": current_profile.get('gender') or "Prefer not to say",
+                                "goal": current_profile.get('goal') or "General fitness",
+                                "goal_weight": current_profile.get('goal_weight'),
                                 "level": current_profile['level'],
                                 "tenure": current_profile['tenure'],
+                                "notes": current_profile.get('notes') or "",
                                 "routine": None,
                                 "model_provider": provider
                             }

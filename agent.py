@@ -10,7 +10,7 @@ import os
 class Exercise(BaseModel):
     name: str = Field(description="Name of the exercise")
     sets_reps: str = Field(description="Sets and Reps (e.g., '3 sets of 12 reps')")
-    youtube_url: str = Field(description="YouTube search URL for the exercise")
+    youtube_url: str = Field(description="REAL YouTube tutorial URL for the exercise")
     form_tip: str = Field(description="2-3 sentence guide on proper form and technique")
 
 class DailyRoutine(BaseModel):
@@ -25,23 +25,40 @@ class AgentState(TypedDict):
     age: int
     weight: float
     height: float
+    gender: str
+    goal: str
+    goal_weight: Optional[float]
     level: str
     tenure: str
+    notes: str
     routine: Optional[WeeklyRoutine] # Now using the Pydantic model
     model_provider: str
 
 # --- Prompts ---
 ROUTINE_PROMPT = ChatPromptTemplate.from_messages([
-    ("system", "You are an expert fitness trainer. You create personalized 7-day gym routines."),
+    ("system", "You are an expert personal trainer and strength coach. You create safe, realistic, highly personalized 7-day gym routines."),
     ("user", """
-    Create a detailed one-week gym routine for a user with the following profile:
+    Create a detailed one-week gym routine for a user with the following profile (use ALL fields):
     - Age: {age}
-    - Weight: {weight} kg
+    - Current weight: {weight} kg
     - Height: {height} cm
+    - Gender: {gender}
+    - Primary goal: {goal}
+    - Goal weight (optional): {goal_weight}
     - Experience Level: {level} (Beginner, Regular, Expert)
-    - Gym Tenure: {tenure}
+    - Gym Tenure / Training history: {tenure}
+    - Additional comments/constraints: {notes}
     
-    Structure the response as a weekly plan. For each exercise, include a YouTube search URL and a "form_tip" describing how to do it correctly.
+    Requirements:
+    - Choose a weekly split and number of training days appropriate for the goal + experience level.
+    - Include at least 1 rest/recovery day unless the user is advanced AND notes explicitly request otherwise.
+    - Adjust volume/intensity to match the goal (fat loss vs muscle gain vs strength vs recomposition vs endurance vs general fitness).
+    - If notes mention injuries/pain/equipment limits, avoid aggravating movements and propose safer substitutions.
+    - Use realistic set/rep prescriptions; include rest guidance in sets_reps when helpful.
+
+    Output rules:
+    - Structure the response as a weekly plan.
+    - For each exercise, include a REAL YouTube tutorial URL and a "form_tip" describing how to do it correctly.
     """)
 ])
 
@@ -70,8 +87,12 @@ def generate_routine(state: AgentState):
         "age": state["age"],
         "weight": state["weight"],
         "height": state["height"],
+        "gender": state.get("gender", "Prefer not to say"),
+        "goal": state.get("goal", "General fitness"),
+        "goal_weight": state.get("goal_weight"),
         "level": state["level"],
-        "tenure": state["tenure"]
+        "tenure": state["tenure"],
+        "notes": state.get("notes", "")
     })
     
     return {"routine": response}

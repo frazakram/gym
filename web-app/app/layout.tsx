@@ -13,8 +13,12 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-cyan-900">
-        {children}
+      <body className="min-h-screen text-slate-100">
+        <div className="app-shell">
+          <div className="app-bg" />
+          <div className="app-atmos" />
+          <div className="app-content">{children}</div>
+        </div>
       </body>
     </html>
   )

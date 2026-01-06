@@ -25,11 +25,28 @@ def init_db():
             age INTEGER,
             weight REAL,
             height REAL,
+            gender TEXT,
+            goal TEXT,
+            goal_weight REAL,
             level TEXT,
             tenure TEXT,
+            notes TEXT,
             FOREIGN KEY(user_id) REFERENCES users(id)
         )
     ''')
+
+    # Backward-compatible: add new columns if DB already exists
+    c.execute("PRAGMA table_info(profiles)")
+    existing_cols = {row[1] for row in c.fetchall()}
+    desired_cols = {
+        "gender": "TEXT",
+        "goal": "TEXT",
+        "goal_weight": "REAL",
+        "notes": "TEXT",
+    }
+    for col, col_type in desired_cols.items():
+        if col not in existing_cols:
+            c.execute(f"ALTER TABLE profiles ADD COLUMN {col} {col_type}")
     
     conn.commit()
     conn.close()
@@ -65,15 +82,15 @@ def authenticate_user(username, password):
             return user[0]
     return None
 
-def save_profile(user_id, age, weight, height, level, tenure):
+def save_profile(user_id, age, weight, height, gender, goal, goal_weight, level, tenure, notes):
     """Save or update user profile."""
     conn = sqlite3.connect(DB_NAME)
     c = conn.cursor()
     
     c.execute('''
-        INSERT OR REPLACE INTO profiles (user_id, age, weight, height, level, tenure)
-        VALUES (?, ?, ?, ?, ?, ?)
-    ''', (user_id, age, weight, height, level, tenure))
+        INSERT OR REPLACE INTO profiles (user_id, age, weight, height, gender, goal, goal_weight, level, tenure, notes)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    ''', (user_id, age, weight, height, gender, goal, goal_weight, level, tenure, notes))
     
     conn.commit()
     conn.close()
@@ -83,7 +100,7 @@ def get_profile(user_id):
     conn = sqlite3.connect(DB_NAME)
     c = conn.cursor()
     
-    c.execute("SELECT age, weight, height, level, tenure FROM profiles WHERE user_id = ?", (user_id,))
+    c.execute("SELECT age, weight, height, gender, goal, goal_weight, level, tenure, notes FROM profiles WHERE user_id = ?", (user_id,))
     profile = c.fetchone()
     conn.close()
     
@@ -92,8 +109,12 @@ def get_profile(user_id):
             "age": profile[0],
             "weight": profile[1],
             "height": profile[2],
-            "level": profile[3],
-            "tenure": profile[4]
+            "gender": profile[3],
+            "goal": profile[4],
+            "goal_weight": profile[5],
+            "level": profile[6],
+            "tenure": profile[7],
+            "notes": profile[8],
         }
     return None
 

@@ -30,9 +30,10 @@ export async function PUT(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { age, weight, height, level, tenure } = await request.json();
+    const { age, weight, height, gender, goal, level, tenure, goal_weight, notes } = await request.json();
 
-    if (!age || !weight || !height || !level || !tenure) {
+    // Avoid falsy checks; validate presence
+    if (age == null || weight == null || height == null || !gender || !goal || !level || !tenure) {
       return NextResponse.json(
         { error: 'All fields are required' },
         { status: 400 }
@@ -44,8 +45,12 @@ export async function PUT(request: NextRequest) {
       age,
       weight,
       height,
+      gender,
+      goal,
       level,
-      tenure
+      tenure,
+      goal_weight,
+      notes
     );
 
     return NextResponse.json({ profile }, { status: 200 });
