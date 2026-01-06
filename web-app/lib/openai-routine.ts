@@ -19,12 +19,17 @@ const WeeklyRoutineSchema = z.object({
 });
 
 function buildPrompt(input: RoutineGenerationInput): string {
+  const normalizedHeight =
+    typeof input.height === "number" && input.height > 0 && input.height <= 8
+      ? Math.round(input.height * 30.48 * 10) / 10
+      : input.height;
+
   return `You are an expert personal trainer and strength coach. Create a realistic, safe, and highly personalized 7-day gym routine that a good trainer would recommend after assessing the client.
 
 Client Profile (use ALL of these when deciding exercise selection, volume, intensity, rest, and progression):
 - Age: ${input.age} years
 - Current weight: ${input.weight} kg
-- Height: ${input.height} cm
+- Height: ${normalizedHeight} cm
 - Gender: ${input.gender}
 - Primary goal: ${input.goal}
 ${typeof input.goal_weight === "number" ? `- Goal weight: ${input.goal_weight} kg` : ""}

@@ -167,6 +167,12 @@ Check for TypeScript errors and fix before deploying
 - Verify users are entering valid API keys in the UI
 - Check AI provider is correctly selected
 
+### Custom logo
+Place your logo image at:
+- `gym/web-app/public/logo.png`
+
+The app will automatically use it in the Login page and Dashboard header. (If the file is missing, it falls back to a simple “G” badge.)
+
 ### Connection errors (ECONNRESET / ETIMEDOUT)
 If you see `Connection error (ECONNRESET)` or similar, your network is likely blocking or resetting connections to the AI provider.
 

@@ -1,8 +1,20 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import { WeeklyRoutine, Profile } from '@/types'
+import { BrandLogo } from '@/components/BrandLogo'
+import { GlassSelect } from '@/components/GlassSelect'
+
+type SavedRoutine = {
+  id: string
+  name: string
+  createdAt: number
+  provider: 'Anthropic' | 'OpenAI'
+  routine: WeeklyRoutine
+}
+
+const ROUTINE_LIBRARY_KEY = 'gymbro:routine-library:v1'
 
 export default function DashboardPage() {
   const router = useRouter()
@@ -13,9 +25,12 @@ export default function DashboardPage() {
   
   // Profile state
   const [profile, setProfile] = useState<Profile | null>(null)
-  const [age, setAge] = useState(25)
-  const [weight, setWeight] = useState(70)
-  const [height, setHeight] = useState(170)
+  const [age, setAge] = useState<number | ''>(25)
+  const [weight, setWeight] = useState<number | ''>(70)
+  const [height, setHeight] = useState<number | ''>(170)
+  const [heightUnit, setHeightUnit] = useState<'cm' | 'ftin'>('cm')
+  const [heightFeet, setHeightFeet] = useState<number | ''>(5)
+  const [heightInches, setHeightInches] = useState<number | ''>(7)
   const [gender, setGender] = useState<Profile['gender']>('Prefer not to say')
   const [goal, setGoal] = useState<Profile['goal']>('General fitness')
   const [level, setLevel] = useState<'Beginner' | 'Regular' | 'Expert'>('Beginner')
@@ -31,6 +46,214 @@ export default function DashboardPage() {
   const [progressPct, setProgressPct] = useState(0)
   const [progressStage, setProgressStage] = useState('')
 
+  // Routine library (local-only)
+  const [savedRoutines, setSavedRoutines] = useState<SavedRoutine[]>([])
+  const [saveNameDraft, setSaveNameDraft] = useState('')
+  const [activeSavedId, setActiveSavedId] = useState<string | null>(null)
+
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(ROUTINE_LIBRARY_KEY)
+      if (!raw) return
+      const parsed = JSON.parse(raw) as unknown
+      if (Array.isArray(parsed)) {
+        // Best-effort validation; ignore malformed entries
+        const cleaned: SavedRoutine[] = parsed
+          .filter((x) => x && typeof x === 'object')
+          .slice(0, 25) as SavedRoutine[]
+        setSavedRoutines(cleaned)
+      }
+    } catch {
+      // ignore
+    }
+  }, [])
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(ROUTINE_LIBRARY_KEY, JSON.stringify(savedRoutines.slice(0, 25)))
+    } catch {
+      // ignore
+    }
+  }, [savedRoutines])
+
+  const routineStats = useMemo(() => {
+    if (!routine) return null
+    const days = routine.days?.length ?? 0
+    const exercises = (routine.days ?? []).reduce((acc, d) => acc + (d.exercises?.length ?? 0), 0)
+    const avgPerDay = days > 0 ? Math.round((exercises / days) * 10) / 10 : 0
+    return { days, exercises, avgPerDay }
+  }, [routine])
+
+  const todayIndex = useMemo(() => {
+    // Map JS Sunday(0) -> Monday(0)
+    return (new Date().getDay() + 6) % 7
+  }, [])
+
+  const todaysPlan = useMemo(() => {
+    if (!routine?.days?.length) return null
+    const idx = Math.min(todayIndex, routine.days.length - 1)
+    return { idx, day: routine.days[idx] }
+  }, [routine, todayIndex])
+
+  const makeId = () => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const c: any = typeof crypto !== 'undefined' ? crypto : null
+    if (c?.randomUUID) return c.randomUUID() as string
+    return `${Date.now()}-${Math.random().toString(16).slice(2)}`
+  }
+
+  const handleSaveCurrentRoutine = () => {
+    if (!routine) return
+    const name =
+      saveNameDraft.trim() ||
+      `Routine • ${new Date().toLocaleDateString(undefined, { month: 'short', day: '2-digit' })}`
+
+    const item: SavedRoutine = {
+      id: makeId(),
+      name,
+      createdAt: Date.now(),
+      provider: modelProvider,
+      routine,
+    }
+
+    setSavedRoutines((prev) => [item, ...prev].slice(0, 25))
+    setActiveSavedId(item.id)
+    setSaveNameDraft('')
+    setSuccess('Routine saved to your library.')
+  }
+
+  const handleLoadSavedRoutine = (id: string) => {
+    const found = savedRoutines.find((r) => r.id === id)
+    if (!found) return
+    setRoutine(found.routine)
+    setActiveSavedId(found.id)
+    setActiveTab('routine')
+    if (typeof window !== 'undefined') window.scrollTo({ top: 0, behavior: 'smooth' })
+    setSuccess(`Loaded: ${found.name}`)
+  }
+
+  const handleDeleteSavedRoutine = (id: string) => {
+    setSavedRoutines((prev) => prev.filter((r) => r.id !== id))
+    if (activeSavedId === id) setActiveSavedId(null)
+  }
+
+  const handleClearRoutine = () => {
+    setRoutine(null)
+    setActiveSavedId(null)
+    setSuccess('Cleared current routine.')
+  }
+
+  const handleCopyRoutineJson = async () => {
+    if (!routine) return
+    try {
+      await navigator.clipboard.writeText(JSON.stringify(routine, null, 2))
+      setSuccess('Copied routine JSON to clipboard.')
+    } catch {
+      setError('Failed to copy. Your browser may block clipboard access.')
+    }
+  }
+
+  const handleJumpToToday = () => {
+    if (!todaysPlan) return
+    const el = document.getElementById(`day-${todaysPlan.idx}`)
+    el?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  }
+
+  const levelOptions = useMemo(
+    () => [
+      { value: 'Beginner', label: 'Beginner' },
+      { value: 'Regular', label: 'Regular' },
+      { value: 'Expert', label: 'Expert' },
+    ] as const,
+    []
+  )
+
+  const genderOptions = useMemo(
+    () =>
+      [
+        { value: 'Male', label: 'Male' },
+        { value: 'Female', label: 'Female' },
+        { value: 'Non-binary', label: 'Non-binary' },
+        { value: 'Prefer not to say', label: 'Prefer not to say' },
+      ] as const,
+    []
+  )
+
+  const goalOptions = useMemo(
+    () =>
+      [
+        { value: 'General fitness', label: 'General fitness' },
+        { value: 'Fat loss', label: 'Fat loss' },
+        { value: 'Muscle gain', label: 'Muscle gain' },
+        { value: 'Strength', label: 'Strength' },
+        { value: 'Recomposition', label: 'Recomposition' },
+        { value: 'Endurance', label: 'Endurance' },
+      ] as const,
+    []
+  )
+
+  const providerOptions = useMemo(
+    () =>
+      [
+        { value: 'Anthropic', label: 'Anthropic (Claude)' },
+        { value: 'OpenAI', label: 'OpenAI (GPT-4)' },
+      ] as const,
+    []
+  )
+
+  const heightUnitOptions = useMemo(
+    () =>
+      [
+        { value: 'cm', label: 'cm' },
+        { value: 'ftin', label: 'ft + in' },
+      ] as const,
+    []
+  )
+
+  const cmToFtIn = (cm: number) => {
+    const totalIn = cm / 2.54
+    const ft = Math.floor(totalIn / 12)
+    const inches = Math.round((totalIn - ft * 12) * 10) / 10
+    return { ft, inches }
+  }
+
+  const ftInToCm = (ft: number, inches: number) => ft * 30.48 + inches * 2.54
+
+  useEffect(() => {
+    // Load preferred height unit (local-only)
+    try {
+      const raw = localStorage.getItem('gymbro:height-unit:v1')
+      if (raw === 'cm' || raw === 'ftin') setHeightUnit(raw)
+    } catch {
+      // ignore
+    }
+  }, [])
+
+  useEffect(() => {
+    try {
+      localStorage.setItem('gymbro:height-unit:v1', heightUnit)
+    } catch {
+      // ignore
+    }
+  }, [heightUnit])
+
+  useEffect(() => {
+    // Keep ft/in in sync when switching to ft/in view
+    if (heightUnit !== 'ftin') return
+    const cm = typeof height === 'number' ? height : 170
+    const { ft, inches } = cmToFtIn(cm)
+    setHeightFeet(ft)
+    setHeightInches(inches)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [heightUnit])
+
+  const resolvedHeightCm = useMemo(() => {
+    if (heightUnit === 'cm') return typeof height === 'number' ? height : null
+    if (typeof heightFeet !== 'number' || typeof heightInches !== 'number') return null
+    const inches = Math.max(0, Math.min(11.9, heightInches))
+    return Math.round(ftInToCm(heightFeet, inches) * 10) / 10
+  }, [height, heightFeet, heightInches, heightUnit])
+
   const fetchProfile = useCallback(async () => {
     try {
       const response = await fetch('/api/profile')
@@ -41,9 +264,9 @@ export default function DashboardPage() {
       const data = await response.json()
       if (data.profile) {
         setProfile(data.profile)
-        setAge(data.profile.age)
-        setWeight(data.profile.weight)
-        setHeight(data.profile.height)
+        setAge(typeof data.profile.age === 'number' ? data.profile.age : 25)
+        setWeight(typeof data.profile.weight === 'number' ? data.profile.weight : 70)
+        setHeight(typeof data.profile.height === 'number' ? data.profile.height : 170)
         setGender(data.profile.gender ?? 'Prefer not to say')
         setGoal(data.profile.goal ?? 'General fitness')
         setLevel(data.profile.level)
@@ -67,13 +290,17 @@ export default function DashboardPage() {
     setSuccess('')
 
     try {
+      if (age === '' || weight === '' || !tenure.trim() || resolvedHeightCm == null) {
+        throw new Error('Please fill Age, Weight, Height, and Training Duration.')
+      }
+
       const response = await fetch('/api/profile', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           age,
           weight,
-          height,
+          height: resolvedHeightCm,
           gender,
           goal,
           level,
@@ -90,6 +317,12 @@ export default function DashboardPage() {
 
       setSuccess('Profile saved. Your next routine will use these details.')
       await fetchProfile()
+      // UX: move user to routine generation immediately
+      setActiveTab('routine')
+      // Smooth scroll to top so the routine panel is visible (esp. on small screens)
+      if (typeof window !== 'undefined') {
+        window.scrollTo({ top: 0, behavior: 'smooth' })
+      }
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : String(err))
     } finally {
@@ -100,6 +333,10 @@ export default function DashboardPage() {
   const handleGenerateRoutine = async () => {
     if (!profile) {
       setError('Please complete your profile first.')
+      return
+    }
+    if (resolvedHeightCm == null) {
+      setError('Please provide a valid height before generating.')
       return
     }
 
@@ -116,7 +353,7 @@ export default function DashboardPage() {
         body: JSON.stringify({
           age: profile.age ?? age,
           weight: profile.weight ?? weight,
-          height: profile.height ?? height,
+          height: typeof profile.height === 'number' ? profile.height : resolvedHeightCm,
           gender: (profile.gender ?? gender) || 'Prefer not to say',
           goal: (profile.goal ?? goal) || 'General fitness',
           level: (profile.level ?? level) || 'Beginner',
@@ -183,12 +420,12 @@ export default function DashboardPage() {
       } else {
         // Fallback JSON mode
         const data = await response.json()
-        if (!response.ok) {
-          throw new Error(data.error || 'Failed to generate routine')
-        }
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to generate routine')
+      }
 
-        setRoutine(data.routine)
-        setSuccess('Routine generated successfully.')
+      setRoutine(data.routine)
+      setSuccess('Routine generated successfully.')
       }
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : String(err))
@@ -204,22 +441,193 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="min-h-screen p-4 sm:p-8">
-      <div className="max-w-6xl mx-auto">
-        {/* Header */}
-        <div className="flex justify-between items-center mb-8">
+    <div className="min-h-screen px-4 py-8 sm:py-12">
+      <div className="max-w-7xl mx-auto">
+        <div className="grid grid-cols-1 xl:grid-cols-12 gap-6">
+          {/* Sidebar (desktop) */}
+          <aside className="hidden xl:block xl:col-span-3">
+            <div className="sticky top-6 space-y-6">
+              <div className="glass rounded-2xl p-5">
           <div className="flex items-center gap-3">
-            <div className="h-10 w-10 rounded-2xl bg-gradient-to-br from-cyan-500 to-blue-600 flex items-center justify-center shadow-lg">
-              <span className="text-white font-black">G</span>
+                  <BrandLogo size={44} />
+                  <div className="min-w-0">
+                    <div className="text-sm font-semibold tracking-tight bg-gradient-to-r from-cyan-200 via-sky-200 to-violet-200 bg-clip-text text-transparent truncate">
+                      GymBro AI
+                    </div>
+                    <div className="text-xs text-slate-300/70 truncate">Personalized routines.</div>
+                  </div>
+                </div>
+
+                <div className="mt-4 glass-soft rounded-xl p-1 flex">
+                  <button
+                    onClick={() => setActiveTab('profile')}
+                    className={`flex-1 px-3 py-2 rounded-lg text-sm font-semibold transition-all ${
+                      activeTab === 'profile'
+                        ? 'bg-gradient-to-r from-cyan-500 to-blue-600 text-white shadow-lg'
+                        : 'text-slate-300/70 hover:text-white'
+                    }`}
+                  >
+                    Profile
+                  </button>
+                  <button
+                    onClick={() => setActiveTab('routine')}
+                    className={`flex-1 px-3 py-2 rounded-lg text-sm font-semibold transition-all ${
+                      activeTab === 'routine'
+                        ? 'bg-gradient-to-r from-cyan-500 to-blue-600 text-white shadow-lg'
+                        : 'text-slate-300/70 hover:text-white'
+                    }`}
+                  >
+                    Routine
+                  </button>
+                </div>
+              </div>
+
+              {/* Focus (Today + insights) */}
+              <div className="glass rounded-2xl overflow-hidden">
+                <div className="h-1 w-full bg-gradient-to-r from-cyan-400 via-sky-400 to-violet-400 opacity-80" />
+                <div className="p-5">
+                  <div className="flex items-center justify-between gap-3">
+                    <h3 className="text-sm font-semibold text-slate-100">Today</h3>
+                    <button
+                      type="button"
+                      onClick={handleJumpToToday}
+                      disabled={!todaysPlan}
+                      className="text-[11px] px-2 py-1 rounded-lg glass-soft text-slate-100/90 hover:text-white disabled:opacity-50 disabled:cursor-not-allowed transition"
+                    >
+                      Jump
+                    </button>
+                  </div>
+
+                  {!todaysPlan ? (
+                    <div className="mt-3 text-sm text-slate-200/70">
+                      Generate a routine to see today’s workout.
+                    </div>
+                  ) : (
+                    <div className="mt-4">
+                      <div className="text-sm text-slate-100 font-semibold line-clamp-1">
+                        {todaysPlan.day.day}
+                      </div>
+                      <div className="mt-2 text-xs text-slate-200/70">
+                        {todaysPlan.day.exercises.length} exercises • {routineStats?.avgPerDay ?? 0} avg/day
+                      </div>
+                      <div className="mt-3 space-y-2">
+                        {todaysPlan.day.exercises.slice(0, 3).map((ex, i) => (
+                          <div key={i} className="glass-soft rounded-xl px-3 py-2">
+                            <div className="text-xs font-semibold text-slate-100 line-clamp-1">
+                              {ex.name}
+                            </div>
+                            <div className="text-[11px] text-slate-200/70 line-clamp-1">{ex.sets_reps}</div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="mt-5 grid grid-cols-2 gap-3">
+                    <div className="glass-soft rounded-xl p-3">
+                      <div className="text-[11px] text-slate-200/70">Days</div>
+                      <div className="text-lg font-semibold text-slate-100">{routineStats?.days ?? '—'}</div>
+                    </div>
+                    <div className="glass-soft rounded-xl p-3">
+                      <div className="text-[11px] text-slate-200/70">Exercises</div>
+                      <div className="text-lg font-semibold text-slate-100">{routineStats?.exercises ?? '—'}</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Routine library */}
+              <div className="glass rounded-2xl overflow-hidden">
+                <div className="p-5">
+                  <div className="flex items-center justify-between gap-3">
+                    <h3 className="text-sm font-semibold text-slate-100">Routine Library</h3>
+                    <span className="text-[11px] text-slate-200/60">{savedRoutines.length}/25</span>
+                  </div>
+
+                  <div className="mt-3">
+                    <div className="flex gap-2">
+                      <input
+                        value={saveNameDraft}
+                        onChange={(e) => setSaveNameDraft(e.target.value)}
+                        placeholder="Name this routine (optional)"
+                        className="flex-1 px-3 py-2 glass-soft rounded-xl text-sm text-white placeholder:text-slate-300/50 focus:outline-none focus:ring-2 focus:ring-cyan-400/60"
+                      />
+                      <button
+                        type="button"
+                        onClick={handleSaveCurrentRoutine}
+                        disabled={!routine}
+                        className="px-3 py-2 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 text-white text-sm font-semibold disabled:opacity-50 disabled:cursor-not-allowed transition"
+                      >
+                        Save
+                      </button>
+                    </div>
+                    <p className="mt-2 text-xs text-slate-200/60">
+                      Saved locally in your browser (no DB needed).
+                    </p>
+                  </div>
+
+                  <div className="mt-4 space-y-2">
+                    {savedRoutines.length === 0 ? (
+                      <div className="text-sm text-slate-200/70 glass-soft rounded-xl p-3">
+                        Save routines here so you can compare and reuse them later.
+                      </div>
+                    ) : (
+                      savedRoutines.slice(0, 6).map((r) => (
+                        <div
+                          key={r.id}
+                          className={`glass-soft rounded-xl p-3 transition ${
+                            activeSavedId === r.id ? 'ring-1 ring-cyan-400/40' : ''
+                          }`}
+                        >
+                          <div className="flex items-start justify-between gap-3">
+                            <div className="min-w-0">
+                              <div className="text-sm font-semibold text-slate-100 truncate">{r.name}</div>
+                              <div className="text-[11px] text-slate-200/60">
+                                {new Date(r.createdAt).toLocaleString()} • {r.provider}
+                              </div>
+                            </div>
+                            <div className="flex gap-2 shrink-0">
+                              <button
+                                type="button"
+                                onClick={() => handleLoadSavedRoutine(r.id)}
+                                className="text-[11px] px-2 py-1 rounded-lg bg-white/10 hover:bg-white/15 text-white transition"
+                              >
+                                Load
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => handleDeleteSavedRoutine(r.id)}
+                                className="text-[11px] px-2 py-1 rounded-lg bg-red-500/15 hover:bg-red-500/20 text-red-100 transition"
+                              >
+                                Del
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </div>
+              </div>
             </div>
+          </aside>
+
+          {/* Main content */}
+          <main className="xl:col-span-9">
+            {/* Header */}
+            <div className="glass rounded-2xl px-5 py-4 mb-6 flex justify-between items-center">
+              <div className="flex items-center gap-3">
+                <BrandLogo size={44} />
             <div>
-              <h1 className="text-3xl sm:text-4xl font-bold text-cyan-300 tracking-tight">GymBro AI</h1>
-              <p className="text-sm text-gray-400">Personalized routines, tuned to your stats.</p>
+                  <h1 className="text-2xl sm:text-3xl font-semibold tracking-tight bg-gradient-to-r from-cyan-200 via-sky-200 to-violet-200 bg-clip-text text-transparent">
+                    GymBro AI
+                  </h1>
+                  <p className="text-sm text-slate-300/70">Personalized routines, tuned to your stats.</p>
             </div>
           </div>
           <button
             onClick={handleLogout}
-            className="px-4 py-2 bg-red-500/20 hover:bg-red-500/30 text-red-300 rounded-lg border border-red-500/50 transition"
+                className="px-4 py-2 rounded-xl glass-soft text-red-200 hover:bg-red-500/10 border border-red-500/30 transition"
           >
             Logout
           </button>
@@ -241,24 +649,24 @@ export default function DashboardPage() {
           </div>
         )}
 
-        {/* Tabs */}
-        <div className="flex gap-4 mb-6">
+            {/* Tabs (mobile/tablet) */}
+            <div className="xl:hidden inline-flex gap-2 mb-6 glass-soft rounded-xl p-1">
           <button
             onClick={() => setActiveTab('profile')}
-            className={`px-6 py-3 rounded-lg font-semibold transition-all ${
+                className={`px-6 py-2.5 rounded-lg font-semibold transition-all ${
               activeTab === 'profile'
-                ? 'bg-cyan-500 text-white shadow-lg'
-                : 'bg-gray-700/50 text-gray-300 hover:bg-gray-700'
+                    ? 'bg-gradient-to-r from-cyan-500 to-blue-600 text-white shadow-lg'
+                    : 'text-slate-300/70 hover:text-white'
             }`}
           >
             My Profile
           </button>
           <button
             onClick={() => setActiveTab('routine')}
-            className={`px-6 py-3 rounded-lg font-semibold transition-all ${
+                className={`px-6 py-2.5 rounded-lg font-semibold transition-all ${
               activeTab === 'routine'
-                ? 'bg-cyan-500 text-white shadow-lg'
-                : 'bg-gray-700/50 text-gray-300 hover:bg-gray-700'
+                    ? 'bg-gradient-to-r from-cyan-500 to-blue-600 text-white shadow-lg'
+                    : 'text-slate-300/70 hover:text-white'
             }`}
           >
             My Routine
@@ -267,11 +675,11 @@ export default function DashboardPage() {
 
         {/* Profile Tab */}
         {activeTab === 'profile' && (
-          <div className="bg-gray-800/50 backdrop-blur-lg rounded-2xl p-8 border border-gray-700">
+              <div className="glass rounded-2xl p-6 sm:p-8">
             <div className="flex items-start justify-between gap-6 mb-6">
               <div>
-                <h2 className="text-2xl font-bold text-gray-100">Update Your Profile</h2>
-                <p className="text-sm text-gray-400 mt-1">
+                <h2 className="text-2xl font-semibold text-slate-100">Update Your Profile</h2>
+                <p className="text-sm text-slate-300/70 mt-1">
                   These details are used to tailor your routine intensity, volume, and exercise selection.
                 </p>
               </div>
@@ -279,102 +687,145 @@ export default function DashboardPage() {
             <form onSubmit={handleSaveProfile} className="space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-2">Age</label>
+                  <label className="block text-sm font-medium text-slate-200/90 mb-2">Age</label>
                   <input
                     type="number"
                     value={age}
-                    onChange={(e) => setAge(Number(e.target.value))}
+                    onChange={(e) => {
+                      const v = e.target.value
+                      setAge(v === '' ? '' : Number(v))
+                    }}
                     min="16"
                     max="100"
-                    className="w-full px-4 py-3 bg-gray-700/50 border border-gray-600 rounded-lg text-white"
+                    className="w-full px-4 py-3 glass-soft rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-cyan-400/60"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-2">Weight (kg)</label>
+                  <label className="block text-sm font-medium text-slate-200/90 mb-2">Weight (kg)</label>
                   <input
                     type="number"
                     value={weight}
-                    onChange={(e) => setWeight(Number(e.target.value))}
+                    onChange={(e) => {
+                      const v = e.target.value
+                      setWeight(v === '' ? '' : Number(v))
+                    }}
                     min="30"
                     max="300"
                     step="0.1"
-                    className="w-full px-4 py-3 bg-gray-700/50 border border-gray-600 rounded-lg text-white"
+                    className="w-full px-4 py-3 glass-soft rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-cyan-400/60"
                   />
                 </div>
 
-                <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-2">Height (cm)</label>
+                <div className="md:col-span-2">
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
+                    <GlassSelect
+                      label="Height unit"
+                      value={heightUnit}
+                      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                      options={heightUnitOptions as any}
+                      onChange={(v) => setHeightUnit(v as 'cm' | 'ftin')}
+                    />
+
+                    {heightUnit === 'cm' ? (
+                      <div className="md:col-span-2">
+                        <label className="block text-sm font-medium text-slate-200/90 mb-2">Height (cm)</label>
                   <input
                     type="number"
                     value={height}
-                    onChange={(e) => setHeight(Number(e.target.value))}
+                          onChange={(e) => {
+                            const v = e.target.value
+                            setHeight(v === '' ? '' : Number(v))
+                          }}
                     min="100"
                     max="250"
                     step="0.1"
-                    className="w-full px-4 py-3 bg-gray-700/50 border border-gray-600 rounded-lg text-white"
-                  />
+                          className="w-full px-4 py-3 glass-soft rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-cyan-400/60"
+                        />
+                      </div>
+                    ) : (
+                      <div className="md:col-span-2 grid grid-cols-2 gap-4">
+                        <div>
+                          <label className="block text-sm font-medium text-slate-200/90 mb-2">Feet</label>
+                          <input
+                            type="number"
+                            value={heightFeet}
+                            onChange={(e) => {
+                              const v = e.target.value
+                              setHeightFeet(v === '' ? '' : Number(v))
+                            }}
+                            min="3"
+                            max="8"
+                            step="1"
+                            className="w-full px-4 py-3 glass-soft rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-cyan-400/60"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-slate-200/90 mb-2">Inches</label>
+                          <input
+                            type="number"
+                            value={heightInches}
+                            onChange={(e) => {
+                              const v = e.target.value
+                              setHeightInches(v === '' ? '' : Number(v))
+                            }}
+                            min="0"
+                            max="11.9"
+                            step="0.1"
+                            className="w-full px-4 py-3 glass-soft rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-cyan-400/60"
+                          />
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  <p className="mt-2 text-xs text-slate-300/50">
+                    Stored as cm: <span className="text-slate-200/80">{resolvedHeightCm ?? '—'}</span>
+                  </p>
                 </div>
 
-                <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-2">Experience Level</label>
-                  <select
+                <GlassSelect
+                  label="Experience Level"
                     value={level}
-                    onChange={(e) => setLevel(e.target.value as 'Beginner' | 'Regular' | 'Expert')}
-                    className="w-full px-4 py-3 bg-gray-700/50 border border-gray-600 rounded-lg text-white"
-                  >
-                    <option value="Beginner">Beginner</option>
-                    <option value="Regular">Regular</option>
-                    <option value="Expert">Expert</option>
-                  </select>
-                </div>
+                  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                  options={levelOptions as any}
+                  onChange={(v) => setLevel(v as 'Beginner' | 'Regular' | 'Expert')}
+                />
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-2">Gender</label>
-                  <select
+                  <GlassSelect
+                    label="Gender"
                     value={gender}
-                    onChange={(e) => setGender(e.target.value as Profile['gender'])}
-                    className="w-full px-4 py-3 bg-gray-700/50 border border-gray-600 rounded-lg text-white"
-                  >
-                    <option value="Male">Male</option>
-                    <option value="Female">Female</option>
-                    <option value="Non-binary">Non-binary</option>
-                    <option value="Prefer not to say">Prefer not to say</option>
-                  </select>
-                  <p className="text-xs text-gray-500 mt-2">
+                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                    options={genderOptions as any}
+                    onChange={(v) => setGender(v as Profile['gender'])}
+                  />
+                  <p className="text-xs text-slate-300/50 mt-2">
                     Used only to tailor exercise selection and recovery assumptions (no storage beyond your profile).
                   </p>
                 </div>
 
-                <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-2">Goal</label>
-                  <select
+                <GlassSelect
+                  label="Goal"
                     value={goal}
-                    onChange={(e) => setGoal(e.target.value as Profile['goal'])}
-                    className="w-full px-4 py-3 bg-gray-700/50 border border-gray-600 rounded-lg text-white"
-                  >
-                    <option value="General fitness">General fitness</option>
-                    <option value="Fat loss">Fat loss</option>
-                    <option value="Muscle gain">Muscle gain</option>
-                    <option value="Strength">Strength</option>
-                    <option value="Recomposition">Recomposition</option>
-                    <option value="Endurance">Endurance</option>
-                  </select>
-                </div>
+                  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                  options={goalOptions as any}
+                  onChange={(v) => setGoal(v as Profile['goal'])}
+                />
 
                 <div className="md:col-span-2">
-                  <label className="block text-sm font-medium text-gray-300 mb-2">Training Duration</label>
+                  <label className="block text-sm font-medium text-slate-200/90 mb-2">Training Duration</label>
                   <input
                     type="text"
                     value={tenure}
                     onChange={(e) => setTenure(e.target.value)}
                     placeholder="e.g., '6 months' or 'Just started'"
-                    className="w-full px-4 py-3 bg-gray-700/50 border border-gray-600 rounded-lg text-white"
+                    className="w-full px-4 py-3 glass-soft rounded-xl text-white placeholder:text-slate-300/50 focus:outline-none focus:ring-2 focus:ring-cyan-400/60"
                   />
                 </div>
 
                 <div className="md:col-span-2">
-                  <label className="block text-sm font-medium text-gray-300 mb-2">Goal Weight (kg)</label>
+                  <label className="block text-sm font-medium text-slate-200/90 mb-2">Goal Weight (kg)</label>
                   <input
                     type="number"
                     value={goalWeight}
@@ -386,21 +837,21 @@ export default function DashboardPage() {
                     max="300"
                     step="0.1"
                     placeholder="Optional (e.g., 72)"
-                    className="w-full px-4 py-3 bg-gray-700/50 border border-gray-600 rounded-lg text-white"
+                    className="w-full px-4 py-3 glass-soft rounded-xl text-white placeholder:text-slate-300/50 focus:outline-none focus:ring-2 focus:ring-cyan-400/60"
                   />
-                  <p className="text-xs text-gray-500 mt-2">
+                  <p className="text-xs text-slate-300/50 mt-2">
                     Optional — helps the routine bias toward the right intensity/cardio/recovery strategy.
                   </p>
                 </div>
 
                 <div className="md:col-span-2">
-                  <label className="block text-sm font-medium text-gray-300 mb-2">Additional comments</label>
+                  <label className="block text-sm font-medium text-slate-200/90 mb-2">Additional comments</label>
                   <textarea
                     value={notes}
                     onChange={(e) => setNotes(e.target.value)}
                     placeholder="Injuries, goals (fat loss/strength/hypertrophy), equipment limits, days per week, exercises you love/hate, etc."
                     rows={4}
-                    className="w-full px-4 py-3 bg-gray-700/50 border border-gray-600 rounded-lg text-white resize-y"
+                    className="w-full px-4 py-3 glass-soft rounded-xl text-white placeholder:text-slate-300/50 focus:outline-none focus:ring-2 focus:ring-cyan-400/60 resize-y"
                   />
                 </div>
               </div>
@@ -408,7 +859,7 @@ export default function DashboardPage() {
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-600 hover:to-blue-700 text-white font-bold py-3 rounded-lg transition-all transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none shadow-lg"
+                className="w-full bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-600 hover:to-blue-700 text-white font-semibold py-3 rounded-xl transition-all transform hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none shadow-lg shadow-cyan-500/10"
               >
                 {loading ? 'Saving...' : 'Save Profile'}
               </button>
@@ -419,20 +870,20 @@ export default function DashboardPage() {
         {/* Routine Tab */}
         {activeTab === 'routine' && (
           <div className="space-y-6">
-            <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
+                <div className="grid grid-cols-1 2xl:grid-cols-3 gap-6">
               {/* Generation panel */}
-              <div className="lg:col-span-2 bg-gray-800/50 backdrop-blur-lg rounded-2xl p-6 sm:p-8 border border-gray-700">
+                  <div className="2xl:col-span-1 glass rounded-2xl p-6 sm:p-8">
                 <div className="flex items-start justify-between gap-4 mb-6">
                   <div>
-                    <h2 className="text-2xl font-bold text-gray-100">Generate Workout Routine</h2>
-                    <p className="text-sm text-gray-400 mt-1">
+                    <h2 className="text-2xl font-semibold text-slate-100">Generate Workout Routine</h2>
+                    <p className="text-sm text-slate-300/70 mt-1">
                       Uses your profile (including gender and comments) to tailor volume and recovery.
                     </p>
                   </div>
                   {profile && (
                     <button
                       onClick={() => setActiveTab('profile')}
-                      className="shrink-0 px-3 py-2 rounded-lg bg-gray-700/40 hover:bg-gray-700 text-gray-200 border border-gray-600 transition"
+                      className="shrink-0 px-3 py-2 rounded-xl glass-soft text-slate-200 hover:text-white transition"
                     >
                       Edit profile
                     </button>
@@ -441,7 +892,7 @@ export default function DashboardPage() {
 
                 {/* Profile summary */}
                 {profile ? (
-                  <div className="mb-6 rounded-xl border border-gray-700 bg-gray-900/30 p-4">
+                  <div className="mb-6 glass-soft rounded-xl p-4">
                     <div className="flex flex-wrap gap-2">
                       <span className="px-3 py-1 rounded-full bg-cyan-500/10 text-cyan-200 border border-cyan-500/30 text-sm">
                         {profile.level}
@@ -449,30 +900,30 @@ export default function DashboardPage() {
                       <span className="px-3 py-1 rounded-full bg-emerald-500/10 text-emerald-200 border border-emerald-500/30 text-sm">
                         {profile.goal}
                       </span>
-                      <span className="px-3 py-1 rounded-full bg-gray-700/40 text-gray-200 border border-gray-600 text-sm">
+                      <span className="px-3 py-1 rounded-full glass-soft text-slate-200 text-sm">
                         {profile.age}y
                       </span>
-                      <span className="px-3 py-1 rounded-full bg-gray-700/40 text-gray-200 border border-gray-600 text-sm">
+                      <span className="px-3 py-1 rounded-full glass-soft text-slate-200 text-sm">
                         {profile.weight}kg
                       </span>
                       {typeof profile.goal_weight === 'number' && (
-                        <span className="px-3 py-1 rounded-full bg-gray-700/40 text-gray-200 border border-gray-600 text-sm">
+                        <span className="px-3 py-1 rounded-full glass-soft text-slate-200 text-sm">
                           Goal {profile.goal_weight}kg
                         </span>
                       )}
-                      <span className="px-3 py-1 rounded-full bg-gray-700/40 text-gray-200 border border-gray-600 text-sm">
+                      <span className="px-3 py-1 rounded-full glass-soft text-slate-200 text-sm">
                         {profile.height}cm
                       </span>
-                      <span className="px-3 py-1 rounded-full bg-gray-700/40 text-gray-200 border border-gray-600 text-sm">
+                      <span className="px-3 py-1 rounded-full glass-soft text-slate-200 text-sm">
                         {profile.gender}
                       </span>
-                      <span className="px-3 py-1 rounded-full bg-gray-700/40 text-gray-200 border border-gray-600 text-sm">
+                      <span className="px-3 py-1 rounded-full glass-soft text-slate-200 text-sm">
                         {profile.tenure}
                       </span>
                     </div>
                     {profile.notes && (
-                      <p className="text-sm text-gray-300 mt-3 line-clamp-3">
-                        <span className="text-gray-400">Notes:</span> {profile.notes}
+                      <p className="text-sm text-slate-200/80 mt-3 line-clamp-3">
+                        <span className="text-slate-300/60">Notes:</span> {profile.notes}
                       </p>
                     )}
                   </div>
@@ -483,20 +934,16 @@ export default function DashboardPage() {
                 )}
 
                 <div className="space-y-4 mb-6">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-300 mb-2">AI Provider</label>
-                    <select
+                  <GlassSelect
+                    label="AI Provider"
                       value={modelProvider}
-                      onChange={(e) => setModelProvider(e.target.value as 'Anthropic' | 'OpenAI')}
-                      className="w-full px-4 py-3 bg-gray-700/50 border border-gray-600 rounded-lg text-white"
-                    >
-                      <option value="Anthropic">Anthropic (Claude)</option>
-                      <option value="OpenAI">OpenAI (GPT-4)</option>
-                    </select>
-                  </div>
+                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                    options={providerOptions as any}
+                    onChange={(v) => setModelProvider(v as 'Anthropic' | 'OpenAI')}
+                  />
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-300 mb-2">
+                    <label className="block text-sm font-medium text-slate-200/90 mb-2">
                       {modelProvider} API Key
                     </label>
                     <input
@@ -510,9 +957,9 @@ export default function DashboardPage() {
                         else if (v.startsWith('sk-')) setModelProvider('OpenAI')
                       }}
                       placeholder={`Enter your ${modelProvider} API key`}
-                      className="w-full px-4 py-3 bg-gray-700/50 border border-gray-600 rounded-lg text-white"
+                      className="w-full px-4 py-3 glass-soft rounded-xl text-white placeholder:text-slate-300/50 focus:outline-none focus:ring-2 focus:ring-cyan-400/60"
                     />
-                    <p className="text-xs text-gray-500 mt-2">
+                    <p className="text-xs text-slate-300/50 mt-2">
                       Your key is used only for this request and is not stored. If your server has an env key set, you can leave this blank.
                     </p>
                   </div>
@@ -521,7 +968,7 @@ export default function DashboardPage() {
                 <button
                   onClick={handleGenerateRoutine}
                   disabled={generating || !profile}
-                  className="w-full bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-600 hover:to-blue-700 text-white font-bold py-3 rounded-lg transition-all transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none shadow-lg"
+                  className="w-full bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-600 hover:to-blue-700 text-white font-semibold py-3 rounded-xl transition-all transform hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none shadow-lg shadow-cyan-500/10"
                 >
                   {generating ? 'Generating…' : 'Generate New Routine'}
                 </button>
@@ -529,17 +976,17 @@ export default function DashboardPage() {
                 {/* Progress */}
                 {generating && (
                   <div className="mt-4">
-                    <div className="flex items-center justify-between text-xs text-gray-400 mb-2">
+                    <div className="flex items-center justify-between text-xs text-slate-300/70 mb-2">
                       <span>{progressStage || 'Working…'}</span>
                       <span>{Math.min(100, Math.max(0, progressPct))}%</span>
                     </div>
-                    <div className="h-2 w-full bg-gray-700/60 rounded-full overflow-hidden border border-gray-600">
+                    <div className="h-2 w-full glass-soft rounded-full overflow-hidden">
                       <div
                         className="h-full bg-gradient-to-r from-cyan-500 to-blue-600 transition-all duration-300"
                         style={{ width: `${Math.min(100, Math.max(0, progressPct))}%` }}
                       />
                     </div>
-                    <p className="mt-2 text-xs text-gray-500">
+                    <p className="mt-2 text-xs text-slate-300/50">
                       If you see “Connection error”, your network may be blocking access to the AI provider.
                     </p>
                   </div>
@@ -547,30 +994,112 @@ export default function DashboardPage() {
               </div>
 
             {/* Routine Display */}
-              <div className="lg:col-span-3 bg-gray-800/50 backdrop-blur-lg rounded-2xl p-6 sm:p-8 border border-gray-700">
+                  <div className="2xl:col-span-2 glass rounded-2xl p-6 sm:p-8">
                 <div className="flex items-center justify-between gap-4 mb-6">
-                  <h3 className="text-2xl font-bold text-cyan-300">Your Weekly Routine</h3>
+                  <div>
+                    <h3 className="text-2xl font-semibold text-slate-100">Your Weekly Routine</h3>
+                    {routineStats && (
+                      <p className="text-sm text-slate-200/70 mt-1">
+                        {routineStats.days} days • {routineStats.exercises} exercises • {routineStats.avgPerDay} avg/day
+                      </p>
+                    )}
+                  </div>
                   {!routine && (
-                    <span className="text-sm text-gray-400">Generate to see your plan here</span>
+                    <span className="text-sm text-slate-300/70">Generate to see your plan here</span>
+                  )}
+                  {routine && (
+                    <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={handleCopyRoutineJson}
+                        className="px-3 py-2 rounded-xl glass-soft text-slate-100 hover:text-white transition text-sm"
+                      >
+                        Copy JSON
+                      </button>
+                      <button
+                        type="button"
+                        onClick={handleClearRoutine}
+                        className="px-3 py-2 rounded-xl bg-red-500/15 hover:bg-red-500/20 text-red-100 transition text-sm"
+                      >
+                        Clear
+                      </button>
+                    </div>
                   )}
                 </div>
 
                 {!routine ? (
-                  <div className="rounded-xl border border-gray-700 bg-gray-900/30 p-6 text-gray-300">
-                    <p className="text-sm text-gray-400">
+                  <div className="glass-soft rounded-xl p-6 text-slate-200/80">
+                    <p className="text-sm text-slate-300/70">
                       Tip: Add injuries/goals in “Additional comments” to get safer, more relevant routines.
                     </p>
                   </div>
                 ) : (
                   <div className="space-y-6">
+                    {/* Today spotlight */}
+                    {todaysPlan && (
+                      <div className="glass-soft rounded-2xl p-5 overflow-hidden">
+                        <div className="h-1 w-full bg-gradient-to-r from-cyan-400 via-sky-400 to-violet-400 opacity-80 rounded-full" />
+                        <div className="mt-4 flex items-start justify-between gap-4">
+                          <div>
+                            <div className="text-sm text-slate-200/70">Today’s workout</div>
+                            <div className="text-lg font-semibold text-slate-100 mt-1">
+                              {todaysPlan.day.day}
+                            </div>
+                            <div className="mt-2 text-sm text-slate-200/70">
+                              {todaysPlan.day.exercises.length} exercises
+                            </div>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={handleJumpToToday}
+                            className="px-3 py-2 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 text-white text-sm font-semibold shadow-lg shadow-cyan-500/10"
+                          >
+                            Jump to day
+                          </button>
+                        </div>
+                        <div className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-3">
+                          {todaysPlan.day.exercises.slice(0, 3).map((ex, i) => (
+                            <div key={i} className="glass-soft rounded-xl p-3">
+                              <div className="text-sm font-semibold text-slate-100 line-clamp-1">{ex.name}</div>
+                              <div className="text-xs text-slate-200/70 mt-1 line-clamp-1">{ex.sets_reps}</div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Save bar */}
+                    <div className="glass-soft rounded-2xl p-4">
+                      <div className="flex flex-col md:flex-row gap-3 md:items-center md:justify-between">
+                        <div className="flex-1 flex gap-2">
+                          <input
+                            value={saveNameDraft}
+                            onChange={(e) => setSaveNameDraft(e.target.value)}
+                            placeholder="Name this routine to save it…"
+                            className="flex-1 px-3 py-2 glass-soft rounded-xl text-sm text-white placeholder:text-slate-300/50 focus:outline-none focus:ring-2 focus:ring-cyan-400/60"
+                          />
+                          <button
+                            type="button"
+                            onClick={handleSaveCurrentRoutine}
+                            className="px-4 py-2 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 text-white text-sm font-semibold"
+                          >
+                            Save to Library
+                          </button>
+                        </div>
+                        <div className="text-xs text-slate-200/60">
+                          Saved locally • {savedRoutines.length}/25 stored
+                        </div>
+                      </div>
+                    </div>
+
                     {routine.days.map((day, dayIndex) => (
-                      <div key={dayIndex} className="rounded-xl border border-gray-700 bg-gray-900/20 p-5">
-                        <h4 className="text-lg font-bold text-gray-100 mb-4">{day.day}</h4>
+                      <div id={`day-${dayIndex}`} key={dayIndex} className="glass-soft rounded-2xl p-5">
+                        <h4 className="text-lg font-semibold text-slate-100 mb-4">{day.day}</h4>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                           {day.exercises.map((exercise, exIndex) => (
                             <div
                               key={exIndex}
-                              className="bg-gray-700/25 rounded-lg p-4 border border-gray-600 hover:border-cyan-500 transition"
+                              className="glass-soft rounded-xl p-4 hover:ring-1 hover:ring-cyan-400/40 transition"
                             >
                               <div className="flex justify-between items-start gap-3 mb-2">
                                 <h5 className="text-base font-semibold text-cyan-300">{exercise.name}</h5>
@@ -578,17 +1107,17 @@ export default function DashboardPage() {
                                   href={exercise.youtube_url}
                                   target="_blank"
                                   rel="noopener noreferrer"
-                                  className="text-xs px-3 py-1 bg-red-600/90 hover:bg-red-700 rounded-full transition"
+                                  className="text-xs px-3 py-1 rounded-full bg-red-600/80 hover:bg-red-600 text-white transition"
                                 >
                                   Watch
                                 </a>
                               </div>
-                              <p className="text-gray-200 text-sm mb-2">{exercise.sets_reps}</p>
-                              <details className="text-sm text-gray-400">
-                                <summary className="cursor-pointer hover:text-cyan-300 transition">
+                              <p className="text-slate-200/90 text-sm mb-2">{exercise.sets_reps}</p>
+                              <details className="text-sm text-slate-300/70">
+                                <summary className="cursor-pointer hover:text-cyan-200 transition">
                                   Form guide
                                 </summary>
-                                <p className="mt-2 pl-4 border-l-2 border-gray-600">{exercise.form_tip}</p>
+                                <p className="mt-2 pl-4 border-l-2 border-white/10 text-slate-200/80">{exercise.form_tip}</p>
                               </details>
                             </div>
                           ))}
@@ -601,6 +1130,8 @@ export default function DashboardPage() {
             </div>
           </div>
         )}
+          </main>
+        </div>
       </div>
     </div>
   )

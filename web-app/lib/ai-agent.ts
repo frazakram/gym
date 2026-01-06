@@ -22,6 +22,11 @@ const WeeklyRoutineSchema = z.object({
 export async function generateRoutine(input: RoutineGenerationInput): Promise<WeeklyRoutine | null> {
 
   let model;
+  // Defensive normalization: height should be cm. If it looks like feet (<= 8), convert to cm.
+  const normalizedHeight =
+    typeof input.height === 'number' && input.height > 0 && input.height <= 8
+      ? Math.round(input.height * 30.48 * 10) / 10
+      : input.height;
 
   if (input.model_provider === 'Anthropic') {
     const apiKey = input.apiKey || process.env.ANTHROPIC_API_KEY;
@@ -53,7 +58,7 @@ export async function generateRoutine(input: RoutineGenerationInput): Promise<We
 Client Profile (use ALL of these when deciding exercise selection, volume, intensity, rest, and progression):
 - Age: ${input.age} years
 - Current weight: ${input.weight} kg
-- Height: ${input.height} cm
+- Height: ${normalizedHeight} cm
 - Gender: ${input.gender}
 - Primary goal: ${input.goal}
 ${typeof input.goal_weight === 'number' ? `- Goal weight: ${input.goal_weight} kg` : ''}

@@ -16,6 +16,9 @@ export async function POST(request: NextRequest) {
       age,
       weight,
       height,
+      height_unit,
+      height_ft,
+      height_in,
       gender,
       goal,
       level,
@@ -66,10 +69,16 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    const ftInToCm = (ft: number, inches: number) => ft * 30.48 + inches * 2.54;
+    const normalizedHeight =
+      (height_unit === 'ftin' && typeof height_ft === 'number' && typeof height_in === 'number')
+        ? ftInToCm(height_ft, Math.max(0, Math.min(11.9, height_in)))
+        : height;
+
     const input = {
       age,
       weight,
-      height,
+      height: normalizedHeight,
       gender,
       goal,
       level,
