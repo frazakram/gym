@@ -44,6 +44,8 @@ export interface Exercise {
     tutorial_points?: string[];
     /** Backward compatibility */
     form_tip?: string;
+    /** WikiHow tutorial link */
+    wikihow_url?: string;
 }
 
 export interface DayRoutine {

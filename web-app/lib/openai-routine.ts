@@ -5,8 +5,9 @@ import type { RoutineGenerationInput, WeeklyRoutine } from "@/types";
 const ExerciseSchema = z.object({
   name: z.string(),
   sets_reps: z.string(),
-  youtube_urls: z.array(z.string()).min(3),
-  tutorial_points: z.array(z.string()).min(3),
+  youtube_urls: z.array(z.string()).min(0).max(3),
+  tutorial_points: z.array(z.string()).min(0).max(5),
+  wikihow_url: z.string().optional(),
 });
 
 const DayRoutineSchema = z.object({
@@ -62,14 +63,16 @@ Output format rules:
         {
           "name": "Exercise name",
           "sets_reps": "3 sets x 10 reps (rest 90s)",
-          "youtube_urls": ["https://www.youtube.com/watch?v=...", "https://www.youtube.com/watch?v=...", "https://www.youtube.com/watch?v=..."],
-          "tutorial_points": ["Point 1", "Point 2", "Point 3"]
+          "youtube_urls": ["https://www.youtube.com/watch?v=..."],
+          "tutorial_points": ["Point 1", "Point 2", "Point 3"],
+          "wikihow_url": "https://www.wikihow.com/..."
         }
       ]
     }
   ]
 }
-- Provide REAL YouTube URLs from reputable channels like Athlean-X, Jeff Nippard, Jeremy Ethier, ScottHermanFitness.
+- Provide 1-3 REAL, currently available YouTube URLs from reputable channels (if available) like Athlean-X, Jeff Nippard, Jeremy Ethier, ScottHermanFitness. Ensure the videos exist.
+- Provide a REAL, working WikiHow tutorial URL for each exercise if one exists.
 
 Return the complete weekly routine as JSON.`;
 }

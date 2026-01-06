@@ -1128,20 +1128,37 @@ export default function DashboardPage() {
                                         />
                                       </div>
                                     )}
-                                    <div className="flex justify-between items-start gap-3 mb-2">
-                                      <h5 className="text-base font-semibold text-cyan-300">{exercise.name}</h5>
-                                      {urls[0] && (
-                                        <a
-                                          href={urls[0]}
-                                          target="_blank"
-                                          rel="noopener noreferrer"
-                                          className="text-xs px-3 py-1 rounded-full bg-red-600/80 hover:bg-red-600 text-white transition"
-                                        >
-                                          Watch
-                                        </a>
-                                      )}
-                                    </div>
-                                    <p className="text-slate-200/90 text-sm mb-3">{exercise.sets_reps}</p>
+                                      <div className="flex justify-between items-start gap-3 mb-2">
+                                        <h5 className="text-base font-semibold text-cyan-300">{exercise.name}</h5>
+                                        <div className="flex gap-2">
+                                          {urls[0] && (
+                                            <a
+                                              href={urls[0]}
+                                              target="_blank"
+                                              rel="noopener noreferrer"
+                                              className="text-xs px-3 py-1 rounded-full bg-red-600/80 hover:bg-red-600 text-white transition flex items-center gap-1"
+                                            >
+                                              <span>Watch</span>
+                                              <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 24 24">
+                                                <path d="M10 15l5.19-3L10 9v6m11.56-7.83c.13.47.22 1.1.28 1.9.07.8.1 1.49.1 2.09L22 12c0 .61-.03 1.3-.1 2.1-.06.8-.15 1.43-.28 1.9-.13.47-.38.85-.73 1.14-.35.29-.85.46-1.5.53-.65.07-1.46.12-2.43.15-1 .03-1.92.05-2.75.05L12 18c-.83 0-1.75-.02-2.75-.05-.97-.03-1.78-.08-2.43-.15-.65-.07-1.15-.24-1.5-.53-.35-.29-.6-.67-.73-1.14-.13-.47-.22-1.1-.28-1.9-.06-.8-.09-1.49-.09-2.09L4 12c0-.61.03-1.3.09-2.1.06-.8.15-1.43.28-1.9.13-.47.38-.85.73-1.14.35-.29.85-.46 1.5-.53.65-.07 1.46-.12 2.43-.15 1-.03 1.92-.05 2.75-.05L12 6c.83 0 1.75.02 2.75.05.97.03 1.78.08 2.43.15.65.07 1.15.24 1.5.53.35.29.6.67.73 1.14z"/>
+                                              </svg>
+                                            </a>
+                                          )}
+                                          {exercise.wikihow_url && (
+                                            <a
+                                              href={exercise.wikihow_url}
+                                              target="_blank"
+                                              rel="noopener noreferrer"
+                                              className="text-xs px-3 py-1 rounded-full bg-blue-600/80 hover:bg-blue-600 text-white transition flex items-center gap-1"
+                                            >
+                                              <span>WikiHow</span>
+                                              <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                                              </svg>
+                                            </a>
+                                          )}
+                                        </div>
+                                      </div>
 
                                     {points.length > 0 && (
                                       <div className="mb-3">

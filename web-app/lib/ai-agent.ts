@@ -6,8 +6,9 @@ import { RoutineGenerationInput, WeeklyRoutine } from "@/types";
 const ExerciseSchema = z.object({
   name: z.string().describe("Name of the exercise"),
   sets_reps: z.string().describe("Sets and reps, e.g., '3 sets x 12 reps'"),
-  youtube_urls: z.array(z.string()).min(3).describe("3 YouTube tutorial URLs for the exercise"),
-  tutorial_points: z.array(z.string()).min(3).describe("At least 3 point-wise technique/tutorial cues"),
+  youtube_urls: z.array(z.string()).min(0).describe("0-3 YouTube tutorial URLs for the exercise"),
+  tutorial_points: z.array(z.string()).min(0).describe("Point-wise technique/tutorial cues (aim for 3 if possible)"),
+  wikihow_url: z.string().optional().describe("A working WikiHow link for this exercise (if available)"),
 });
 
 const DayRoutineSchema = z.object({
@@ -85,8 +86,9 @@ Output format rules:
 - For each exercise include:
   - name
   - sets_reps (include sets, reps, and optionally rest time)
-  - youtube_urls (ARRAY of exactly 3 REAL YouTube URLs from reputable channels like Athlean-X, Jeff Nippard, Jeremy Ethier, ScottHermanFitness)
-  - tutorial_points (ARRAY of at least 3 bullet-style points: setup, execution cues, common mistakes to avoid)
+  - youtube_urls (ARRAY of 1-3 REAL, currently available YouTube URLs from reputable channels like Athlean-X, Jeff Nippard, Jeremy Ethier, ScottHermanFitness)
+  - tutorial_points (ARRAY of 1-5 bullet-style points: setup, execution cues, common mistakes to avoid)
+  - wikihow_url (A working WikiHow link for the exercise if available)
 
 Structure the routine with:
 - Proper muscle group splits
@@ -99,6 +101,8 @@ Make sure to provide REAL YouTube URLs for exercises from channels like:
 - Jeff Nippard
 - Jeremy Ethier
 - ScottHermanFitness
+- Provide working WikiHow links for each exercise.
+- CRITICAL: Ensure all YouTube URLs are for currently active videos.
 
 Return the complete weekly routine.`;
 
