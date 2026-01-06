@@ -17,6 +17,7 @@ type SavedRoutine = {
 }
 
 const ROUTINE_LIBRARY_KEY = 'gymbro:routine-library:v1'
+const AI_KEYS_KEY = 'gymbro:ai-keys:v1'
 
 export default function DashboardPage() {
   const router = useRouter()
@@ -51,6 +52,7 @@ export default function DashboardPage() {
   const [generating, setGenerating] = useState(false)
   const [progressPct, setProgressPct] = useState(0)
   const [progressStage, setProgressStage] = useState('')
+  const [improvingNotes, setImprovingNotes] = useState(false)
 
   // Routine library (local-only)
   const [savedRoutines, setSavedRoutines] = useState<SavedRoutine[]>([])
@@ -73,6 +75,71 @@ export default function DashboardPage() {
       // ignore
     }
   }, [])
+
+  useEffect(() => {
+    // Load saved API key for selected provider (local-only)
+    try {
+      const raw = localStorage.getItem(AI_KEYS_KEY)
+      if (!raw) return
+      const parsed = JSON.parse(raw) as unknown
+      const anyParsed = parsed as Record<string, unknown> | null
+      const saved = anyParsed?.[modelProvider]
+      if (typeof saved === 'string' && saved.trim() && !apiKey.trim()) {
+        setApiKey(saved.trim())
+      }
+    } catch {
+      // ignore
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [modelProvider])
+
+  const handleSaveApiKey = () => {
+    const key = apiKey.trim()
+    if (!key) {
+      setError('Enter an API key first.')
+      return
+    }
+    try {
+      const raw = localStorage.getItem(AI_KEYS_KEY)
+      const parsed = raw ? (JSON.parse(raw) as unknown) : {}
+      const anyParsed = (parsed && typeof parsed === 'object' ? parsed : {}) as Record<string, unknown>
+      const next = { ...anyParsed, [modelProvider]: key }
+      localStorage.setItem(AI_KEYS_KEY, JSON.stringify(next))
+      setSuccess('API key saved locally.')
+      setSidebarOpen(false)
+    } catch {
+      setError('Failed to save API key in this browser.')
+    }
+  }
+
+  const handleImproveNotes = async () => {
+    setError('')
+    setSuccess('')
+    setImprovingNotes(true)
+    try {
+      const res = await fetch('/api/notes/improve', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          notes,
+          model_provider: modelProvider,
+          api_key: apiKey?.trim() || undefined,
+        }),
+      })
+      const data = (await res.json().catch(() => ({}))) as any
+      if (!res.ok) throw new Error(data?.error || `HTTP ${res.status}`)
+      if (typeof data?.notes !== 'string' || !data.notes.trim()) {
+        throw new Error('AI did not return improved notes.')
+      }
+      setNotes(data.notes.trim())
+      setSuccess('Notes improved by AI.')
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : String(err)
+      setError(msg || 'Failed to improve notes.')
+    } finally {
+      setImprovingNotes(false)
+    }
+  }
 
   useEffect(() => {
     try {
@@ -631,9 +698,18 @@ export default function DashboardPage() {
                       placeholder={`Enter your ${modelProvider} API key`}
                       className="w-full px-4 py-3 glass-soft rounded-xl text-white placeholder:text-slate-300/50 focus:outline-none focus:ring-2 focus:ring-cyan-400/60"
                     />
-                    <p className="text-xs text-slate-200/60 mt-2">
-                      Used only for requests. Not stored on the server.
-                    </p>
+                    <div className="mt-2 flex items-center justify-between gap-2">
+                      <p className="text-xs text-slate-200/60">
+                        Used only for requests. Not stored on the server.
+                      </p>
+                      <button
+                        type="button"
+                        onClick={handleSaveApiKey}
+                        className="shrink-0 px-3 py-2 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 text-white text-xs font-semibold hover:from-cyan-600 hover:to-blue-700 transition"
+                      >
+                        Save
+                      </button>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -867,7 +943,21 @@ export default function DashboardPage() {
                 </div>
 
                 <div className="md:col-span-2">
-                  <label className="block text-sm font-medium text-slate-200/90 mb-2">Additional comments</label>
+                  <div className="flex items-center justify-between gap-3 mb-2">
+                    <label className="block text-sm font-medium text-slate-200/90">Additional comments</label>
+                    <button
+                      type="button"
+                      onClick={handleImproveNotes}
+                      disabled={improvingNotes}
+                      className="shrink-0 px-3 py-2 rounded-xl glass-soft text-slate-100 hover:text-white transition disabled:opacity-60 disabled:cursor-not-allowed"
+                      title="Improve notes with AI"
+                    >
+                      <span className="mr-2" aria-hidden="true">
+                        🪄
+                      </span>
+                      {improvingNotes ? 'Improving…' : 'Improve by AI'}
+                    </button>
+                  </div>
                   <textarea
                     value={notes}
                     onChange={(e) => setNotes(e.target.value)}
