@@ -2,8 +2,40 @@ import { Pool } from 'pg';
 import bcrypt from 'bcryptjs';
 import { User, Profile } from '@/types';
 
+function isPostgresUrl(value: string): boolean {
+  const v = value.trim();
+  return v.startsWith("postgres://") || v.startsWith("postgresql://");
+}
+
+function firstEnv(...keys: string[]): string {
+  for (const k of keys) {
+    const v = process.env[k];
+    if (typeof v !== "string") continue;
+    const trimmed = v.trim();
+    if (!trimmed) continue;
+    if (!isPostgresUrl(trimmed)) continue;
+    return trimmed;
+  }
+  return "";
+}
+
+const connectionString = firstEnv(
+  // Common names (recommended)
+  "POSTGRES_URL",
+  "DATABASE_URL",
+  "POSTGRES_URL_NON_POOLING",
+  "DATABASE_URL_UNPOOLED",
+  "POSTGRES_PRISMA_URL",
+  // Namespaced variants (some Vercel/Neon setups)
+  "gym_POSTGRES_URL",
+  "gym_DATABASE_URL",
+  "gym_POSTGRES_URL_NON_POOLING",
+  "gym_DATABASE_URL_UNPOOLED",
+  "gym_POSTGRES_PRISMA_URL"
+);
+
 const pool = new Pool({
-  connectionString: process.env.POSTGRES_URL,
+  connectionString,
   ssl: {
     rejectUnauthorized: false,
   },
@@ -34,6 +66,12 @@ const MOCK_PROFILE: Profile = {
 
 // In-memory mock store so local dev works even without a DB
 const mockProfileStore = new Map<number, Profile>();
+
+function allowMockAuth(): boolean {
+  // Industry-ready default: NEVER allow mock authentication in production.
+  // For local dev, you can explicitly enable it with ALLOW_MOCK_AUTH=true.
+  return process.env.ALLOW_MOCK_AUTH === 'true';
+}
 
 export async function initializeDatabase() {
   try {
@@ -98,12 +136,14 @@ export async function createUser(username: string, password: string): Promise<Us
     );
     return result.rows[0] || null;
   } catch (error: unknown) {
-    console.warn("createUser DB failed, using mock:", error);
     const maybePgError = error as { code?: string } | null;
     if (maybePgError?.code === '23505') return null; // Username exists
-
-    // FALLBACK SUCCESS
-    return { ...MOCK_USER, username };
+    if (allowMockAuth()) {
+      console.warn("createUser DB failed, using mock auth:", error);
+      return { ...MOCK_USER, username };
+    }
+    console.error("createUser DB failed:", error);
+    throw new Error("Database unavailable. Registration is disabled until DB is configured.");
   }
 }
 
@@ -123,10 +163,33 @@ export async function authenticateUser(username: string, password: string): Prom
 
     return isValid ? user.id : null;
   } catch (error) {
-    console.warn("authenticateUser DB failed, using mock:", error);
-    // FALLBACK SUCCESS: Allow ANY login if DB is down
-    return MOCK_USER_ID;
+    if (allowMockAuth()) {
+      console.warn("authenticateUser DB failed, using mock auth:", error);
+      // Mock auth is explicitly enabled for local development
+      return MOCK_USER_ID;
+    }
+    console.error("authenticateUser DB failed:", error);
+    return null;
   }
+}
+
+export async function getUserIdByUsername(username: string): Promise<number | null> {
+  try {
+    const result = await pool.query<User>('SELECT id FROM users WHERE username = $1', [username]);
+    return result.rows?.[0]?.id ?? null;
+  } catch (error) {
+    if (allowMockAuth()) {
+      console.warn("getUserIdByUsername DB failed, using mock auth:", error);
+      return MOCK_USER_ID;
+    }
+    console.error("getUserIdByUsername DB failed:", error);
+    return null;
+  }
+}
+
+export async function createUserWithRandomPassword(username: string): Promise<User | null> {
+  const random = `${Date.now()}-${Math.random().toString(16).slice(2)}-${Math.random().toString(16).slice(2)}`;
+  return await createUser(username, random);
 }
 
 export async function getProfile(userId: number): Promise<Profile | null> {

@@ -136,6 +136,9 @@ web-app/
 |----------|----------|-------------|
 | `POSTGRES_URL` | Production | Vercel Postgres connection string |
 | `JWT_SECRET` | Yes | Secret key for JWT encryption |
+| `GOOGLE_CLIENT_ID` | Optional | Google OAuth client ID (enables “Sign in with Google”) |
+| `GOOGLE_CLIENT_SECRET` | Optional | Google OAuth client secret (enables “Sign in with Google”) |
+| `ALLOW_MOCK_AUTH` | No | Set to `true` ONLY for local dev if you want mock login when DB is unavailable |
 | `ANTHROPIC_API_KEY` | No | Users enter in UI |
 | `OPENAI_API_KEY` | No | Users enter in UI |
 | `OPENAI_BASE_URL` | No | Override OpenAI API base URL (default `https://api.openai.com`) |
@@ -143,6 +146,20 @@ web-app/
 | `OPENAI_TIMEOUT_MS` | No | Request timeout in ms (default `120000`) |
 | `OPENAI_PROXY` | No | Proxy URL for OpenAI requests (e.g. `http://proxy.mycorp:8080`). Falls back to `HTTPS_PROXY`/`HTTP_PROXY` |
 | `OPENAI_RETRY_ATTEMPTS` | No | Network retry attempts (default `2`) |
+
+For a copy/paste setup guide, see `ENV_SETUP.md`.
+
+## Google Sign-In (OAuth)
+
+Google Sign-In is **free** to use. You need to create OAuth credentials in Google Cloud and add these env vars:
+
+- `GOOGLE_CLIENT_ID`
+- `GOOGLE_CLIENT_SECRET`
+
+Also add an **Authorized redirect URI** in Google Cloud:
+
+- `http://localhost:3000/api/auth/google/callback` (local dev)
+- `https://YOUR_DOMAIN/api/auth/google/callback` (production)
 
 ## Security
 

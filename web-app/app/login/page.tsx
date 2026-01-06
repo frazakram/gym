@@ -93,6 +93,44 @@ export default function LoginPage() {
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-4">
+            {isLogin && (
+              <>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setError('')
+                    window.location.href = '/api/auth/google/start?returnTo=/dashboard'
+                  }}
+                  className="w-full flex items-center justify-center gap-3 py-3 rounded-xl bg-white text-slate-900 font-semibold hover:bg-slate-100 transition shadow-lg"
+                >
+                  <svg width="18" height="18" viewBox="0 0 48 48" aria-hidden="true">
+                    <path
+                      fill="#EA4335"
+                      d="M24 9.5c3.54 0 6.73 1.22 9.25 3.63l6.9-6.9C35.94 2.39 30.36 0 24 0 14.62 0 6.5 5.38 2.56 13.22l8.04 6.24C12.44 13.16 17.74 9.5 24 9.5z"
+                    />
+                    <path
+                      fill="#4285F4"
+                      d="M46.5 24c0-1.57-.14-3.09-.41-4.56H24v8.63h12.62c-.54 2.9-2.15 5.36-4.58 7.02l7.05 5.47C43.65 36.19 46.5 30.62 46.5 24z"
+                    />
+                    <path
+                      fill="#FBBC05"
+                      d="M10.6 28.54A14.5 14.5 0 0 1 9.5 24c0-1.58.28-3.1.78-4.54l-8.04-6.24A23.96 23.96 0 0 0 0 24c0 3.87.93 7.52 2.56 10.78l8.04-6.24z"
+                    />
+                    <path
+                      fill="#34A853"
+                      d="M24 48c6.36 0 11.72-2.1 15.63-5.7l-7.05-5.47c-1.96 1.32-4.47 2.1-8.58 2.1-6.26 0-11.56-3.66-13.4-8.96l-8.04 6.24C6.5 42.62 14.62 48 24 48z"
+                    />
+                  </svg>
+                  Sign in with Google
+                </button>
+
+                <div className="flex items-center gap-3">
+                  <div className="h-px flex-1 bg-white/10" />
+                  <div className="text-xs text-slate-300/70">or</div>
+                  <div className="h-px flex-1 bg-white/10" />
+                </div>
+              </>
+            )}
             <div>
               <label className="block text-sm font-medium text-slate-200/90 mb-2">
                 Email / Username

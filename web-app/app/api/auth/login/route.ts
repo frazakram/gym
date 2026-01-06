@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { authenticateUser } from '@/lib/db';
+import { authenticateUser, initializeDatabase } from '@/lib/db';
 import { createSession, setSessionCookie } from '@/lib/auth';
 
 export async function POST(request: NextRequest) {
@@ -12,6 +12,9 @@ export async function POST(request: NextRequest) {
         { status: 400 }
       );
     }
+
+    // Ensure tables exist before trying to read
+    await initializeDatabase();
 
     const userId = await authenticateUser(username, password);
 
