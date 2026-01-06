@@ -2,6 +2,7 @@ import { ChatAnthropic } from "@langchain/anthropic";
 import { ChatOpenAI } from "@langchain/openai";
 import { z } from "zod";
 import { RoutineGenerationInput, WeeklyRoutine } from "@/types";
+import { postProcessRoutine } from "@/lib/routine-postprocess";
 
 const ExerciseSchema = z.object({
   name: z.string().describe("Name of the exercise"),
@@ -103,6 +104,7 @@ Make sure to provide REAL YouTube URLs for exercises from channels like:
 - ScottHermanFitness
 - Provide working WikiHow links for each exercise.
 - CRITICAL: Ensure all YouTube URLs are for currently active videos.
+- CRITICAL: Only return YouTube URLs from youtube.com or youtu.be (no other domains). If you're not sure, return an empty array for youtube_urls.
 
 Return the complete weekly routine.`;
 
@@ -111,7 +113,7 @@ Return the complete weekly routine.`;
     const response = await structuredModel.invoke([
       { role: "user", content: prompt }
     ]);
-    return response as WeeklyRoutine;
+    return postProcessRoutine(response as WeeklyRoutine);
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : String(err);
     const isOpenAIProvider = input.model_provider !== 'Anthropic';
@@ -130,7 +132,7 @@ Return the complete weekly routine.`;
     }).withStructuredOutput(WeeklyRoutineSchema);
 
     const response = await fallback.invoke([{ role: "user", content: prompt }]);
-    return response as WeeklyRoutine;
+    return postProcessRoutine(response as WeeklyRoutine);
   }
 
   // Removed try/catch to allow error propagation to the API route

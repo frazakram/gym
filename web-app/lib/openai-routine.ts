@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { ProxyAgent } from "undici";
 import type { RoutineGenerationInput, WeeklyRoutine } from "@/types";
+import { postProcessRoutine } from "@/lib/routine-postprocess";
 
 const ExerciseSchema = z.object({
   name: z.string(),
@@ -72,6 +73,7 @@ Output format rules:
   ]
 }
 - Provide 1-3 REAL, currently available YouTube URLs from reputable channels (if available) like Athlean-X, Jeff Nippard, Jeremy Ethier, ScottHermanFitness. Ensure the videos exist.
+- Only return YouTube URLs from youtube.com or youtu.be (no other domains). If you're not sure a valid YouTube video exists, return an empty array for youtube_urls.
 - Provide a REAL, working WikiHow tutorial URL for each exercise if one exists.
 
 Return the complete weekly routine as JSON.`;
@@ -215,7 +217,7 @@ export async function generateRoutineOpenAI(input: RoutineGenerationInput): Prom
 
       const parsed = coerceJsonObject(content);
       const validated = WeeklyRoutineSchema.parse(parsed);
-      return validated as WeeklyRoutine;
+      return postProcessRoutine(validated as WeeklyRoutine);
     } catch (err: unknown) {
       lastErr = err;
       if (attempt >= maxAttempts || !isRetryableNetworkError(err)) break;

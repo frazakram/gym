@@ -5,6 +5,8 @@ import { useRouter } from 'next/navigation'
 import { WeeklyRoutine, Profile } from '@/types'
 import { BrandLogo } from '@/components/BrandLogo'
 import { GlassSelect } from '@/components/GlassSelect'
+import YouTubeHoverPreview from '@/components/YouTubeHoverPreview'
+import { getYouTubeId, sanitizeYouTubeUrls } from '@/lib/youtube'
 
 type SavedRoutine = {
   id: string
@@ -209,32 +211,14 @@ export default function DashboardPage() {
     el?.scrollIntoView({ behavior: 'smooth', block: 'start' })
   }
 
-  const getYouTubeId = (url: string): string | null => {
-    try {
-      const u = new URL(url)
-      if (u.hostname.includes('youtu.be')) {
-        const id = u.pathname.replace('/', '').trim()
-        return id || null
-      }
-      if (u.hostname.includes('youtube.com')) {
-        const v = u.searchParams.get('v')
-        if (v) return v
-        // /shorts/<id>
-        const parts = u.pathname.split('/').filter(Boolean)
-        const shortsIdx = parts.indexOf('shorts')
-        if (shortsIdx !== -1 && parts[shortsIdx + 1]) return parts[shortsIdx + 1]
-      }
-      return null
-    } catch {
-      return null
-    }
-  }
+  // NOTE: YouTube URL parsing/validation is centralized in lib/youtube.ts
 
   const getExerciseYouTubeUrls = (ex: any): string[] => {
-    const urls = Array.isArray(ex.youtube_urls) ? ex.youtube_urls.filter((x: any) => typeof x === 'string') : []
-    if (urls.length) return urls
-    if (typeof ex.youtube_url === 'string' && ex.youtube_url.trim()) return [ex.youtube_url.trim()]
-    return []
+    const urls = Array.isArray(ex.youtube_urls)
+      ? ex.youtube_urls.filter((x: any) => typeof x === 'string')
+      : []
+    const legacy = typeof ex.youtube_url === 'string' && ex.youtube_url.trim() ? [ex.youtube_url.trim()] : []
+    return sanitizeYouTubeUrls(urls.length ? urls : legacy, 3)
   }
 
   const getExerciseTutorialPoints = (ex: any): string[] => {
@@ -1112,22 +1096,11 @@ export default function DashboardPage() {
                               {(() => {
                                 const urls = getExerciseYouTubeUrls(exercise).slice(0, 3)
                                 const ytId = urls[0] ? getYouTubeId(urls[0]) : null
-                                const thumb = ytId ? `https://img.youtube.com/vi/${ytId}/hqdefault.jpg` : null
                                 const points = getExerciseTutorialPoints(exercise)
 
                                 return (
                                   <>
-                                    {thumb && (
-                                      <div className="mb-3 overflow-hidden rounded-xl ring-1 ring-white/10">
-                                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                                        <img
-                                          src={thumb}
-                                          alt={`${exercise.name} thumbnail`}
-                                          className="w-full h-36 object-cover"
-                                          loading="lazy"
-                                        />
-                                      </div>
-                                    )}
+                                    {ytId && <YouTubeHoverPreview videoId={ytId} title={exercise.name} />}
                                       <div className="flex justify-between items-start gap-3 mb-2">
                                         <h5 className="text-base font-semibold text-cyan-300">{exercise.name}</h5>
                                         <div className="flex gap-2">
