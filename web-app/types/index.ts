@@ -29,8 +29,21 @@ export interface Session {
 export interface Exercise {
     name: string;
     sets_reps: string;
-    youtube_url: string;
-    form_tip: string;
+    /**
+     * New format (preferred): 3 tutorial video URLs.
+     * Kept optional for backward compatibility with saved routines.
+     */
+    youtube_urls?: string[];
+    /** Backward compatibility */
+    youtube_url?: string;
+
+    /**
+     * New format (preferred): bullet-style form/tutorial points (>= 3).
+     * Kept optional for backward compatibility with saved routines.
+     */
+    tutorial_points?: string[];
+    /** Backward compatibility */
+    form_tip?: string;
 }
 
 export interface DayRoutine {

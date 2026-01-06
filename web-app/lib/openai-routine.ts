@@ -5,8 +5,8 @@ import type { RoutineGenerationInput, WeeklyRoutine } from "@/types";
 const ExerciseSchema = z.object({
   name: z.string(),
   sets_reps: z.string(),
-  youtube_url: z.string(),
-  form_tip: z.string(),
+  youtube_urls: z.array(z.string()).min(3),
+  tutorial_points: z.array(z.string()).min(3),
 });
 
 const DayRoutineSchema = z.object({
@@ -62,8 +62,8 @@ Output format rules:
         {
           "name": "Exercise name",
           "sets_reps": "3 sets x 10 reps (rest 90s)",
-          "youtube_url": "https://www.youtube.com/watch?v=...",
-          "form_tip": "Short, practical cues..."
+          "youtube_urls": ["https://www.youtube.com/watch?v=...", "https://www.youtube.com/watch?v=...", "https://www.youtube.com/watch?v=..."],
+          "tutorial_points": ["Point 1", "Point 2", "Point 3"]
         }
       ]
     }

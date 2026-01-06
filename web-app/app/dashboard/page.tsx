@@ -209,6 +209,52 @@ export default function DashboardPage() {
     el?.scrollIntoView({ behavior: 'smooth', block: 'start' })
   }
 
+  const getYouTubeId = (url: string): string | null => {
+    try {
+      const u = new URL(url)
+      if (u.hostname.includes('youtu.be')) {
+        const id = u.pathname.replace('/', '').trim()
+        return id || null
+      }
+      if (u.hostname.includes('youtube.com')) {
+        const v = u.searchParams.get('v')
+        if (v) return v
+        // /shorts/<id>
+        const parts = u.pathname.split('/').filter(Boolean)
+        const shortsIdx = parts.indexOf('shorts')
+        if (shortsIdx !== -1 && parts[shortsIdx + 1]) return parts[shortsIdx + 1]
+      }
+      return null
+    } catch {
+      return null
+    }
+  }
+
+  const getExerciseYouTubeUrls = (ex: any): string[] => {
+    const urls = Array.isArray(ex.youtube_urls) ? ex.youtube_urls.filter((x: any) => typeof x === 'string') : []
+    if (urls.length) return urls
+    if (typeof ex.youtube_url === 'string' && ex.youtube_url.trim()) return [ex.youtube_url.trim()]
+    return []
+  }
+
+  const getExerciseTutorialPoints = (ex: any): string[] => {
+    const pts = Array.isArray(ex.tutorial_points) ? ex.tutorial_points.filter((x: any) => typeof x === 'string') : []
+    if (pts.length >= 3) return pts
+    if (typeof ex.form_tip === 'string' && ex.form_tip.trim()) {
+      const parts = ex.form_tip
+        .split(/[\n•\-]+/g)
+        .map((s: string) => s.trim())
+        .filter(Boolean)
+      if (parts.length >= 3) return parts.slice(0, 5)
+      const sentences = ex.form_tip
+        .split('.')
+        .map((s: string) => s.trim())
+        .filter(Boolean)
+      return sentences.slice(0, 5)
+    }
+    return []
+  }
+
   const levelOptions = useMemo(
     () => [
       { value: 'Beginner', label: 'Beginner' },
@@ -1063,24 +1109,72 @@ export default function DashboardPage() {
                               key={exIndex}
                               className="glass-soft rounded-xl p-4 hover:ring-1 hover:ring-cyan-400/40 transition"
                             >
-                              <div className="flex justify-between items-start gap-3 mb-2">
-                                <h5 className="text-base font-semibold text-cyan-300">{exercise.name}</h5>
-                                <a
-                                  href={exercise.youtube_url}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  className="text-xs px-3 py-1 rounded-full bg-red-600/80 hover:bg-red-600 text-white transition"
-                                >
-                                  Watch
-                                </a>
-                              </div>
-                              <p className="text-slate-200/90 text-sm mb-2">{exercise.sets_reps}</p>
-                              <details className="text-sm text-slate-300/70">
-                                <summary className="cursor-pointer hover:text-cyan-200 transition">
-                                  Form guide
-                                </summary>
-                                <p className="mt-2 pl-4 border-l-2 border-white/10 text-slate-200/80">{exercise.form_tip}</p>
-                              </details>
+                              {(() => {
+                                const urls = getExerciseYouTubeUrls(exercise).slice(0, 3)
+                                const ytId = urls[0] ? getYouTubeId(urls[0]) : null
+                                const thumb = ytId ? `https://img.youtube.com/vi/${ytId}/hqdefault.jpg` : null
+                                const points = getExerciseTutorialPoints(exercise)
+
+                                return (
+                                  <>
+                                    {thumb && (
+                                      <div className="mb-3 overflow-hidden rounded-xl ring-1 ring-white/10">
+                                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                                        <img
+                                          src={thumb}
+                                          alt={`${exercise.name} thumbnail`}
+                                          className="w-full h-36 object-cover"
+                                          loading="lazy"
+                                        />
+                                      </div>
+                                    )}
+                                    <div className="flex justify-between items-start gap-3 mb-2">
+                                      <h5 className="text-base font-semibold text-cyan-300">{exercise.name}</h5>
+                                      {urls[0] && (
+                                        <a
+                                          href={urls[0]}
+                                          target="_blank"
+                                          rel="noopener noreferrer"
+                                          className="text-xs px-3 py-1 rounded-full bg-red-600/80 hover:bg-red-600 text-white transition"
+                                        >
+                                          Watch
+                                        </a>
+                                      )}
+                                    </div>
+                                    <p className="text-slate-200/90 text-sm mb-3">{exercise.sets_reps}</p>
+
+                                    {points.length > 0 && (
+                                      <div className="mb-3">
+                                        <div className="text-xs font-semibold text-slate-100 mb-2">Tutorial (points)</div>
+                                        <ul className="list-disc pl-5 space-y-1 text-sm text-slate-200/80">
+                                          {points.slice(0, 5).map((p, i) => (
+                                            <li key={i}>{p}</li>
+                                          ))}
+                                        </ul>
+                                      </div>
+                                    )}
+
+                                    {urls.length > 0 && (
+                                      <div>
+                                        <div className="text-xs font-semibold text-slate-100 mb-2">Video tutorials</div>
+                                        <div className="flex flex-wrap gap-2">
+                                          {urls.slice(0, 3).map((u, i) => (
+                                            <a
+                                              key={i}
+                                              href={u}
+                                              target="_blank"
+                                              rel="noopener noreferrer"
+                                              className="text-xs px-3 py-2 rounded-xl glass-menu text-slate-100 hover:text-white transition"
+                                            >
+                                              Tutorial {i + 1}
+                                            </a>
+                                          ))}
+                                        </div>
+                                      </div>
+                                    )}
+                                  </>
+                                )
+                              })()}
                             </div>
                           ))}
                         </div>

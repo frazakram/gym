@@ -6,8 +6,8 @@ import { RoutineGenerationInput, WeeklyRoutine } from "@/types";
 const ExerciseSchema = z.object({
   name: z.string().describe("Name of the exercise"),
   sets_reps: z.string().describe("Sets and reps, e.g., '3 sets x 12 reps'"),
-  youtube_url: z.string().describe("YouTube tutorial URL for the exercise"),
-  form_tip: z.string().describe("Form and technique tips for proper execution"),
+  youtube_urls: z.array(z.string()).min(3).describe("3 YouTube tutorial URLs for the exercise"),
+  tutorial_points: z.array(z.string()).min(3).describe("At least 3 point-wise technique/tutorial cues"),
 });
 
 const DayRoutineSchema = z.object({
@@ -85,8 +85,8 @@ Output format rules:
 - For each exercise include:
   - name
   - sets_reps (include sets, reps, and optionally rest time)
-  - youtube_url (REAL YouTube URLs from reputable channels like Athlean-X, Jeff Nippard, Jeremy Ethier, ScottHermanFitness)
-  - form_tip (short, practical cues to avoid injury)
+  - youtube_urls (ARRAY of exactly 3 REAL YouTube URLs from reputable channels like Athlean-X, Jeff Nippard, Jeremy Ethier, ScottHermanFitness)
+  - tutorial_points (ARRAY of at least 3 bullet-style points: setup, execution cues, common mistakes to avoid)
 
 Structure the routine with:
 - Proper muscle group splits
