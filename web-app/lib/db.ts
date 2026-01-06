@@ -2,8 +2,31 @@ import { Pool } from 'pg';
 import bcrypt from 'bcryptjs';
 import { User, Profile } from '@/types';
 
+function firstEnv(...keys: string[]): string {
+  for (const k of keys) {
+    const v = process.env[k];
+    if (typeof v === "string" && v.trim()) return v.trim();
+  }
+  return "";
+}
+
+const connectionString = firstEnv(
+  // Common names (recommended)
+  "POSTGRES_URL",
+  "DATABASE_URL",
+  "POSTGRES_URL_NON_POOLING",
+  "DATABASE_URL_UNPOOLED",
+  "POSTGRES_PRISMA_URL",
+  // Namespaced variants (some Vercel/Neon setups)
+  "gym_POSTGRES_URL",
+  "gym_DATABASE_URL",
+  "gym_POSTGRES_URL_NON_POOLING",
+  "gym_DATABASE_URL_UNPOOLED",
+  "gym_POSTGRES_PRISMA_URL"
+);
+
 const pool = new Pool({
-  connectionString: process.env.POSTGRES_URL,
+  connectionString,
   ssl: {
     rejectUnauthorized: false,
   },
