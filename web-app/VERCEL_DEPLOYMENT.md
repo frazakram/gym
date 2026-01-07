@@ -1,4 +1,4 @@
-# Vercel Deployment Guide for GymBro AI
+# Vercel Deployment Guide for Gym Bro
 
 ## Quick Start (3 Steps)
 
@@ -194,7 +194,7 @@ npm run lint
 3. ✅ Generate a workout routine
 4. ✅ Share your deployment URL!
 
-Your GymBro AI app is now live! 🎉
+Your Gym Bro app is now live! 🎉
 
 ---
 

@@ -70,3 +70,35 @@ export interface RoutineGenerationInput {
     model_provider: 'Anthropic' | 'OpenAI';
     apiKey?: string;
 }
+
+// Progress Tracking Types
+export interface SavedRoutine {
+    id: number;
+    user_id: number;
+    week_number: number;
+    routine_json: WeeklyRoutine;
+    created_at: Date;
+}
+
+export interface ExerciseCompletion {
+    id: number;
+    routine_id: number;
+    day_index: number;
+    exercise_index: number;
+    completed: boolean;
+    actual_weight?: number;
+    actual_reps?: number;
+    notes?: string;
+    completed_at?: Date;
+}
+
+export interface CompletionStats {
+    total_exercises: number;
+    completed_exercises: number;
+    completion_percentage: number;
+    exercises_by_day: {
+        day_name: string;
+        total: number;
+        completed: number;
+    }[];
+}

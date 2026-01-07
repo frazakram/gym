@@ -2,7 +2,7 @@ import type { Metadata } from 'next'
 import './globals.css'
 
 export const metadata: Metadata = {
-  title: 'GymBro AI - AI-Powered Gym Routine Generator',
+  title: 'Gym Bro - AI - Powered Gym Routine Generator',
   description: 'Generate personalized weekly workout plans with AI',
 }
 

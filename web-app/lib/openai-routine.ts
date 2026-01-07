@@ -20,7 +20,7 @@ const WeeklyRoutineSchema = z.object({
   days: z.array(DayRoutineSchema),
 });
 
-function buildPrompt(input: RoutineGenerationInput): string {
+function buildPrompt(input: RoutineGenerationInput, historicalContext?: string): string {
   const normalizedHeight =
     typeof input.height === "number" && input.height > 0 && input.height <= 8
       ? Math.round(input.height * 30.48 * 10) / 10
@@ -37,7 +37,7 @@ Client Profile (use ALL of these when deciding exercise selection, volume, inten
 ${typeof input.goal_weight === "number" ? `- Goal weight: ${input.goal_weight} kg` : ""}
 - Experience level: ${input.level}
 - Training history/duration: ${input.tenure}
-${input.notes && input.notes.trim() ? `- Additional comments/constraints: ${input.notes.trim()}` : ""}
+${input.notes && input.notes.trim() ? `- Additional comments/constraints: ${input.notes.trim()}` : ""}${historicalContext ? historicalContext : ""}
 
 Requirements (very important):
 - Choose a split appropriate for the client's goal + level (e.g., 3–6 training days/week + rest days as needed).
@@ -169,7 +169,7 @@ async function sleep(ms: number) {
   await new Promise((r) => setTimeout(r, ms));
 }
 
-export async function generateRoutineOpenAI(input: RoutineGenerationInput): Promise<WeeklyRoutine> {
+export async function generateRoutineOpenAI(input: RoutineGenerationInput, historicalContext?: string): Promise<WeeklyRoutine> {
   const apiKey = sanitizeApiKey(input.apiKey || process.env.OPENAI_API_KEY || "");
   if (!apiKey) throw new Error("OpenAI API key is required");
   assertValidOpenAIApiKey(apiKey);
@@ -200,7 +200,7 @@ export async function generateRoutineOpenAI(input: RoutineGenerationInput): Prom
           model,
           temperature: 0.7,
           response_format: { type: "json_object" },
-          messages: [{ role: "user", content: buildPrompt(input) }],
+          messages: [{ role: "user", content: buildPrompt(input, historicalContext) }],
         }),
         signal: controller.signal,
         // undici fetch supports dispatcher (Node/Next runtime); TS doesn't include it in RequestInit.
