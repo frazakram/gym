@@ -55,7 +55,7 @@ export default function LoginPage() {
             <BrandLogo size={88} className="rounded-3xl" />
           </div>
           <h1 className="text-4xl sm:text-5xl font-semibold tracking-tight bg-gradient-to-r from-cyan-200 via-sky-200 to-violet-200 bg-clip-text text-transparent">
-            GymBro AI
+            Gym Bro
           </h1>
           <p className="mt-2 text-sm text-slate-300/80">
             Personalized fitness. Powered by intelligence.
@@ -69,11 +69,10 @@ export default function LoginPage() {
                 setIsLogin(true)
                 setError('')
               }}
-              className={`flex-1 py-2 rounded-md font-medium transition-all ${
-                isLogin
-                  ? 'bg-gradient-to-r from-cyan-500 to-blue-600 text-white shadow-lg'
-                  : 'text-slate-300/70 hover:text-white'
-              }`}
+              className={`flex-1 py-2 rounded-md font-medium transition-all ${isLogin
+                ? 'bg-gradient-to-r from-cyan-500 to-blue-600 text-white shadow-lg'
+                : 'text-slate-300/70 hover:text-white'
+                }`}
             >
               Login
             </button>
@@ -82,11 +81,10 @@ export default function LoginPage() {
                 setIsLogin(false)
                 setError('')
               }}
-              className={`flex-1 py-2 rounded-md font-medium transition-all ${
-                !isLogin
-                  ? 'bg-gradient-to-r from-cyan-500 to-blue-600 text-white shadow-lg'
-                  : 'text-slate-300/70 hover:text-white'
-              }`}
+              className={`flex-1 py-2 rounded-md font-medium transition-all ${!isLogin
+                ? 'bg-gradient-to-r from-cyan-500 to-blue-600 text-white shadow-lg'
+                : 'text-slate-300/70 hover:text-white'
+                }`}
             >
               Register
             </button>

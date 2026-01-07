@@ -78,6 +78,32 @@ export async function initializeDatabase() {
           expires_at TIMESTAMP NOT NULL
         );
       `);
+
+      // Progress tracking tables
+      await client.query(`
+        CREATE TABLE IF NOT EXISTS routines (
+          id SERIAL PRIMARY KEY,
+          user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+          week_number INTEGER NOT NULL,
+          routine_json JSONB NOT NULL,
+          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        );
+      `);
+
+      await client.query(`
+        CREATE TABLE IF NOT EXISTS exercise_completions (
+          id SERIAL PRIMARY KEY,
+          routine_id INTEGER REFERENCES routines(id) ON DELETE CASCADE,
+          day_index INTEGER NOT NULL,
+          exercise_index INTEGER NOT NULL,
+          completed BOOLEAN DEFAULT FALSE,
+          actual_weight DECIMAL(5,2),
+          actual_reps INTEGER,
+          notes TEXT,
+          completed_at TIMESTAMP
+        );
+      `);
+
       console.log('Database initialized successfully');
     } finally {
       client.release();
@@ -242,3 +268,145 @@ export async function saveProfile(
     return { ...fallback, user_id: userId };
   }
 }
+
+// ============= ROUTINE & PROGRESS TRACKING =============
+
+// Mock Storage
+const mockRoutineStore = new Map<number, any>();
+// Key: routineId -> Array of execution records
+const mockCompletionStore = new Map<number, Map<string, boolean>>();
+
+export async function saveRoutine(
+  userId: number,
+  weekNumber: number,
+  routine: any
+): Promise<number | null> {
+  try {
+    const result = await pool.query(
+      `INSERT INTO routines (user_id, week_number, routine_json)
+       VALUES ($1, $2, $3)
+       RETURNING id`,
+      [userId, weekNumber, JSON.stringify(routine)]
+    );
+    return result.rows[0]?.id || null;
+  } catch (error) {
+    console.warn("saveRoutine DB failed, using mock:", error);
+    // FALLBACK
+    const mockId = Math.floor(Math.random() * 100000) + 100000;
+    mockRoutineStore.set(mockId, {
+      id: mockId,
+      user_id: userId,
+      week_number: weekNumber,
+      routine_json: routine,
+      created_at: new Date()
+    });
+    return mockId;
+  }
+}
+
+export async function getLatestRoutine(userId: number): Promise<any | null> {
+  try {
+    const result = await pool.query(
+      `SELECT id, user_id, week_number, routine_json, created_at
+       FROM routines
+       WHERE user_id = $1
+       ORDER BY week_number DESC, created_at DESC
+       LIMIT 1`,
+      [userId]
+    );
+    if (result.rows.length > 0) return result.rows[0];
+    throw new Error("No DB routine found");
+  } catch (error) {
+    console.warn("getLatestRoutine DB failed/empty, checking mock:", error);
+    // FALLBACK
+    const userRoutines = Array.from(mockRoutineStore.values())
+      .filter(r => r.user_id === userId)
+      .sort((a, b) => b.created_at.getTime() - a.created_at.getTime());
+    return userRoutines[0] || null;
+  }
+}
+
+export async function getRoutinesByUser(userId: number): Promise<any[]> {
+  try {
+    const result = await pool.query(
+      `SELECT id, user_id, week_number, routine_json, created_at
+       FROM routines
+       WHERE user_id = $1
+       ORDER BY week_number DESC, created_at DESC`,
+      [userId]
+    );
+    return result.rows;
+  } catch (error) {
+    console.warn("getRoutinesByUser DB failed, checking mock:", error);
+    // FALLBACK
+    return Array.from(mockRoutineStore.values())
+      .filter(r => r.user_id === userId)
+      .sort((a, b) => b.created_at.getTime() - a.created_at.getTime());
+  }
+}
+
+export async function toggleExerciseCompletion(
+  routineId: number,
+  dayIndex: number,
+  exerciseIndex: number,
+  completed: boolean
+): Promise<boolean> {
+  const key = `${dayIndex}-${exerciseIndex}`;
+  try {
+    // Check if completion record exists
+    const existing = await pool.query(
+      `SELECT id FROM exercise_completions
+       WHERE routine_id = $1 AND day_index = $2 AND exercise_index = $3`,
+      [routineId, dayIndex, exerciseIndex]
+    );
+
+    if (existing.rows.length > 0) {
+      // Update existing
+      await pool.query(
+        `UPDATE exercise_completions
+         SET completed = $4, completed_at = $5
+         WHERE routine_id = $1 AND day_index = $2 AND exercise_index = $3`,
+        [routineId, dayIndex, exerciseIndex, completed, completed ? new Date() : null]
+      );
+    } else {
+      // Insert new
+      await pool.query(
+        `INSERT INTO exercise_completions (routine_id, day_index, exercise_index, completed, completed_at)
+         VALUES ($1, $2, $3, $4, $5)`,
+        [routineId, dayIndex, exerciseIndex, completed, completed ? new Date() : null]
+      );
+    }
+    return true;
+  } catch (error) {
+    console.warn("toggleExerciseCompletion DB failed, using mock:", error);
+    // FALLBACK
+    if (!mockCompletionStore.has(routineId)) {
+      mockCompletionStore.set(routineId, new Map());
+    }
+    mockCompletionStore.get(routineId)?.set(key, completed);
+    return true;
+  }
+}
+
+export async function getCompletionStats(routineId: number): Promise<any> {
+  try {
+    const result = await pool.query(
+      `SELECT day_index, exercise_index, completed
+       FROM exercise_completions
+       WHERE routine_id = $1`,
+      [routineId]
+    );
+    return result.rows;
+  } catch (error) {
+    console.warn("getCompletionStats DB failed, using mock:", error);
+    // FALLBACK
+    const store = mockCompletionStore.get(routineId);
+    if (!store) return [];
+    
+    return Array.from(store.entries()).map(([k, v]) => {
+      const [d, e] = k.split('-');
+      return { day_index: Number(d), exercise_index: Number(e), completed: v };
+    });
+  }
+}
+

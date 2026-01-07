@@ -6,6 +6,7 @@ import { WeeklyRoutine, Profile } from '@/types'
 import { BrandLogo } from '@/components/BrandLogo'
 import { GlassSelect } from '@/components/GlassSelect'
 import YouTubeHoverPreview from '@/components/YouTubeHoverPreview'
+import { ExerciseCheckbox } from '@/components/ExerciseCheckbox'
 import { getYouTubeId, sanitizeYouTubeUrls } from '@/lib/youtube'
 
 type SavedRoutine = {
@@ -29,7 +30,7 @@ export default function DashboardPage() {
   // Collapsible sidebar
   const [sidebarOpen, setSidebarOpen] = useState(true)
   const [isMobileSidebar, setIsMobileSidebar] = useState(false)
-  
+
   // Profile state
   const [profile, setProfile] = useState<Profile | null>(null)
   const [age, setAge] = useState<number | ''>(25)
@@ -44,7 +45,7 @@ export default function DashboardPage() {
   const [tenure, setTenure] = useState('Just started')
   const [goalWeight, setGoalWeight] = useState<number | ''>('')
   const [notes, setNotes] = useState('')
-  
+
   // Routine state
   const [routine, setRoutine] = useState<WeeklyRoutine | null>(null)
   const [modelProvider, setModelProvider] = useState<'Anthropic' | 'OpenAI'>('Anthropic')
@@ -53,6 +54,12 @@ export default function DashboardPage() {
   const [progressPct, setProgressPct] = useState(0)
   const [progressStage, setProgressStage] = useState('')
   const [improvingNotes, setImprovingNotes] = useState(false)
+
+  // Progress tracking state
+  const [currentRoutineId, setCurrentRoutineId] = useState<number | null>(null)
+  const [currentWeekNumber, setCurrentWeekNumber] = useState(1)
+  const [exerciseCompletions, setExerciseCompletions] = useState<Map<string, boolean>>(new Map())
+  const [userId, setUserId] = useState<number | null>(null)
 
   // Routine library (local-only)
   const [savedRoutines, setSavedRoutines] = useState<SavedRoutine[]>([])
@@ -241,12 +248,60 @@ export default function DashboardPage() {
     setSuccess('Routine saved to your library.')
   }
 
-  const handleLoadSavedRoutine = (id: string) => {
+  const saveRoutineToDatabase = async (routineData: WeeklyRoutine) => {
+    try {
+      // Get userId if we don't have it yet
+      let currentUserId = userId
+      if (!currentUserId) {
+        const profileRes = await fetch('/api/profile')
+        const profileData = await profileRes.json()
+        if (profileData.profile?.user_id) {
+          currentUserId = profileData.profile.user_id
+          setUserId(currentUserId)
+        } else {
+          // Mock user ID fallback
+          currentUserId = 999
+          setUserId(999)
+        }
+      }
+
+      const res = await fetch('/api/routines', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userId: currentUserId,
+          weekNumber: currentWeekNumber,
+          routine: routineData,
+        }),
+      })
+
+      const data = await res.json()
+      if (data.routineId) {
+        setCurrentRoutineId(data.routineId)
+        // Do NOT reset completions here; we want to keep optimal state
+        // setExerciseCompletions(new Map())  <-- REMOVED
+        return data.routineId
+      }
+      return null
+    } catch (err) {
+      console.error('Error saving routine:', err)
+      // Don't fail the whole flow if DB save fails
+      return null
+    }
+  }
+
+  const handleLoadSavedRoutine = async (id: string) => {
     const found = savedRoutines.find((r) => r.id === id)
     if (!found) return
     setRoutine(found.routine)
+    // Reset completions when loading a different routine
+    setExerciseCompletions(new Map())
     setActiveSavedId(found.id)
     setActiveTab('routine')
+
+    // Sync with DB to enable tracking
+    await saveRoutineToDatabase(found.routine)
+
     if (typeof window !== 'undefined') window.scrollTo({ top: 0, behavior: 'smooth' })
     setSuccess(`Loaded: ${found.name}`)
   }
@@ -291,9 +346,9 @@ export default function DashboardPage() {
   const getExerciseTutorialPoints = (ex: any): string[] => {
     const pts = Array.isArray(ex.tutorial_points)
       ? ex.tutorial_points
-          .filter((x: any) => typeof x === 'string')
-          .map((s: string) => s.trim())
-          .filter(Boolean)
+        .filter((x: any) => typeof x === 'string')
+        .map((s: string) => s.trim())
+        .filter(Boolean)
       : []
     if (pts.length >= 3) return pts.slice(0, 5)
     if (typeof ex.form_tip === 'string' && ex.form_tip.trim()) {
@@ -431,6 +486,32 @@ export default function DashboardPage() {
     }
   }, [router])
 
+  const fetchLatestRoutine = useCallback(async (userIdParam: number) => {
+    try {
+      const res = await fetch(`/api/routines?userId=${userIdParam}`)
+      const { routine } = await res.json()
+      if (routine) {
+        setRoutine(routine.routine_json)
+        setCurrentRoutineId(routine.id)
+        setCurrentWeekNumber(routine.week_number)
+
+        // Fetch completions
+        const compRes = await fetch(`/api/completions?routineId=${routine.id}`)
+        const { completions } = await compRes.json()
+
+        // Build completion map
+        const map = new Map<string, boolean>()
+        completions.forEach((c: any) => {
+          map.set(`${c.day_index}-${c.exercise_index}`, c.completed)
+        })
+        setExerciseCompletions(map)
+        setActiveTab('routine')
+      }
+    } catch (err: unknown) {
+      console.error('Error fetching latest routine:', err)
+    }
+  }, [])
+
   useEffect(() => {
     fetchProfile()
   }, [fetchProfile])
@@ -482,7 +563,7 @@ export default function DashboardPage() {
     }
   }
 
-  const handleGenerateRoutine = async () => {
+  const handleGenerateRoutine = async (isNextWeek: boolean = false) => {
     if (!profile) {
       setError('Please complete your profile first.')
       return
@@ -559,6 +640,16 @@ export default function DashboardPage() {
             } else if (currentEvent === 'routine') {
               setRoutine(payload.routine)
               setSuccess('Routine generated successfully.')
+
+              if (isNextWeek) {
+                setCurrentWeekNumber(prev => prev + 1)
+              }
+
+              // Reset completions for new routine
+              setExerciseCompletions(new Map())
+
+              // Save routine to database
+              await saveRoutineToDatabase(payload.routine)
             } else if (currentEvent === 'error') {
               throw new Error(payload.message || 'Failed to generate routine')
             }
@@ -572,12 +663,22 @@ export default function DashboardPage() {
       } else {
         // Fallback JSON mode
         const data = await response.json()
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to generate routine')
-      }
+        if (!response.ok) {
+          throw new Error(data.error || 'Failed to generate routine')
+        }
 
-      setRoutine(data.routine)
-      setSuccess('Routine generated successfully.')
+        setRoutine(data.routine)
+        setSuccess('Routine generated successfully.')
+
+        if (isNextWeek) {
+          setCurrentWeekNumber(prev => prev + 1)
+        }
+
+        // Reset completions for new routine
+        setExerciseCompletions(new Map())
+
+        // Save routine to database
+        await saveRoutineToDatabase(data.routine)
       }
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : String(err))
@@ -586,6 +687,8 @@ export default function DashboardPage() {
       setProgressStage('')
     }
   }
+
+
 
   const handleLogout = async () => {
     await fetch('/api/auth/logout', { method: 'POST' })
@@ -607,9 +710,8 @@ export default function DashboardPage() {
 
         {/* Collapsible sidebar */}
         <aside
-          className={`fixed z-50 top-0 left-0 h-full w-[92vw] sm:w-[360px] max-w-none p-4 transition-transform ${
-            sidebarOpen ? 'translate-x-0' : '-translate-x-full'
-          }`}
+          className={`fixed z-50 top-0 left-0 h-full w-[92vw] sm:w-[360px] max-w-none p-4 transition-transform ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'
+            }`}
         >
           <div className="h-full">
             <div className="panel-solid rounded-2xl p-5 h-full flex flex-col overflow-hidden">
@@ -618,7 +720,7 @@ export default function DashboardPage() {
                   <BrandLogo size={44} />
                   <div className="min-w-0">
                     <div className="text-sm font-semibold tracking-tight bg-gradient-to-r from-cyan-200 via-sky-200 to-violet-200 bg-clip-text text-transparent truncate">
-                      GymBro AI
+                      Gym Bro
                     </div>
                     <div className="text-xs text-slate-300/70 truncate">Personalized routines.</div>
                   </div>
@@ -640,11 +742,10 @@ export default function DashboardPage() {
                     setActiveTab('profile')
                     if (isMobileSidebar) setSidebarOpen(false)
                   }}
-                  className={`flex-1 px-3 py-2 rounded-lg text-sm font-semibold transition-all ${
-                    activeTab === 'profile'
-                      ? 'bg-gradient-to-r from-cyan-500 to-blue-600 text-white shadow-lg'
-                      : 'text-slate-300/70 hover:text-white'
-                  }`}
+                  className={`flex-1 px-3 py-2 rounded-lg text-sm font-semibold transition-all ${activeTab === 'profile'
+                    ? 'bg-gradient-to-r from-cyan-500 to-blue-600 text-white shadow-lg'
+                    : 'text-slate-300/70 hover:text-white'
+                    }`}
                 >
                   Profile
                 </button>
@@ -653,11 +754,10 @@ export default function DashboardPage() {
                     setActiveTab('routine')
                     if (isMobileSidebar) setSidebarOpen(false)
                   }}
-                  className={`flex-1 px-3 py-2 rounded-lg text-sm font-semibold transition-all ${
-                    activeTab === 'routine'
-                      ? 'bg-gradient-to-r from-cyan-500 to-blue-600 text-white shadow-lg'
-                      : 'text-slate-300/70 hover:text-white'
-                  }`}
+                  className={`flex-1 px-3 py-2 rounded-lg text-sm font-semibold transition-all ${activeTab === 'routine'
+                    ? 'bg-gradient-to-r from-cyan-500 to-blue-600 text-white shadow-lg'
+                    : 'text-slate-300/70 hover:text-white'
+                    }`}
                 >
                   Routine
                 </button>
@@ -665,6 +765,55 @@ export default function DashboardPage() {
 
               {/* Scrollable content */}
               <div className="mt-6 flex-1 overflow-auto pr-1">
+                {savedRoutines.length > 0 ? (
+                  <div className="mb-6">
+                    <div className="flex items-center justify-between px-1 mb-2">
+                      <div className="text-xs font-semibold text-slate-300 uppercase tracking-wider">Library</div>
+                      <div className="text-[10px] text-slate-400">{savedRoutines.length} saved</div>
+                    </div>
+                    <div className="space-y-1">
+                      {savedRoutines.map((routine) => (
+                        <div
+                          key={routine.id}
+                          className={`group relative flex items-center gap-2 p-2 rounded-xl transition-all ${activeSavedId === routine.id
+                            ? 'bg-gradient-to-r from-cyan-500/20 to-blue-600/20 border border-cyan-500/30'
+                            : 'hover:bg-white/5 border border-transparent'
+                            }`}
+                        >
+                          <button
+                            onClick={() => handleLoadSavedRoutine(routine.id)}
+                            className="flex-1 text-left min-w-0"
+                          >
+                            <div className={`text-sm font-medium truncate ${activeSavedId === routine.id ? 'text-cyan-200' : 'text-slate-200'
+                              }`}>
+                              {routine.name}
+                            </div>
+                            <div className="text-[10px] text-slate-400 truncate">
+                              {new Date(routine.createdAt).toLocaleDateString()} • {routine.routine.days.length} days
+                            </div>
+                          </button>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              handleDeleteSavedRoutine(routine.id)
+                            }}
+                            className="p-1.5 rounded-lg text-slate-400 hover:text-red-300 hover:bg-red-500/10 opacity-0 group-hover:opacity-100 focus:opacity-100 transition-opacity"
+                            title="Delete routine"
+                          >
+                            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                            </svg>
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ) : (
+                  <div className="mb-6 px-1 text-center py-8 border border-dashed border-slate-700/50 rounded-xl">
+                    <p className="text-xs text-slate-400">No saved routines yet</p>
+                  </div>
+                )}
+
                 {/* Push settings to bottom */}
                 <div className="flex-1" />
 
@@ -719,9 +868,8 @@ export default function DashboardPage() {
 
         {/* Main content */}
         <main
-          className={`transition-[padding,filter,opacity] duration-300 ${
-            sidebarOpen ? 'xl:pl-[340px]' : 'xl:pl-0'
-          } ${isMobileSidebar && sidebarOpen ? 'pointer-events-none select-none blur-[1px] opacity-40' : ''}`}
+          className={`transition-[padding,filter,opacity] duration-300 ${sidebarOpen ? 'xl:pl-[340px]' : 'xl:pl-0'
+            } ${isMobileSidebar && sidebarOpen ? 'pointer-events-none select-none blur-[1px] opacity-40' : ''}`}
         >
           {/* Header */}
           <div className="glass rounded-2xl px-5 py-4 mb-6 flex justify-between items-center">
@@ -738,7 +886,7 @@ export default function DashboardPage() {
               )}
               <div>
                 <h1 className="text-2xl sm:text-3xl font-semibold tracking-tight bg-gradient-to-r from-cyan-200 via-sky-200 to-violet-200 bg-clip-text text-transparent">
-                  GymBro AI
+                  Gym Bro
                 </h1>
                 <p className="text-sm text-slate-300/70">Personalized routines, tuned to your stats.</p>
               </div>
@@ -753,525 +901,597 @@ export default function DashboardPage() {
             </div>
           </div>
 
-        {/* Status banners */}
-        {(error || success) && (
-          <div className="mb-6 space-y-3">
-            {error && (
-              <div className="rounded-xl border border-red-500/40 bg-red-500/10 px-4 py-3 text-red-200">
-                {error}
-              </div>
-            )}
-            {success && (
-              <div className="rounded-xl border border-emerald-500/40 bg-emerald-500/10 px-4 py-3 text-emerald-200">
-                {success}
-              </div>
-            )}
-          </div>
-        )}
-
-            {/* Tabs moved to sidebar */}
-
-        {/* Profile Tab */}
-        {activeTab === 'profile' && (
-              <div className="glass rounded-2xl p-6 sm:p-8">
-            <div className="flex items-start justify-between gap-6 mb-6">
-              <div>
-                <h2 className="text-2xl font-semibold text-slate-100">Update Your Profile</h2>
-                <p className="text-sm text-slate-300/70 mt-1">
-                  These details are used to tailor your routine intensity, volume, and exercise selection.
-                </p>
-              </div>
+          {/* Status banners */}
+          {(error || success) && (
+            <div className="mb-6 space-y-3">
+              {error && (
+                <div className="rounded-xl border border-red-500/40 bg-red-500/10 px-4 py-3 text-red-200">
+                  {error}
+                </div>
+              )}
+              {success && (
+                <div className="rounded-xl border border-emerald-500/40 bg-emerald-500/10 px-4 py-3 text-emerald-200">
+                  {success}
+                </div>
+              )}
             </div>
-            <form onSubmit={handleSaveProfile} className="space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                  <label className="block text-sm font-medium text-slate-200/90 mb-2">Age</label>
-                  <input
-                    type="number"
-                    value={age}
-                    onChange={(e) => {
-                      const v = e.target.value
-                      setAge(v === '' ? '' : Number(v))
-                    }}
-                    min="16"
-                    max="100"
-                    className="w-full px-4 py-3 glass-soft rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-cyan-400/60"
-                  />
-                </div>
+          )}
 
-                <div>
-                  <label className="block text-sm font-medium text-slate-200/90 mb-2">Weight (kg)</label>
-                  <input
-                    type="number"
-                    value={weight}
-                    onChange={(e) => {
-                      const v = e.target.value
-                      setWeight(v === '' ? '' : Number(v))
-                    }}
-                    min="30"
-                    max="300"
-                    step="0.1"
-                    className="w-full px-4 py-3 glass-soft rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-cyan-400/60"
-                  />
-                </div>
+          {/* Tabs moved to sidebar */}
 
-                <div className="md:col-span-2">
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
-                    <GlassSelect
-                      label="Height unit"
-                      value={heightUnit}
-                      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                      options={heightUnitOptions as any}
-                      onChange={(v) => setHeightUnit(v as 'cm' | 'ftin')}
+          {/* Profile Tab */}
+          {activeTab === 'profile' && (
+            <div className="glass rounded-2xl p-6 sm:p-8">
+              <div className="flex items-start justify-between gap-6 mb-6">
+                <div>
+                  <h2 className="text-2xl font-semibold text-slate-100">Update Your Profile</h2>
+                  <p className="text-sm text-slate-300/70 mt-1">
+                    These details are used to tailor your routine intensity, volume, and exercise selection.
+                  </p>
+                </div>
+              </div>
+              <form onSubmit={handleSaveProfile} className="space-y-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div>
+                    <label className="block text-sm font-medium text-slate-200/90 mb-2">Age</label>
+                    <input
+                      type="number"
+                      value={age}
+                      onChange={(e) => {
+                        const v = e.target.value
+                        setAge(v === '' ? '' : Number(v))
+                      }}
+                      min="16"
+                      max="100"
+                      className="w-full px-4 py-3 glass-soft rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-cyan-400/60"
                     />
+                  </div>
 
-                    {heightUnit === 'cm' ? (
-                      <div className="md:col-span-2">
-                        <label className="block text-sm font-medium text-slate-200/90 mb-2">Height (cm)</label>
-                  <input
-                    type="number"
-                    value={height}
-                          onChange={(e) => {
-                            const v = e.target.value
-                            setHeight(v === '' ? '' : Number(v))
-                          }}
-                    min="100"
-                    max="250"
-                    step="0.1"
-                          className="w-full px-4 py-3 glass-soft rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-cyan-400/60"
-                        />
-                      </div>
-                    ) : (
-                      <div className="md:col-span-2 grid grid-cols-2 gap-4">
-                        <div>
-                          <label className="block text-sm font-medium text-slate-200/90 mb-2">Feet</label>
+                  <div>
+                    <label className="block text-sm font-medium text-slate-200/90 mb-2">Weight (kg)</label>
+                    <input
+                      type="number"
+                      value={weight}
+                      onChange={(e) => {
+                        const v = e.target.value
+                        setWeight(v === '' ? '' : Number(v))
+                      }}
+                      min="30"
+                      max="300"
+                      step="0.1"
+                      className="w-full px-4 py-3 glass-soft rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-cyan-400/60"
+                    />
+                  </div>
+
+                  <div className="md:col-span-2">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
+                      <GlassSelect
+                        label="Height unit"
+                        value={heightUnit}
+                        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                        options={heightUnitOptions as any}
+                        onChange={(v) => setHeightUnit(v as 'cm' | 'ftin')}
+                      />
+
+                      {heightUnit === 'cm' ? (
+                        <div className="md:col-span-2">
+                          <label className="block text-sm font-medium text-slate-200/90 mb-2">Height (cm)</label>
                           <input
                             type="number"
-                            value={heightFeet}
+                            value={height}
                             onChange={(e) => {
                               const v = e.target.value
-                              setHeightFeet(v === '' ? '' : Number(v))
+                              setHeight(v === '' ? '' : Number(v))
                             }}
-                            min="3"
-                            max="8"
-                            step="1"
-                            className="w-full px-4 py-3 glass-soft rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-cyan-400/60"
-                          />
-                        </div>
-                        <div>
-                          <label className="block text-sm font-medium text-slate-200/90 mb-2">Inches</label>
-                          <input
-                            type="number"
-                            value={heightInches}
-                            onChange={(e) => {
-                              const v = e.target.value
-                              setHeightInches(v === '' ? '' : Number(v))
-                            }}
-                            min="0"
-                            max="11.9"
+                            min="100"
+                            max="250"
                             step="0.1"
                             className="w-full px-4 py-3 glass-soft rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-cyan-400/60"
                           />
                         </div>
-                      </div>
-                    )}
-                  </div>
+                      ) : (
+                        <div className="md:col-span-2 grid grid-cols-2 gap-4">
+                          <div>
+                            <label className="block text-sm font-medium text-slate-200/90 mb-2">Feet</label>
+                            <input
+                              type="number"
+                              value={heightFeet}
+                              onChange={(e) => {
+                                const v = e.target.value
+                                setHeightFeet(v === '' ? '' : Number(v))
+                              }}
+                              min="3"
+                              max="8"
+                              step="1"
+                              className="w-full px-4 py-3 glass-soft rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-cyan-400/60"
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-sm font-medium text-slate-200/90 mb-2">Inches</label>
+                            <input
+                              type="number"
+                              value={heightInches}
+                              onChange={(e) => {
+                                const v = e.target.value
+                                setHeightInches(v === '' ? '' : Number(v))
+                              }}
+                              min="0"
+                              max="11.9"
+                              step="0.1"
+                              className="w-full px-4 py-3 glass-soft rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-cyan-400/60"
+                            />
+                          </div>
+                        </div>
+                      )}
+                    </div>
 
-                  <p className="mt-2 text-xs text-slate-300/50">
-                    Stored as cm: <span className="text-slate-200/80">{resolvedHeightCm ?? '—'}</span>
-                  </p>
-                </div>
-
-                <GlassSelect
-                  label="Experience Level"
-                    value={level}
-                  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                  options={levelOptions as any}
-                  onChange={(v) => setLevel(v as 'Beginner' | 'Regular' | 'Expert')}
-                />
-
-                <div>
-                  <GlassSelect
-                    label="Gender"
-                    value={gender}
-                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                    options={genderOptions as any}
-                    onChange={(v) => setGender(v as Profile['gender'])}
-                  />
-                  <p className="text-xs text-slate-300/50 mt-2">
-                    Used only to tailor exercise selection and recovery assumptions (no storage beyond your profile).
-                  </p>
-                </div>
-
-                <GlassSelect
-                  label="Goal"
-                    value={goal}
-                  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                  options={goalOptions as any}
-                  onChange={(v) => setGoal(v as Profile['goal'])}
-                />
-
-                <div className="md:col-span-2">
-                  <label className="block text-sm font-medium text-slate-200/90 mb-2">Training Duration</label>
-                  <input
-                    type="text"
-                    value={tenure}
-                    onChange={(e) => setTenure(e.target.value)}
-                    placeholder="e.g., '6 months' or 'Just started'"
-                    className="w-full px-4 py-3 glass-soft rounded-xl text-white placeholder:text-slate-300/50 focus:outline-none focus:ring-2 focus:ring-cyan-400/60"
-                  />
-                </div>
-
-                <div className="md:col-span-2">
-                  <label className="block text-sm font-medium text-slate-200/90 mb-2">Goal Weight (kg)</label>
-                  <input
-                    type="number"
-                    value={goalWeight}
-                    onChange={(e) => {
-                      const v = e.target.value
-                      setGoalWeight(v === '' ? '' : Number(v))
-                    }}
-                    min="30"
-                    max="300"
-                    step="0.1"
-                    placeholder="Optional (e.g., 72)"
-                    className="w-full px-4 py-3 glass-soft rounded-xl text-white placeholder:text-slate-300/50 focus:outline-none focus:ring-2 focus:ring-cyan-400/60"
-                  />
-                  <p className="text-xs text-slate-300/50 mt-2">
-                    Optional — helps the routine bias toward the right intensity/cardio/recovery strategy.
-                  </p>
-                </div>
-
-                <div className="md:col-span-2">
-                  <div className="flex items-center justify-between gap-3 mb-2">
-                    <label className="block text-sm font-medium text-slate-200/90">Additional comments</label>
-                    <button
-                      type="button"
-                      onClick={handleImproveNotes}
-                      disabled={improvingNotes}
-                      className="shrink-0 px-3 py-2 rounded-xl glass-soft text-slate-100 hover:text-white transition disabled:opacity-60 disabled:cursor-not-allowed"
-                      title="Improve notes with AI"
-                    >
-                      <span className="mr-2" aria-hidden="true">
-                        🪄
-                      </span>
-                      {improvingNotes ? 'Improving…' : 'Improve by AI'}
-                    </button>
-                  </div>
-                  <textarea
-                    value={notes}
-                    onChange={(e) => setNotes(e.target.value)}
-                    placeholder="Injuries, goals (fat loss/strength/hypertrophy), equipment limits, days per week, exercises you love/hate, etc."
-                    rows={4}
-                    className="w-full px-4 py-3 glass-soft rounded-xl text-white placeholder:text-slate-300/50 focus:outline-none focus:ring-2 focus:ring-cyan-400/60 resize-y"
-                  />
-                </div>
-              </div>
-
-              <button
-                type="submit"
-                disabled={loading}
-                className="w-full bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-600 hover:to-blue-700 text-white font-semibold py-3 rounded-xl transition-all transform hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none shadow-lg shadow-cyan-500/10"
-              >
-                {loading ? 'Saving...' : 'Save Profile'}
-              </button>
-            </form>
-          </div>
-        )}
-
-        {/* Routine Tab */}
-        {activeTab === 'routine' && (
-          <div className="space-y-6">
-                <div className="grid grid-cols-1 2xl:grid-cols-3 gap-6">
-              {/* Generation panel */}
-                  <div className="2xl:col-span-1 glass rounded-2xl p-6 sm:p-8">
-                <div className="flex items-start justify-between gap-4 mb-6">
-                  <div>
-                    <h2 className="text-2xl font-semibold text-slate-100">Generate Workout Routine</h2>
-                    <p className="text-sm text-slate-300/70 mt-1">
-                      Uses your profile (including gender and comments) to tailor volume and recovery.
+                    <p className="mt-2 text-xs text-slate-300/50">
+                      Stored as cm: <span className="text-slate-200/80">{resolvedHeightCm ?? '—'}</span>
                     </p>
                   </div>
-                  {profile && (
-                    <button
-                      onClick={() => setActiveTab('profile')}
-                      className="shrink-0 px-3 py-2 rounded-xl glass-soft text-slate-200 hover:text-white transition"
-                    >
-                      Edit profile
-                    </button>
-                  )}
-                </div>
 
-                {/* Profile summary */}
-                {profile ? (
-                  <div className="mb-6 glass-soft rounded-xl p-4">
-                    <div className="flex flex-wrap gap-2">
-                      <span className="px-3 py-1 rounded-full bg-cyan-500/10 text-cyan-200 border border-cyan-500/30 text-sm">
-                        {profile.level}
-                      </span>
-                      <span className="px-3 py-1 rounded-full bg-emerald-500/10 text-emerald-200 border border-emerald-500/30 text-sm">
-                        {profile.goal}
-                      </span>
-                      <span className="px-3 py-1 rounded-full glass-soft text-slate-200 text-sm">
-                        {profile.age}y
-                      </span>
-                      <span className="px-3 py-1 rounded-full glass-soft text-slate-200 text-sm">
-                        {profile.weight}kg
-                      </span>
-                      {typeof profile.goal_weight === 'number' && (
-                        <span className="px-3 py-1 rounded-full glass-soft text-slate-200 text-sm">
-                          Goal {profile.goal_weight}kg
+                  <GlassSelect
+                    label="Experience Level"
+                    value={level}
+                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                    options={levelOptions as any}
+                    onChange={(v) => setLevel(v as 'Beginner' | 'Regular' | 'Expert')}
+                  />
+
+                  <div>
+                    <GlassSelect
+                      label="Gender"
+                      value={gender}
+                      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                      options={genderOptions as any}
+                      onChange={(v) => setGender(v as Profile['gender'])}
+                    />
+                    <p className="text-xs text-slate-300/50 mt-2">
+                      Used only to tailor exercise selection and recovery assumptions (no storage beyond your profile).
+                    </p>
+                  </div>
+
+                  <GlassSelect
+                    label="Goal"
+                    value={goal}
+                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                    options={goalOptions as any}
+                    onChange={(v) => setGoal(v as Profile['goal'])}
+                  />
+
+                  <div className="md:col-span-2">
+                    <label className="block text-sm font-medium text-slate-200/90 mb-2">Training Duration</label>
+                    <input
+                      type="text"
+                      value={tenure}
+                      onChange={(e) => setTenure(e.target.value)}
+                      placeholder="e.g., '6 months' or 'Just started'"
+                      className="w-full px-4 py-3 glass-soft rounded-xl text-white placeholder:text-slate-300/50 focus:outline-none focus:ring-2 focus:ring-cyan-400/60"
+                    />
+                  </div>
+
+                  <div className="md:col-span-2">
+                    <label className="block text-sm font-medium text-slate-200/90 mb-2">Goal Weight (kg)</label>
+                    <input
+                      type="number"
+                      value={goalWeight}
+                      onChange={(e) => {
+                        const v = e.target.value
+                        setGoalWeight(v === '' ? '' : Number(v))
+                      }}
+                      min="30"
+                      max="300"
+                      step="0.1"
+                      placeholder="Optional (e.g., 72)"
+                      className="w-full px-4 py-3 glass-soft rounded-xl text-white placeholder:text-slate-300/50 focus:outline-none focus:ring-2 focus:ring-cyan-400/60"
+                    />
+                    <p className="text-xs text-slate-300/50 mt-2">
+                      Optional — helps the routine bias toward the right intensity/cardio/recovery strategy.
+                    </p>
+                  </div>
+
+                  <div className="md:col-span-2">
+                    <div className="flex items-center justify-between gap-3 mb-2">
+                      <label className="block text-sm font-medium text-slate-200/90">Additional comments</label>
+                      <button
+                        type="button"
+                        onClick={handleImproveNotes}
+                        disabled={improvingNotes}
+                        className="shrink-0 px-3 py-2 rounded-xl glass-soft text-slate-100 hover:text-white transition disabled:opacity-60 disabled:cursor-not-allowed"
+                        title="Improve notes with AI"
+                      >
+                        <span className="mr-2" aria-hidden="true">
+                          🪄
                         </span>
-                      )}
-                      <span className="px-3 py-1 rounded-full glass-soft text-slate-200 text-sm">
-                        {profile.height}cm
-                      </span>
-                      <span className="px-3 py-1 rounded-full glass-soft text-slate-200 text-sm">
-                        {profile.gender}
-                      </span>
-                      <span className="px-3 py-1 rounded-full glass-soft text-slate-200 text-sm">
-                        {profile.tenure}
-                      </span>
+                        {improvingNotes ? 'Improving…' : 'Improve by AI'}
+                      </button>
                     </div>
-                    {profile.notes && (
-                      <p className="text-sm text-slate-200/80 mt-3 line-clamp-3">
-                        <span className="text-slate-300/60">Notes:</span> {profile.notes}
-                      </p>
-                    )}
+                    <textarea
+                      value={notes}
+                      onChange={(e) => setNotes(e.target.value)}
+                      placeholder="Injuries, goals (fat loss/strength/hypertrophy), equipment limits, days per week, exercises you love/hate, etc."
+                      rows={4}
+                      className="w-full px-4 py-3 glass-soft rounded-xl text-white placeholder:text-slate-300/50 focus:outline-none focus:ring-2 focus:ring-cyan-400/60 resize-y"
+                    />
                   </div>
-                ) : (
-                  <div className="mb-6 rounded-xl border border-yellow-500/30 bg-yellow-500/10 p-4 text-yellow-200">
-                    Please complete your profile first — routine generation is disabled until then.
-                  </div>
-                )}
-
-                <div className="mb-6 glass-soft rounded-xl p-4">
-                  <div className="text-sm font-semibold text-slate-100">AI settings</div>
-                  <p className="text-sm text-slate-200/70 mt-1">
-                    Provider + API key are now in the sidebar under <span className="text-slate-100">Settings</span>.
-                  </p>
                 </div>
 
                 <button
-                  onClick={handleGenerateRoutine}
-                  disabled={generating || !profile}
+                  type="submit"
+                  disabled={loading}
                   className="w-full bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-600 hover:to-blue-700 text-white font-semibold py-3 rounded-xl transition-all transform hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none shadow-lg shadow-cyan-500/10"
                 >
-                  {generating ? 'Generating…' : 'Generate New Routine'}
+                  {loading ? 'Saving...' : 'Save Profile'}
                 </button>
+              </form>
+            </div>
+          )}
 
-                {/* Progress */}
-                {generating && (
-                  <div className="mt-4">
-                    <div className="flex items-center justify-between text-xs text-slate-300/70 mb-2">
-                      <span>{progressStage || 'Working…'}</span>
-                      <span>{Math.min(100, Math.max(0, progressPct))}%</span>
-                    </div>
-                    <div className="h-2 w-full glass-soft rounded-full overflow-hidden">
-                      <div
-                        className="h-full bg-gradient-to-r from-cyan-500 to-blue-600 transition-all duration-300"
-                        style={{ width: `${Math.min(100, Math.max(0, progressPct))}%` }}
-                      />
-                    </div>
-                    <p className="mt-2 text-xs text-slate-300/50">
-                      If you see “Connection error”, your network may be blocking access to the AI provider.
-                    </p>
-                  </div>
-                )}
-              </div>
-
-            {/* Routine Display */}
-                  <div className="2xl:col-span-2 glass rounded-2xl p-6 sm:p-8">
-                <div className="flex items-center justify-between gap-4 mb-6">
-                  <div>
-                    <h3 className="text-2xl font-semibold text-slate-100">Your Weekly Routine</h3>
-                    {routineStats && (
-                      <p className="text-sm text-slate-200/70 mt-1">
-                        {routineStats.days} days • {routineStats.exercises} exercises • {routineStats.avgPerDay} avg/day
+          {/* Routine Tab */}
+          {activeTab === 'routine' && (
+            <div className="space-y-6">
+              <div className="grid grid-cols-1 2xl:grid-cols-3 gap-6">
+                {/* Generation panel */}
+                <div className="2xl:col-span-1 glass rounded-2xl p-6 sm:p-8">
+                  <div className="flex items-start justify-between gap-4 mb-6">
+                    <div>
+                      <h2 className="text-2xl font-semibold text-slate-100">Generate Workout Routine</h2>
+                      <p className="text-sm text-slate-300/70 mt-1">
+                        Uses your profile (including gender and comments) to tailor volume and recovery.
                       </p>
+                    </div>
+                    {profile && (
+                      <button
+                        onClick={() => setActiveTab('profile')}
+                        className="shrink-0 px-3 py-2 rounded-xl glass-soft text-slate-200 hover:text-white transition"
+                      >
+                        Edit profile
+                      </button>
                     )}
                   </div>
-                  {!routine && (
-                    <span className="text-sm text-slate-300/70">Generate to see your plan here</span>
+
+                  {/* Profile summary */}
+                  {profile ? (
+                    <div className="mb-6 glass-soft rounded-xl p-4">
+                      <div className="flex flex-wrap gap-2">
+                        <span className="px-3 py-1 rounded-full bg-cyan-500/10 text-cyan-200 border border-cyan-500/30 text-sm">
+                          {profile.level}
+                        </span>
+                        <span className="px-3 py-1 rounded-full bg-emerald-500/10 text-emerald-200 border border-emerald-500/30 text-sm">
+                          {profile.goal}
+                        </span>
+                        <span className="px-3 py-1 rounded-full glass-soft text-slate-200 text-sm">
+                          {profile.age}y
+                        </span>
+                        <span className="px-3 py-1 rounded-full glass-soft text-slate-200 text-sm">
+                          {profile.weight}kg
+                        </span>
+                        {typeof profile.goal_weight === 'number' && (
+                          <span className="px-3 py-1 rounded-full glass-soft text-slate-200 text-sm">
+                            Goal {profile.goal_weight}kg
+                          </span>
+                        )}
+                        <span className="px-3 py-1 rounded-full glass-soft text-slate-200 text-sm">
+                          {profile.height}cm
+                        </span>
+                        <span className="px-3 py-1 rounded-full glass-soft text-slate-200 text-sm">
+                          {profile.gender}
+                        </span>
+                        <span className="px-3 py-1 rounded-full glass-soft text-slate-200 text-sm">
+                          {profile.tenure}
+                        </span>
+                      </div>
+                      {profile.notes && (
+                        <p className="text-sm text-slate-200/80 mt-3 line-clamp-3">
+                          <span className="text-slate-300/60">Notes:</span> {profile.notes}
+                        </p>
+                      )}
+                    </div>
+                  ) : (
+                    <div className="mb-6 rounded-xl border border-yellow-500/30 bg-yellow-500/10 p-4 text-yellow-200">
+                      Please complete your profile first — routine generation is disabled until then.
+                    </div>
                   )}
-                  {routine && (
-                    <div className="flex items-center gap-2">
-                      <button
-                        type="button"
-                        onClick={handleCopyRoutineJson}
-                        className="px-3 py-2 rounded-xl glass-soft text-slate-100 hover:text-white transition text-sm"
-                      >
-                        Copy JSON
-                      </button>
-                      <button
-                        type="button"
-                        onClick={handleClearRoutine}
-                        className="px-3 py-2 rounded-xl bg-red-500/15 hover:bg-red-500/20 text-red-100 transition text-sm"
-                      >
-                        Clear
-                      </button>
+
+                  <div className="mb-6 glass-soft rounded-xl p-4">
+                    <div className="text-sm font-semibold text-slate-100">AI settings</div>
+                    <p className="text-sm text-slate-200/70 mt-1">
+                      Provider + API key are now in the sidebar under <span className="text-slate-100">Settings</span>.
+                    </p>
+                  </div>
+
+                  <button
+                    onClick={() => handleGenerateRoutine(false)}
+                    disabled={generating || !profile}
+                    className="w-full bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-600 hover:to-blue-700 text-white font-semibold py-3 rounded-xl transition-all transform hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none shadow-lg shadow-cyan-500/10"
+                  >
+                    {generating ? 'Generating…' : 'Generate New Routine'}
+                  </button>
+
+                  {/* Progress */}
+                  {generating && (
+                    <div className="mt-4">
+                      <div className="flex items-center justify-between text-xs text-slate-300/70 mb-2">
+                        <span>{progressStage || 'Working…'}</span>
+                        <span>{Math.min(100, Math.max(0, progressPct))}%</span>
+                      </div>
+                      <div className="h-2 w-full glass-soft rounded-full overflow-hidden">
+                        <div
+                          className="h-full bg-gradient-to-r from-cyan-500 to-blue-600 transition-all duration-300"
+                          style={{ width: `${Math.min(100, Math.max(0, progressPct))}%` }}
+                        />
+                      </div>
+                      <p className="mt-2 text-xs text-slate-300/50">
+                        If you see “Connection error”, your network may be blocking access to the AI provider.
+                      </p>
                     </div>
                   )}
                 </div>
 
-                {!routine ? (
-                  <div className="glass-soft rounded-xl p-6 text-slate-200/80">
-                    <p className="text-sm text-slate-300/70">
-                      Tip: Add injuries/goals in “Additional comments” to get safer, more relevant routines.
-                    </p>
+                {/* Routine Display */}
+                <div className="2xl:col-span-2 glass rounded-2xl p-6 sm:p-8">
+                  <div className="flex items-center justify-between gap-4 mb-6">
+                    <div>
+                      <h3 className="text-2xl font-semibold text-slate-100">Your Weekly Routine</h3>
+                      {routineStats && (
+                        <p className="text-sm text-slate-200/70 mt-1">
+                          {routineStats.days} days • {routineStats.exercises} exercises • {routineStats.avgPerDay} avg/day
+                        </p>
+                      )}
+                    </div>
+                    {!routine && (
+                      <span className="text-sm text-slate-300/70">Generate to see your plan here</span>
+                    )}
+                    {routine && (
+                      <div className="flex items-center gap-2">
+                        <button
+                          type="button"
+                          onClick={handleCopyRoutineJson}
+                          className="px-3 py-2 rounded-xl glass-soft text-slate-100 hover:text-white transition text-sm"
+                        >
+                          Copy JSON
+                        </button>
+                        <button
+                          type="button"
+                          onClick={handleClearRoutine}
+                          className="px-3 py-2 rounded-xl bg-red-500/15 hover:bg-red-500/20 text-red-100 transition text-sm"
+                        >
+                          Clear
+                        </button>
+                      </div>
+                    )}
                   </div>
-                ) : (
-                  <div className="space-y-6">
-                    {/* Today spotlight */}
-                    {todaysPlan && (
-                      <div className="glass-soft rounded-2xl p-5 overflow-hidden">
-                        <div className="h-1 w-full bg-gradient-to-r from-cyan-400 via-sky-400 to-violet-400 opacity-80 rounded-full" />
-                        <div className="mt-4 flex items-start justify-between gap-4">
-                          <div>
-                            <div className="text-sm text-slate-200/70">Today’s workout</div>
-                            <div className="text-lg font-semibold text-slate-100 mt-1">
-                              {todaysPlan.day.day}
+
+                  {!routine ? (
+                    <div className="glass-soft rounded-xl p-6 text-slate-200/80">
+                      <p className="text-sm text-slate-300/70">
+                        Tip: Add injuries/goals in “Additional comments” to get safer, more relevant routines.
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="space-y-6">
+                      {/* Today spotlight */}
+                      {todaysPlan && (
+                        <div className="glass-soft rounded-2xl p-5 overflow-hidden">
+                          <div className="h-1 w-full bg-gradient-to-r from-cyan-400 via-sky-400 to-violet-400 opacity-80 rounded-full" />
+                          <div className="mt-4 flex items-start justify-between gap-4">
+                            <div>
+                              <div className="text-sm text-slate-200/70">Today’s workout</div>
+                              <div className="text-lg font-semibold text-slate-100 mt-1">
+                                {todaysPlan.day.day}
+                              </div>
+                              <div className="mt-2 text-sm text-slate-200/70">
+                                {todaysPlan.day.exercises.length} exercises
+                              </div>
                             </div>
-                            <div className="mt-2 text-sm text-slate-200/70">
-                              {todaysPlan.day.exercises.length} exercises
+                            <button
+                              type="button"
+                              onClick={handleJumpToToday}
+                              className="px-3 py-2 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 text-white text-sm font-semibold shadow-lg shadow-cyan-500/10"
+                            >
+                              Jump to day
+                            </button>
+                          </div>
+                          <div className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-3">
+                            {todaysPlan.day.exercises.slice(0, 3).map((ex, i) => (
+                              <div key={i} className="glass-soft rounded-xl p-3">
+                                <div className="text-sm font-semibold text-slate-100 line-clamp-1">{ex.name}</div>
+                                <div className="text-xs text-slate-200/70 mt-1 line-clamp-1">{ex.sets_reps}</div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Save bar */}
+                      <div className="glass-soft rounded-2xl p-4">
+                        <div className="flex flex-col md:flex-row gap-3 md:items-center md:justify-between">
+                          <div className="flex-1 flex gap-2">
+                            <input
+                              value={saveNameDraft}
+                              onChange={(e) => setSaveNameDraft(e.target.value)}
+                              placeholder="Name this routine to save it…"
+                              className="flex-1 px-3 py-2 glass-soft rounded-xl text-sm text-white placeholder:text-slate-300/50 focus:outline-none focus:ring-2 focus:ring-cyan-400/60"
+                            />
+                            <button
+                              type="button"
+                              onClick={handleSaveCurrentRoutine}
+                              className="px-4 py-2 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 text-white text-sm font-semibold"
+                            >
+                              Save to Library
+                            </button>
+                          </div>
+                          <div className="text-xs text-slate-200/60">
+                            Saved locally • {savedRoutines.length}/25 stored
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Progress Indicator */}
+                      <div className="glass-soft rounded-2xl p-5">
+                        <div className="flex items-center justify-between mb-3">
+                          <div>
+                            <div className="text-sm font-semibold text-slate-100">Week {currentWeekNumber} Progress</div>
+                            <div className="text-xs text-slate-200/60 mt-1">
+                              {(() => {
+                                let total = 0
+                                let completed = 0
+                                routine.days.forEach((day, dIdx) => {
+                                  day.exercises.forEach((_, eIdx) => {
+                                    total++
+                                    if (exerciseCompletions.get(`${dIdx}-${eIdx}`)) completed++
+                                  })
+                                })
+                                const percentage = total > 0 ? Math.round((completed / total) * 100) : 0
+                                return `${completed}/${total} exercises completed (${percentage}%)`
+                              })()}
                             </div>
                           </div>
                           <button
-                            type="button"
-                            onClick={handleJumpToToday}
-                            className="px-3 py-2 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 text-white text-sm font-semibold shadow-lg shadow-cyan-500/10"
+                            onClick={async () => {
+                              // Don't update week number immediately
+                              // setCurrentWeekNumber(prev => prev + 1)
+                              await handleGenerateRoutine(true) // Pass true to indicate "next week"
+                            }}
+                            disabled={!currentRoutineId || generating}
+                            className="px-4 py-2 rounded-xl bg-gradient-to-r from-violet-500 to-purple-600 text-white text-sm font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
                           >
-                            Jump to day
+                            Generate Week {currentWeekNumber + 1}
                           </button>
                         </div>
-                        <div className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-3">
-                          {todaysPlan.day.exercises.slice(0, 3).map((ex, i) => (
-                            <div key={i} className="glass-soft rounded-xl p-3">
-                              <div className="text-sm font-semibold text-slate-100 line-clamp-1">{ex.name}</div>
-                              <div className="text-xs text-slate-200/70 mt-1 line-clamp-1">{ex.sets_reps}</div>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Save bar */}
-                    <div className="glass-soft rounded-2xl p-4">
-                      <div className="flex flex-col md:flex-row gap-3 md:items-center md:justify-between">
-                        <div className="flex-1 flex gap-2">
-                          <input
-                            value={saveNameDraft}
-                            onChange={(e) => setSaveNameDraft(e.target.value)}
-                            placeholder="Name this routine to save it…"
-                            className="flex-1 px-3 py-2 glass-soft rounded-xl text-sm text-white placeholder:text-slate-300/50 focus:outline-none focus:ring-2 focus:ring-cyan-400/60"
+                        <div className="w-full bg-slate-700 rounded-full h-2.5">
+                          <div
+                            className="bg-gradient-to-r from-emerald-500 to-cyan-500 h-2.5 rounded-full transition-all"
+                            style={{
+                              width: `${(() => {
+                                let total = 0
+                                let completed = 0
+                                routine.days.forEach((day, dIdx) => {
+                                  day.exercises.forEach((_, eIdx) => {
+                                    total++
+                                    if (exerciseCompletions.get(`${dIdx}-${eIdx}`)) completed++
+                                  })
+                                })
+                                return total > 0 ? Math.round((completed / total) * 100) : 0
+                              })()}%`
+                            }}
                           />
-                          <button
-                            type="button"
-                            onClick={handleSaveCurrentRoutine}
-                            className="px-4 py-2 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 text-white text-sm font-semibold"
-                          >
-                            Save to Library
-                          </button>
-                        </div>
-                        <div className="text-xs text-slate-200/60">
-                          Saved locally • {savedRoutines.length}/25 stored
                         </div>
                       </div>
+
+                      {routine.days.map((day, dayIndex) => (
+                        <div id={`day-${dayIndex}`} key={dayIndex} className="glass-soft rounded-2xl p-5">
+                          <h4 className="text-lg font-semibold text-slate-100 mb-4">{day.day}</h4>
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            {day.exercises.map((exercise, exIndex) => (
+                              <div
+                                key={exIndex}
+                                className="glass-soft rounded-xl p-4 hover:ring-1 hover:ring-cyan-400/40 transition"
+                              >
+                                {(() => {
+                                  const urls = getExerciseYouTubeUrls(exercise).slice(0, 3)
+                                  const ytId = urls[0] ? getYouTubeId(urls[0]) : null
+                                  const points = getExerciseTutorialPoints(exercise)
+
+                                  return (
+                                    <>
+                                      {ytId && <YouTubeHoverPreview videoId={ytId} title={exercise.name} />}
+                                      <div className="flex items-start gap-3">
+                                        <ExerciseCheckbox
+                                          routineId={currentRoutineId}
+                                          dayIndex={dayIndex}
+                                          exerciseIndex={exIndex}
+                                          exerciseName={exercise.name}
+                                          initialCompleted={exerciseCompletions.get(`${dayIndex}-${exIndex}`) || false}
+                                          onEnsureRoutineSaved={() => saveRoutineToDatabase(routine)}
+                                          onToggle={(completed) => {
+                                            setExerciseCompletions(prev => {
+                                              const next = new Map(prev)
+                                              next.set(`${dayIndex}-${exIndex}`, completed)
+                                              return next
+                                            })
+                                          }}
+                                        />
+                                        <div className="flex-1">
+                                          <div className="flex justify-between items-start gap-3 mb-2">
+                                            <h5 className="text-base font-semibold text-cyan-300">{exercise.name}</h5>
+                                            <div className="flex gap-2">
+                                              {urls[0] && (
+                                                <a
+                                                  href={urls[0]}
+                                                  target="_blank"
+                                                  rel="noopener noreferrer"
+                                                  className="text-xs px-3 py-1 rounded-full bg-red-600/80 hover:bg-red-600 text-white transition flex items-center gap-1"
+                                                >
+                                                  <span>Watch</span>
+                                                  <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 24 24">
+                                                    <path d="M10 15l5.19-3L10 9v6m11.56-7.83c.13.47.22 1.1.28 1.9.07.8.1 1.49.1 2.09L22 12c0 .61-.03 1.3-.1 2.1-.06.8-.15 1.43-.28 1.9-.13.47-.38.85-.73 1.14-.35.29-.85.46-1.5.53-.65.07-1.46.12-2.43.15-1 .03-1.92.05-2.75.05L12 18c-.83 0-1.75-.02-2.75-.05-.97-.03-1.78-.08-2.43-.15-.65-.07-1.15-.24-1.5-.53-.35-.29-.6-.67-.73-1.14-.13-.47-.22-1.1-.28-1.9-.06-.8-.09-1.49-.09-2.09L4 12c0-.61.03-1.3.09-2.1.06-.8.15-1.43.28-1.9.13-.47.38-.85.73-1.14.35-.29.85-.46 1.5-.53.65-.07 1.46-.12 2.43-.15 1-.03 1.92-.05 2.75-.05L12 6c.83 0 1.75.02 2.75.05.97.03 1.78.08 2.43.15.65.07 1.15.24 1.5.53.35.29.6.67.73 1.14z" />
+                                                  </svg>
+                                                </a>
+                                              )}
+                                              {exercise.wikihow_url && (
+                                                <a
+                                                  href={exercise.wikihow_url}
+                                                  target="_blank"
+                                                  rel="noopener noreferrer"
+                                                  className="text-xs px-3 py-1 rounded-full bg-blue-600/80 hover:bg-blue-600 text-white transition flex items-center gap-1"
+                                                >
+                                                  <span>WikiHow</span>
+                                                  <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                                                  </svg>
+                                                </a>
+                                              )}
+                                            </div>
+                                          </div>
+                                          <p className="text-sm text-slate-200/80 mb-3">{exercise.sets_reps}</p>
+
+                                          {points.length > 0 && (
+                                            <div className="mb-3">
+                                              <div className="text-xs font-semibold text-slate-100 mb-2">Tutorial (points)</div>
+                                              <ul className="list-disc pl-5 space-y-1 text-sm text-slate-200/80">
+                                                {points.slice(0, 5).map((p, i) => (
+                                                  <li key={i}>{p}</li>
+                                                ))}
+                                              </ul>
+                                            </div>
+                                          )}
+
+                                          {urls.length > 0 && (
+                                            <div>
+                                              <div className="text-xs font-semibold text-slate-100 mb-2">Video tutorials</div>
+                                              <div className="flex flex-wrap gap-2">
+                                                {urls.slice(0, 3).map((u, i) => (
+                                                  <a
+                                                    key={i}
+                                                    href={u}
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                    className="text-xs px-3 py-2 rounded-xl glass-menu text-slate-100 hover:text-white transition"
+                                                  >
+                                                    Tutorial {i + 1}
+                                                  </a>
+                                                ))}
+                                              </div>
+                                            </div>
+                                          )}
+                                        </div>
+                                      </div>
+                                    </>
+                                  )
+                                })()}
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      ))}
                     </div>
-
-                    {routine.days.map((day, dayIndex) => (
-                      <div id={`day-${dayIndex}`} key={dayIndex} className="glass-soft rounded-2xl p-5">
-                        <h4 className="text-lg font-semibold text-slate-100 mb-4">{day.day}</h4>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                          {day.exercises.map((exercise, exIndex) => (
-                            <div
-                              key={exIndex}
-                              className="glass-soft rounded-xl p-4 hover:ring-1 hover:ring-cyan-400/40 transition"
-                            >
-                              {(() => {
-                                const urls = getExerciseYouTubeUrls(exercise).slice(0, 3)
-                                const ytId = urls[0] ? getYouTubeId(urls[0]) : null
-                                const points = getExerciseTutorialPoints(exercise)
-
-                                return (
-                                  <>
-                                    {ytId && <YouTubeHoverPreview videoId={ytId} title={exercise.name} />}
-                                      <div className="flex justify-between items-start gap-3 mb-2">
-                                        <h5 className="text-base font-semibold text-cyan-300">{exercise.name}</h5>
-                                        <div className="flex gap-2">
-                                          {urls[0] && (
-                                            <a
-                                              href={urls[0]}
-                                              target="_blank"
-                                              rel="noopener noreferrer"
-                                              className="text-xs px-3 py-1 rounded-full bg-red-600/80 hover:bg-red-600 text-white transition flex items-center gap-1"
-                                            >
-                                              <span>Watch</span>
-                                              <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 24 24">
-                                                <path d="M10 15l5.19-3L10 9v6m11.56-7.83c.13.47.22 1.1.28 1.9.07.8.1 1.49.1 2.09L22 12c0 .61-.03 1.3-.1 2.1-.06.8-.15 1.43-.28 1.9-.13.47-.38.85-.73 1.14-.35.29-.85.46-1.5.53-.65.07-1.46.12-2.43.15-1 .03-1.92.05-2.75.05L12 18c-.83 0-1.75-.02-2.75-.05-.97-.03-1.78-.08-2.43-.15-.65-.07-1.15-.24-1.5-.53-.35-.29-.6-.67-.73-1.14-.13-.47-.22-1.1-.28-1.9-.06-.8-.09-1.49-.09-2.09L4 12c0-.61.03-1.3.09-2.1.06-.8.15-1.43.28-1.9.13-.47.38-.85.73-1.14.35-.29.85-.46 1.5-.53.65-.07 1.46-.12 2.43-.15 1-.03 1.92-.05 2.75-.05L12 6c.83 0 1.75.02 2.75.05.97.03 1.78.08 2.43.15.65.07 1.15.24 1.5.53.35.29.6.67.73 1.14z"/>
-                                              </svg>
-                                            </a>
-                                          )}
-                                          {exercise.wikihow_url && (
-                                            <a
-                                              href={exercise.wikihow_url}
-                                              target="_blank"
-                                              rel="noopener noreferrer"
-                                              className="text-xs px-3 py-1 rounded-full bg-blue-600/80 hover:bg-blue-600 text-white transition flex items-center gap-1"
-                                            >
-                                              <span>WikiHow</span>
-                                              <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-                                              </svg>
-                                            </a>
-                                          )}
-                                        </div>
-                                      </div>
-
-                                    {points.length > 0 && (
-                                      <div className="mb-3">
-                                        <div className="text-xs font-semibold text-slate-100 mb-2">Tutorial (points)</div>
-                                        <ul className="list-disc pl-5 space-y-1 text-sm text-slate-200/80">
-                                          {points.slice(0, 5).map((p, i) => (
-                                            <li key={i}>{p}</li>
-                                          ))}
-                                        </ul>
-                                      </div>
-                                    )}
-
-                                    {urls.length > 0 && (
-                                      <div>
-                                        <div className="text-xs font-semibold text-slate-100 mb-2">Video tutorials</div>
-                                        <div className="flex flex-wrap gap-2">
-                                          {urls.slice(0, 3).map((u, i) => (
-                                            <a
-                                              key={i}
-                                              href={u}
-                                              target="_blank"
-                                              rel="noopener noreferrer"
-                                              className="text-xs px-3 py-2 rounded-xl glass-menu text-slate-100 hover:text-white transition"
-                                            >
-                                              Tutorial {i + 1}
-                                            </a>
-                                          ))}
-                                        </div>
-                                      </div>
-                                    )}
-                                  </>
-                                )
-                              })()}
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
+                  )}
+                </div>
               </div>
             </div>
-          </div>
-        )}
-          </main>
+          )}
+        </main>
       </div>
     </div>
   )

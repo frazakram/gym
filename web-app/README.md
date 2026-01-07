@@ -1,4 +1,4 @@
-# GymBro AI - Next.js Web Application
+# Gym Bro - Next.js Web Application
 
 AI-powered gym routine generator built with Next.js 14, TypeScript, and Tailwind CSS. Deployed on Vercel.
 

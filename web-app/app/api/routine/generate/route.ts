@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { generateRoutine } from '@/lib/ai-agent';
 import { getSession } from '@/lib/auth';
 import { generateRoutineOpenAI } from '@/lib/openai-routine';
+import { buildHistoricalContext, formatHistoricalContextForPrompt } from '@/lib/historical-context';
+
 
 export async function POST(request: NextRequest) {
   try {
@@ -75,6 +77,18 @@ export async function POST(request: NextRequest) {
         ? ftInToCm(height_ft, Math.max(0, Math.min(11.9, height_in)))
         : height;
 
+    // Build historical context for progressive routines
+    let historicalContextStr: string | undefined;
+    try {
+      const historicalContext = await buildHistoricalContext(session.userId);
+      if (historicalContext) {
+        historicalContextStr = formatHistoricalContextForPrompt(historicalContext);
+      }
+    } catch (error) {
+      console.warn('Failed to build historical context:', error);
+      // Continue without historical context
+    }
+
     const input = {
       age,
       weight,
@@ -109,8 +123,8 @@ export async function POST(request: NextRequest) {
 
             const routine =
               provider === 'OpenAI'
-                ? await generateRoutineOpenAI(input)
-                : await generateRoutine(input);
+                ? await generateRoutineOpenAI(input, historicalContextStr)
+                : await generateRoutine(input, historicalContextStr);
 
             clearInterval(tick);
             controller.enqueue(sse('progress', { pct: 100, stage: 'Done' }));
@@ -137,8 +151,8 @@ export async function POST(request: NextRequest) {
     // Non-streaming mode
     const routine =
       provider === 'OpenAI'
-        ? await generateRoutineOpenAI(input)
-        : await generateRoutine(input);
+        ? await generateRoutineOpenAI(input, historicalContextStr)
+        : await generateRoutine(input, historicalContextStr);
 
     if (!routine) {
       return NextResponse.json(

@@ -12,7 +12,7 @@ type Props = {
 
 export function BrandLogo({
   src,
-  alt = 'GymBro AI logo',
+  alt = 'Gym Bro logo',
   size = 44,
   className = '',
 }: Props) {
