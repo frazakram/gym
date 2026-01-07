@@ -21,7 +21,7 @@ const WeeklyRoutineSchema = z.object({
   days: z.array(DayRoutineSchema).describe("Complete weekly routine with all days"),
 });
 
-export async function generateRoutine(input: RoutineGenerationInput): Promise<WeeklyRoutine | null> {
+export async function generateRoutine(input: RoutineGenerationInput, historicalContext?: string): Promise<WeeklyRoutine | null> {
 
   let model;
   // Defensive normalization: height should be cm. If it looks like feet (<= 8), convert to cm.
@@ -66,7 +66,7 @@ Client Profile (use ALL of these when deciding exercise selection, volume, inten
 ${typeof input.goal_weight === 'number' ? `- Goal weight: ${input.goal_weight} kg` : ''}
 - Experience level: ${input.level}
 - Training history/duration: ${input.tenure}
-${input.notes && input.notes.trim() ? `- Additional comments/constraints: ${input.notes.trim()}` : ''}
+${input.notes && input.notes.trim() ? `- Additional comments/constraints: ${input.notes.trim()}` : ''}${historicalContext ? historicalContext : ''}
 
 Requirements (very important):
 - Choose a split appropriate for the client's goal + level (e.g., 3–6 training days/week + rest days as needed).
