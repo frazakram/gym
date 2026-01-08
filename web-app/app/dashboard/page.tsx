@@ -66,6 +66,10 @@ export default function DashboardPage() {
   const [saveNameDraft, setSaveNameDraft] = useState('')
   const [activeSavedId, setActiveSavedId] = useState<string | null>(null)
 
+  // Mobile UX state
+  const [showGenerator, setShowGenerator] = useState(true)
+  const [expandedDay, setExpandedDay] = useState<number | null>(null)
+
   useEffect(() => {
     try {
       const raw = localStorage.getItem(ROUTINE_LIBRARY_KEY)
@@ -269,7 +273,6 @@ export default function DashboardPage() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          userId: currentUserId,
           weekNumber: currentWeekNumber,
           routine: routineData,
         }),
@@ -486,9 +489,9 @@ export default function DashboardPage() {
     }
   }, [router])
 
-  const fetchLatestRoutine = useCallback(async (userIdParam: number) => {
+  const fetchLatestRoutine = useCallback(async () => {
     try {
-      const res = await fetch(`/api/routines?userId=${userIdParam}`)
+      const res = await fetch(`/api/routines`)
       const { routine } = await res.json()
       if (routine) {
         setRoutine(routine.routine_json)
@@ -506,6 +509,16 @@ export default function DashboardPage() {
         })
         setExerciseCompletions(map)
         setActiveTab('routine')
+
+        // Mobile UX: Auto-collapse generator if we have a routine
+        if (window.innerWidth < 1280) {
+          setShowGenerator(false)
+        }
+
+        // Auto-expand today's day
+        const dayIdx = (new Date().getDay() + 6) % 7
+        const safeIdx = Math.min(dayIdx, routine.routine_json.days.length - 1)
+        setExpandedDay(safeIdx)
       }
     } catch (err: unknown) {
       console.error('Error fetching latest routine:', err)
@@ -1133,16 +1146,22 @@ export default function DashboardPage() {
               <div className="grid grid-cols-1 2xl:grid-cols-3 gap-6">
                 {/* Generation panel */}
                 <div className="2xl:col-span-1 glass rounded-2xl p-6 sm:p-8">
-                  <div className="flex items-start justify-between gap-4 mb-6">
-                    <div>
-                      <h2 className="text-2xl font-semibold text-slate-100">Generate Workout Routine</h2>
-                      <p className="text-sm text-slate-300/70 mt-1">
-                        Uses your profile (including gender and comments) to tailor volume and recovery.
-                      </p>
+                  <div
+                    className="flex items-center justify-between gap-4 cursor-pointer sm:cursor-default"
+                    onClick={() => setShowGenerator(!showGenerator)}
+                  >
+                    <div className="flex items-center gap-2">
+                      <h2 className="text-2xl font-semibold text-slate-100">Generate Routine</h2>
+                      <span className={`sm:hidden text-slate-400 transition-transform ${showGenerator ? 'rotate-180' : ''}`}>
+                        ▼
+                      </span>
                     </div>
-                    {profile && (
+                    {profile && showGenerator && (
                       <button
-                        onClick={() => setActiveTab('profile')}
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          setActiveTab('profile')
+                        }}
                         className="shrink-0 px-3 py-2 rounded-xl glass-soft text-slate-200 hover:text-white transition"
                       >
                         Edit profile
@@ -1150,87 +1169,95 @@ export default function DashboardPage() {
                     )}
                   </div>
 
-                  {/* Profile summary */}
-                  {profile ? (
-                    <div className="mb-6 glass-soft rounded-xl p-4">
-                      <div className="flex flex-wrap gap-2">
-                        <span className="px-3 py-1 rounded-full bg-cyan-500/10 text-cyan-200 border border-cyan-500/30 text-sm">
-                          {profile.level}
-                        </span>
-                        <span className="px-3 py-1 rounded-full bg-emerald-500/10 text-emerald-200 border border-emerald-500/30 text-sm">
-                          {profile.goal}
-                        </span>
-                        <span className="px-3 py-1 rounded-full glass-soft text-slate-200 text-sm">
-                          {profile.age}y
-                        </span>
-                        <span className="px-3 py-1 rounded-full glass-soft text-slate-200 text-sm">
-                          {profile.weight}kg
-                        </span>
-                        {typeof profile.goal_weight === 'number' && (
-                          <span className="px-3 py-1 rounded-full glass-soft text-slate-200 text-sm">
-                            Goal {profile.goal_weight}kg
-                          </span>
-                        )}
-                        <span className="px-3 py-1 rounded-full glass-soft text-slate-200 text-sm">
-                          {profile.height}cm
-                        </span>
-                        <span className="px-3 py-1 rounded-full glass-soft text-slate-200 text-sm">
-                          {profile.gender}
-                        </span>
-                        <span className="px-3 py-1 rounded-full glass-soft text-slate-200 text-sm">
-                          {profile.tenure}
-                        </span>
-                      </div>
-                      {profile.notes && (
-                        <p className="text-sm text-slate-200/80 mt-3 line-clamp-3">
-                          <span className="text-slate-300/60">Notes:</span> {profile.notes}
-                        </p>
-                      )}
-                    </div>
-                  ) : (
-                    <div className="mb-6 rounded-xl border border-yellow-500/30 bg-yellow-500/10 p-4 text-yellow-200">
-                      Please complete your profile first — routine generation is disabled until then.
-                    </div>
-                  )}
-
-                  <div className="mb-6 glass-soft rounded-xl p-4">
-                    <div className="text-sm font-semibold text-slate-100">AI settings</div>
-                    <p className="text-sm text-slate-200/70 mt-1">
-                      Provider + API key are now in the sidebar under <span className="text-slate-100">Settings</span>.
-                    </p>
-                  </div>
-
-                  <button
-                    onClick={() => handleGenerateRoutine(false)}
-                    disabled={generating || !profile}
-                    className="w-full bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-600 hover:to-blue-700 text-white font-semibold py-3 rounded-xl transition-all transform hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none shadow-lg shadow-cyan-500/10"
-                  >
-                    {generating ? 'Generating…' : 'Generate New Routine'}
-                  </button>
-
-                  {/* Progress */}
-                  {generating && (
-                    <div className="mt-4">
-                      <div className="flex items-center justify-between text-xs text-slate-300/70 mb-2">
-                        <span>{progressStage || 'Working…'}</span>
-                        <span>{Math.min(100, Math.max(0, progressPct))}%</span>
-                      </div>
-                      <div className="h-2 w-full glass-soft rounded-full overflow-hidden">
-                        <div
-                          className="h-full bg-gradient-to-r from-cyan-500 to-blue-600 transition-all duration-300"
-                          style={{ width: `${Math.min(100, Math.max(0, progressPct))}%` }}
-                        />
-                      </div>
-                      <p className="mt-2 text-xs text-slate-300/50">
-                        If you see “Connection error”, your network may be blocking access to the AI provider.
+                  {showGenerator && (
+                    <div className="mt-6 animation-fade-in">
+                      <p className="text-sm text-slate-300/70 mb-6">
+                        Uses your profile (including gender and comments) to tailor volume and recovery.
                       </p>
+
+                      {/* Profile summary */}
+                      {profile ? (
+                        <div className="mb-6 glass-soft rounded-xl p-4">
+                          <div className="flex flex-wrap gap-2">
+                            <span className="px-3 py-1 rounded-full bg-cyan-500/10 text-cyan-200 border border-cyan-500/30 text-sm">
+                              {profile.level}
+                            </span>
+                            <span className="px-3 py-1 rounded-full bg-emerald-500/10 text-emerald-200 border border-emerald-500/30 text-sm">
+                              {profile.goal}
+                            </span>
+                            <span className="px-3 py-1 rounded-full glass-soft text-slate-200 text-sm">
+                              {profile.age}y
+                            </span>
+                            <span className="px-3 py-1 rounded-full glass-soft text-slate-200 text-sm">
+                              {profile.weight}kg
+                            </span>
+                            {typeof profile.goal_weight === 'number' && (
+                              <span className="px-3 py-1 rounded-full glass-soft text-slate-200 text-sm">
+                                Goal {profile.goal_weight}kg
+                              </span>
+                            )}
+                            <span className="px-3 py-1 rounded-full glass-soft text-slate-200 text-sm">
+                              {profile.height}cm
+                            </span>
+                            <span className="px-3 py-1 rounded-full glass-soft text-slate-200 text-sm">
+                              {profile.gender}
+                            </span>
+                            <span className="px-3 py-1 rounded-full glass-soft text-slate-200 text-sm">
+                              {profile.tenure}
+                            </span>
+                          </div>
+                          {profile.notes && (
+                            <p className="text-sm text-slate-200/80 mt-3 line-clamp-3">
+                              <span className="text-slate-300/60">Notes:</span> {profile.notes}
+                            </p>
+                          )}
+                        </div>
+                      ) : (
+                        <div className="mb-6 rounded-xl border border-yellow-500/30 bg-yellow-500/10 p-4 text-yellow-200">
+                          Please complete your profile first — routine generation is disabled until then.
+                        </div>
+                      )}
+
+                      <div className="mb-6 glass-soft rounded-xl p-4">
+                        <div className="text-sm font-semibold text-slate-100">AI settings</div>
+                        <p className="text-sm text-slate-200/70 mt-1">
+                          Provider + API key are now in the sidebar under <span className="text-slate-100">Settings</span>.
+                        </p>
+                      </div>
+
+                      <button
+                        onClick={() => handleGenerateRoutine(false)}
+                        disabled={generating || !profile}
+                        className="w-full bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-600 hover:to-blue-700 text-white font-semibold py-3 rounded-xl transition-all transform hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none shadow-lg shadow-cyan-500/10"
+                      >
+                        {generating ? 'Generating…' : 'Generate New Routine'}
+                      </button>
+
+                      {/* Progress */}
+                      {generating && (
+                        <div className="mt-4">
+                          <div className="flex items-center justify-between text-xs text-slate-300/70 mb-2">
+                            <span>{progressStage || 'Working…'}</span>
+                            <span>{Math.min(100, Math.max(0, progressPct))}%</span>
+                          </div>
+                          <div className="h-2 w-full glass-soft rounded-full overflow-hidden">
+                            <div
+                              className="h-full bg-gradient-to-r from-cyan-500 to-blue-600 transition-all duration-300"
+                              style={{ width: `${Math.min(100, Math.max(0, progressPct))}%` }}
+                            />
+                          </div>
+                          <p className="mt-2 text-xs text-slate-300/50">
+                            If you see “Connection error”, your network may be blocking access to the AI provider.
+                          </p>
+                        </div>
+                      )}
                     </div>
                   )}
                 </div>
 
                 {/* Routine Display */}
                 <div className="2xl:col-span-2 glass rounded-2xl p-6 sm:p-8">
-                  <div className="flex items-center justify-between gap-4 mb-6">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
                     <div>
                       <h3 className="text-2xl font-semibold text-slate-100">Your Weekly Routine</h3>
                       {routineStats && (
@@ -1286,7 +1313,11 @@ export default function DashboardPage() {
                             </div>
                             <button
                               type="button"
-                              onClick={handleJumpToToday}
+                              onClick={() => {
+                                handleJumpToToday()
+                                // Ensure it opens
+                                if (todaysPlan) setExpandedDay(todaysPlan.idx)
+                              }}
                               className="px-3 py-2 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 text-white text-sm font-semibold shadow-lg shadow-cyan-500/10"
                             >
                               Jump to day
@@ -1349,8 +1380,6 @@ export default function DashboardPage() {
                           </div>
                           <button
                             onClick={async () => {
-                              // Don't update week number immediately
-                              // setCurrentWeekNumber(prev => prev + 1)
                               await handleGenerateRoutine(true) // Pass true to indicate "next week"
                             }}
                             disabled={!currentRoutineId || generating}
@@ -1379,112 +1408,148 @@ export default function DashboardPage() {
                         </div>
                       </div>
 
-                      {routine.days.map((day, dayIndex) => (
-                        <div id={`day-${dayIndex}`} key={dayIndex} className="glass-soft rounded-2xl p-5">
-                          <h4 className="text-lg font-semibold text-slate-100 mb-4">{day.day}</h4>
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            {day.exercises.map((exercise, exIndex) => (
-                              <div
-                                key={exIndex}
-                                className="glass-soft rounded-xl p-4 hover:ring-1 hover:ring-cyan-400/40 transition"
-                              >
-                                {(() => {
-                                  const urls = getExerciseYouTubeUrls(exercise).slice(0, 3)
-                                  const ytId = urls[0] ? getYouTubeId(urls[0]) : null
-                                  const points = getExerciseTutorialPoints(exercise)
+                      {/* Days Accordion */}
+                      {routine.days.map((day, dayIndex) => {
+                        const isExpanded = expandedDay === dayIndex
+                        const completedInDay = day.exercises.filter((_, eIdx) => exerciseCompletions.get(`${dayIndex}-${eIdx}`)).length
+                        const totalInDay = day.exercises.length
+                        const dayComplete = totalInDay > 0 && completedInDay === totalInDay
 
-                                  return (
-                                    <>
-                                      {ytId && <YouTubeHoverPreview videoId={ytId} title={exercise.name} />}
-                                      <div className="flex items-start gap-3">
-                                        <ExerciseCheckbox
-                                          routineId={currentRoutineId}
-                                          dayIndex={dayIndex}
-                                          exerciseIndex={exIndex}
-                                          exerciseName={exercise.name}
-                                          initialCompleted={exerciseCompletions.get(`${dayIndex}-${exIndex}`) || false}
-                                          onEnsureRoutineSaved={() => saveRoutineToDatabase(routine)}
-                                          onToggle={(completed) => {
-                                            setExerciseCompletions(prev => {
-                                              const next = new Map(prev)
-                                              next.set(`${dayIndex}-${exIndex}`, completed)
-                                              return next
-                                            })
-                                          }}
-                                        />
-                                        <div className="flex-1">
-                                          <div className="flex justify-between items-start gap-3 mb-2">
-                                            <h5 className="text-base font-semibold text-cyan-300">{exercise.name}</h5>
-                                            <div className="flex gap-2">
-                                              {urls[0] && (
-                                                <a
-                                                  href={urls[0]}
-                                                  target="_blank"
-                                                  rel="noopener noreferrer"
-                                                  className="text-xs px-3 py-1 rounded-full bg-red-600/80 hover:bg-red-600 text-white transition flex items-center gap-1"
-                                                >
-                                                  <span>Watch</span>
-                                                  <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 24 24">
-                                                    <path d="M10 15l5.19-3L10 9v6m11.56-7.83c.13.47.22 1.1.28 1.9.07.8.1 1.49.1 2.09L22 12c0 .61-.03 1.3-.1 2.1-.06.8-.15 1.43-.28 1.9-.13.47-.38.85-.73 1.14-.35.29-.85.46-1.5.53-.65.07-1.46.12-2.43.15-1 .03-1.92.05-2.75.05L12 18c-.83 0-1.75-.02-2.75-.05-.97-.03-1.78-.08-2.43-.15-.65-.07-1.15-.24-1.5-.53-.35-.29-.6-.67-.73-1.14-.13-.47-.22-1.1-.28-1.9-.06-.8-.09-1.49-.09-2.09L4 12c0-.61.03-1.3.09-2.1.06-.8.15-1.43.28-1.9.13-.47.38-.85.73-1.14.35-.29.85-.46 1.5-.53.65-.07 1.46-.12 2.43-.15 1-.03 1.92-.05 2.75-.05L12 6c.83 0 1.75.02 2.75.05.97.03 1.78.08 2.43.15.65.07 1.15.24 1.5.53.35.29.6.67.73 1.14z" />
-                                                  </svg>
-                                                </a>
-                                              )}
-                                              {exercise.wikihow_url && (
-                                                <a
-                                                  href={exercise.wikihow_url}
-                                                  target="_blank"
-                                                  rel="noopener noreferrer"
-                                                  className="text-xs px-3 py-1 rounded-full bg-blue-600/80 hover:bg-blue-600 text-white transition flex items-center gap-1"
-                                                >
-                                                  <span>WikiHow</span>
-                                                  <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-                                                  </svg>
-                                                </a>
-                                              )}
-                                            </div>
-                                          </div>
-                                          <p className="text-sm text-slate-200/80 mb-3">{exercise.sets_reps}</p>
+                        return (
+                          <div
+                            id={`day-${dayIndex}`}
+                            key={dayIndex}
+                            className={`glass-soft rounded-2xl overflow-hidden transition-all duration-300 ${isExpanded ? 'ring-1 ring-cyan-500/30 bg-white/5' : ''}`}
+                          >
+                            <button
+                              type="button"
+                              onClick={() => setExpandedDay(isExpanded ? null : dayIndex)}
+                              className="w-full px-5 py-4 flex items-center justify-between text-left hover:bg-white/5 transition"
+                            >
+                              <div>
+                                <h4 className={`text-lg font-semibold transition ${isExpanded ? 'text-cyan-200' : 'text-slate-100'}`}>
+                                  {day.day}
+                                </h4>
+                                <p className="text-xs text-slate-400 mt-0.5">
+                                  {completedInDay}/{totalInDay} completed
+                                  {dayComplete && <span className="ml-2 text-emerald-400">✓ Done</span>}
+                                </p>
+                              </div>
+                              <span className={`text-slate-400 transition-transform duration-300 ${isExpanded ? 'rotate-180' : ''}`}>
+                                ▼
+                              </span>
+                            </button>
 
-                                          {points.length > 0 && (
-                                            <div className="mb-3">
-                                              <div className="text-xs font-semibold text-slate-100 mb-2">Tutorial (points)</div>
-                                              <ul className="list-disc pl-5 space-y-1 text-sm text-slate-200/80">
-                                                {points.slice(0, 5).map((p, i) => (
-                                                  <li key={i}>{p}</li>
-                                                ))}
-                                              </ul>
-                                            </div>
-                                          )}
+                            {isExpanded && (
+                              <div className="px-5 pb-5 border-t border-white/5 pt-4 animation-fade-in">
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                  {day.exercises.map((exercise, exIndex) => (
+                                    <div
+                                      key={exIndex}
+                                      className="glass-soft rounded-xl p-4 hover:ring-1 hover:ring-cyan-400/40 transition"
+                                    >
+                                      {(() => {
+                                        const urls = getExerciseYouTubeUrls(exercise).slice(0, 3)
+                                        const ytId = urls[0] ? getYouTubeId(urls[0]) : null
+                                        const points = getExerciseTutorialPoints(exercise)
 
-                                          {urls.length > 0 && (
-                                            <div>
-                                              <div className="text-xs font-semibold text-slate-100 mb-2">Video tutorials</div>
-                                              <div className="flex flex-wrap gap-2">
-                                                {urls.slice(0, 3).map((u, i) => (
-                                                  <a
-                                                    key={i}
-                                                    href={u}
-                                                    target="_blank"
-                                                    rel="noopener noreferrer"
-                                                    className="text-xs px-3 py-2 rounded-xl glass-menu text-slate-100 hover:text-white transition"
-                                                  >
-                                                    Tutorial {i + 1}
-                                                  </a>
-                                                ))}
+                                        return (
+                                          <>
+                                            {ytId && <YouTubeHoverPreview videoId={ytId} title={exercise.name} />}
+                                            <div className="flex items-start gap-3">
+                                              <ExerciseCheckbox
+                                                routineId={currentRoutineId}
+                                                dayIndex={dayIndex}
+                                                exerciseIndex={exIndex}
+                                                exerciseName={exercise.name}
+                                                initialCompleted={exerciseCompletions.get(`${dayIndex}-${exIndex}`) || false}
+                                                onEnsureRoutineSaved={() => saveRoutineToDatabase(routine)}
+                                                onToggle={(completed) => {
+                                                  setExerciseCompletions(prev => {
+                                                    const next = new Map(prev)
+                                                    next.set(`${dayIndex}-${exIndex}`, completed)
+                                                    return next
+                                                  })
+                                                }}
+                                              />
+                                              <div className="flex-1">
+                                                <div className="flex justify-between items-start gap-3 mb-2">
+                                                  <h5 className={`text-base font-semibold transition ${exerciseCompletions.get(`${dayIndex}-${exIndex}`) ? 'text-emerald-300 line-through opacity-70' : 'text-cyan-300'}`}>
+                                                    {exercise.name}
+                                                  </h5>
+                                                  <div className="flex gap-2">
+                                                    {urls[0] && (
+                                                      <a
+                                                        href={urls[0]}
+                                                        target="_blank"
+                                                        rel="noopener noreferrer"
+                                                        className="text-xs px-3 py-1 rounded-full bg-red-600/80 hover:bg-red-600 text-white transition flex items-center gap-1"
+                                                      >
+                                                        <span>Watch</span>
+                                                        <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 24 24">
+                                                          <path d="M10 15l5.19-3L10 9v6m11.56-7.83c.13.47.22 1.1.28 1.9.07.8.1 1.49.1 2.09L22 12c0 .61-.03 1.3-.1 2.1-.06.8-.15 1.43-.28 1.9-.13.47-.38.85-.73 1.14-.35.29-.85.46-1.5.53-.65.07-1.46.12-2.43.15-1 .03-1.92.05-2.75.05L12 18c-.83 0-1.75-.02-2.75-.05-.97-.03-1.78-.08-2.43-.15-.65-.07-1.15-.24-1.5-.53-.35-.29-.6-.67-.73-1.14-.13-.47-.22-1.1-.28-1.9-.06-.8-.09-1.49-.09-2.09L4 12c0-.61.03-1.3.09-2.1.06-.8.15-1.43.28-1.9.13-.47.38-.85.73-1.14.35-.29.85-.46 1.5-.53.65-.07 1.46-.12 2.43-.15 1-.03 1.92-.05 2.75-.05L12 6c.83 0 1.75.02 2.75.05.97.03 1.78.08 2.43.15.65.07 1.15.24 1.5.53.35.29.6.67.73 1.14z" />
+                                                        </svg>
+                                                      </a>
+                                                    )}
+                                                    {exercise.wikihow_url && (
+                                                      <a
+                                                        href={exercise.wikihow_url}
+                                                        target="_blank"
+                                                        rel="noopener noreferrer"
+                                                        className="text-xs px-3 py-1 rounded-full bg-blue-600/80 hover:bg-blue-600 text-white transition flex items-center gap-1"
+                                                      >
+                                                        <span>WikiHow</span>
+                                                        <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                                                        </svg>
+                                                      </a>
+                                                    )}
+                                                  </div>
+                                                </div>
+                                                <p className="text-sm text-slate-200/80 mb-3">{exercise.sets_reps}</p>
+
+                                                {points.length > 0 && (
+                                                  <div className="mb-3">
+                                                    <div className="text-xs font-semibold text-slate-100 mb-2">Tutorial (points)</div>
+                                                    <ul className="list-disc pl-5 space-y-1 text-sm text-slate-200/80">
+                                                      {points.slice(0, 5).map((p, i) => (
+                                                        <li key={i}>{p}</li>
+                                                      ))}
+                                                    </ul>
+                                                  </div>
+                                                )}
+
+                                                {urls.length > 0 && (
+                                                  <div>
+                                                    <div className="text-xs font-semibold text-slate-100 mb-2">Video tutorials</div>
+                                                    <div className="flex flex-wrap gap-2">
+                                                      {urls.slice(0, 3).map((u, i) => (
+                                                        <a
+                                                          key={i}
+                                                          href={u}
+                                                          target="_blank"
+                                                          rel="noopener noreferrer"
+                                                          className="text-xs px-3 py-2 rounded-xl glass-menu text-slate-100 hover:text-white transition"
+                                                        >
+                                                          Tutorial {i + 1}
+                                                        </a>
+                                                      ))}
+                                                    </div>
+                                                  </div>
+                                                )}
                                               </div>
                                             </div>
-                                          )}
-                                        </div>
-                                      </div>
-                                    </>
-                                  )
-                                })()}
+                                          </>
+                                        )
+                                      })()}
+                                    </div>
+                                  ))}
+                                </div>
                               </div>
-                            ))}
+                            )}
                           </div>
-                        </div>
-                      ))}
+                        )
+                      })}
                     </div>
                   )}
                 </div>

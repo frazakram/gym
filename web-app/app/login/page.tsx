@@ -203,6 +203,11 @@ export default function LoginPage() {
                   autoComplete={isLogin ? 'current-password' : 'new-password'}
                 />
               </div>
+              {!isLogin && (
+                <p className="mt-2 text-xs text-slate-400">
+                  Must be at least 6 characters, including uppercase, number, and special character.
+                </p>
+              )}
             </div>
 
             {error && (
