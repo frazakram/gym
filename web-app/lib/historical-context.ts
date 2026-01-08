@@ -14,7 +14,7 @@ export async function buildHistoricalContext(userId: number): Promise<Historical
     const latestRoutine = await getLatestRoutine(userId);
     if (!latestRoutine) return null;
 
-    const completions = await getCompletionStats(latestRoutine.id);
+    const completions = await getCompletionStats(userId, latestRoutine.id);
     const routineJson = latestRoutine.routine_json;
 
     // Calculate total exercises
@@ -47,7 +47,7 @@ export async function buildHistoricalContext(userId: number): Promise<Historical
       day.exercises?.forEach((exercise: any, exIdx: number) => {
         const key = `${dayIdx}-${exIdx}`;
         const isCompleted = exerciseCompletionMap.get(key);
-        
+
         if (!isCompleted && totalExercises > 0) {
           struggling.push(exercise.name);
         } else if (isCompleted) {
@@ -56,8 +56,8 @@ export async function buildHistoricalContext(userId: number): Promise<Historical
       });
     });
 
-    const completionPercentage = totalExercises > 0 
-      ? Math.round((completedCount / totalExercises) * 100) 
+    const completionPercentage = totalExercises > 0
+      ? Math.round((completedCount / totalExercises) * 100)
       : 0;
 
     return {

@@ -13,6 +13,33 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Password Validation
+    if (password.length < 6) {
+      return NextResponse.json(
+        { error: 'Password must be at least 6 characters long' },
+        { status: 400 }
+      );
+    }
+    if (!/[A-Z]/.test(password)) {
+      return NextResponse.json(
+        { error: 'Password must contain at least one uppercase letter' },
+        { status: 400 }
+      );
+    }
+    if (!/[0-9]/.test(password)) {
+      return NextResponse.json(
+        { error: 'Password must contain at least one number' },
+        { status: 400 }
+      );
+    }
+    // Special characters: !@#$%^&*()_+-=[]{}|;':",./<>? and others
+    if (!/[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]/.test(password)) {
+      return NextResponse.json(
+        { error: 'Password must contain at least one special character' },
+        { status: 400 }
+      );
+    }
+
     // Ensure tables exist before trying to insert
     await initializeDatabase();
 

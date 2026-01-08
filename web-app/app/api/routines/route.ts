@@ -1,18 +1,25 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { saveRoutine, getLatestRoutine, getRoutinesByUser } from '@/lib/db';
+import { getSession } from '@/lib/auth';
 
 export async function POST(req: NextRequest) {
   try {
-    const { userId, weekNumber, routine } = await req.json();
+    const session = await getSession();
+    if (!session) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
 
-    if (!userId || !weekNumber || !routine) {
+    const { weekNumber, routine } = await req.json();
+
+    if (!weekNumber || !routine) {
       return NextResponse.json(
         { error: 'Missing required fields' },
         { status: 400 }
       );
     }
 
-    const routineId = await saveRoutine(userId, weekNumber, routine);
+    // Use session userId instead of accepting it from client
+    const routineId = await saveRoutine(session.userId, weekNumber, routine);
 
     if (!routineId) {
       return NextResponse.json(
@@ -33,22 +40,20 @@ export async function POST(req: NextRequest) {
 
 export async function GET(req: NextRequest) {
   try {
-    const { searchParams } = new URL(req.url);
-    const userId = searchParams.get('userId');
-    const getAll = searchParams.get('all') === 'true';
-
-    if (!userId) {
-      return NextResponse.json(
-        { error: 'userId is required' },
-        { status: 400 }
-      );
+    const session = await getSession();
+    if (!session) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
+    const { searchParams } = new URL(req.url);
+    const getAll = searchParams.get('all') === 'true';
+
+    // Use session userId instead of accepting it from query params
     if (getAll) {
-      const routines = await getRoutinesByUser(Number(userId));
+      const routines = await getRoutinesByUser(session.userId);
       return NextResponse.json({ routines });
     } else {
-      const routine = await getLatestRoutine(Number(userId));
+      const routine = await getLatestRoutine(session.userId);
       return NextResponse.json({ routine });
     }
   } catch (error) {

@@ -1,8 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { toggleExerciseCompletion, getCompletionStats } from '@/lib/db';
+import { getSession } from '@/lib/auth';
 
 export async function POST(req: NextRequest) {
   try {
+    const session = await getSession();
+    if (!session) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
     const { routineId, dayIndex, exerciseIndex, completed } = await req.json();
 
     if (routineId === undefined || dayIndex === undefined || exerciseIndex === undefined || completed === undefined) {
@@ -13,6 +19,7 @@ export async function POST(req: NextRequest) {
     }
 
     const success = await toggleExerciseCompletion(
+      session.userId,
       Number(routineId),
       Number(dayIndex),
       Number(exerciseIndex),
@@ -21,8 +28,8 @@ export async function POST(req: NextRequest) {
 
     if (!success) {
       return NextResponse.json(
-        { error: 'Failed to update completion status' },
-        { status: 500 }
+        { error: 'Failed to update completion status (Access Denied or Error)' },
+        { status: 403 } // 403 Forbidden is more appropriate if it was an ownership issue
       );
     }
 
@@ -38,6 +45,11 @@ export async function POST(req: NextRequest) {
 
 export async function GET(req: NextRequest) {
   try {
+    const session = await getSession();
+    if (!session) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
     const { searchParams } = new URL(req.url);
     const routineId = searchParams.get('routineId');
 
@@ -48,7 +60,7 @@ export async function GET(req: NextRequest) {
       );
     }
 
-    const completions = await getCompletionStats(Number(routineId));
+    const completions = await getCompletionStats(session.userId, Number(routineId));
     return NextResponse.json({ completions });
   } catch (error) {
     console.error('Error fetching completions:', error);

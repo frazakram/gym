@@ -147,7 +147,12 @@ export async function initializeDatabase() {
       client.release();
     }
   } catch (error) {
-    console.error('Error initializing database (continuing with mock mode):', error);
+    if (allowMockAuth()) {
+      console.error('Error initializing database (continuing with mock mode):', error);
+      return;
+    }
+    console.error('Error initializing database:', error);
+    throw error;
   }
 }
 
@@ -226,9 +231,13 @@ export async function getProfile(userId: number): Promise<Profile | null> {
     );
     return result.rows[0] || null;
   } catch (error) {
-    console.warn("getProfile DB failed, using mock:", error);
-    // FALLBACK PROFILE (per-user)
-    return mockProfileStore.get(userId) || { ...MOCK_PROFILE, user_id: userId };
+    if (allowMockAuth()) {
+      console.warn("getProfile DB failed, using mock:", error);
+      // FALLBACK PROFILE (per-user)
+      return mockProfileStore.get(userId) || { ...MOCK_PROFILE, user_id: userId };
+    }
+    console.error("getProfile DB failed:", error);
+    throw error;
   }
 }
 
@@ -313,22 +322,26 @@ export async function saveProfile(
       return result.rows[0];
     }
   } catch (error) {
-    console.warn("saveProfile DB failed, using mock:", error);
-    // Return mock with the requested data
-    const fallback: Profile = {
-      ...MOCK_PROFILE,
-      age,
-      weight,
-      height,
-      gender,
-      goal,
-      level: validLevel,
-      tenure,
-      goal_weight: typeof goal_weight === 'number' && Number.isFinite(goal_weight) ? goal_weight : undefined,
-      notes: notes?.trim() ? notes.trim() : undefined
-    };
-    mockProfileStore.set(userId, { ...fallback, user_id: userId, updated_at: new Date() });
-    return { ...fallback, user_id: userId };
+    if (allowMockAuth()) {
+      console.warn("saveProfile DB failed, using mock:", error);
+      // Return mock with the requested data
+      const fallback: Profile = {
+        ...MOCK_PROFILE,
+        age,
+        weight,
+        height,
+        gender,
+        goal,
+        level: validLevel,
+        tenure,
+        goal_weight: typeof goal_weight === 'number' && Number.isFinite(goal_weight) ? goal_weight : undefined,
+        notes: notes?.trim() ? notes.trim() : undefined
+      };
+      mockProfileStore.set(userId, { ...fallback, user_id: userId, updated_at: new Date() });
+      return { ...fallback, user_id: userId };
+    }
+    console.error("saveProfile DB failed:", error);
+    throw error;
   }
 }
 
@@ -353,17 +366,21 @@ export async function saveRoutine(
     );
     return result.rows[0]?.id || null;
   } catch (error) {
-    console.warn("saveRoutine DB failed, using mock:", error);
-    // FALLBACK
-    const mockId = Math.floor(Math.random() * 100000) + 100000;
-    mockRoutineStore.set(mockId, {
-      id: mockId,
-      user_id: userId,
-      week_number: weekNumber,
-      routine_json: routine,
-      created_at: new Date()
-    });
-    return mockId;
+    if (allowMockAuth()) {
+      console.warn("saveRoutine DB failed, using mock:", error);
+      // FALLBACK
+      const mockId = Math.floor(Math.random() * 100000) + 100000;
+      mockRoutineStore.set(mockId, {
+        id: mockId,
+        user_id: userId,
+        week_number: weekNumber,
+        routine_json: routine,
+        created_at: new Date()
+      });
+      return mockId;
+    }
+    console.error("saveRoutine DB failed:", error);
+    throw error;
   }
 }
 
@@ -380,12 +397,29 @@ export async function getLatestRoutine(userId: number): Promise<any | null> {
     if (result.rows.length > 0) return result.rows[0];
     throw new Error("No DB routine found");
   } catch (error) {
-    console.warn("getLatestRoutine DB failed/empty, checking mock:", error);
-    // FALLBACK
-    const userRoutines = Array.from(mockRoutineStore.values())
-      .filter(r => r.user_id === userId)
-      .sort((a, b) => b.created_at.getTime() - a.created_at.getTime());
-    return userRoutines[0] || null;
+    if (allowMockAuth()) {
+      console.warn("getLatestRoutine DB failed/empty, checking mock:", error);
+      // FALLBACK
+      const userRoutines = Array.from(mockRoutineStore.values())
+        .filter(r => r.user_id === userId)
+        .sort((a, b) => b.created_at.getTime() - a.created_at.getTime());
+      return userRoutines[0] || null;
+    }
+    console.error("getLatestRoutine DB failed:", error);
+    // If it's just a 404/not found, we might want to return null?
+    // But the original code throws "No DB routine found" inside the try, which is caught here.
+    // If it's a connection error, we want to throw.
+    // If we throw here, the API returns 500.
+    // If the user has no routine, we usually want to return null, not 500.
+    // But the original query inside try block catches empty result and throws "No DB routine found".
+    // So if I throw here, "No DB routine found" becomes a 500.
+    // Ideally, "No DB routine found" should be handled as "return null" if it's just empty.
+    // Let's refine this one:
+    const msg = error instanceof Error ? error.message : String(error);
+    if (msg.includes("No DB routine found")) {
+      return null; // Not found is strictly not an error
+    }
+    throw error;
   }
 }
 
@@ -400,15 +434,20 @@ export async function getRoutinesByUser(userId: number): Promise<any[]> {
     );
     return result.rows;
   } catch (error) {
-    console.warn("getRoutinesByUser DB failed, checking mock:", error);
-    // FALLBACK
-    return Array.from(mockRoutineStore.values())
-      .filter(r => r.user_id === userId)
-      .sort((a, b) => b.created_at.getTime() - a.created_at.getTime());
+    if (allowMockAuth()) {
+      console.warn("getRoutinesByUser DB failed, checking mock:", error);
+      // FALLBACK
+      return Array.from(mockRoutineStore.values())
+        .filter(r => r.user_id === userId)
+        .sort((a, b) => b.created_at.getTime() - a.created_at.getTime());
+    }
+    console.error("getRoutinesByUser DB failed:", error);
+    throw error;
   }
 }
 
 export async function toggleExerciseCompletion(
+  userId: number,
   routineId: number,
   dayIndex: number,
   exerciseIndex: number,
@@ -416,6 +455,16 @@ export async function toggleExerciseCompletion(
 ): Promise<boolean> {
   const key = `${dayIndex}-${exerciseIndex}`;
   try {
+    // 1. Verify ownership
+    const ownership = await pool.query(
+      'SELECT id FROM routines WHERE id = $1 AND user_id = $2',
+      [routineId, userId]
+    );
+    if (ownership.rows.length === 0) {
+      console.warn(`User ${userId} attempted to modify routine ${routineId} which helps to someone else (or doesn't exist).`);
+      return false; // Or throw an error depending on preference, but false indicates failure to toggle
+    }
+
     // Check if completion record exists
     const existing = await pool.query(
       `SELECT id FROM exercise_completions
@@ -441,18 +490,32 @@ export async function toggleExerciseCompletion(
     }
     return true;
   } catch (error) {
-    console.warn("toggleExerciseCompletion DB failed, using mock:", error);
-    // FALLBACK
-    if (!mockCompletionStore.has(routineId)) {
-      mockCompletionStore.set(routineId, new Map());
+    if (allowMockAuth()) {
+      console.warn("toggleExerciseCompletion DB failed, using mock:", error);
+      // FALLBACK
+      if (!mockCompletionStore.has(routineId)) {
+        mockCompletionStore.set(routineId, new Map());
+      }
+      mockCompletionStore.get(routineId)?.set(key, completed);
+      return true;
     }
-    mockCompletionStore.get(routineId)?.set(key, completed);
-    return true;
+    console.error("toggleExerciseCompletion DB failed:", error);
+    throw error;
   }
 }
 
-export async function getCompletionStats(routineId: number): Promise<any> {
+export async function getCompletionStats(userId: number, routineId: number): Promise<any> {
   try {
+    // 1. Verify ownership (users can only see their own completion stats)
+    const ownership = await pool.query(
+      'SELECT id FROM routines WHERE id = $1 AND user_id = $2',
+      [routineId, userId]
+    );
+    if (ownership.rows.length === 0) {
+      // Return empty or throw. Returning empty is safer/quieter for UI.
+      return [];
+    }
+
     const result = await pool.query(
       `SELECT day_index, exercise_index, completed
        FROM exercise_completions
@@ -461,15 +524,19 @@ export async function getCompletionStats(routineId: number): Promise<any> {
     );
     return result.rows;
   } catch (error) {
-    console.warn("getCompletionStats DB failed, using mock:", error);
-    // FALLBACK
-    const store = mockCompletionStore.get(routineId);
-    if (!store) return [];
-    
-    return Array.from(store.entries()).map(([k, v]) => {
-      const [d, e] = k.split('-');
-      return { day_index: Number(d), exercise_index: Number(e), completed: v };
-    });
+    if (allowMockAuth()) {
+      console.warn("getCompletionStats DB failed, using mock:", error);
+      // FALLBACK
+      const store = mockCompletionStore.get(routineId);
+      if (!store) return [];
+
+      return Array.from(store.entries()).map(([k, v]) => {
+        const [d, e] = k.split('-');
+        return { day_index: Number(d), exercise_index: Number(e), completed: v };
+      });
+    }
+    console.error("getCompletionStats DB failed:", error);
+    throw error;
   }
 }
 
