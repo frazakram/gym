@@ -319,7 +319,7 @@ export async function saveProfile(
           goal_duration?.trim() ? goal_duration.trim() : null
         ]
       );
-      revalidateTag('user-profile');
+      // revalidateTag('user-profile');
       return result.rows[0];
     } else {
       const result = await pool.query<Profile>(
@@ -340,7 +340,7 @@ export async function saveProfile(
           goal_duration?.trim() ? goal_duration.trim() : null
         ]
       );
-      revalidateTag('user-profile');
+      // revalidateTag('user-profile');
       return result.rows[0];
     }
   } catch (error) {
