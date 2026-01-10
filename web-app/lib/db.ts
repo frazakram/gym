@@ -1,6 +1,7 @@
 import { Pool } from 'pg';
 import bcrypt from 'bcryptjs';
 import { User, Profile } from '@/types';
+import { unstable_cache, revalidateTag } from 'next/cache';
 
 function isPostgresUrl(value: string): boolean {
   const v = value.trim();
@@ -107,7 +108,9 @@ export async function initializeDatabase() {
       await client.query(`ALTER TABLE profiles ADD COLUMN IF NOT EXISTS gender VARCHAR(32);`);
       await client.query(`ALTER TABLE profiles ADD COLUMN IF NOT EXISTS notes TEXT;`);
       await client.query(`ALTER TABLE profiles ADD COLUMN IF NOT EXISTS goal VARCHAR(32);`);
+      await client.query(`ALTER TABLE profiles ADD COLUMN IF NOT EXISTS goal VARCHAR(32);`);
       await client.query(`ALTER TABLE profiles ADD COLUMN IF NOT EXISTS goal_weight DECIMAL(5,2);`);
+      await client.query(`ALTER TABLE profiles ADD COLUMN IF NOT EXISTS goal_duration TEXT;`);
 
       await client.query(`
         CREATE TABLE IF NOT EXISTS sessions (
@@ -223,20 +226,32 @@ export async function createUserWithRandomPassword(username: string): Promise<Us
   return await createUser(username, random);
 }
 
+const getProfileCached = unstable_cache(
+  async (userId: number) => {
+    try {
+      const result = await pool.query<Profile>(
+        'SELECT * FROM profiles WHERE user_id = $1',
+        [userId]
+      );
+      return result.rows[0] || null;
+    } catch (error) {
+      console.error("getProfile DB failed:", error);
+      throw error;
+    }
+  },
+  ['user-profile'],
+  { tags: ['user-profile'] }
+);
+
 export async function getProfile(userId: number): Promise<Profile | null> {
   try {
-    const result = await pool.query<Profile>(
-      'SELECT * FROM profiles WHERE user_id = $1',
-      [userId]
-    );
-    return result.rows[0] || null;
+    return await getProfileCached(userId);
   } catch (error) {
     if (allowMockAuth()) {
       console.warn("getProfile DB failed, using mock:", error);
       // FALLBACK PROFILE (per-user)
       return mockProfileStore.get(userId) || { ...MOCK_PROFILE, user_id: userId };
     }
-    console.error("getProfile DB failed:", error);
     throw error;
   }
 }
@@ -251,7 +266,8 @@ export async function saveProfile(
   level: string,
   tenure: string,
   goal_weight?: number,
-  notes?: string
+  notes?: string,
+  goal_duration?: string
 ): Promise<Profile | null> {
   // Safe cast since we handle string to strict union transition
   const validLevel = level as Profile['level'];
@@ -268,7 +284,8 @@ export async function saveProfile(
       level: validLevel, // Use the casted level
       tenure,
       goal_weight: typeof goal_weight === 'number' && Number.isFinite(goal_weight) ? goal_weight : undefined,
-      notes: notes?.trim() ? notes.trim() : undefined
+      notes: notes?.trim() ? notes.trim() : undefined,
+      goal_duration: goal_duration?.trim() ? goal_duration.trim() : undefined
     };
 
     // Try Real DB
@@ -284,7 +301,8 @@ export async function saveProfile(
       const result = await pool.query<Profile>(
         `UPDATE profiles 
          SET age = $2, weight = $3, height = $4, gender = $5,
-             goal = $6, level = $7, tenure = $8, goal_weight = $9, notes = $10, updated_at = CURRENT_TIMESTAMP
+             goal = $6, level = $7, tenure = $8, goal_weight = $9, notes = $10,
+             goal_duration = $11, updated_at = CURRENT_TIMESTAMP
          WHERE user_id = $1
          RETURNING *`,
         [
@@ -297,14 +315,16 @@ export async function saveProfile(
           level,
           tenure,
           typeof goal_weight === 'number' && Number.isFinite(goal_weight) ? goal_weight : null,
-          notes?.trim() ? notes.trim() : null
+          notes?.trim() ? notes.trim() : null,
+          goal_duration?.trim() ? goal_duration.trim() : null
         ]
       );
+      // revalidateTag('user-profile');
       return result.rows[0];
     } else {
       const result = await pool.query<Profile>(
-        `INSERT INTO profiles (user_id, age, weight, height, gender, goal, level, tenure, goal_weight, notes)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+        `INSERT INTO profiles (user_id, age, weight, height, gender, goal, level, tenure, goal_weight, notes, goal_duration)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
          RETURNING *`,
         [
           userId,
@@ -316,9 +336,11 @@ export async function saveProfile(
           level,
           tenure,
           typeof goal_weight === 'number' && Number.isFinite(goal_weight) ? goal_weight : null,
-          notes?.trim() ? notes.trim() : null
+          notes?.trim() ? notes.trim() : null,
+          goal_duration?.trim() ? goal_duration.trim() : null
         ]
       );
+      // revalidateTag('user-profile');
       return result.rows[0];
     }
   } catch (error) {
@@ -335,7 +357,8 @@ export async function saveProfile(
         level: validLevel,
         tenure,
         goal_weight: typeof goal_weight === 'number' && Number.isFinite(goal_weight) ? goal_weight : undefined,
-        notes: notes?.trim() ? notes.trim() : undefined
+        notes: notes?.trim() ? notes.trim() : undefined,
+        goal_duration: goal_duration?.trim() ? goal_duration.trim() : undefined
       };
       mockProfileStore.set(userId, { ...fallback, user_id: userId, updated_at: new Date() });
       return { ...fallback, user_id: userId };

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback, useMemo } from 'react'
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { WeeklyRoutine, Profile } from '@/types'
 import { BrandLogo } from '@/components/BrandLogo'
@@ -18,7 +18,6 @@ type SavedRoutine = {
 }
 
 const ROUTINE_LIBRARY_KEY = 'gymbro:routine-library:v1'
-const AI_KEYS_KEY = 'gymbro:ai-keys:v1'
 
 export default function DashboardPage() {
   const router = useRouter()
@@ -44,12 +43,24 @@ export default function DashboardPage() {
   const [level, setLevel] = useState<'Beginner' | 'Regular' | 'Expert'>('Beginner')
   const [tenure, setTenure] = useState('Just started')
   const [goalWeight, setGoalWeight] = useState<number | ''>('')
+  const [goalDuration, setGoalDuration] = useState('')
   const [notes, setNotes] = useState('')
+
+  // Modal State
+  const [modalConfig, setModalConfig] = useState<{
+    type: 'warning' | 'error'
+    title: string
+    message: string
+    emoji?: string
+    onConfirm?: () => void
+    onCancel?: () => void
+  } | null>(null)
+
+  // Smart Trigger State
+  const lastGenProfileRef = useRef<string | null>(null)
 
   // Routine state
   const [routine, setRoutine] = useState<WeeklyRoutine | null>(null)
-  const [modelProvider, setModelProvider] = useState<'Anthropic' | 'OpenAI'>('Anthropic')
-  const [apiKey, setApiKey] = useState('')
   const [generating, setGenerating] = useState(false)
   const [progressPct, setProgressPct] = useState(0)
   const [progressStage, setProgressStage] = useState('')
@@ -87,42 +98,6 @@ export default function DashboardPage() {
     }
   }, [])
 
-  useEffect(() => {
-    // Load saved API key for selected provider (local-only)
-    try {
-      const raw = localStorage.getItem(AI_KEYS_KEY)
-      if (!raw) return
-      const parsed = JSON.parse(raw) as unknown
-      const anyParsed = parsed as Record<string, unknown> | null
-      const saved = anyParsed?.[modelProvider]
-      if (typeof saved === 'string' && saved.trim() && !apiKey.trim()) {
-        setApiKey(saved.trim())
-      }
-    } catch {
-      // ignore
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [modelProvider])
-
-  const handleSaveApiKey = () => {
-    const key = apiKey.trim()
-    if (!key) {
-      setError('Enter an API key first.')
-      return
-    }
-    try {
-      const raw = localStorage.getItem(AI_KEYS_KEY)
-      const parsed = raw ? (JSON.parse(raw) as unknown) : {}
-      const anyParsed = (parsed && typeof parsed === 'object' ? parsed : {}) as Record<string, unknown>
-      const next = { ...anyParsed, [modelProvider]: key }
-      localStorage.setItem(AI_KEYS_KEY, JSON.stringify(next))
-      setSuccess('API key saved locally.')
-      setSidebarOpen(false)
-    } catch {
-      setError('Failed to save API key in this browser.')
-    }
-  }
-
   const handleImproveNotes = async () => {
     setError('')
     setSuccess('')
@@ -133,8 +108,7 @@ export default function DashboardPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           notes,
-          model_provider: modelProvider,
-          api_key: apiKey?.trim() || undefined,
+          model_provider: 'OpenAI',
         }),
       })
       const data = (await res.json().catch(() => ({}))) as any
@@ -173,6 +147,18 @@ export default function DashboardPage() {
       // ignore
     }
   }, [])
+
+  useEffect(() => {
+    if (error) {
+      setModalConfig({
+        type: 'error',
+        title: 'Oops!',
+        message: error,
+        emoji: '⚠️',
+        onCancel: () => setModalConfig(null)
+      })
+    }
+  }, [error])
 
   useEffect(() => {
     try {
@@ -242,7 +228,7 @@ export default function DashboardPage() {
       id: makeId(),
       name,
       createdAt: Date.now(),
-      provider: modelProvider,
+      provider: 'OpenAI',
       routine,
     }
 
@@ -402,14 +388,7 @@ export default function DashboardPage() {
     []
   )
 
-  const providerOptions = useMemo(
-    () =>
-      [
-        { value: 'Anthropic', label: 'Anthropic (Claude)' },
-        { value: 'OpenAI', label: 'OpenAI (GPT-4)' },
-      ] as const,
-    []
-  )
+
 
   const heightUnitOptions = useMemo(
     () =>
@@ -474,14 +453,15 @@ export default function DashboardPage() {
       const data = await response.json()
       if (data.profile) {
         setProfile(data.profile)
-        setAge(typeof data.profile.age === 'number' ? data.profile.age : 25)
-        setWeight(typeof data.profile.weight === 'number' ? data.profile.weight : 70)
-        setHeight(typeof data.profile.height === 'number' ? data.profile.height : 170)
+        setAge(data.profile.age != null ? Number(data.profile.age) : 25)
+        setWeight(data.profile.weight != null ? Number(data.profile.weight) : 70)
+        setHeight(data.profile.height != null ? Number(data.profile.height) : 170)
         setGender(data.profile.gender ?? 'Prefer not to say')
         setGoal(data.profile.goal ?? 'General fitness')
         setLevel(data.profile.level)
         setTenure(data.profile.tenure)
-        setGoalWeight(typeof data.profile.goal_weight === 'number' ? data.profile.goal_weight : '')
+        setGoalWeight(data.profile.goal_weight != null ? Number(data.profile.goal_weight) : '')
+        setGoalDuration(data.profile.goal_duration ?? '')
         setNotes(data.profile.notes ?? '')
       }
     } catch (err: unknown) {
@@ -553,6 +533,7 @@ export default function DashboardPage() {
           tenure,
           goal_weight: goalWeight === '' ? undefined : goalWeight,
           notes,
+          goal_duration: goalDuration,
         }),
       })
 
@@ -586,6 +567,46 @@ export default function DashboardPage() {
       return
     }
 
+    // Smart Trigger: Check if profile has changed significantly
+    const currentProfileHash = JSON.stringify({
+      age, weight, height: resolvedHeightCm, gender, goal, level, tenure, goalWeight, goalDuration, notes
+    })
+
+    if (!isNextWeek && lastGenProfileRef.current === currentProfileHash) {
+      setModalConfig({
+        type: 'warning',
+        title: 'No Changes Detected',
+        message: "You haven't changed your profile since the last generation. The new routine might be very similar.",
+        emoji: '🤔',
+        onConfirm: () => {
+          setModalConfig(null)
+          performGeneration(isNextWeek)
+        },
+        onCancel: () => setModalConfig(null)
+      })
+      return
+    }
+
+    performGeneration(isNextWeek)
+  }
+
+  const performGeneration = async (isNextWeek: boolean = false) => {
+    if (!profile) {
+      setError('Please complete your profile first.')
+      return
+    }
+    if (resolvedHeightCm == null) {
+      setError('Please provide a valid height before generating.')
+      return
+    }
+    // Validation is repeated here for safety if called directly, 
+    // but the hashing logic below is updated after success.
+
+    // Smart Trigger Logic Removed from here (handled in wrapper)
+    const currentProfileHash = JSON.stringify({
+      age, weight, height: resolvedHeightCm, gender, goal, level, tenure, goalWeight, goalDuration, notes
+    })
+
     setGenerating(true)
     setProgressPct(5)
     setProgressStage('Starting…')
@@ -597,21 +618,25 @@ export default function DashboardPage() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          age: profile.age ?? age,
-          weight: profile.weight ?? weight,
-          height: typeof profile.height === 'number' ? profile.height : resolvedHeightCm,
-          gender: (profile.gender ?? gender) || 'Prefer not to say',
-          goal: (profile.goal ?? goal) || 'General fitness',
-          level: (profile.level ?? level) || 'Beginner',
+          age: Number(age),
+          weight: Number(weight),
+          height: Number(resolvedHeightCm),
+          gender,
+          goal,
+          level,
           tenure: (profile.tenure ?? tenure) || 'Just started',
           goal_weight: profile.goal_weight,
           notes: profile.notes,
-          model_provider: modelProvider,
-          // Optional: server can use env var if set
-          api_key: apiKey?.trim() || undefined,
-          stream: true,
+          goal_duration: profile.goal_duration,
+          model_provider: 'OpenAI',
+          is_next_week: isNextWeek,
         }),
       })
+
+      // Update smart trigger ref on success
+      if (response.ok) {
+        lastGenProfileRef.current = currentProfileHash
+      }
 
       const contentType = response.headers.get('content-type') || ''
 
@@ -836,43 +861,10 @@ export default function DashboardPage() {
                   <div className="text-[11px] text-slate-200/60">AI</div>
                 </div>
 
-                <div className="mt-3 space-y-3">
-                  <GlassSelect
-                    label="AI Provider"
-                    value={modelProvider}
-                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                    options={providerOptions as any}
-                    onChange={(v) => setModelProvider(v as 'Anthropic' | 'OpenAI')}
-                  />
-                  <div>
-                    <label className="block text-sm font-medium text-slate-200/90 mb-2">
-                      {modelProvider} API Key
-                    </label>
-                    <input
-                      type="password"
-                      value={apiKey}
-                      onChange={(e) => {
-                        const v = e.target.value
-                        setApiKey(v)
-                        if (v.startsWith('sk-ant-')) setModelProvider('Anthropic')
-                        else if (v.startsWith('sk-')) setModelProvider('OpenAI')
-                      }}
-                      placeholder={`Enter your ${modelProvider} API key`}
-                      className="w-full px-4 py-3 glass-soft rounded-xl text-white placeholder:text-slate-300/50 focus:outline-none focus:ring-2 focus:ring-cyan-400/60"
-                    />
-                    <div className="mt-2 flex items-center justify-between gap-2">
-                      <p className="text-xs text-slate-200/60">
-                        Used only for requests. Not stored on the server.
-                      </p>
-                      <button
-                        type="button"
-                        onClick={handleSaveApiKey}
-                        className="shrink-0 px-3 py-2 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 text-white text-xs font-semibold hover:from-cyan-600 hover:to-blue-700 transition"
-                      >
-                        Save
-                      </button>
-                    </div>
-                  </div>
+                <div className="mt-3">
+                  <p className="text-xs text-slate-300/50">
+                    Using OpenAI (Server Key)
+                  </p>
                 </div>
               </div>
             </div>
@@ -956,6 +948,7 @@ export default function DashboardPage() {
                       }}
                       min="16"
                       max="100"
+                      onWheel={(e) => e.currentTarget.blur()}
                       className="w-full px-4 py-3 glass-soft rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-cyan-400/60"
                     />
                   </div>
@@ -972,6 +965,7 @@ export default function DashboardPage() {
                       min="30"
                       max="300"
                       step="0.1"
+                      onWheel={(e) => e.currentTarget.blur()}
                       className="w-full px-4 py-3 glass-soft rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-cyan-400/60"
                     />
                   </div>
@@ -999,6 +993,7 @@ export default function DashboardPage() {
                             min="100"
                             max="250"
                             step="0.1"
+                            onWheel={(e) => e.currentTarget.blur()}
                             className="w-full px-4 py-3 glass-soft rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-cyan-400/60"
                           />
                         </div>
@@ -1016,6 +1011,7 @@ export default function DashboardPage() {
                               min="3"
                               max="8"
                               step="1"
+                              onWheel={(e) => e.currentTarget.blur()}
                               className="w-full px-4 py-3 glass-soft rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-cyan-400/60"
                             />
                           </div>
@@ -1031,6 +1027,7 @@ export default function DashboardPage() {
                               min="0"
                               max="11.9"
                               step="0.1"
+                              onWheel={(e) => e.currentTarget.blur()}
                               className="w-full px-4 py-3 glass-soft rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-cyan-400/60"
                             />
                           </div>
@@ -1096,6 +1093,7 @@ export default function DashboardPage() {
                       max="300"
                       step="0.1"
                       placeholder="Optional (e.g., 72)"
+                      onWheel={(e) => e.currentTarget.blur()}
                       className="w-full px-4 py-3 glass-soft rounded-xl text-white placeholder:text-slate-300/50 focus:outline-none focus:ring-2 focus:ring-cyan-400/60"
                     />
                     <p className="text-xs text-slate-300/50 mt-2">
@@ -1194,6 +1192,11 @@ export default function DashboardPage() {
                             {typeof profile.goal_weight === 'number' && (
                               <span className="px-3 py-1 rounded-full glass-soft text-slate-200 text-sm">
                                 Goal {profile.goal_weight}kg
+                              </span>
+                            )}
+                            {profile.goal_duration && (
+                              <span className="px-3 py-1 rounded-full glass-soft text-slate-200 text-sm">
+                                {profile.goal_duration}
                               </span>
                             )}
                             <span className="px-3 py-1 rounded-full glass-soft text-slate-200 text-sm">
@@ -1558,6 +1561,52 @@ export default function DashboardPage() {
           )}
         </main>
       </div>
+
+      {/* FEEDBACK MODAL */}
+      {modalConfig && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="w-full max-w-sm bg-slate-900 border border-white/10 rounded-3xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200 ring-1 ring-white/10">
+            <div className={`h-2 w-full ${modalConfig.type === 'error' ? 'bg-red-500' : 'bg-amber-400'}`} />
+            <div className="p-8 text-center">
+              <div className="text-5xl mb-6 animate-bounce-slow">
+                {modalConfig.emoji || (modalConfig.type === 'error' ? '💥' : '⚠️')}
+              </div>
+              <h3 className="text-xl font-bold text-white mb-2 tracking-tight">
+                {modalConfig.title}
+              </h3>
+              <p className="text-slate-300 leading-relaxed mb-8 text-sm">
+                {modalConfig.message}
+              </p>
+
+              <div className="flex gap-3 justify-center">
+                {modalConfig.onCancel && (
+                  <button
+                    onClick={() => {
+                      if (modalConfig.onCancel) modalConfig.onCancel()
+                      else setModalConfig(null)
+                    }}
+                    className="px-5 py-2.5 rounded-xl font-medium text-sm text-slate-300 hover:text-white hover:bg-white/5 transition-colors"
+                  >
+                    Cancel
+                  </button>
+                )}
+                <button
+                  onClick={() => {
+                    if (modalConfig.onConfirm) modalConfig.onConfirm()
+                    else setModalConfig(null)
+                  }}
+                  className={`px-6 py-2.5 rounded-xl font-semibold text-sm shadow-lg transform transition-all active:scale-95 ${modalConfig.type === 'error'
+                    ? 'bg-gradient-to-r from-red-500 to-rose-600 text-white shadow-red-500/20 hover:shadow-red-500/30'
+                    : 'bg-gradient-to-r from-amber-400 to-orange-500 text-slate-900 shadow-amber-500/20 hover:shadow-amber-500/30'
+                    }`}
+                >
+                  {modalConfig.type === 'error' ? 'Dismiss' : 'Continue'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
