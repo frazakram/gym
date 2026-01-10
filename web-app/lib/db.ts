@@ -469,6 +469,28 @@ export async function getRoutinesByUser(userId: number): Promise<any[]> {
   }
 }
 
+export async function getRoutineByWeek(userId: number, weekNumber: number): Promise<any | null> {
+  try {
+    const result = await pool.query(
+      `SELECT id, user_id, week_number, routine_json, created_at
+       FROM routines
+       WHERE user_id = $1 AND week_number = $2
+       ORDER BY created_at DESC
+       LIMIT 1`,
+      [userId, weekNumber]
+    );
+    return result.rows[0] || null;
+  } catch (error) {
+    if (allowMockAuth()) {
+      console.warn("getRoutineByWeek DB failed, checking mock:", error);
+      return Array.from(mockRoutineStore.values())
+        .find(r => r.user_id === userId && r.week_number === weekNumber) || null;
+    }
+    console.error("getRoutineByWeek DB failed:", error);
+    throw error;
+  }
+}
+
 export async function toggleExerciseCompletion(
   userId: number,
   routineId: number,

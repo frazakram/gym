@@ -148,7 +148,25 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    // Non-streaming mode
+    // Non-streaming mode (Consistency Check)
+    if (typeof body.week_number === 'number' && body.regenerate !== true) {
+      try {
+        const { getRoutineByWeek } = await import('@/lib/db');
+        const existing = await getRoutineByWeek(session.userId, body.week_number);
+        if (existing) {
+          return NextResponse.json({
+            routine: existing.routine_json,
+            source: 'db',
+            week_number: existing.week_number,
+            routine_id: existing.id // Return ID so front-end can track it
+          });
+        }
+      } catch (err) {
+        console.warn('Failed to check existing routine, proceeding to generate:', err);
+      }
+    }
+
+    // AI Generation
     const routine =
       provider === 'OpenAI'
         ? await generateRoutineOpenAI(input, historicalContextStr)
@@ -161,7 +179,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    return NextResponse.json({ routine }, { status: 200 });
+    return NextResponse.json({ routine, source: 'ai' }, { status: 200 });
   } catch (error: unknown) {
     // Don't leak secrets in logs — log the message only
     const message = error instanceof Error ? error.message : String(error);

@@ -614,6 +614,9 @@ export default function DashboardPage() {
     setSuccess('')
 
     try {
+      // Determine target week number
+      const targetWeekNumber = isNextWeek ? currentWeekNumber + 1 : currentWeekNumber
+
       const response = await fetch('/api/routine/generate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -630,6 +633,7 @@ export default function DashboardPage() {
           goal_duration: profile.goal_duration,
           model_provider: 'OpenAI',
           is_next_week: isNextWeek,
+          week_number: targetWeekNumber, // Added for consistency check
         }),
       })
 
@@ -640,7 +644,7 @@ export default function DashboardPage() {
 
       const contentType = response.headers.get('content-type') || ''
 
-      // SSE streaming mode
+      // SSE streaming mode (Not currently using DB consistency check here - TODO: Add if needed)
       if (contentType.includes('text/event-stream')) {
         const reader = response.body?.getReader()
         if (!reader) throw new Error('No response stream available')
@@ -686,7 +690,7 @@ export default function DashboardPage() {
               // Reset completions for new routine
               setExerciseCompletions(new Map())
 
-              // Save routine to database
+              // Save routine to database (SSE = Always new)
               await saveRoutineToDatabase(payload.routine)
             } else if (currentEvent === 'error') {
               throw new Error(payload.message || 'Failed to generate routine')
@@ -699,24 +703,43 @@ export default function DashboardPage() {
           throw new Error('Failed to generate routine')
         }
       } else {
-        // Fallback JSON mode
+        // Fallback JSON mode (Includes Consistency Check)
         const data = await response.json()
         if (!response.ok) {
           throw new Error(data.error || 'Failed to generate routine')
         }
 
         setRoutine(data.routine)
-        setSuccess('Routine generated successfully.')
 
-        if (isNextWeek) {
+        // Handle week number updates
+        if (data.week_number) {
+          setCurrentWeekNumber(data.week_number)
+        } else if (isNextWeek) {
           setCurrentWeekNumber(prev => prev + 1)
         }
 
-        // Reset completions for new routine
-        setExerciseCompletions(new Map())
-
-        // Save routine to database
-        await saveRoutineToDatabase(data.routine)
+        if (data.source === 'db') {
+          setSuccess('Loaded existing routine for this week.')
+          // Do NOT reset completions if it's the same routine we might have seen before?
+          // Actually, if we just generated/loaded it, we should probably fetch completions for it
+          if (data.routine_id) {
+            setCurrentRoutineId(data.routine_id)
+            // Fetch completions for this existing routine
+            const compRes = await fetch(`/api/completions?routineId=${data.routine_id}`)
+            const { completions } = await compRes.json()
+            const map = new Map<string, boolean>()
+            completions.forEach((c: any) => {
+              map.set(`${c.day_index}-${c.exercise_index}`, c.completed)
+            })
+            setExerciseCompletions(map)
+          }
+        } else {
+          setSuccess('Routine generated successfully.')
+          // Reset completions for new routine
+          setExerciseCompletions(new Map())
+          // Save routine to database (Only if source == 'ai')
+          await saveRoutineToDatabase(data.routine)
+        }
       }
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : String(err))
