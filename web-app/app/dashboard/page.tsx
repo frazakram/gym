@@ -452,7 +452,9 @@ export default function DashboardPage() {
       }
       const data = await response.json()
       if (data.profile) {
-        setProfile(data.profile)
+        // Inject username into profile object for easy access
+        const extendedProfile = { ...data.profile, username: data.username }
+        setProfile(extendedProfile)
         setAge(data.profile.age != null ? Number(data.profile.age) : 25)
         setWeight(data.profile.weight != null ? Number(data.profile.weight) : 70)
         setHeight(data.profile.height != null ? Number(data.profile.height) : 170)
@@ -888,6 +890,15 @@ export default function DashboardPage() {
                   <p className="text-xs text-slate-300/50">
                     Using OpenAI (Server Key)
                   </p>
+                  {/* User info */}
+                  <div className="mt-2 text-[10px] text-slate-500 font-mono truncate">
+                    {profile?.user_id && (
+                      <span>
+                        {/* We can store username in state if we want, or just rely on ID backup if not available */}
+                        User: {(profile as any).username || `ID: ${profile.user_id}`}
+                      </span>
+                    )}
+                  </div>
                 </div>
               </div>
             </div>

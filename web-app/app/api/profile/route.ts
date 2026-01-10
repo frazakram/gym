@@ -10,9 +10,16 @@ export async function GET() {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const profile = await getProfile(session.userId);
+    const { getUser } = await import('@/lib/db');
+    const [profile, user] = await Promise.all([
+      getProfile(session.userId),
+      getUser(session.userId)
+    ]);
 
-    return NextResponse.json({ profile }, { status: 200 });
+    return NextResponse.json({
+      profile,
+      username: user?.username || `User ${session.userId}`
+    }, { status: 200 });
   } catch (error) {
     console.error('Error fetching profile:', error);
     return NextResponse.json(

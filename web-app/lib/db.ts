@@ -221,6 +221,24 @@ export async function getUserIdByUsername(username: string): Promise<number | nu
   }
 }
 
+export async function getUser(userId: number): Promise<Pick<User, 'id' | 'username'> | null> {
+  try {
+    const result = await pool.query<User>(
+      'SELECT id, username FROM users WHERE id = $1',
+      [userId]
+    );
+    return result.rows[0] || null;
+  } catch (error) {
+    if (allowMockAuth()) {
+      // Mock fallback
+      if (userId === MOCK_USER_ID) return { id: MOCK_USER_ID, username: MOCK_USER.username };
+      return null;
+    }
+    console.error("getUser DB failed:", error);
+    return null;
+  }
+}
+
 export async function createUserWithRandomPassword(username: string): Promise<User | null> {
   const random = `${Date.now()}-${Math.random().toString(16).slice(2)}-${Math.random().toString(16).slice(2)}`;
   return await createUser(username, random);
