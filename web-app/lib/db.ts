@@ -221,6 +221,24 @@ export async function getUserIdByUsername(username: string): Promise<number | nu
   }
 }
 
+export async function getUser(userId: number): Promise<Pick<User, 'id' | 'username'> | null> {
+  try {
+    const result = await pool.query<User>(
+      'SELECT id, username FROM users WHERE id = $1',
+      [userId]
+    );
+    return result.rows[0] || null;
+  } catch (error) {
+    if (allowMockAuth()) {
+      // Mock fallback
+      if (userId === MOCK_USER_ID) return { id: MOCK_USER_ID, username: MOCK_USER.username };
+      return null;
+    }
+    console.error("getUser DB failed:", error);
+    return null;
+  }
+}
+
 export async function createUserWithRandomPassword(username: string): Promise<User | null> {
   const random = `${Date.now()}-${Math.random().toString(16).slice(2)}-${Math.random().toString(16).slice(2)}`;
   return await createUser(username, random);
@@ -465,6 +483,28 @@ export async function getRoutinesByUser(userId: number): Promise<any[]> {
         .sort((a, b) => b.created_at.getTime() - a.created_at.getTime());
     }
     console.error("getRoutinesByUser DB failed:", error);
+    throw error;
+  }
+}
+
+export async function getRoutineByWeek(userId: number, weekNumber: number): Promise<any | null> {
+  try {
+    const result = await pool.query(
+      `SELECT id, user_id, week_number, routine_json, created_at
+       FROM routines
+       WHERE user_id = $1 AND week_number = $2
+       ORDER BY created_at DESC
+       LIMIT 1`,
+      [userId, weekNumber]
+    );
+    return result.rows[0] || null;
+  } catch (error) {
+    if (allowMockAuth()) {
+      console.warn("getRoutineByWeek DB failed, checking mock:", error);
+      return Array.from(mockRoutineStore.values())
+        .find(r => r.user_id === userId && r.week_number === weekNumber) || null;
+    }
+    console.error("getRoutineByWeek DB failed:", error);
     throw error;
   }
 }
