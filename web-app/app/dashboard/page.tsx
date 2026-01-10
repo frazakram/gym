@@ -80,6 +80,7 @@ export default function DashboardPage() {
   // Mobile UX state
   const [showGenerator, setShowGenerator] = useState(true)
   const [expandedDay, setExpandedDay] = useState<number | null>(null)
+  const [showAISettings, setShowAISettings] = useState(true)
 
   useEffect(() => {
     try {
@@ -413,6 +414,13 @@ export default function DashboardPage() {
     try {
       const raw = localStorage.getItem('gymbro:height-unit:v1')
       if (raw === 'cm' || raw === 'ftin') setHeightUnit(raw)
+    } catch {
+      // ignore
+    }
+    // Load AI settings visibility preference
+    try {
+      const aiSettingsVisible = localStorage.getItem('gymbro:show-ai-settings:v1')
+      if (aiSettingsVisible === '0') setShowAISettings(false)
     } catch {
       // ignore
     }
@@ -1175,33 +1183,38 @@ export default function DashboardPage() {
           {/* Routine Tab */}
           {activeTab === 'routine' && (
             <div className="space-y-6">
-              <div className="grid grid-cols-1 2xl:grid-cols-3 gap-6">
+              <div className="grid grid-cols-1 lg:grid-cols-5 gap-6 lg:items-start">
                 {/* Generation panel */}
-                <div className="2xl:col-span-1 glass rounded-2xl p-6 sm:p-8">
-                  <div
-                    className="flex items-center justify-between gap-4 cursor-pointer sm:cursor-default"
-                    onClick={() => setShowGenerator(!showGenerator)}
-                  >
-                    <div className="flex items-center gap-2">
-                      <h2 className="text-2xl font-semibold text-slate-100">Generate Routine</h2>
-                      <span className={`sm:hidden text-slate-400 transition-transform ${showGenerator ? 'rotate-180' : ''}`}>
-                        ▼
-                      </span>
+                {showGenerator && (
+                  <div className="lg:col-span-2 glass rounded-2xl p-6 sm:p-8 flex flex-col lg:min-h-[calc(100vh-12rem)]">
+                    <div className="flex items-center justify-between gap-4">
+                      <div className="flex items-center gap-2">
+                        <h2 className="text-2xl font-semibold text-slate-100">Generate Routine</h2>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        {profile && (
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              setActiveTab('profile')
+                            }}
+                            className="shrink-0 px-3 py-2 rounded-xl glass-soft text-slate-200 hover:text-white transition text-sm"
+                          >
+                            Edit profile
+                          </button>
+                        )}
+                        <button
+                          onClick={() => setShowGenerator(false)}
+                          className="shrink-0 p-2 rounded-xl glass-soft text-slate-400 hover:text-white transition"
+                          aria-label="Hide panel"
+                        >
+                          <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                          </svg>
+                        </button>
+                      </div>
                     </div>
-                    {profile && showGenerator && (
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          setActiveTab('profile')
-                        }}
-                        className="shrink-0 px-3 py-2 rounded-xl glass-soft text-slate-200 hover:text-white transition"
-                      >
-                        Edit profile
-                      </button>
-                    )}
-                  </div>
 
-                  {showGenerator && (
                     <div className="mt-6 animation-fade-in">
                       <p className="text-sm text-slate-300/70 mb-6">
                         Uses your profile (including gender and comments) to tailor volume and recovery.
@@ -1209,7 +1222,7 @@ export default function DashboardPage() {
 
                       {/* Profile summary */}
                       {profile ? (
-                        <div className="mb-6 glass-soft rounded-xl p-4">
+                        <div className="mb-6 glass-soft rounded-xl p-4 max-w-full overflow-hidden">
                           <div className="flex flex-wrap gap-2">
                             <span className="px-3 py-1 rounded-full bg-cyan-500/10 text-cyan-200 border border-cyan-500/30 text-sm">
                               {profile.level}
@@ -1218,14 +1231,14 @@ export default function DashboardPage() {
                               {profile.goal}
                             </span>
                             <span className="px-3 py-1 rounded-full glass-soft text-slate-200 text-sm">
-                              {profile.age}y
+                              {profile.age} years
                             </span>
                             <span className="px-3 py-1 rounded-full glass-soft text-slate-200 text-sm">
-                              {profile.weight}kg
+                              {profile.weight} kg
                             </span>
                             {typeof profile.goal_weight === 'number' && (
                               <span className="px-3 py-1 rounded-full glass-soft text-slate-200 text-sm">
-                                Goal {profile.goal_weight}kg
+                                Goal: {profile.goal_weight} kg
                               </span>
                             )}
                             {profile.goal_duration && (
@@ -1234,7 +1247,7 @@ export default function DashboardPage() {
                               </span>
                             )}
                             <span className="px-3 py-1 rounded-full glass-soft text-slate-200 text-sm">
-                              {profile.height}cm
+                              {profile.height} cm
                             </span>
                             <span className="px-3 py-1 rounded-full glass-soft text-slate-200 text-sm">
                               {profile.gender}
@@ -1244,7 +1257,7 @@ export default function DashboardPage() {
                             </span>
                           </div>
                           {profile.notes && (
-                            <p className="text-sm text-slate-200/80 mt-3 line-clamp-3">
+                            <p className="text-sm text-slate-200/80 mt-3 break-words whitespace-pre-wrap max-w-full">
                               <span className="text-slate-300/60">Notes:</span> {profile.notes}
                             </p>
                           )}
@@ -1255,12 +1268,30 @@ export default function DashboardPage() {
                         </div>
                       )}
 
-                      <div className="mb-6 glass-soft rounded-xl p-4">
-                        <div className="text-sm font-semibold text-slate-100">AI settings</div>
-                        <p className="text-sm text-slate-200/70 mt-1">
-                          Provider + API key are now in the sidebar under <span className="text-slate-100">Settings</span>.
-                        </p>
-                      </div>
+                      {showAISettings && (
+                        <div className="mb-6 glass-soft rounded-xl p-4 relative">
+                          <button
+                            onClick={() => {
+                              setShowAISettings(false)
+                              try {
+                                localStorage.setItem('gymbro:show-ai-settings:v1', '0')
+                              } catch {
+                                // ignore
+                              }
+                            }}
+                            className="absolute top-2 right-2 p-1.5 rounded-lg text-slate-400 hover:text-slate-200 hover:bg-white/5 transition-colors"
+                            aria-label="Dismiss"
+                          >
+                            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                          </button>
+                          <div className="text-sm font-semibold text-slate-100">AI Settings</div>
+                          <p className="text-sm text-slate-200/70 mt-1 pr-6">
+                            Provider and API key are now in the sidebar under <span className="text-slate-100">Settings</span>.
+                          </p>
+                        </div>
+                      )}
 
                       <button
                         onClick={() => handleGenerateRoutine(false)}
@@ -1289,11 +1320,26 @@ export default function DashboardPage() {
                         </div>
                       )}
                     </div>
-                  )}
-                </div>
+                  </div>
+                )}
+
+                {/* Show Panel Button (when hidden) */}
+                {!showGenerator && (
+                  <div className="fixed bottom-6 left-6 z-40">
+                    <button
+                      onClick={() => setShowGenerator(true)}
+                      className="px-4 py-3 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-600 hover:to-blue-700 text-white font-semibold shadow-lg shadow-cyan-500/30 transition-all transform hover:scale-105 flex items-center gap-2"
+                    >
+                      <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                      </svg>
+                      Show Panel
+                    </button>
+                  </div>
+                )}
 
                 {/* Routine Display */}
-                <div className="2xl:col-span-2 glass rounded-2xl p-6 sm:p-8">
+                <div className={`${showGenerator ? 'lg:col-span-3' : 'lg:col-span-5'} glass rounded-2xl p-6 sm:p-8 transition-all`}>
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
                     <div>
                       <h3 className="text-2xl font-semibold text-slate-100">Your Weekly Routine</h3>
