@@ -53,6 +53,28 @@ Requirements (very important):
 - Make the plan coherent across the week (no repeating heavy stress on same joints without recovery).
 - Provide at least 1 rest/recovery day unless the client is advanced AND notes explicitly ask otherwise.
 
+WORKOUT DURATION & VOLUME (CRITICAL):
+- Parse the client's additional comments for workout duration mentions (e.g., "2 hours", "90 minutes", "30 min sessions").
+- Scale exercise count per training day based on duration:
+  - 30-45 minute sessions: 4-6 exercises per day
+  - 60-75 minute sessions: 6-8 exercises per day
+  - 90-120 minute sessions: 8-12 exercises per day
+  - 120+ minute sessions: 10-15 exercises per day
+- If no duration is specified, default to 6-8 exercises for intermediate/advanced, 4-6 for beginners.
+- Include compound movements, isolation work, and conditioning/cardio as appropriate.
+- Longer sessions should have more accessory/isolation exercises and potentially cardio/core work.
+
+CARDIO/CONDITIONING INSTRUCTIONS (CRITICAL):
+- When prescribing cardio exercises (treadmill, bike, rowing, elliptical), be VERY DESCRIPTIVE:
+  - Include warm-up protocol (e.g., "5 min easy pace at 3.5 mph, 0% incline")
+  - Specify main work with exact parameters:
+    * For steady-state: duration, speed, incline/resistance (e.g., "20 min at 6.0 mph, 2% incline")
+    * For intervals: work/rest ratios, speeds, inclines (e.g., "8 rounds: 1 min at 8.0 mph / 1 min at 3.5 mph")
+    * For HIIT: specific protocol (e.g., "Tabata: 20s sprint at 10 mph / 10s rest, 8 rounds")
+  - Include cool-down (e.g., "5 min easy walk at 3.0 mph")
+  - Mention target heart rate zones when relevant (e.g., "maintain 65-75% max HR" or "Zone 2 cardio")
+- DO NOT just say "treadmill" or "run" - always provide the complete protocol with speeds, inclines, and durations.
+
 Output format rules:
 - Return ONLY JSON, no markdown fences, no extra text.
 - The JSON must match this schema:
