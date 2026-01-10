@@ -5,9 +5,10 @@ import { motion, useSpring } from 'framer-motion'
 
 interface LoginMascotProps {
     isPasswordFocused: boolean
+    isLoginFailed: boolean
 }
 
-export function LoginMascot({ isPasswordFocused }: LoginMascotProps) {
+export function LoginMascot({ isPasswordFocused, isLoginFailed }: LoginMascotProps) {
     const [mousePos, setMousePos] = useState({ x: 0, y: 0 })
 
     // Smooth spring animations for all character pupils
@@ -74,102 +75,144 @@ export function LoginMascot({ isPasswordFocused }: LoginMascotProps) {
     return (
         <div id="login-mascot-group" className="relative w-full h-full flex items-center justify-center">
             <svg width="400" height="500" viewBox="0 0 400 500" fill="none" className="select-none">
-
-                {/* Purple Rectangle Character (tallest, back left) */}
                 <motion.g
-                    initial={{ y: 50, opacity: 0 }}
-                    animate={{ y: 0, opacity: 1 }}
-                    transition={{ type: 'spring', stiffness: 150, damping: 20, delay: 0.1 }}
+                    animate={isLoginFailed ? { x: [-10, 10, -10, 10, 0] } : { x: 0 }}
+                    transition={{ duration: 0.4 }}
                 >
-                    {/* Extended height to touch base (y=450) */}
-                    <rect x="120" y="70" width="100" height="380" rx="24" fill="#7C3AED" />
-
-                    {/* Eyes - WHITE sclera with dark pupils */}
-                    <circle cx="150" cy="130" r="10" fill="white" />
-                    <motion.circle cx="150" cy="130" r="4" fill="#1e293b" style={{ x: purplePupilX, y: purplePupilY }} />
-
-                    <circle cx="190" cy="130" r="10" fill="white" />
-                    <motion.circle cx="190" cy="130" r="4" fill="#1e293b" style={{ x: purplePupilX, y: purplePupilY }} />
-
-                    {/* Mouth */}
-                    <line x1="160" y1="170" x2="160" y2="190" stroke="#6D28D9" strokeWidth="3" strokeLinecap="round" />
-                </motion.g>
-
-                {/* Dark Gray Rectangle Character (middle) */}
-                <motion.g
-                    initial={{ y: 50, opacity: 0 }}
-                    animate={{ y: 0, opacity: 1 }}
-                    transition={{ type: 'spring', stiffness: 150, damping: 20, delay: 0.2 }}
-                >
-                    {/* Elongated to touch base (y=450) and darker color */}
-                    <rect x="170" y="170" width="90" height="280" rx="24" fill="#1E293B" />
-
-                    {/* Eyes - WHITE sclera with dark pupils */}
-                    <circle cx="200" cy="230" r="9" fill="white" />
-                    <motion.circle cx="200" cy="230" r="4" fill="#1e293b" style={{ x: grayPupilX, y: grayPupilY }} />
-
-                    <circle cx="230" cy="230" r="9" fill="white" />
-                    <motion.circle cx="230" cy="230" r="4" fill="#1e293b" style={{ x: grayPupilX, y: grayPupilY }} />
-                </motion.g>
-
-                {/* Orange Semi-Circle Character (front left, bottom) */}
-                <motion.g
-                    initial={{ y: 50, opacity: 0 }}
-                    animate={{ y: 0, opacity: 1 }}
-                    transition={{ type: 'spring', stiffness: 150, damping: 20, delay: 0.3 }}
-                >
-                    {/* MASSIVE rounded shape to anchor the group - Darker Orange */}
-                    <path
-                        d="M 10 450 C 10 260, 270 260, 270 450 Z"
-                        fill="#F97316"
-                    />
-
-                    {/* Eyes (Three simple dots in a curve: two low, one high) */}
-                    <motion.circle cx="115" cy="335" r="5" fill="#1e293b" style={{ x: orangePupilX, y: orangePupilY }} />
-                    <motion.circle cx="138" cy="335" r="5" fill="#1e293b" style={{ x: orangePupilX, y: orangePupilY }} />
-                    <motion.circle cx="161" cy="325" r="5" fill="#1e293b" style={{ x: orangePupilX, y: orangePupilY }} />
-                </motion.g>
-
-                {/* Yellow Pill Shape Character (front right) */}
-                <motion.g
-                    initial={{ y: 50, opacity: 0 }}
-                    animate={{ y: 0, opacity: 1 }}
-                    transition={{ type: 'spring', stiffness: 150, damping: 20, delay: 0.4 }}
-                >
-                    {/* Darker Yellow */}
-                    <rect x="240" y="270" width="90" height="180" rx="45" fill="#F59E0B" />
-
-                    {/* Single eye - Just a dark pupil (no sclera) */}
-                    <motion.circle cx="300" cy="320" r="3.5" fill="#1e293b" style={{ x: yellowPupilX, y: yellowPupilY }} />
-                  
-                    {/* Beak/mouth - Pointing OUTSIDE the body AND Tracking Cursor */}
-                    <motion.path
-                        d="M 300 345 L 380 330"
-                        stroke="#1e293b"
-                        strokeWidth="4"
-                        strokeLinecap="round"
-                        style={{ x: yellowNoseX, y: yellowNoseY }}
-                    />
-                </motion.g>
-
-                {/* Hand overlay when password is focused */}
-                {isPasswordFocused && (
+                    {/* Purple Rectangle Character (tallest, back left) */}
                     <motion.g
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: 20 }}
-                        transition={{ type: 'spring', stiffness: 200, damping: 15 }}
+                        initial={{ y: 50, opacity: 0 }}
+                        animate={{ y: 0, opacity: 1 }}
+                        transition={{ type: 'spring', stiffness: 150, damping: 20, delay: 0.1 }}
                     >
-                        {/* Purple character hands */}
-                        <ellipse cx="130" cy="130" rx="20" ry="25" fill="#8B5CF6" opacity="0.9" />
-                        <ellipse cx="210" cy="130" rx="20" ry="25" fill="#8B5CF6" opacity="0.9" />
+                        {/* Extended height to touch base (y=450) */}
+                        <rect x="120" y="70" width="100" height="380" rx="24" fill="#7C3AED" />
 
-                        {/* Gray character hands */}
-                        <ellipse cx="180" cy="230" rx="18" ry="22" fill="#334155" opacity="0.9" />
-                        <ellipse cx="250" cy="230" rx="18" ry="22" fill="#334155" opacity="0.9" />
+                        {/* Eyes - WHITE sclera with dark pupils (Red on error) */}
+                        <circle cx="150" cy="130" r="10" fill="white" />
+                        <motion.circle
+                            cx="150" cy="130" r="4"
+                            animate={{ fill: isLoginFailed ? "#EF4444" : "#1e293b" }}
+                            style={{ x: purplePupilX, y: purplePupilY }}
+                        />
+
+                        <circle cx="190" cy="130" r="10" fill="white" />
+                        <motion.circle
+                            cx="190" cy="130" r="4"
+                            animate={{ fill: isLoginFailed ? "#EF4444" : "#1e293b" }}
+                            style={{ x: purplePupilX, y: purplePupilY }}
+                        />
+
+                        {/* Mouth - Morphs to frown on error */}
+                        <motion.path
+                            initial={false}
+                            animate={{ d: isLoginFailed ? "M 150 185 Q 160 170 170 185" : "M 160 170 L 160 190" }}
+                            stroke="#6D28D9"
+                            strokeWidth="3"
+                            strokeLinecap="round"
+                        />
                     </motion.g>
-                )}
+
+                    {/* Dark Gray Rectangle Character (middle) */}
+                    <motion.g
+                        initial={{ y: 50, opacity: 0 }}
+                        animate={{ y: 0, opacity: 1 }}
+                        transition={{ type: 'spring', stiffness: 150, damping: 20, delay: 0.2 }}
+                    >
+                        {/* Elongated to touch base (y=450) and darker color */}
+                        <rect x="170" y="170" width="90" height="280" rx="24" fill="#1E293B" />
+
+                        {/* Eyes - WHITE sclera with dark pupils (Red on error) */}
+                        <circle cx="200" cy="230" r="9" fill="white" />
+                        <motion.circle
+                            cx="200" cy="230" r="4"
+                            animate={{ fill: isLoginFailed ? "#EF4444" : "#1e293b" }}
+                            style={{ x: grayPupilX, y: grayPupilY }}
+                        />
+
+                        <circle cx="230" cy="230" r="9" fill="white" />
+                        <motion.circle
+                            cx="230" cy="230" r="4"
+                            animate={{ fill: isLoginFailed ? "#EF4444" : "#1e293b" }}
+                            style={{ x: grayPupilX, y: grayPupilY }}
+                        />
+                    </motion.g>
+
+                    {/* Orange Semi-Circle Character (front left, bottom) */}
+                    <motion.g
+                        initial={{ y: 50, opacity: 0 }}
+                        animate={{ y: 0, opacity: 1 }}
+                        transition={{ type: 'spring', stiffness: 150, damping: 20, delay: 0.3 }}
+                    >
+                        {/* MASSIVE rounded shape to anchor the group - Darker Orange */}
+                        <path
+                            d="M 10 450 C 10 260, 270 260, 270 450 Z"
+                            fill="#F97316"
+                        />
+
+                        {/* Eyes (Three simple dots in a curve: two low, one high) - Red on error */}
+                        <motion.circle
+                            cx="115" cy="335" r="5"
+                            animate={{ fill: isLoginFailed ? "#EF4444" : "#1e293b" }}
+                            style={{ x: orangePupilX, y: orangePupilY }}
+                        />
+                        <motion.circle
+                            cx="138" cy="335" r="5"
+                            animate={{ fill: isLoginFailed ? "#EF4444" : "#1e293b" }}
+                            style={{ x: orangePupilX, y: orangePupilY }}
+                        />
+                        <motion.circle
+                            cx="161" cy="325" r="5"
+                            animate={{ fill: isLoginFailed ? "#EF4444" : "#1e293b" }}
+                            style={{ x: orangePupilX, y: orangePupilY }}
+                        />
+                    </motion.g>
+
+                    {/* Yellow Pill Shape Character (front right) */}
+                    <motion.g
+                        initial={{ y: 50, opacity: 0 }}
+                        animate={{ y: 0, opacity: 1 }}
+                        transition={{ type: 'spring', stiffness: 150, damping: 20, delay: 0.4 }}
+                    >
+                        {/* Darker Yellow */}
+                        <rect x="240" y="270" width="90" height="180" rx="45" fill="#F59E0B" />
+
+                        {/* Single eye - Just a dark pupil (no sclera) - Red on error */}
+                        <motion.circle
+                            cx="300" cy="320" r="3.5"
+                            animate={{ fill: isLoginFailed ? "#EF4444" : "#1e293b" }}
+                            style={{ x: yellowPupilX, y: yellowPupilY }}
+                        />
+
+                        {/* Beak/mouth - Pointing OUTSIDE the body AND Tracking Cursor */}
+                        <motion.path
+                            d="M 300 345 L 380 330"
+                            stroke="#1e293b"
+                            strokeWidth="4"
+                            strokeLinecap="round"
+                            style={{ x: yellowNoseX, y: yellowNoseY }}
+                        />
+                    </motion.g>
+
+                    {/* Hand overlay when password is focused */}
+                    {isPasswordFocused && (
+                        <motion.g
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0, y: 20 }}
+                            transition={{ type: 'spring', stiffness: 200, damping: 15 }}
+                        >
+                            {/* Purple character hands */}
+                            <ellipse cx="130" cy="130" rx="20" ry="25" fill="#8B5CF6" opacity="0.9" />
+                            <ellipse cx="210" cy="130" rx="20" ry="25" fill="#8B5CF6" opacity="0.9" />
+
+                            {/* Gray character hands */}
+                            <ellipse cx="180" cy="230" rx="18" ry="22" fill="#334155" opacity="0.9" />
+                            <ellipse cx="250" cy="230" rx="18" ry="22" fill="#334155" opacity="0.9" />
+                        </motion.g>
+                    )}
+                </motion.g>
             </svg>
-        </div>
+        </div >
     )
 }

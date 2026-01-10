@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { motion, AnimatePresence } from 'framer-motion'
 import { BrandLogo } from '@/components/BrandLogo'
 import { LoginMascot } from '@/components/LoginMascot'
 
@@ -13,6 +14,7 @@ export default function LoginPage() {
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
   const [passwordFocused, setPasswordFocused] = useState(false)
+  const [isLoginFailed, setIsLoginFailed] = useState(false)
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -31,6 +33,7 @@ export default function LoginPage() {
 
       if (!response.ok) {
         setError(data.error || 'Something went wrong')
+        setIsLoginFailed(true)
         setLoading(false)
         return
       }
@@ -45,6 +48,7 @@ export default function LoginPage() {
       }
     } catch (err) {
       setError('Network error. Please try again.')
+      setIsLoginFailed(true)
       setLoading(false)
     }
   }
@@ -59,9 +63,14 @@ export default function LoginPage() {
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_80%_20%,rgba(139,92,246,0.3),transparent_50%)]" />
 
         {/* Mascot Container */}
-        <div className="relative z-10 w-full h-full flex flex-col items-center justify-center p-8">
+        <motion.div
+          initial={{ y: -200, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          transition={{ type: "spring", stiffness: 120, damping: 15, delay: 0 }} // Heavy drop, first
+          className="relative z-10 w-full h-full flex flex-col items-center justify-center p-8"
+        >
           <div className="w-full max-w-lg aspect-square scale-110">
-            <LoginMascot isPasswordFocused={passwordFocused} />
+            <LoginMascot isPasswordFocused={passwordFocused} isLoginFailed={isLoginFailed} />
           </div>
           <div className="mt-8 text-center">
             <h2 className="text-3xl font-bold text-white mb-2 tracking-tight">Join the Movement</h2>
@@ -69,7 +78,7 @@ export default function LoginPage() {
               Your personal AI fitness companion waiting to help you achieve your goals.
             </p>
           </div>
-        </div>
+        </motion.div>
       </div>
 
       {/* Right Side - Dark Glass Login Form (Original Colors) */}
@@ -80,7 +89,12 @@ export default function LoginPage() {
         </div>
 
         <div className="w-full max-w-md relative z-10">
-          <div className="text-center mb-8">
+          <motion.div
+            initial={{ y: -50, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            transition={{ delay: 0.1, type: "spring" }} // Stagger 2
+            className="text-center mb-8"
+          >
             <div className="flex justify-center mb-4">
               <BrandLogo size={72} className="rounded-3xl" />
             </div>
@@ -90,7 +104,7 @@ export default function LoginPage() {
             <p className="text-sm text-slate-300/80">
               Welcome back! Please enter your details.
             </p>
-          </div>
+          </motion.div>
 
           <div className="glass glow-ring rounded-2xl p-6 sm:p-8">
             <div className="flex mb-6 glass-soft rounded-xl p-1">
@@ -185,7 +199,10 @@ export default function LoginPage() {
                   <input
                     type="text"
                     value={username}
-                    onChange={(e) => setUsername(e.target.value)}
+                    onChange={(e) => {
+                      setUsername(e.target.value)
+                      if (isLoginFailed) setIsLoginFailed(false)
+                    }}
                     required
                     className="w-full pl-10 pr-4 py-3 glass-soft rounded-xl focus:outline-none focus:ring-2 focus:ring-cyan-400/60 text-white placeholder:text-slate-300/50 transition"
                     placeholder="Enter your email or username"
@@ -227,7 +244,10 @@ export default function LoginPage() {
                   <input
                     type="password"
                     value={password}
-                    onChange={(e) => setPassword(e.target.value)}
+                    onChange={(e) => {
+                      setPassword(e.target.value)
+                      if (isLoginFailed) setIsLoginFailed(false)
+                    }}
                     onFocus={() => setPasswordFocused(true)}
                     onBlur={() => setPasswordFocused(false)}
                     required
