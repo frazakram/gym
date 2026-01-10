@@ -228,9 +228,7 @@ export default function DashboardPage() {
       id: makeId(),
       name,
       createdAt: Date.now(),
-      createdAt: Date.now(),
       provider: 'OpenAI',
-      routine,
       routine,
     }
 
@@ -1598,8 +1596,8 @@ export default function DashboardPage() {
                     else setModalConfig(null)
                   }}
                   className={`px-6 py-2.5 rounded-xl font-semibold text-sm shadow-lg transform transition-all active:scale-95 ${modalConfig.type === 'error'
-                      ? 'bg-gradient-to-r from-red-500 to-rose-600 text-white shadow-red-500/20 hover:shadow-red-500/30'
-                      : 'bg-gradient-to-r from-amber-400 to-orange-500 text-slate-900 shadow-amber-500/20 hover:shadow-amber-500/30'
+                    ? 'bg-gradient-to-r from-red-500 to-rose-600 text-white shadow-red-500/20 hover:shadow-red-500/30'
+                    : 'bg-gradient-to-r from-amber-400 to-orange-500 text-slate-900 shadow-amber-500/20 hover:shadow-amber-500/30'
                     }`}
                 >
                   {modalConfig.type === 'error' ? 'Dismiss' : 'Continue'}
