@@ -761,6 +761,43 @@ export default function DashboardPage() {
 
 
 
+  const handleResetRoutines = () => {
+    setModalConfig({
+      type: 'warning',
+      title: 'Reset All Routine Data?',
+      message: 'This will permanently delete all your saved routines and progress. This action cannot be undone.',
+      emoji: '⚠️',
+      onConfirm: async () => {
+        setModalConfig(null)
+        setLoading(true)
+        setError('')
+        setSuccess('')
+        try {
+          const res = await fetch('/api/routines/reset', { method: 'DELETE' })
+          const data = await res.json()
+
+          if (!res.ok) {
+            throw new Error(data?.error || 'Failed to reset routines')
+          }
+
+          // Clear local state
+          setRoutine(null)
+          setCurrentRoutineId(null)
+          setCurrentWeekNumber(1)
+          setExerciseCompletions(new Map())
+          setActiveSavedId(null)
+
+          setSuccess('All routine data has been reset. You can now generate a fresh routine.')
+        } catch (err) {
+          setError(err instanceof Error ? err.message : 'Failed to reset routines')
+        } finally {
+          setLoading(false)
+        }
+      },
+      onCancel: () => setModalConfig(null)
+    })
+  }
+
   const handleLogout = async () => {
     await fetch('/api/auth/logout', { method: 'POST' })
     router.push('/login')
@@ -1166,6 +1203,29 @@ export default function DashboardPage() {
                       rows={4}
                       className="w-full px-4 py-3 glass-soft rounded-xl text-white placeholder:text-slate-300/50 focus:outline-none focus:ring-2 focus:ring-cyan-400/60 resize-y"
                     />
+                  </div>
+                </div>
+
+                {/* Reset Routine Data */}
+                <div className="mt-8 pt-6 border-t border-slate-700/50">
+                  <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+                    <div className="flex-1">
+                      <h3 className="text-sm font-semibold text-slate-100">Reset Routine Data</h3>
+                      <p className="text-xs text-slate-300/70 mt-1">
+                        Clear all saved routines and progress. This action cannot be undone.
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={handleResetRoutines}
+                      disabled={loading}
+                      className="px-4 py-2 rounded-xl bg-red-500/10 border border-red-500/30 text-red-300 hover:bg-red-500/20 transition flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                      </svg>
+                      Reset All Data
+                    </button>
                   </div>
                 </div>
 
