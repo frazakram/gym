@@ -55,18 +55,13 @@ export async function generateRoutine(input: RoutineGenerationInput, historicalC
 
   const structuredModel = model.withStructuredOutput(WeeklyRoutineSchema);
 
-  const prompt = `You are an expert personal trainer and strength coach. Create a realistic, safe, and highly personalized 7-day gym routine that a good trainer would recommend after assessing the client.
-
-Client Profile (use ALL of these when deciding exercise selection, volume, intensity, rest, and progression):
-- Age: ${input.age} years
-- Current weight: ${input.weight} kg
-- Height: ${normalizedHeight} cm
-- Gender: ${input.gender}
-- Primary goal: ${input.goal}
-${typeof input.goal_weight === 'number' ? `- Goal weight: ${input.goal_weight} kg` : ''}
-- Experience level: ${input.level}
-- Training history/duration: ${input.tenure}
-${input.notes && input.notes.trim() ? `- Additional comments/constraints: ${input.notes.trim()}` : ''}${historicalContext ? historicalContext : ''}
+  /* 
+   * PROMPT CACHING STRATEGY:
+   * We split the prompt into:
+   * 1. System Prompt (Static instructions) -> CACHED (ephemeral)
+   * 2. User Context (Dynamic profile) -> NOT CACHED
+   */
+  const systemPromptContent = `You are an expert personal trainer and strength coach. Create a realistic, safe, and highly personalized 7-day gym routine that a good trainer would recommend after assessing the client.
 
 Requirements (very important):
 - Choose a split appropriate for the client's goal + level (e.g., 3–6 training days/week + rest days as needed).
@@ -104,15 +99,41 @@ Make sure to provide REAL YouTube URLs for exercises from channels like:
 - ScottHermanFitness
 - Provide working WikiHow links for each exercise.
 - CRITICAL: Ensure all YouTube URLs are for currently active videos.
-- CRITICAL: Only return YouTube URLs from youtube.com or youtu.be (no other domains). If you're not sure, return an empty array for youtube_urls.
+- CRITICAL: Only return YouTube URLs from youtube.com or youtube (no other domains). If you're not sure, return an empty array for youtube_urls.
 
 Return the complete weekly routine.`;
 
+  const userContext = `Client Profile (use ALL of these when deciding exercise selection, volume, intensity, rest, and progression):
+- Age: ${input.age} years
+- Current weight: ${input.weight} kg
+- Height: ${normalizedHeight} cm
+- Gender: ${input.gender}
+- Primary goal: ${input.goal}
+${typeof input.goal_weight === 'number' ? `- Goal weight: ${input.goal_weight} kg` : ''}
+- Experience level: ${input.level}
+- Training history/duration: ${input.tenure}
+${input.goal_duration && input.goal_duration.trim() ? `- Target timeframe for goal: ${input.goal_duration.trim()}` : ''}
+${input.notes && input.notes.trim() ? `- Additional comments/constraints: ${input.notes.trim()}` : ''}${historicalContext ? historicalContext : ''}`;
+
   // Some OpenAI accounts/projects may not have access to certain models; retry once with a safer default.
   try {
-    const response = await structuredModel.invoke([
-      { role: "user", content: prompt }
-    ]);
+    // Pass system prompt + user context separately to enable caching on the system part
+    const messages = [
+      {
+        role: "system",
+        content: [
+          {
+            type: "text",
+            text: systemPromptContent,
+            cache_control: { type: "ephemeral" }
+          }
+        ]
+      },
+      { role: "user", content: userContext }
+    ];
+
+    // @ts-ignore - LangChain types might be strict about message content structure but this is valid for Anthropic
+    const response = await structuredModel.invoke(messages);
     return postProcessRoutine(response as WeeklyRoutine);
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : String(err);
@@ -131,8 +152,11 @@ Return the complete weekly routine.`;
       apiKey: input.apiKey || process.env.OPENAI_API_KEY,
     }).withStructuredOutput(WeeklyRoutineSchema);
 
-    const response = await fallback.invoke([{ role: "user", content: prompt }]);
-    return postProcessRoutine(response as WeeklyRoutine);
+    const fallbackResponse = await fallback.invoke([
+      { role: "system", content: systemPromptContent },
+      { role: "user", content: userContext }
+    ]);
+    return postProcessRoutine(fallbackResponse as WeeklyRoutine);
   }
 
   // Removed try/catch to allow error propagation to the API route

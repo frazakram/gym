@@ -30,7 +30,7 @@ export async function PUT(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { age, weight, height, gender, goal, level, tenure, goal_weight, notes } = await request.json();
+    const { age, weight, height, gender, goal, level, tenure, goal_weight, notes, goal_duration } = await request.json();
 
     // Avoid falsy checks; validate presence
     if (age == null || weight == null || height == null || !gender || !goal || !level || !tenure) {
@@ -50,7 +50,8 @@ export async function PUT(request: NextRequest) {
       level,
       tenure,
       goal_weight,
-      notes
+      notes,
+      goal_duration
     );
 
     return NextResponse.json({ profile }, { status: 200 });

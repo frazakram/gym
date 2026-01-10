@@ -16,6 +16,7 @@ export interface Profile {
     level: 'Beginner' | 'Regular' | 'Expert';
     tenure: string;
     goal_weight?: number;
+    goal_duration?: string;
     notes?: string;
     updated_at?: Date;
 }
@@ -66,6 +67,7 @@ export interface RoutineGenerationInput {
     level: 'Beginner' | 'Regular' | 'Expert';
     tenure: string;
     goal_weight?: number;
+    goal_duration?: string;
     notes?: string;
     model_provider: 'Anthropic' | 'OpenAI';
     apiKey?: string;
