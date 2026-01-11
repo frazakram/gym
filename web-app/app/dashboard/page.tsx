@@ -1616,17 +1616,17 @@ export default function DashboardPage() {
                                                 }}
                                               />
                                               <div className="flex-1">
-                                                <div className="flex justify-between items-start gap-3 mb-2">
-                                                  <h5 className={`text-base font-semibold transition ${exerciseCompletions.get(`${dayIndex}-${exIndex}`) ? 'text-emerald-300 line-through opacity-70' : 'text-cyan-300'}`}>
+                                                <div className="flex flex-col sm:flex-row justify-between items-start gap-3 mb-3">
+                                                  <h5 className={`text-base font-semibold transition break-words ${exerciseCompletions.get(`${dayIndex}-${exIndex}`) ? 'text-emerald-300 line-through opacity-70' : 'text-cyan-300'}`}>
                                                     {exercise.name}
                                                   </h5>
-                                                  <div className="flex gap-2">
+                                                  <div className="flex flex-wrap gap-2 shrink-0">
                                                     {urls[0] && (
                                                       <a
                                                         href={urls[0]}
                                                         target="_blank"
                                                         rel="noopener noreferrer"
-                                                        className="text-xs px-3 py-1 rounded-full bg-red-600/80 hover:bg-red-600 text-white transition flex items-center gap-1"
+                                                        className="text-xs px-3 py-1.5 rounded-full bg-red-600/80 hover:bg-red-600 text-white transition flex items-center gap-1 whitespace-nowrap"
                                                       >
                                                         <span>Watch</span>
                                                         <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 24 24">
@@ -1639,7 +1639,7 @@ export default function DashboardPage() {
                                                         href={exercise.wikihow_url}
                                                         target="_blank"
                                                         rel="noopener noreferrer"
-                                                        className="text-xs px-3 py-1 rounded-full bg-blue-600/80 hover:bg-blue-600 text-white transition flex items-center gap-1"
+                                                        className="text-xs px-3 py-1.5 rounded-full bg-blue-600/80 hover:bg-blue-600 text-white transition flex items-center gap-1 whitespace-nowrap"
                                                       >
                                                         <span>WikiHow</span>
                                                         <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1652,9 +1652,9 @@ export default function DashboardPage() {
                                                 <p className="text-sm text-slate-200/80 mb-3">{exercise.sets_reps}</p>
 
                                                 {points.length > 0 && (
-                                                  <div className="mb-3">
+                                                  <div className="mb-3 max-w-full overflow-hidden">
                                                     <div className="text-xs font-semibold text-slate-100 mb-2">Tutorial (points)</div>
-                                                    <ul className="list-disc pl-5 space-y-1 text-sm text-slate-200/80">
+                                                    <ul className="list-disc pl-5 space-y-1 text-sm text-slate-200/80 break-words">
                                                       {points.slice(0, 5).map((p, i) => (
                                                         <li key={i}>{p}</li>
                                                       ))}
