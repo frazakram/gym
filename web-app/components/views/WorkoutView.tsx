@@ -56,29 +56,29 @@ export function WorkoutView({
   return (
     <div className="pb-24">
       {/* Header */}
-      <div className="sticky top-0 z-10 glass-menu backdrop-blur-xl px-4 py-4 border-b border-white/10">
-        <div className="flex items-center gap-3">
+      <div className="sticky top-0 z-10 glass-menu backdrop-blur-xl px-4 py-3 border-b border-white/10">
+        <div className="flex items-center gap-2">
           <button
             onClick={onBack}
-            className="p-2 rounded-xl glass-soft hover:bg-white/10 transition"
+            className="p-1.5 rounded-lg glass-soft hover:bg-white/10 transition"
             aria-label="Go back"
           >
-            <svg className="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
             </svg>
           </button>
           <div className="flex-1 min-w-0">
-            <h1 className="text-xl font-bold text-white truncate">{day.day}</h1>
-            <p className="text-sm text-slate-300/70">
+            <h1 className="text-base font-bold text-white truncate">{day.day}</h1>
+            <p className="text-xs text-slate-300/70">
               {completedCount}/{totalCount} completed • {progressPercentage}%
             </p>
           </div>
         </div>
         
         {/* Progress Bar */}
-        <div className="mt-3 w-full bg-slate-700 rounded-full h-2">
+        <div className="mt-2 w-full bg-slate-700 rounded-full h-1.5">
           <div
-            className="bg-gradient-to-r from-emerald-500 to-cyan-500 h-2 rounded-full transition-all duration-300"
+            className="bg-gradient-to-r from-emerald-500 to-cyan-500 h-1.5 rounded-full transition-all duration-300"
             style={{ width: `${progressPercentage}%` }}
           />
         </div>
@@ -102,11 +102,11 @@ export function WorkoutView({
 
       {/* Completion Message */}
       {completedCount === totalCount && totalCount > 0 && (
-        <div className="px-4 pt-6">
-          <div className="glass rounded-2xl p-6 text-center bg-gradient-to-r from-emerald-500/10 to-cyan-500/10 border border-emerald-500/20">
-            <div className="text-5xl mb-3">🎉</div>
-            <h3 className="text-xl font-bold text-white mb-2">Workout Complete!</h3>
-            <p className="text-slate-300/70">Great job finishing today's workout</p>
+        <div className="px-4 pt-4">
+          <div className="glass rounded-xl p-4 text-center bg-gradient-to-r from-emerald-500/10 to-cyan-500/10 border border-emerald-500/20">
+            <div className="text-4xl mb-2">🎉</div>
+            <h3 className="text-base font-bold text-white mb-1">Workout Complete!</h3>
+            <p className="text-xs text-slate-300/70">Great job finishing today's workout</p>
           </div>
         </div>
       )}

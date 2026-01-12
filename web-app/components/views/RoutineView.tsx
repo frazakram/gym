@@ -46,11 +46,11 @@ export function RoutineView({
   return (
     <div className="pb-24">
       {/* Header */}
-      <div className="px-4 pt-6 pb-4">
-        <h1 className="text-2xl font-bold text-white mb-1">
+      <div className="px-4 pt-4 pb-3">
+        <h1 className="text-lg font-bold text-white mb-0.5">
           {currentDay?.day || 'Select a Day'}
         </h1>
-        <p className="text-sm text-slate-300/70">
+        <p className="text-xs text-slate-300/70">
           {currentDay?.exercises?.length || 0} Exercises
         </p>
       </div>
@@ -104,19 +104,19 @@ export function RoutineView({
       </div>
 
       {/* Estimated Time */}
-      <div className="px-4 pt-6">
-        <div className="glass-soft rounded-xl p-4 text-center">
-          <p className="text-sm text-slate-300/70">Estimated Time</p>
-          <p className="text-2xl font-bold text-white mt-1">{estimatedMinutes} min</p>
+      <div className="px-4 pt-4">
+        <div className="glass-soft rounded-lg p-3 text-center">
+          <p className="text-xs text-slate-300/70">Estimated Time</p>
+          <p className="text-lg font-bold text-white mt-0.5">{estimatedMinutes} min</p>
         </div>
       </div>
 
       {/* Regenerate Button */}
-      <div className="px-4 pt-4">
+      <div className="px-4 pt-3">
         <button
           onClick={onGenerateRoutine}
           disabled={generating}
-          className="w-full py-3 px-6 rounded-xl glass-soft text-slate-100 hover:text-white hover:bg-white/10 transition font-medium disabled:opacity-50 flex items-center justify-center gap-2"
+          className="w-full py-2.5 px-4 rounded-lg glass-soft text-slate-100 hover:text-white hover:bg-white/10 transition text-sm font-medium disabled:opacity-50 flex items-center justify-center gap-2"
         >
           <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />

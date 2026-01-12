@@ -9,8 +9,8 @@ interface CircularProgressProps {
 
 export function CircularProgress({ 
   percentage, 
-  size = 120, 
-  strokeWidth = 8,
+  size = 100, 
+  strokeWidth = 6,
   label 
 }: CircularProgressProps) {
   const radius = (size - strokeWidth) / 2
@@ -55,11 +55,11 @@ export function CircularProgress({
           </defs>
         </svg>
         <div className="absolute inset-0 flex flex-col items-center justify-center">
-          <span className="text-3xl font-bold text-white">{Math.round(percentage)}%</span>
+          <span className="text-2xl font-bold text-white">{Math.round(percentage)}%</span>
         </div>
       </div>
       {label && (
-        <p className="mt-3 text-sm text-slate-300/70 text-center">{label}</p>
+        <p className="mt-2 text-xs text-slate-300/70 text-center">{label}</p>
       )}
     </div>
   )
