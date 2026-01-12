@@ -12,6 +12,7 @@ interface RoutineViewProps {
   completionPercentage: number
   currentWeekNumber: number
   generating: boolean
+  viewingHistory?: boolean
 }
 
 export function RoutineView({
@@ -22,6 +23,7 @@ export function RoutineView({
   completionPercentage,
   currentWeekNumber,
   generating,
+  viewingHistory = false,
 }: RoutineViewProps) {
   const todayIndex = (new Date().getDay() + 6) % 7 // Mon=0
   const [selectedDay, setSelectedDay] = useState(todayIndex)
@@ -118,7 +120,8 @@ export function RoutineView({
       </div>
 
       {/* Action Buttons */}
-      <div className="px-4 pt-3 space-y-2">
+      {!viewingHistory && (
+        <div className="px-4 pt-3 space-y-2">
         {/* Ready for Next Week indicator */}
         {completionPercentage >= 80 && (
           <div className="glass-soft rounded-lg p-3 mb-2 border border-emerald-500/30">
@@ -158,6 +161,7 @@ export function RoutineView({
           <span>Regenerate This Week</span>
         </button>
       </div>
+      )}
     </div>
   )
 }
