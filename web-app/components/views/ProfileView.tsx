@@ -82,22 +82,32 @@ export function ProfileView({
     { value: 'ftin', label: 'ft + in' },
   ]
 
+  // Get avatar emoji based on gender
+  const getAvatarEmoji = () => {
+    switch(gender) {
+      case 'Male': return '👨'
+      case 'Female': return '👩'
+      case 'Non-binary': return '🧑'
+      default: return '👤'
+    }
+  }
+
   return (
-    <div className="pb-24 px-4 py-6 space-y-6">
+    <div className="pb-24 px-4 py-4 space-y-4">
       {/* User Card */}
-      <div className="glass rounded-2xl p-6">
-        <div className="flex items-center gap-4 mb-6">
-          {/* Profile Photo */}
-          <div className="w-20 h-20 rounded-full bg-gradient-to-br from-cyan-500 to-blue-600 flex items-center justify-center text-3xl font-bold text-white">
-            {((profile as any)?.username || 'U')[0].toUpperCase()}
+      <div className="glass rounded-xl p-4">
+        <div className="flex items-center gap-3 mb-4">
+          {/* Profile Photo - Gender-based Avatar */}
+          <div className="w-16 h-16 rounded-full bg-gradient-to-br from-cyan-500 to-blue-600 flex items-center justify-center text-3xl">
+            {getAvatarEmoji()}
           </div>
           
           {/* User Info */}
-          <div className="flex-1">
-            <h2 className="text-2xl font-bold text-white mb-1">
+          <div className="flex-1 min-w-0">
+            <h2 className="text-lg font-bold text-white mb-0.5 truncate">
               {(profile as any)?.username || 'User'}
             </h2>
-            <p className="text-sm text-slate-300/70">
+            <p className="text-xs text-slate-300/70">
               {age} yrs • {gender}
             </p>
           </div>
@@ -105,35 +115,35 @@ export function ProfileView({
           {/* Logout */}
           <button
             onClick={onLogout}
-            className="p-2 rounded-xl glass-soft hover:bg-red-500/10 text-slate-300 hover:text-red-300 transition"
+            className="p-2 rounded-lg glass-soft hover:bg-red-500/10 text-slate-300 hover:text-red-300 transition flex-shrink-0"
             aria-label="Logout"
           >
-            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
             </svg>
           </button>
         </div>
 
         {/* Stats Grid */}
-        <div className="grid grid-cols-3 gap-3">
-          <div className="glass-soft rounded-xl p-3 text-center">
-            <p className="text-2xl font-bold text-white">{weight || '—'}</p>
-            <p className="text-xs text-slate-300/60 mt-1">kg</p>
+        <div className="grid grid-cols-3 gap-2">
+          <div className="glass-soft rounded-lg p-2 text-center">
+            <p className="text-lg font-bold text-white">{weight || '—'}</p>
+            <p className="text-[10px] text-slate-300/60 mt-0.5">kg</p>
           </div>
-          <div className="glass-soft rounded-xl p-3 text-center">
-            <p className="text-2xl font-bold text-white">{resolvedHeightCm || '—'}</p>
-            <p className="text-xs text-slate-300/60 mt-1">cm</p>
+          <div className="glass-soft rounded-lg p-2 text-center">
+            <p className="text-lg font-bold text-white">{resolvedHeightCm || '—'}</p>
+            <p className="text-[10px] text-slate-300/60 mt-0.5">cm</p>
           </div>
-          <div className="glass-soft rounded-xl p-3 text-center">
-            <p className="text-lg font-bold text-white">{level}</p>
-            <p className="text-xs text-slate-300/60 mt-1">Level</p>
+          <div className="glass-soft rounded-lg p-2 text-center">
+            <p className="text-sm font-bold text-white">{level}</p>
+            <p className="text-[10px] text-slate-300/60 mt-0.5">Level</p>
           </div>
         </div>
       </div>
 
       {/* Goals Section */}
-      <div className="glass rounded-2xl p-6">
-        <h3 className="text-lg font-semibold text-white mb-4">Goals</h3>
+      <div className="glass rounded-xl p-4">
+        <h3 className="text-sm font-semibold text-white mb-3">Goals</h3>
         
         {/* Current Goal */}
         <button
@@ -195,8 +205,8 @@ export function ProfileView({
       </div>
 
       {/* Preferences Section */}
-      <div className="glass rounded-2xl p-6">
-        <h3 className="text-lg font-semibold text-white mb-4">Preferences</h3>
+      <div className="glass rounded-xl p-4">
+        <h3 className="text-sm font-semibold text-white mb-3">Preferences</h3>
 
         {/* Stats */}
         <button
@@ -393,7 +403,7 @@ export function ProfileView({
       <button
         onClick={onSaveProfile}
         disabled={loading}
-        className="w-full py-4 px-6 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 text-white font-semibold text-lg shadow-lg shadow-cyan-500/20 hover:shadow-cyan-500/30 transition-all disabled:opacity-50"
+        className="w-full py-2.5 px-4 rounded-lg bg-gradient-to-r from-cyan-500 to-blue-600 text-white font-semibold text-sm shadow-lg shadow-cyan-500/20 hover:shadow-cyan-500/30 transition-all disabled:opacity-50"
       >
         {loading ? 'Saving...' : 'Save Profile'}
       </button>
@@ -401,7 +411,7 @@ export function ProfileView({
       {/* Reset Button */}
       <button
         onClick={onResetRoutines}
-        className="w-full py-3 px-6 rounded-xl bg-red-500/15 hover:bg-red-500/20 text-red-300 font-medium transition border border-red-500/30"
+        className="w-full py-2.5 px-4 rounded-lg bg-red-500/15 hover:bg-red-500/20 text-red-300 text-sm font-medium transition border border-red-500/30"
       >
         Reset Routine Data
       </button>
