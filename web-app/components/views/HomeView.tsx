@@ -12,6 +12,7 @@ interface HomeViewProps {
   onGenerateRoutine: () => void
   onGenerateNextWeek: () => void
   generating: boolean
+  viewingHistory?: boolean
 }
 
 export function HomeView({
@@ -23,6 +24,7 @@ export function HomeView({
   onGenerateRoutine,
   onGenerateNextWeek,
   generating,
+  viewingHistory = false,
 }: HomeViewProps) {
   // Get greeting based on time
   const getGreeting = () => {
@@ -118,7 +120,7 @@ export function HomeView({
       </div>
 
       {/* Action Buttons */}
-      {routine && (
+      {routine && !viewingHistory && (
         <div className="space-y-2">
           {/* Next Week Button - shown when 80%+ complete */}
           {progress.percentage >= 80 && (

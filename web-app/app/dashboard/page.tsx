@@ -8,10 +8,16 @@ import { HomeView } from '@/components/views/HomeView'
 import { RoutineView } from '@/components/views/RoutineView'
 import { WorkoutView } from '@/components/views/WorkoutView'
 import { ProfileView } from '@/components/views/ProfileView'
+import { Sidebar } from '@/components/Sidebar'
 
 export default function DashboardPage() {
   const router = useRouter()
   const [activeView, setActiveView] = useState<'home' | 'routine' | 'workout' | 'profile'>('home')
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false)
+  const [historyRoutines, setHistoryRoutines] = useState<any[]>([])
+  const [loadingHistory, setLoadingHistory] = useState(false)
+  const [viewingHistory, setViewingHistory] = useState(false) // True if viewing a past routine
+  
   const [selectedDayIndex, setSelectedDayIndex] = useState(0)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
@@ -122,6 +128,57 @@ export default function DashboardPage() {
     fetchProfile()
     fetchLatestRoutine()
   }, [fetchProfile, fetchLatestRoutine])
+
+  const fetchHistory = async () => {
+    setLoadingHistory(true)
+    try {
+      const res = await fetch('/api/routines?all=true')
+      const data = await res.json()
+      if (data.routines) {
+        setHistoryRoutines(data.routines)
+      }
+    } catch (err) {
+      console.error('Failed to fetch history:', err)
+    } finally {
+      setLoadingHistory(false)
+    }
+  }
+
+  const handleSelectHistoryRoutine = async (historyItem: any) => {
+    setRoutine(historyItem.routine_json)
+    setCurrentRoutineId(historyItem.id)
+    setCurrentWeekNumber(historyItem.week_number)
+    
+    // Check if this is the "latest" routine to toggle viewingHistory mode
+    // Ideally we comparing IDs, but for now assumption: any selection from history list implies "viewing" mode if strictly previous
+    // Actually simpler: Just set viewingHistory = true, and have a "Back to Latest" button
+    
+    // Fetch completions for this routine
+    try {
+      const compRes = await fetch(`/api/completions?routineId=${historyItem.id}`)
+      const { completions } = await compRes.json()
+      const map = new Map<string, boolean>()
+        completions.forEach((c: any) => {
+          map.set(`${c.day_index}-${c.exercise_index}`, c.completed)
+        })
+      setExerciseCompletions(map)
+      
+      // Determine if this is the latest
+      // For simplicity, let's assume if it came from the sidebar click, we treat it as "viewing history"
+      // UNLESS it matches the very latest one.
+      
+      setViewingHistory(true) 
+      setActiveView('routine') // Go to routine view to see the plan
+    } catch (err) {
+      console.error('Error loading history completions:', err)
+    }
+  }
+
+  const handleBackToLatest = async () => {
+    setViewingHistory(false)
+    await fetchLatestRoutine()
+    setActiveView('home')
+  }
 
   useEffect(() => {
     if (error) {
@@ -405,23 +462,61 @@ export default function DashboardPage() {
 
   return (
     <div className="min-h-screen bg-transparent">
+      <Sidebar 
+        isOpen={isSidebarOpen}
+        onClose={() => setIsSidebarOpen(false)}
+        routines={historyRoutines}
+        currentRoutineId={currentRoutineId}
+        onSelectRoutine={handleSelectHistoryRoutine}
+        loading={loadingHistory}
+      />
+
       {/* Main Content Container */}
-      <div className="max-w-screen-md mx-auto">
+      <div className="max-w-screen-md mx-auto relative">
+        {/* Menu Button */}
+        <div className="absolute top-4 left-4 z-20">
+             <button 
+               onClick={() => {
+                 setIsSidebarOpen(true)
+                 fetchHistory()
+               }}
+               className="p-2 bg-slate-800/80 backdrop-blur rounded-full text-white shadow-lg border border-white/10"
+             >
+               <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h7" />
+               </svg>
+             </button>
+        </div>
+        
         {/* Status banners */}
-        {(error || success) && (
-          <div className="px-4 pt-6 space-y-3">
-            {error && (
-              <div className="rounded-xl border border-red-500/40 bg-red-500/10 px-4 py-3 text-red-200 text-sm">
-                {error}
-              </div>
-            )}
-            {success && (
-              <div className="rounded-xl border border-emerald-500/40 bg-emerald-500/10 px-4 py-3 text-emerald-200 text-sm">
-                {success}
-              </div>
-            )}
-          </div>
-        )}
+        <div className="pt-16 px-4 space-y-3">
+          {viewingHistory && (
+             <div className="flex items-center justify-between rounded-xl border border-indigo-500/40 bg-indigo-500/10 px-4 py-3 text-indigo-200 text-sm">
+               <span className="flex items-center gap-2">
+                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                 </svg>
+                 Viewing History (Week {currentWeekNumber})
+               </span>
+               <button 
+                 onClick={handleBackToLatest}
+                 className="text-white hover:text-indigo-100 font-semibold underline decoration-2 underline-offset-2"
+               >
+                 Back to Current
+               </button>
+             </div>
+          )}
+          {error && (
+            <div className="rounded-xl border border-red-500/40 bg-red-500/10 px-4 py-3 text-red-200 text-sm">
+              {error}
+            </div>
+          )}
+          {success && (
+            <div className="rounded-xl border border-emerald-500/40 bg-emerald-500/10 px-4 py-3 text-emerald-200 text-sm">
+              {success}
+            </div>
+          )}
+        </div>
 
         {/* View Rendering */}
         {activeView === 'home' && (
@@ -434,6 +529,7 @@ export default function DashboardPage() {
             onGenerateRoutine={() => handleGenerateRoutine(false)}
             onGenerateNextWeek={handleGenerateNextWeek}
             generating={generating}
+            viewingHistory={viewingHistory}
           />
         )}
 
@@ -449,6 +545,7 @@ export default function DashboardPage() {
             completionPercentage={calculateCompletionPercentage()}
             currentWeekNumber={currentWeekNumber}
             generating={generating}
+            viewingHistory={viewingHistory}
           />
         )}
 
