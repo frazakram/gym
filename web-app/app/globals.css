@@ -194,3 +194,76 @@ body {
     animation: none;
   }
 }
+
+/* --- Mobile-specific utilities --- */
+.gradient-button {
+  background: linear-gradient(to right, #06b6d4, #2563eb);
+  box-shadow: 0 10px 30px rgba(6, 182, 212, 0.2);
+  transition: box-shadow 0.3s ease;
+}
+
+.gradient-button:hover {
+  box-shadow: 0 10px 40px rgba(6, 182, 212, 0.3);
+}
+
+/* Hide scrollbar but keep functionality */
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
+/* Safe area for bottom navigation on mobile devices */
+.safe-area-bottom {
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+/* Mobile touch optimization */
+@media (hover: none) and (pointer: coarse) {
+  /* Ensure touch targets are at least 44x44px */
+  button, a {
+    min-height: 44px;
+    min-width: 44px;
+  }
+}
+
+/* Animation utilities */
+@keyframes fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes zoom-in-95 {
+  from { transform: scale(0.95); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+
+@keyframes bounce-slow {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
+}
+
+.animate-in {
+  animation-duration: 0.2s;
+  animation-timing-function: ease-out;
+  animation-fill-mode: both;
+}
+
+.fade-in {
+  animation-name: fade-in;
+}
+
+.zoom-in-95 {
+  animation-name: zoom-in-95;
+}
+
+.animate-bounce-slow {
+  animation: bounce-slow 2s ease-in-out infinite;
+}
+
+.duration-200 {
+  animation-duration: 0.2s;
+}
