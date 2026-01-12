@@ -603,3 +603,25 @@ export async function getCompletionStats(userId: number, routineId: number): Pro
   }
 }
 
+export async function deleteAllUserRoutines(userId: number): Promise<void> {
+  try {
+    // Due to ON DELETE CASCADE constraints, deleting routines will automatically
+    // delete associated exercise_completions.
+    await pool.query(
+      'DELETE FROM routines WHERE user_id = $1',
+      [userId]
+    );
+  } catch (error) {
+    if (allowMockAuth()) {
+      console.warn("deleteAllUserRoutines DB failed, clearing mock stores:", error);
+      // Clear mock data for this user
+      for (const [key, val] of mockRoutineStore.entries()) {
+        if (val.user_id === userId) mockRoutineStore.delete(key);
+      }
+      return; 
+    }
+    console.error("deleteAllUserRoutines DB failed:", error);
+    throw error;
+  }
+}
+
