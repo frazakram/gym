@@ -8,6 +8,9 @@ interface RoutineViewProps {
   routine: WeeklyRoutine | null
   onNavigateToWorkout: (dayIndex: number) => void
   onGenerateRoutine: () => void
+  onGenerateNextWeek: () => void
+  completionPercentage: number
+  currentWeekNumber: number
   generating: boolean
 }
 
@@ -15,6 +18,9 @@ export function RoutineView({
   routine,
   onNavigateToWorkout,
   onGenerateRoutine,
+  onGenerateNextWeek,
+  completionPercentage,
+  currentWeekNumber,
   generating,
 }: RoutineViewProps) {
   const todayIndex = (new Date().getDay() + 6) % 7 // Mon=0
@@ -111,8 +117,36 @@ export function RoutineView({
         </div>
       </div>
 
-      {/* Regenerate Button */}
-      <div className="px-4 pt-3">
+      {/* Action Buttons */}
+      <div className="px-4 pt-3 space-y-2">
+        {/* Ready for Next Week indicator */}
+        {completionPercentage >= 80 && (
+          <div className="glass-soft rounded-lg p-3 mb-2 border border-emerald-500/30">
+            <div className="flex items-center gap-2 text-emerald-300 mb-1">
+              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <span className="text-sm font-semibold">Great Progress!</span>
+            </div>
+            <p className="text-xs text-slate-300/70">You've completed {completionPercentage}% of this week. Ready to advance?</p>
+          </div>
+        )}
+
+        {/* Next Week Button */}
+        {completionPercentage >= 80 && (
+          <button
+            onClick={onGenerateNextWeek}
+            disabled={generating}
+            className="w-full py-3 px-4 rounded-xl bg-gradient-to-r from-emerald-500 to-green-600 text-white font-semibold shadow-lg shadow-emerald-500/20 hover:shadow-emerald-500/30 transition-all text-sm disabled:opacity-50 flex items-center justify-center gap-2"
+          >
+            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
+            </svg>
+            <span>{generating ? 'Generating...' : `Generate Week ${currentWeekNumber + 1}`}</span>
+          </button>
+        )}
+        
+        {/* Regenerate Current Week */}
         <button
           onClick={onGenerateRoutine}
           disabled={generating}
@@ -121,7 +155,7 @@ export function RoutineView({
           <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
           </svg>
-          <span>Regenerate Plan</span>
+          <span>Regenerate This Week</span>
         </button>
       </div>
     </div>

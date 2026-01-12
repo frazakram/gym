@@ -345,6 +345,8 @@ export default function DashboardPage() {
       }
 
       setSuccess('Profile saved successfully.')
+      // Clear the generation hash so profile changes trigger new routine generation
+      lastGenProfileRef.current = null
       await fetchProfile()
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : String(err))
@@ -356,6 +358,23 @@ export default function DashboardPage() {
   const handleLogout = async () => {
     await fetch('/api/auth/logout', { method: 'POST' })
     router.push('/login')
+  }
+
+  const handleGenerateNextWeek = async () => {
+    await handleGenerateRoutine(true)
+  }
+
+  const calculateCompletionPercentage = () => {
+    if (!routine) return 0
+    let total = 0
+    let completed = 0
+    routine.days.forEach((day, dIdx) => {
+      day.exercises.forEach((_, eIdx) => {
+        total++
+        if (exerciseCompletions.get(`${dIdx}-${eIdx}`)) completed++
+      })
+    })
+    return total > 0 ? Math.round((completed / total) * 100) : 0
   }
 
   const handleFieldUpdate = (field: string, value: any) => {
@@ -413,6 +432,7 @@ export default function DashboardPage() {
             currentWeekNumber={currentWeekNumber}
             onNavigateToWorkout={() => setActiveView('workout')}
             onGenerateRoutine={() => handleGenerateRoutine(false)}
+            onGenerateNextWeek={handleGenerateNextWeek}
             generating={generating}
           />
         )}
@@ -425,6 +445,9 @@ export default function DashboardPage() {
               setActiveView('workout')
             }}
             onGenerateRoutine={() => handleGenerateRoutine(false)}
+            onGenerateNextWeek={handleGenerateNextWeek}
+            completionPercentage={calculateCompletionPercentage()}
+            currentWeekNumber={currentWeekNumber}
             generating={generating}
           />
         )}

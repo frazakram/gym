@@ -10,6 +10,7 @@ interface HomeViewProps {
   currentWeekNumber: number
   onNavigateToWorkout: () => void
   onGenerateRoutine: () => void
+  onGenerateNextWeek: () => void
   generating: boolean
 }
 
@@ -20,6 +21,7 @@ export function HomeView({
   currentWeekNumber,
   onNavigateToWorkout,
   onGenerateRoutine,
+  onGenerateNextWeek,
   generating,
 }: HomeViewProps) {
   // Get greeting based on time
@@ -115,18 +117,33 @@ export function HomeView({
         </div>
       </div>
 
-      {/* Regenerate Plan */}
+      {/* Action Buttons */}
       {routine && (
-        <div className="flex gap-2">
+        <div className="space-y-2">
+          {/* Next Week Button - shown when 80%+ complete */}
+          {progress.percentage >= 80 && (
+            <button
+              onClick={onGenerateNextWeek}
+              disabled={generating}
+              className="w-full py-3 px-4 rounded-xl bg-gradient-to-r from-emerald-500 to-green-600 text-white font-semibold text-sm shadow-lg shadow-emerald-500/20 hover:shadow-emerald-500/30 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+            >
+              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
+              </svg>
+              <span>{generating ? 'Generating...' : `Generate Week ${currentWeekNumber + 1}`}</span>
+            </button>
+          )}
+          
+          {/* Regenerate Current Week */}
           <button
             onClick={onGenerateRoutine}
             disabled={generating}
-            className="flex-1 py-2.5 px-4 rounded-lg glass-soft text-slate-100 hover:text-white hover:bg-white/10 transition text-sm font-medium disabled:opacity-50 flex items-center justify-center gap-2"
+            className="w-full py-2.5 px-4 rounded-lg glass-soft text-slate-100 hover:text-white hover:bg-white/10 transition text-sm font-medium disabled:opacity-50 flex items-center justify-center gap-2"
           >
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
             </svg>
-            <span>Regenerate Plan</span>
+            <span>Regenerate Current Week</span>
           </button>
         </div>
       )}
