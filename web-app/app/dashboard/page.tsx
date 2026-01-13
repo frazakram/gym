@@ -2,17 +2,19 @@
 
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import { useRouter } from 'next/navigation'
-import { WeeklyRoutine, Profile } from '@/types'
+import { WeeklyRoutine, Profile, WeeklyDiet } from '@/types'
 import { BottomNav } from '@/components/BottomNav'
 import { HomeView } from '@/components/views/HomeView'
 import { RoutineView } from '@/components/views/RoutineView'
 import { WorkoutView } from '@/components/views/WorkoutView'
 import { ProfileView } from '@/components/views/ProfileView'
+import { DietView } from '@/components/views/DietView'
 import { Sidebar } from '@/components/Sidebar'
+import { Toast, ToastType } from '@/components/ui/Toast'
 
 export default function DashboardPage() {
   const router = useRouter()
-  const [activeView, setActiveView] = useState<'home' | 'routine' | 'workout' | 'profile'>('home')
+  const [activeView, setActiveView] = useState<'home' | 'routine' | 'workout' | 'profile' | 'diet'>('home')
   const [isSidebarOpen, setIsSidebarOpen] = useState(false)
   const [historyRoutines, setHistoryRoutines] = useState<any[]>([])
   const [loadingHistory, setLoadingHistory] = useState(false)
@@ -22,6 +24,38 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
+
+  // Toast notifications
+  interface ToastItem {
+    id: string
+    message: string
+    type: ToastType
+  }
+  const [toasts, setToasts] = useState<ToastItem[]>([])
+
+  const showToast = (message: string, type: ToastType) => {
+    const id = `toast-${Date.now()}`
+    setToasts(prev => [...prev, { id, message, type }])
+  }
+
+  const removeToast = (id: string) => {
+    setToasts(prev => prev.filter(t => t.id !== id))
+  }
+
+  // Auto-show toast when error/success changes
+  useEffect(() => {
+    if (error) {
+      showToast(error, 'error')
+      setError('') // Clear after showing
+    }
+  }, [error])
+
+  useEffect(() => {
+    if (success) {
+      showToast(success, 'success')
+      setSuccess('') // Clear after showing
+    }
+  }, [success])
 
   // Profile state
   const [profile, setProfile] = useState<Profile | null>(null)
@@ -38,6 +72,16 @@ export default function DashboardPage() {
   const [goalWeight, setGoalWeight] = useState<number | ''>('')
   const [goalDuration, setGoalDuration] = useState('')
   const [notes, setNotes] = useState('')
+  // Diet State
+  const [dietType, setDietType] = useState<string[]>(['No Restrictions'])
+  const [cuisine, setCuisine] = useState<Profile['cuisine']>('No Preference')
+  const [proteinPowder, setProteinPowder] = useState<Profile['protein_powder']>('No')
+  const [proteinPowderAmount, setProteinPowderAmount] = useState<number>(0)
+  const [specificFoodPreferences, setSpecificFoodPreferences] = useState<string>('')
+  const [mealsPerDay, setMealsPerDay] = useState<number>(3)
+  const [allergies, setAllergies] = useState<string[]>([])
+  const [cookingLevel, setCookingLevel] = useState<string>('Moderate')
+  const [budget, setBudget] = useState<string>('Standard')
 
   // Modal State
   const [modalConfig, setModalConfig] = useState<{
@@ -54,7 +98,9 @@ export default function DashboardPage() {
 
   // Routine state
   const [routine, setRoutine] = useState<WeeklyRoutine | null>(null)
+  const [dietPlan, setDietPlan] = useState<WeeklyDiet | null>(null)
   const [generating, setGenerating] = useState(false)
+  const [generatingDiet, setGeneratingDiet] = useState(false) // Independent loading state
 
   // Progress tracking state
   const [currentRoutineId, setCurrentRoutineId] = useState<number | null>(null)
@@ -91,6 +137,15 @@ export default function DashboardPage() {
         setGoalWeight(data.profile.goal_weight != null ? Number(data.profile.goal_weight) : '')
         setGoalDuration(data.profile.goal_duration ?? '')
         setNotes(data.profile.notes ?? '')
+        setDietType(data.profile.diet_type || ['No Restrictions'])
+        setCuisine(data.profile.cuisine ?? 'No Preference')
+        setProteinPowder(data.profile.protein_powder ?? 'No')
+        setProteinPowderAmount(data.profile.protein_powder_amount ?? 0)
+        setSpecificFoodPreferences(data.profile.specific_food_preferences ?? '')
+        setMealsPerDay(data.profile.meals_per_day ?? 3)
+        setAllergies(data.profile.allergies || [])
+        setCookingLevel(data.profile.cooking_level ?? 'Moderate')
+        setBudget(data.profile.budget ?? 'Standard')
       }
     } catch (err: unknown) {
       console.error('Error fetching profile:', err)
@@ -239,7 +294,8 @@ export default function DashboardPage() {
     }
 
     const currentProfileHash = JSON.stringify({
-      age, weight, height: resolvedHeightCm, gender, goal, level, tenure, goalWeight, goalDuration, notes
+      age, weight, height: resolvedHeightCm, gender, goal, level, tenure, goalWeight, goalDuration, notes,
+      dietType, cuisine, proteinPowder, mealsPerDay, allergies
     })
 
     if (!isNextWeek && lastGenProfileRef.current === currentProfileHash) {
@@ -292,7 +348,8 @@ export default function DashboardPage() {
 
       if (response.ok) {
         lastGenProfileRef.current = JSON.stringify({
-          age, weight, height: resolvedHeightCm, gender, goal, level, tenure, goalWeight, goalDuration, notes
+          age, weight, height: resolvedHeightCm, gender, goal, level, tenure, goalWeight, goalDuration, notes,
+           dietType, cuisine, proteinPowder, mealsPerDay, allergies
         })
       }
 
@@ -325,12 +382,48 @@ export default function DashboardPage() {
         setSuccess('Routine generated successfully.')
         setExerciseCompletions(new Map())
         await saveRoutineToDatabase(data.routine)
+        
+        // Auto-trigger diet generation if routine is new
+        handleGenerateDiet();
       }
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : String(err))
     } finally {
       setGenerating(false)
     }
+  }
+
+
+
+  const handleGenerateDiet = async () => {
+     if (!profile) return;
+     setGeneratingDiet(true);
+     setError('');
+     setSuccess('');
+
+     try {
+       const dietRes = await fetch('/api/diet/generate', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+             routine: routine, // Pass context if available
+             model_provider: 'OpenAI'
+          })
+       })
+       const dietData = await dietRes.json()
+       if (!dietRes.ok) throw new Error(dietData.error || 'Failed to generate diet');
+       
+       if (dietData.dietPlan) {
+          setDietPlan(dietData.dietPlan)
+          setSuccess('Diet plan generated successfully!');
+       }
+     } catch (e: unknown) {
+        const msg = e instanceof Error ? e.message : String(e);
+        console.error("Diet gen error", msg)
+        setError(msg);
+     } finally {
+        setGeneratingDiet(false);
+     }
   }
 
   const handleResetRoutines = () => {
@@ -393,8 +486,15 @@ export default function DashboardPage() {
           goal_weight: goalWeight === '' ? undefined : goalWeight,
           notes,
           goal_duration: goalDuration,
+          diet_type: dietType,
+          cuisine,
+          protein_powder: proteinPowder,
+          protein_powder_amount: proteinPowderAmount,
+          meals_per_day: mealsPerDay,
+          allergies,
+          specific_food_preferences: specificFoodPreferences
         }),
-      })
+      });
 
       if (!response.ok) {
         const data = await response.json().catch(() => null)
@@ -449,6 +549,15 @@ export default function DashboardPage() {
       case 'goalWeight': setGoalWeight(value); break
       case 'goalDuration': setGoalDuration(value); break
       case 'notes': setNotes(value); break
+      case 'dietType': setDietType(value); break
+      case 'cuisine': setCuisine(value); break
+      case 'proteinPowder': setProteinPowder(value); break
+      case 'proteinPowderAmount': setProteinPowderAmount(value); break
+      case 'specificFoodPreferences': setSpecificFoodPreferences(value); break
+      case 'mealsPerDay': setMealsPerDay(value); break
+      case 'allergies': setAllergies(value); break
+      case 'cookingLevel': setCookingLevel(value); break
+      case 'budget': setBudget(value); break
     }
   }
 
@@ -473,14 +582,14 @@ export default function DashboardPage() {
 
       {/* Main Content Container */}
       <div className="max-w-screen-md mx-auto relative">
-        {/* Menu Button */}
-        <div className="absolute top-4 left-4 z-20">
+        {/* Menu Button - positioned to not overlap with sticky headers */}
+        <div className="fixed top-4 left-4 z-30">
              <button 
                onClick={() => {
                  setIsSidebarOpen(true)
                  fetchHistory()
                }}
-               className="p-2 bg-slate-800/80 backdrop-blur rounded-full text-white shadow-lg border border-white/10"
+               className="p-2 bg-slate-800/80 backdrop-blur rounded-full text-white shadow-lg border border-white/10 hover:bg-slate-700/80 transition-colors"
              >
                <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h7" />
@@ -488,41 +597,12 @@ export default function DashboardPage() {
              </button>
         </div>
         
-        {/* Status banners */}
-        <div className="pt-16 px-4 space-y-3">
-          {viewingHistory && (
-             <div className="flex items-center justify-between rounded-xl border border-indigo-500/40 bg-indigo-500/10 px-4 py-3 text-indigo-200 text-sm">
-               <span className="flex items-center gap-2">
-                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                 </svg>
-                 Viewing History (Week {currentWeekNumber})
-               </span>
-               <button 
-                 onClick={handleBackToLatest}
-                 className="text-white hover:text-indigo-100 font-semibold underline decoration-2 underline-offset-2"
-               >
-                 Back to Current
-               </button>
-             </div>
-          )}
-          {error && (
-            <div className="rounded-xl border border-red-500/40 bg-red-500/10 px-4 py-3 text-red-200 text-sm">
-              {error}
-            </div>
-          )}
-          {success && (
-            <div className="rounded-xl border border-emerald-500/40 bg-emerald-500/10 px-4 py-3 text-emerald-200 text-sm">
-              {success}
-            </div>
-          )}
-        </div>
-
         {/* View Rendering */}
         {activeView === 'home' && (
           <HomeView
             profile={profile}
             routine={routine}
+            diet={dietPlan}
             exerciseCompletions={exerciseCompletions}
             currentWeekNumber={currentWeekNumber}
             onNavigateToWorkout={() => setActiveView('workout')}
@@ -536,6 +616,7 @@ export default function DashboardPage() {
         {activeView === 'routine' && (
           <RoutineView
             routine={routine}
+            diet={dietPlan}
             onNavigateToWorkout={(dayIndex) => {
               setSelectedDayIndex(dayIndex)
               setActiveView('workout')
@@ -561,6 +642,14 @@ export default function DashboardPage() {
           />
         )}
 
+        {activeView === 'diet' && (
+          <DietView
+            diet={dietPlan}
+            onGenerateDiet={handleGenerateDiet}
+            generating={generatingDiet}
+          />
+        )}
+
         {activeView === 'profile' && (
           <ProfileView
             profile={profile}
@@ -578,6 +667,15 @@ export default function DashboardPage() {
             goalDuration={goalDuration}
             notes={notes}
             resolvedHeightCm={resolvedHeightCm}
+            dietType={dietType}
+            cuisine={cuisine}
+            proteinPowder={proteinPowder}
+            proteinPowderAmount={proteinPowderAmount}
+            specificFoodPreferences={specificFoodPreferences}
+            mealsPerDay={mealsPerDay}
+            allergies={allergies}
+            cookingLevel={cookingLevel}
+            budget={budget}
             onUpdateField={handleFieldUpdate}
             onSaveProfile={handleSaveProfile}
             onResetRoutines={handleResetRoutines}
@@ -589,6 +687,21 @@ export default function DashboardPage() {
 
       {/* Bottom Navigation */}
       <BottomNav activeView={activeView} onViewChange={setActiveView} />
+
+      {/* Toast Notifications */}
+      {toasts.map((toast, index) => (
+        <div
+          key={toast.id}
+          style={{ bottom: `${6 + index * 5}rem` }}
+          className="fixed left-0 right-0 z-[60]"
+        >
+          <Toast
+            message={toast.message}
+            type={toast.type}
+            onClose={() => removeToast(toast.id)}
+          />
+        </div>
+      ))}
 
       {/* Modal */}
       {modalConfig && (

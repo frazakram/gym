@@ -91,8 +91,8 @@ export function ExerciseCard({
         </div>
       )}
 
-      {/* YouTube Preview (if no image) */}
-      {!imageUrl && ytId && (
+      {/* YouTube Preview - Always show if available */}
+      {ytId && (
         <YouTubeHoverPreview videoId={ytId} title={exercise.name} />
       )}
 

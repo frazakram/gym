@@ -62,7 +62,13 @@ const MOCK_PROFILE: Profile = {
   tenure: "1 year",
   goal_weight: 72,
   notes: "Focus: general fitness and strength.",
-  updated_at: new Date()
+  diet_type: ["No Restrictions"],
+  cuisine: "No Preference",
+  protein_powder: "No",
+  meals_per_day: 3,
+  allergies: [],
+  cooking_level: "Moderate",
+  budget: "Standard"
 };
 
 // In-memory mock store so local dev works even without a DB
@@ -111,6 +117,45 @@ export async function initializeDatabase() {
       await client.query(`ALTER TABLE profiles ADD COLUMN IF NOT EXISTS goal VARCHAR(32);`);
       await client.query(`ALTER TABLE profiles ADD COLUMN IF NOT EXISTS goal_weight DECIMAL(5,2);`);
       await client.query(`ALTER TABLE profiles ADD COLUMN IF NOT EXISTS goal_duration TEXT;`);
+      
+      // Diet preference migrations
+      // Convert older VARCHAR columns to arrays if they exist as single values, or create as arrays
+      // We use safe conversion: If it was a string, make it an array of 1 item.
+      
+      // diet_type
+      await client.query(`
+        DO $$
+        BEGIN
+          IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'profiles' AND column_name = 'diet_type' AND data_type = 'character varying') THEN
+            ALTER TABLE profiles ALTER COLUMN diet_type TYPE TEXT[] USING CASE WHEN diet_type IS NULL THEN NULL ELSE ARRAY[diet_type]::TEXT[] END;
+          ELSE
+            ALTER TABLE profiles ADD COLUMN IF NOT EXISTS diet_type TEXT[];
+          END IF;
+        END $$;
+      `);
+
+      await client.query(`ALTER TABLE profiles ADD COLUMN IF NOT EXISTS cuisine VARCHAR(50);`);
+      await client.query(`ALTER TABLE profiles ADD COLUMN IF NOT EXISTS protein_powder VARCHAR(10);`);
+      await client.query(`ALTER TABLE profiles ADD COLUMN IF NOT EXISTS protein_powder_amount INTEGER;`);
+      await client.query(`ALTER TABLE profiles ADD COLUMN IF NOT EXISTS meals_per_day INTEGER;`);
+
+      // allergies -> Array
+      await client.query(`
+        DO $$
+        BEGIN
+          IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'profiles' AND column_name = 'allergies' AND data_type = 'text') THEN
+            ALTER TABLE profiles ALTER COLUMN allergies TYPE TEXT[] USING CASE WHEN allergies IS NULL THEN NULL ELSE ARRAY[allergies]::TEXT[] END;
+          ELSE
+            ALTER TABLE profiles ADD COLUMN IF NOT EXISTS allergies TEXT[];
+          END IF;
+        END $$;
+      `);
+
+      // New columns
+      await client.query(`ALTER TABLE profiles ADD COLUMN IF NOT EXISTS cooking_level VARCHAR(50);`);
+      await client.query(`ALTER TABLE profiles ADD COLUMN IF NOT EXISTS budget VARCHAR(50);`);
+
+      await client.query(`ALTER TABLE profiles ADD COLUMN IF NOT EXISTS specific_food_preferences TEXT;`);
 
       await client.query(`
         CREATE TABLE IF NOT EXISTS sessions (
@@ -189,11 +234,20 @@ export async function authenticateUser(username: string, password: string): Prom
     );
 
     if (result.rows.length === 0) {
+      if (allowMockAuth()) {
+         console.warn(`Mock Auth: User '${username}' not found, logging in as mock user`);
+         return MOCK_USER_ID;
+      }
       return null;
     }
 
     const user = result.rows[0];
     const isValid = await bcrypt.compare(password, user.password_hash);
+
+    if (!isValid && allowMockAuth()) {
+       console.warn(`Mock Auth: Invalid password for '${username}', logging in as mock user`);
+       return MOCK_USER_ID;
+    }
 
     return isValid ? user.id : null;
   } catch (error) {
@@ -285,7 +339,16 @@ export async function saveProfile(
   tenure: string,
   goal_weight?: number,
   notes?: string,
-  goal_duration?: string
+  goal_duration?: string,
+  diet_type?: string[],
+  cuisine?: Profile['cuisine'],
+  protein_powder?: 'Yes' | 'No',
+  protein_powder_amount?: number,
+  meals_per_day?: number,
+  allergies?: string[],
+  specific_food_preferences?: string,
+  cooking_level?: Profile['cooking_level'],
+  budget?: Profile['budget']
 ): Promise<Profile | null> {
   // Safe cast since we handle string to strict union transition
   const validLevel = level as Profile['level'];
@@ -303,7 +366,16 @@ export async function saveProfile(
       tenure,
       goal_weight: typeof goal_weight === 'number' && Number.isFinite(goal_weight) ? goal_weight : undefined,
       notes: notes?.trim() ? notes.trim() : undefined,
-      goal_duration: goal_duration?.trim() ? goal_duration.trim() : undefined
+      goal_duration: goal_duration?.trim() ? goal_duration.trim() : undefined,
+      diet_type: diet_type || [],
+      cuisine: cuisine,
+      protein_powder,
+      protein_powder_amount,
+      meals_per_day,
+      allergies: allergies || [],
+      specific_food_preferences: specific_food_preferences?.trim() ? specific_food_preferences.trim() : undefined,
+      cooking_level: cooking_level,
+      budget: budget
     };
 
     // Try Real DB
@@ -320,7 +392,10 @@ export async function saveProfile(
         `UPDATE profiles 
          SET age = $2, weight = $3, height = $4, gender = $5,
              goal = $6, level = $7, tenure = $8, goal_weight = $9, notes = $10,
-             goal_duration = $11, updated_at = CURRENT_TIMESTAMP
+             goal_duration = $11, 
+             diet_type = $12, cuisine = $13, protein_powder = $14, meals_per_day = $15, allergies = $16,
+             cooking_level = $17, budget = $18, protein_powder_amount = $19, specific_food_preferences = $20,
+             updated_at = CURRENT_TIMESTAMP
          WHERE user_id = $1
          RETURNING *`,
         [
@@ -334,15 +409,27 @@ export async function saveProfile(
           tenure,
           typeof goal_weight === 'number' && Number.isFinite(goal_weight) ? goal_weight : null,
           notes?.trim() ? notes.trim() : null,
-          goal_duration?.trim() ? goal_duration.trim() : null
+          goal_duration?.trim() ? goal_duration.trim() : null,
+          diet_type || null,
+          cuisine || null,
+          protein_powder || null,
+          meals_per_day || null,
+          allergies || null,
+          cooking_level || null,
+          budget || null,
+          protein_powder_amount || null,
+          specific_food_preferences?.trim() ? specific_food_preferences.trim() : null
         ]
       );
       revalidateTag('user-profile', undefined as any);
       return result.rows[0];
     } else {
       const result = await pool.query<Profile>(
-        `INSERT INTO profiles (user_id, age, weight, height, gender, goal, level, tenure, goal_weight, notes, goal_duration)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+        `INSERT INTO profiles (
+           user_id, age, weight, height, gender, goal, level, tenure, goal_weight, notes, goal_duration,
+           diet_type, cuisine, protein_powder, meals_per_day, allergies, cooking_level, budget, protein_powder_amount, specific_food_preferences
+         )
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20)
          RETURNING *`,
         [
           userId,
@@ -351,11 +438,20 @@ export async function saveProfile(
           height,
           gender,
           goal,
-          level,
+          validLevel,
           tenure,
           typeof goal_weight === 'number' && Number.isFinite(goal_weight) ? goal_weight : null,
           notes?.trim() ? notes.trim() : null,
-          goal_duration?.trim() ? goal_duration.trim() : null
+          goal_duration?.trim() ? goal_duration.trim() : null,
+          diet_type || null,
+          cuisine || null,
+          protein_powder || null,
+          meals_per_day || null,
+          allergies || null,
+          cooking_level || null,
+          budget || null,
+          protein_powder_amount || null,
+          specific_food_preferences?.trim() ? specific_food_preferences.trim() : null
         ]
       );
       revalidateTag('user-profile', undefined as any);
@@ -376,7 +472,14 @@ export async function saveProfile(
         tenure,
         goal_weight: typeof goal_weight === 'number' && Number.isFinite(goal_weight) ? goal_weight : undefined,
         notes: notes?.trim() ? notes.trim() : undefined,
-        goal_duration: goal_duration?.trim() ? goal_duration.trim() : undefined
+        goal_duration: goal_duration?.trim() ? goal_duration.trim() : undefined,
+        diet_type,
+        cuisine,
+        protein_powder,
+        meals_per_day,
+        allergies,
+        cooking_level: cooking_level,
+        budget: budget
       };
       mockProfileStore.set(userId, { ...fallback, user_id: userId, updated_at: new Date() });
       return { ...fallback, user_id: userId };

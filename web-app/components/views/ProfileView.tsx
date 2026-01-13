@@ -19,6 +19,16 @@ interface ProfileViewProps {
   goalWeight: number | ''
   goalDuration: string
   notes: string
+  // Diet Props
+  dietType: string[]
+  cuisine: Profile['cuisine']
+  proteinPowder: Profile['protein_powder']
+  proteinPowderAmount: number
+  specificFoodPreferences: string
+  mealsPerDay: number
+  allergies: string[]
+  cookingLevel: string
+  budget: string
   resolvedHeightCm: number | null
   onUpdateField: (field: string, value: any) => void
   onSaveProfile: (e: React.FormEvent) => void
@@ -42,6 +52,15 @@ export function ProfileView({
   goalWeight,
   goalDuration,
   notes,
+  dietType,
+  cuisine,
+  proteinPowder,
+  proteinPowderAmount,
+  specificFoodPreferences,
+  mealsPerDay,
+  allergies,
+  cookingLevel,
+  budget,
   resolvedHeightCm,
   onUpdateField,
   onSaveProfile,
@@ -302,6 +321,7 @@ export function ProfileView({
                       const v = e.target.value
                       onUpdateField('heightInches', v === '' ? '' : Number(v))
                     }}
+                    onWheel={(e) => e.currentTarget.blur()}
                     min="0"
                     max="11.9"
                     step="0.1"
@@ -395,6 +415,214 @@ export function ProfileView({
               placeholder="Injuries, preferences, goals..."
               className="w-full px-4 py-3 glass-soft rounded-xl text-white placeholder:text-slate-300/50 focus:outline-none focus:ring-2 focus:ring-cyan-400/60 resize-none"
             />
+          </div>
+        )}
+      </div>
+
+      {/* Nutrition Preferences */}
+      <div className="glass rounded-xl p-4">
+        <h3 className="text-sm font-semibold text-white mb-3">Nutrition Preferences</h3>
+
+        <button
+          onClick={() => toggleSection('nutrition')}
+          className="w-full flex items-center justify-between p-4 glass-soft rounded-xl hover:bg-white/10 transition"
+        >
+          <div className="text-left">
+            <p className="text-sm text-slate-300/70">Diet & Meals</p>
+            <p className="font-semibold text-white">{(dietType && dietType.length > 0) ? (dietType.length > 1 ? `${dietType.length} Selected` : dietType[0]) : 'Any'} • {cuisine || 'Any'}</p>
+          </div>
+          <svg className="w-5 h-5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+          </svg>
+        </button>
+
+        {expandedSection === 'nutrition' && (
+          <div className="mt-3 p-4 glass-soft rounded-xl">
+            <div className="space-y-6">
+            <div className="pb-2 border-b border-white/5">
+                <h3 className="text-lg font-medium text-white/90 flex items-center gap-2">
+                    <span className="text-xl">🥗</span> Nutrition Preferences
+                </h3>
+                <p className="text-sm text-slate-400 mt-1">Customize your meal plan engine.</p>
+            </div>
+             
+             {/* Diet Type (Multi-select) */}
+             <div>
+                <label className="block text-sm font-medium text-slate-200/90 mb-2">Dietary Type (Select all that apply)</label>
+                <div className="flex flex-wrap gap-2">
+                  {[
+                    'No Restrictions', 'Vegetarian', 'Vegan', 'Pescatarian', 
+                    'Keto', 'Paleo', 'Strictly Non-Vegetarian', 'Halal', 'Kosher', 'Gluten-Free'
+                  ].map((type) => {
+                    const isSelected = (dietType || []).includes(type);
+                    return (
+                      <button
+                        key={type}
+                        onClick={() => {
+                          const current = dietType || [];
+                          let newTypes;
+                          if (type === 'No Restrictions') {
+                             newTypes = ['No Restrictions'];
+                          } else {
+                             // Remove 'No Restrictions' if other is selected
+                             const filtered = current.filter(t => t !== 'No Restrictions');
+                             if (isSelected) {
+                               newTypes = filtered.filter(t => t !== type);
+                             } else {
+                               newTypes = [...filtered, type];
+                             }
+                          }
+                          if (newTypes.length === 0) newTypes = ['No Restrictions'];
+                          onUpdateField('dietType', newTypes);
+                        }}
+                        className={`px-3 py-1.5 rounded-lg text-xs font-medium transition border ${
+                          isSelected 
+                            ? 'bg-cyan-500/20 border-cyan-500 text-cyan-200 shadow-sm shadow-cyan-500/10' 
+                            : 'bg-white/5 border-white/10 text-slate-400 hover:bg-white/10 hover:text-slate-200'
+                        }`}
+                      >
+                        {type}
+                      </button>
+                    );
+                  })}
+                </div>
+             </div>
+
+             {/* Allergies (Multi-select) */}
+             <div>
+                <label className="block text-sm font-medium text-slate-200/90 mb-2">Allergies / Intolerances</label>
+                <div className="flex flex-wrap gap-2">
+                  {[
+                    'None', 'Dairy', 'Gluten', 'Nuts', 'Shellfish', 'Eggs', 'Soy'
+                  ].map((allergy) => {
+                    const isSelected = (allergies || []).includes(allergy);
+                    return (
+                      <button
+                        key={allergy}
+                        onClick={() => {
+                          const current = allergies || [];
+                          let newAllergies: string[];
+                          if (allergy === 'None') {
+                             newAllergies = []; // Empty array means None
+                          } else {
+                             if (isSelected) {
+                               newAllergies = current.filter(t => t !== allergy);
+                             } else {
+                               newAllergies = [...current, allergy];
+                             }
+                          }
+                          onUpdateField('allergies', newAllergies);
+                        }}
+                        className={`px-3 py-1.5 rounded-lg text-xs font-medium transition border ${
+                           isSelected 
+                            ? 'bg-red-500/20 border-red-500 text-red-200 shadow-sm shadow-red-500/10' 
+                            : 'bg-white/5 border-white/10 text-slate-400 hover:bg-white/10 hover:text-slate-200'
+                        }`}
+                      >
+                        {allergy}
+                      </button>
+                    );
+                  })}
+                </div>
+             </div>
+
+             <GlassSelect
+               label="Cuisine / Region"
+               value={cuisine || 'No Preference'}
+               options={[
+                  { value: 'No Preference', label: 'No Preference' },
+                  { value: 'North Indian', label: 'North Indian' },
+                  { value: 'South Indian', label: 'South Indian' },
+                  { value: 'Mughlai', label: 'Mughlai' },
+                  { value: 'Mediterranean', label: 'Mediterranean' },
+                  { value: 'American', label: 'American' },
+                  { value: 'Mexican', label: 'Mexican' },
+                  { value: 'Asian', label: 'Asian' },
+               ] as any}
+               onChange={(v) => onUpdateField('cuisine', v)}
+             />
+
+             <div className="grid grid-cols-2 gap-3">
+                <GlassSelect
+                   label="Meals Per Day"
+                   value={String(mealsPerDay)}
+                   options={[
+                      { value: '2', label: '2 Meals' },
+                      { value: '3', label: '3 Meals' },
+                      { value: '4', label: '4 Meals' },
+                      { value: '5', label: '5 Meals' },
+                      { value: '6', label: '6 Meals' },
+                   ] as any}
+                   onChange={(v) => onUpdateField('mealsPerDay', Number(v))}
+                />
+                <GlassSelect
+                  label="Protein Powder?"
+                  value={proteinPowder || 'No'}
+                  options={[
+                      { value: 'Yes', label: 'Yes' },
+                      { value: 'No', label: 'No' },
+                  ] as any}
+                  onChange={(v) => onUpdateField('proteinPowder', v)}
+                />
+                {(proteinPowder === 'Yes') && (
+                  <div className="animate-in fade-in slide-in-from-top-2 duration-300">
+                    <label className="block text-sm font-medium text-slate-200/90 mb-2">Protein Intake from Powder (g/day)</label>
+                    <div className="relative">
+                        <input
+                        type="number"
+                        value={proteinPowderAmount || ''}
+                        onChange={(e) => onUpdateField('proteinPowderAmount', e.target.value === '' ? 0 : Number(e.target.value))}
+                        onWheel={(e) => e.currentTarget.blur()}
+                        placeholder="e.g. 25"
+                        className="w-full pl-4 pr-12 py-3 glass-soft rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-cyan-400/60"
+                        />
+                        <span className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 text-sm">g</span>
+                    </div>
+                  </div>
+                )}
+             </div>
+
+             {/* Specific Food Preferences */}
+             <div className="p-4 rounded-xl bg-white/5 border border-white/10 space-y-3">
+                <label className="block text-sm font-medium text-slate-200/90 flex items-center gap-2">
+                    <span>📝</span> Specific Food Inclusions / Exclusions
+                </label>
+                <textarea
+                  value={specificFoodPreferences || ''}
+                  onChange={(e) => onUpdateField('specificFoodPreferences', e.target.value)}
+                  placeholder="e.g. Include oats for breakfast, exclude mushrooms. I hate bell peppers."
+                  rows={3}
+                  className="w-full px-4 py-3 glass-soft rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-cyan-400/60 placeholder-slate-500/50"
+                />
+                <p className="text-xs text-slate-400/70">
+                    The AI will treat these as strict rules for your diet plan.
+                </p>
+             </div>
+
+             <div className="grid grid-cols-2 gap-3">
+                 <GlassSelect
+                   label="Cooking Level"
+                   value={cookingLevel || 'Moderate'}
+                   options={[
+                      { value: 'Full Prep', label: 'Full Prep' },
+                      { value: 'Moderate', label: 'Moderate' },
+                      { value: 'Minimal', label: 'Minimal' },
+                      { value: 'No Cooking', label: 'No Cooking' },
+                   ] as any}
+                   onChange={(v) => onUpdateField('cookingLevel', v)}
+                 />
+                 <GlassSelect
+                   label="Budget"
+                   value={budget || 'Standard'}
+                   options={[
+                      { value: 'Budget-Friendly', label: 'Budget-Friendly' },
+                      { value: 'Standard', label: 'Standard' },
+                      { value: 'Premium', label: 'Premium' },
+                   ] as any}
+                   onChange={(v) => onUpdateField('budget', v)}
+                 />
+             </div>
+          </div>
           </div>
         )}
       </div>

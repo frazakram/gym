@@ -1,11 +1,13 @@
 'use client'
 
 import { useState } from 'react'
-import { WeeklyRoutine } from '@/types'
+import { WeeklyRoutine, WeeklyDiet } from '@/types'
 import { DaySelector } from '../DaySelector'
+import { DietDisplay } from '@/components/DietDisplay'
 
 interface RoutineViewProps {
   routine: WeeklyRoutine | null
+  diet: WeeklyDiet | null // Added diet prop
   onNavigateToWorkout: (dayIndex: number) => void
   onGenerateRoutine: () => void
   onGenerateNextWeek: () => void
@@ -17,6 +19,7 @@ interface RoutineViewProps {
 
 export function RoutineView({
   routine,
+  diet,
   onNavigateToWorkout,
   onGenerateRoutine,
   onGenerateNextWeek,
@@ -162,6 +165,12 @@ export function RoutineView({
         </button>
       </div>
       )}
+
+      {/* Diet Display */}
+      <div className="px-4 pb-8">
+         <DietDisplay diet={diet} />
+      </div>
+
     </div>
   )
 }
