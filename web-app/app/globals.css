@@ -246,6 +246,55 @@ body {
   50% { transform: translateY(-10px); }
 }
 
+@keyframes slide-in-up {
+  from {
+    transform: translateY(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes slide-out-down {
+  from {
+    transform: translateY(0);
+    opacity: 1;
+  }
+  to {
+    transform: translateY(100%);
+    opacity: 0;
+  }
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+@keyframes ripple {
+  to {
+    width: 500px;
+    height: 500px;
+    opacity: 0;
+    transform: translate(-50%, -50%);
+  }
+}
+
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
 .animate-in {
   animation-duration: 0.2s;
   animation-timing-function: ease-out;
@@ -264,6 +313,31 @@ body {
   animation: bounce-slow 2s ease-in-out infinite;
 }
 
+.animate-slide-in-up {
+  animation: slide-in-up 0.3s ease-out;
+}
+
+.animate-slide-out-down {
+  animation: slide-out-down 0.3s ease-in;
+}
+
+.skeleton-shimmer {
+  animation: shimmer 2s infinite linear;
+}
+
+.animate-ripple {
+  animation: ripple 0.6s ease-out;
+}
+
+.animate-float {
+  animation: float 3s ease-in-out infinite;
+}
+
 .duration-200 {
   animation-duration: 0.2s;
+}
+
+/* Smooth view transitions */
+.view-transition {
+  animation: fade-in 0.3s ease-out;
 }

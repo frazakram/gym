@@ -16,10 +16,36 @@ export default function LoginPage() {
   const [passwordFocused, setPasswordFocused] = useState(false)
   const [isLoginFailed, setIsLoginFailed] = useState(false)
 
+  const validatePassword = (pwd: string): string | null => {
+    if (pwd.length < 6) {
+      return 'Password must be at least 6 characters long'
+    }
+    if (!/[A-Z]/.test(pwd)) {
+      return 'Password must contain at least one uppercase letter'
+    }
+    if (!/[0-9]/.test(pwd)) {
+      return 'Password must contain at least one number'
+    }
+    if (!/[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]/.test(pwd)) {
+      return 'Password must contain at least one special character'
+    }
+    return null
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError('')
     setLoading(true)
+
+    // Client-side validation for registration
+    if (!isLogin) {
+      const passwordError = validatePassword(password)
+      if (passwordError) {
+        setError(passwordError)
+        setLoading(false)
+        return
+      }
+    }
 
     try {
       const endpoint = isLogin ? '/api/auth/login' : '/api/auth/register'

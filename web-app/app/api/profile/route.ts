@@ -37,7 +37,11 @@ export async function PUT(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { age, weight, height, gender, goal, level, tenure, goal_weight, notes, goal_duration } = await request.json();
+    const { 
+      age, weight, height, gender, goal, level, tenure, goal_weight, notes, goal_duration,
+      diet_type, cuisine, protein_powder, meals_per_day, allergies,
+      cooking_level, budget, protein_powder_amount, specific_food_preferences
+    } = await request.json();
 
     // Avoid falsy checks; validate presence
     if (age == null || weight == null || height == null || !gender || !goal || !level || !tenure) {
@@ -58,7 +62,16 @@ export async function PUT(request: NextRequest) {
       tenure,
       goal_weight,
       notes,
-      goal_duration
+      goal_duration,
+      diet_type,
+      cuisine,
+      protein_powder,
+      protein_powder_amount,
+      meals_per_day,
+      allergies,
+      specific_food_preferences,
+      cooking_level,
+      budget
     );
 
     return NextResponse.json({ profile }, { status: 200 });

@@ -19,6 +19,36 @@ export interface Profile {
     goal_duration?: string;
     notes?: string;
     updated_at?: Date;
+    // Diet Preferences
+    diet_type?: string[]; // Multi-select
+    cuisine?: 'No Preference' | 'North Indian' | 'South Indian' | 'Mediterranean' | 'American' | 'Mexican' | 'Asian' | 'Mughlai';
+    protein_powder?: 'Yes' | 'No';
+    protein_powder_amount?: number; // Grams of protein from powder
+    meals_per_day?: number;
+    allergies?: string[]; // Multi-select
+    specific_food_preferences?: string; // Users specific inclusions/exclusions
+    cooking_level?: 'Beginner' | 'Moderate' | 'Advanced';
+    budget?: 'Low' | 'Standard' | 'High';
+}
+
+export interface Meal {
+    name: string;
+    calories: number;
+    protein: number;
+    carbs: number;
+    fats: number;
+    ingredients: string;
+}
+
+export interface DailyDiet {
+    day: string;
+    meals: Meal[];
+    total_calories: number;
+    total_protein: number;
+}
+
+export interface WeeklyDiet {
+    days: DailyDiet[];
 }
 
 export interface Session {

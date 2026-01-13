@@ -1,11 +1,14 @@
 'use client'
 
-import { WeeklyRoutine } from '@/types'
+import { WeeklyRoutine, WeeklyDiet } from '@/types'
 import { CircularProgress } from '../CircularProgress'
+import { NoRoutineEmptyState } from '../ui/EmptyState'
+import { AnimatedButton } from '../ui/AnimatedButton'
 
 interface HomeViewProps {
   profile: any
   routine: WeeklyRoutine | null
+  diet: WeeklyDiet | null
   exerciseCompletions: Map<string, boolean>
   currentWeekNumber: number
   onNavigateToWorkout: () => void
@@ -18,6 +21,7 @@ interface HomeViewProps {
 export function HomeView({
   profile,
   routine,
+  diet,
   exerciseCompletions,
   currentWeekNumber,
   onNavigateToWorkout,
@@ -37,6 +41,9 @@ export function HomeView({
   // Get today's workout
   const todayIndex = (new Date().getDay() + 6) % 7 // Mon=0
   const todaysPlan = routine?.days?.[Math.min(todayIndex, (routine.days?.length || 1) - 1)]
+  
+  // Get today's diet
+  const todaysDiet = diet?.days?.[Math.min(todayIndex, (diet.days?.length || 1) - 1)]
 
   // Calculate progress
   const calculateProgress = () => {
@@ -59,7 +66,7 @@ export function HomeView({
   const progress = calculateProgress()
 
   return (
-    <div className="pb-24 px-4 py-4 space-y-4">
+    <div className="pb-24 px-4 py-4 space-y-4 view-transition">
       {/* Greeting Header */}
       <div className="mb-1">
         <h1 className="text-xl font-bold text-white mb-0.5">
@@ -83,26 +90,51 @@ export function HomeView({
             </p>
           </div>
           
-          <button
+          <AnimatedButton
             onClick={onNavigateToWorkout}
-            className="w-full py-3 px-4 rounded-lg bg-gradient-to-r from-cyan-500 to-blue-600 text-white font-semibold text-sm shadow-lg shadow-cyan-500/20 hover:shadow-cyan-500/30 transition-all flex items-center justify-center gap-2"
+            variant="primary"
+            fullWidth
+            icon={
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
+              </svg>
+            }
           >
-            <span>Start Workout</span>
-            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
-            </svg>
-          </button>
+            Start Workout
+          </AnimatedButton>
         </div>
       ) : (
-        <div className="glass rounded-xl p-4 text-center">
-          <p className="text-slate-300/70 text-sm mb-3">No routine generated yet</p>
-          <button
-            onClick={onGenerateRoutine}
-            disabled={generating}
-            className="w-full py-2.5 px-4 rounded-lg bg-gradient-to-r from-cyan-500 to-blue-600 text-white text-sm font-semibold disabled:opacity-50"
-          >
-            {generating ? 'Generating...' : 'Generate Your First Routine'}
-          </button>
+        <NoRoutineEmptyState onGenerate={onGenerateRoutine} />
+      )}
+
+      {/* Today's Diet Card */}
+      {diet && todaysDiet && (
+        <div className="glass rounded-xl p-4 overflow-hidden">
+          <div className="mb-3">
+            <p className="text-xs text-slate-300/70 mb-0.5">Today's Nutrition</p>
+            <h2 className="text-lg font-bold text-white mb-0.5">
+              {todaysDiet.day}
+            </h2>
+            <div className="flex gap-4 text-xs text-slate-300/60 mt-1">
+               <span className="flex items-center gap-1">Protocol: {profile?.diet_type || 'Standard'}</span>
+               <span className="flex items-center gap-1">🔥 {todaysDiet.total_calories} kcal</span>
+               <span className="flex items-center gap-1">🥩 {todaysDiet.total_protein}g Protein</span>
+            </div>
+          </div>
+          
+          <div className="space-y-2 mb-3">
+             {todaysDiet.meals.slice(0, 2).map((meal, i) => (
+                <div key={i} className="flex justify-between text-sm text-white/80 bg-white/5 p-2 rounded">
+                   <span className="truncate flex-1">{meal.name}</span>
+                   <span className="text-white/50 text-xs ml-2">{meal.calories} kcal</span>
+                </div>
+             ))}
+             {todaysDiet.meals.length > 2 && (
+                <div className="text-xs text-center text-white/40">
+                   + {todaysDiet.meals.length - 2} more meals
+                </div>
+             )}
+          </div>
         </div>
       )}
 
@@ -124,29 +156,37 @@ export function HomeView({
         <div className="space-y-2">
           {/* Next Week Button - shown when 80%+ complete */}
           {progress.percentage >= 80 && (
-            <button
+            <AnimatedButton
               onClick={onGenerateNextWeek}
               disabled={generating}
-              className="w-full py-3 px-4 rounded-xl bg-gradient-to-r from-emerald-500 to-green-600 text-white font-semibold text-sm shadow-lg shadow-emerald-500/20 hover:shadow-emerald-500/30 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+              loading={generating}
+              variant="secondary"
+              fullWidth
+              icon={
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                </svg>
+              }
             >
-              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
-              </svg>
-              <span>{generating ? 'Generating...' : `Generate Week ${currentWeekNumber + 1}`}</span>
-            </button>
+              {generating ? 'Generating...' : `Generate Week ${currentWeekNumber + 1}`}
+            </AnimatedButton>
           )}
           
           {/* Regenerate Current Week */}
-          <button
+          <AnimatedButton
             onClick={onGenerateRoutine}
             disabled={generating}
-            className="w-full py-2.5 px-4 rounded-lg glass-soft text-slate-100 hover:text-white hover:bg-white/10 transition text-sm font-medium disabled:opacity-50 flex items-center justify-center gap-2"
+            loading={generating}
+            variant="ghost"
+            fullWidth
+            icon={
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+              </svg>
+            }
           >
-            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-            </svg>
-            <span>Regenerate Current Week</span>
-          </button>
+            Regenerate Current Week
+          </AnimatedButton>
         </div>
       )}
 
