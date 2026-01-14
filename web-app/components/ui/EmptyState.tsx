@@ -31,7 +31,7 @@ export function EmptyState({
       {actionLabel && onAction && (
         <button
           onClick={onAction}
-          className="px-6 py-3 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 text-white font-semibold text-sm shadow-lg shadow-cyan-500/20 hover:shadow-cyan-500/30 transition-all active:scale-95"
+          className="px-6 py-3 rounded-xl btn-primary text-white font-semibold text-sm transition-all active:scale-95 ui-focus-ring"
         >
           {actionLabel}
         </button>

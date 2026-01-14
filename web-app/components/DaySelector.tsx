@@ -25,14 +25,15 @@ export function DaySelector({ selectedDay, onDayChange, daysInRoutine = 7 }: Day
                 relative px-4 py-2.5 rounded-xl min-w-[60px] font-semibold text-sm
                 transition-all duration-200
                 ${isSelected 
-                  ? 'bg-gradient-to-r from-cyan-500 to-blue-600 text-white shadow-lg shadow-cyan-500/20' 
-                  : 'glass-soft text-slate-300 hover:text-white hover:bg-white/10'
+                  ? 'bg-emerald-400/14 border border-emerald-400/25 text-emerald-50 shadow-[0_12px_34px_rgba(16,185,129,0.14)]' 
+                  : 'glass-soft border border-white/10 text-slate-300 hover:text-white hover:bg-white/8'
                 }
+                ui-focus-ring
               `}
             >
               <span>{day}</span>
               {isToday && !isSelected && (
-                <div className="absolute -top-1 -right-1 w-2 h-2 bg-cyan-400 rounded-full" />
+                <div className="absolute -top-1 -right-1 w-2 h-2 bg-emerald-300 rounded-full" />
               )}
             </button>
           )

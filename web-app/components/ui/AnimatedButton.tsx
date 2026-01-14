@@ -44,8 +44,8 @@ export function AnimatedButton({
   }
 
   const variantClasses = {
-    primary: 'bg-gradient-to-r from-cyan-500 to-blue-600 text-white shadow-lg shadow-cyan-500/20 hover:shadow-cyan-500/30',
-    secondary: 'bg-gradient-to-r from-emerald-500 to-green-600 text-white shadow-lg shadow-emerald-500/20 hover:shadow-emerald-500/30',
+    primary: 'btn-primary text-white',
+    secondary: 'btn-secondary',
     ghost: 'glass-soft text-slate-100 hover:text-white hover:bg-white/10'
   }
 
@@ -65,7 +65,7 @@ export function AnimatedButton({
         ${variantClasses[variant]}
         ${sizeClasses[size]}
         ${fullWidth ? 'w-full' : ''}
-        ${className}
+        ui-focus-ring ${className}
       `}
     >
       {/* Ripple effect */}
@@ -120,7 +120,7 @@ export function IconButton({
       aria-label={ariaLabel}
       className={`
         p-2 rounded-full glass-soft text-slate-300 hover:text-white hover:bg-white/10
-        transition-all active:scale-90 ${className}
+        transition-all active:scale-90 ui-focus-ring ${className}
       `}
     >
       {children}
