@@ -44,14 +44,6 @@ export function HomeView({
     if (hour < 18) return 'Good afternoon'
     return 'Good evening'
   }
-  
-  const getDisplayName = () => {
-    if (profile?.name) return profile.name;
-    if (!profile?.username) return 'Friend';
-    const clean = profile.username.split('@')[0];
-    // Capitalize first letter
-    return clean.charAt(0).toUpperCase() + clean.slice(1);
-  }
 
   // Get today's workout
   const todayIndex = (new Date().getDay() + 6) % 7 // Mon=0
@@ -84,9 +76,9 @@ export function HomeView({
     <div className="pb-24 px-4 pt-5 space-y-4 view-transition">
       {/* Greeting */}
       <div className="flex items-start justify-between gap-3">
-        <div className="min-w-0 pt-10">
+        <div className="min-w-0">
           <h1 className="text-[22px] font-semibold tracking-tight text-white leading-tight">
-            {getGreeting()}, {getDisplayName()}
+            {getGreeting()}, {profile?.username || 'Friend'}
           </h1>
           <p className="mt-1 text-xs text-slate-300/70">
             {profile?.goal || 'General fitness'} • {profile?.level || 'Beginner'}

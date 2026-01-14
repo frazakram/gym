@@ -9,7 +9,7 @@ import { AnimatedButton } from '../ui/AnimatedButton'
 
 interface DietViewProps {
   diet: WeeklyDiet | null
-  onGenerateDiet: (isNextWeek?: boolean) => void
+  onGenerateDiet: () => void
   generating: boolean
 }
 
@@ -40,7 +40,7 @@ export const DietView: React.FC<DietViewProps> = ({ diet, onGenerateDiet, genera
         subtitle="Weekly plan with calories and protein highlighted"
         right={
           <button
-            onClick={() => onGenerateDiet()}
+            onClick={onGenerateDiet}
             disabled={generating}
             className="text-[11px] px-3 py-1.5 rounded-full btn-secondary disabled:opacity-50 transition ui-focus-ring"
           >
@@ -55,24 +55,6 @@ export const DietView: React.FC<DietViewProps> = ({ diet, onGenerateDiet, genera
         <p className="text-sm text-slate-300/80 leading-relaxed">
           This plan is based on your profile preferences. Update diet type, allergies, or meals per day in Profile.
         </p>
-      </GlassCard>
-
-      <GlassCard className="p-4">
-        <div className="flex items-center justify-between">
-          <div>
-            <p className="text-sm font-semibold text-white">Manage plan</p>
-            <p className="text-xs text-slate-300/70">Get ready for the upcoming week</p>
-          </div>
-          <AnimatedButton
-            onClick={() => onGenerateDiet(true)}
-            disabled={generating}
-            loading={generating}
-            variant="secondary"
-            size="sm"
-          >
-            Generate Next Week
-          </AnimatedButton>
-        </div>
       </GlassCard>
     </div>
   )
