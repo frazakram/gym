@@ -59,6 +59,7 @@ export default function DashboardPage() {
 
   // Profile state
   const [profile, setProfile] = useState<Profile | null>(null)
+  const [name, setName] = useState<string>('')
   const [age, setAge] = useState<number | ''>(25)
   const [weight, setWeight] = useState<number | ''>(70)
   const [height, setHeight] = useState<number | ''>(170)
@@ -127,6 +128,7 @@ export default function DashboardPage() {
       if (data.profile) {
         const extendedProfile = { ...data.profile, username: data.username }
         setProfile(extendedProfile)
+        setName(data.profile.name ?? '')
         setAge(data.profile.age != null ? Number(data.profile.age) : 25)
         setWeight(data.profile.weight != null ? Number(data.profile.weight) : 70)
         setHeight(data.profile.height != null ? Number(data.profile.height) : 170)
@@ -179,10 +181,23 @@ export default function DashboardPage() {
     }
   }, [])
 
+  const fetchLatestDiet = useCallback(async () => {
+    try {
+      const res = await fetch('/api/diet');
+      const data = await res.json();
+      if (data.diet) {
+        setDietPlan(data.diet.diet_json);
+      }
+    } catch (err) {
+      console.error('Error fetching latest diet:', err);
+    }
+  }, []);
+
   useEffect(() => {
     fetchProfile()
     fetchLatestRoutine()
-  }, [fetchProfile, fetchLatestRoutine])
+    fetchLatestDiet()
+  }, [fetchProfile, fetchLatestRoutine, fetchLatestDiet])
 
   const fetchHistory = async () => {
     setLoadingHistory(true)
@@ -196,7 +211,7 @@ export default function DashboardPage() {
       console.error('Failed to fetch history:', err)
     } finally {
       setLoadingHistory(false)
-    }
+  }
   }
 
   const handleSelectHistoryRoutine = async (historyItem: any) => {
@@ -204,6 +219,20 @@ export default function DashboardPage() {
     setCurrentRoutineId(historyItem.id)
     setCurrentWeekNumber(historyItem.week_number)
     
+    // Attempt to load associated diet for this week
+    try {
+      const dietRes = await fetch(`/api/diet?week=${historyItem.week_number}`);
+      const dietData = await dietRes.json();
+      if (dietData.diet) {
+        setDietPlan(dietData.diet.diet_json);
+      } else {
+        setDietPlan(null); // No diet found for this old routine
+      }
+    } catch (e) {
+      console.error("Error loading history diet", e);
+      setDietPlan(null);
+    }
+
     // Check if this is the "latest" routine to toggle viewingHistory mode
     // Ideally we comparing IDs, but for now assumption: any selection from history list implies "viewing" mode if strictly previous
     // Actually simpler: Just set viewingHistory = true, and have a "Back to Latest" button
@@ -232,6 +261,7 @@ export default function DashboardPage() {
   const handleBackToLatest = async () => {
     setViewingHistory(false)
     await fetchLatestRoutine()
+    await fetchLatestDiet()
     setActiveView('home')
   }
 
@@ -413,9 +443,21 @@ export default function DashboardPage() {
        const dietData = await dietRes.json()
        if (!dietRes.ok) throw new Error(dietData.error || 'Failed to generate diet');
        
+
+       
        if (dietData.dietPlan) {
           setDietPlan(dietData.dietPlan)
           setSuccess('Diet plan generated successfully!');
+
+          // Save diet
+          await fetch('/api/diet/save', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              weekNumber: currentWeekNumber,
+              diet: dietData.dietPlan
+            })
+          });
        }
      } catch (e: unknown) {
         const msg = e instanceof Error ? e.message : String(e);
@@ -448,6 +490,7 @@ export default function DashboardPage() {
           setRoutine(null)
           setCurrentRoutineId(null)
           setCurrentWeekNumber(1)
+          setDietPlan(null) // Clear diet too
           setExerciseCompletions(new Map())
 
           setSuccess('All routine data has been reset. You can now generate a fresh routine.')
@@ -492,7 +535,10 @@ export default function DashboardPage() {
           protein_powder_amount: proteinPowderAmount,
           meals_per_day: mealsPerDay,
           allergies,
-          specific_food_preferences: specificFoodPreferences
+          specific_food_preferences: specificFoodPreferences,
+          cooking_level: cookingLevel,
+          budget: budget,
+          name: name
         }),
       });
 
@@ -558,6 +604,7 @@ export default function DashboardPage() {
       case 'allergies': setAllergies(value); break
       case 'cookingLevel': setCookingLevel(value); break
       case 'budget': setBudget(value); break
+      case 'name': setName(value); break
     }
   }
 
@@ -653,6 +700,7 @@ export default function DashboardPage() {
         {activeView === 'profile' && (
           <ProfileView
             profile={profile}
+            name={name}
             age={age}
             weight={weight}
             height={height}
