@@ -10,6 +10,7 @@ import { Collapsible } from '../ui/Collapsible'
 
 interface ProfileViewProps {
   profile: (Profile & { username?: string }) | null
+  name?: string
   age: number | ''
   weight: number | ''
   height: number | ''
@@ -43,6 +44,7 @@ interface ProfileViewProps {
 
 export function ProfileView({
   profile,
+  name,
   age,
   weight,
   height,
@@ -126,7 +128,7 @@ export function ProfileView({
           </div>
           <div className="flex-1 min-w-0">
             <p className="text-[15px] font-semibold tracking-tight text-white truncate">
-              {profile?.username || 'Profile'}
+              {name || profile?.username || 'Profile'}
             </p>
             <p className="mt-0.5 text-xs text-slate-300/70">
               {age || '—'} yrs • {gender}
