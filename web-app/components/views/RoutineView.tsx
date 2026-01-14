@@ -4,6 +4,12 @@ import { useState } from 'react'
 import { WeeklyRoutine, WeeklyDiet } from '@/types'
 import { DaySelector } from '../DaySelector'
 import { DietDisplay } from '@/components/DietDisplay'
+import { GlassCard } from '../ui/GlassCard'
+import { SectionHeader } from '../ui/SectionHeader'
+import { AnimatedButton } from '../ui/AnimatedButton'
+import { Collapsible } from '../ui/Collapsible'
+import { parseSetsReps } from '@/lib/setsReps'
+import { ExerciseListSkeleton } from '../ui/SkeletonLoader'
 
 interface RoutineViewProps {
   routine: WeeklyRoutine | null
@@ -30,6 +36,8 @@ export function RoutineView({
 }: RoutineViewProps) {
   const todayIndex = (new Date().getDay() + 6) % 7 // Mon=0
   const [selectedDay, setSelectedDay] = useState(todayIndex)
+  const [manageOpen, setManageOpen] = useState(false)
+  const [nutritionOpen, setNutritionOpen] = useState(false)
 
   if (!routine) {
     return (
@@ -40,7 +48,7 @@ export function RoutineView({
           <button
             onClick={onGenerateRoutine}
             disabled={generating}
-            className="py-3 px-8 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 text-white font-semibold disabled:opacity-50"
+            className="py-3 px-8 rounded-xl btn-primary text-white font-semibold disabled:opacity-50 ui-focus-ring"
           >
             {generating ? 'Generating...' : 'Generate Routine'}
           </button>
@@ -52,18 +60,16 @@ export function RoutineView({
   const currentDay = routine.days[Math.min(selectedDay, routine.days.length - 1)]
   
   // Estimate time based on exercise count (rough estimate)
-  const estimatedMinutes = currentDay?.exercises?.length ? currentDay.exercises.length * 10 : 45
+  const estimatedMinutes = currentDay?.exercises?.length ? currentDay.exercises.length * 9 + 12 : 25
 
   return (
     <div className="pb-24">
       {/* Header */}
       <div className="px-4 pt-4 pb-3">
-        <h1 className="text-lg font-bold text-white mb-0.5">
+        <h1 className="text-[18px] font-semibold tracking-tight text-white mb-0.5">
           {currentDay?.day || 'Select a Day'}
         </h1>
-        <p className="text-xs text-slate-300/70">
-          {currentDay?.exercises?.length || 0} Exercises
-        </p>
+        <p className="text-xs text-slate-300/70">{currentDay?.exercises?.length || 0} exercises</p>
       </div>
 
       {/* Day Selector */}
@@ -73,103 +79,152 @@ export function RoutineView({
         daysInRoutine={routine.days.length}
       />
 
-      {/* Exercise List */}
-      <div className="px-4 pt-4 space-y-3">
-        {currentDay?.exercises?.map((exercise, index) => (
-          <button
-            key={index}
-            onClick={() => {
-              setSelectedDay(selectedDay)
-              onNavigateToWorkout(selectedDay)
-            }}
-            className="w-full glass-soft rounded-xl p-4 hover:bg-white/10 transition-all text-left flex items-center justify-between group"
-          >
-            <div className="flex items-center gap-4 flex-1 min-w-0">
-              {/* Exercise Icon/Emoji */}
-              <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-cyan-500/20 to-blue-600/20 flex items-center justify-center text-2xl flex-shrink-0">
-                💪
-              </div>
-              
-              {/* Exercise Info */}
-              <div className="flex-1 min-w-0">
-                <h3 className="font-semibold text-white mb-1 truncate">
-                  {exercise.name}
-                </h3>
-                <p className="text-sm text-slate-300/60 truncate">
-                  {exercise.sets_reps}
-                </p>
-              </div>
-            </div>
-
-            {/* Chevron */}
-            <svg 
-              className="w-5 h-5 text-slate-400 group-hover:text-cyan-400 transition flex-shrink-0" 
-              fill="none" 
-              viewBox="0 0 24 24" 
-              stroke="currentColor"
-            >
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-            </svg>
-          </button>
-        ))}
-      </div>
-
-      {/* Estimated Time */}
+      {/* Workout card */}
       <div className="px-4 pt-4">
-        <div className="glass-soft rounded-lg p-3 text-center">
-          <p className="text-xs text-slate-300/70">Estimated Time</p>
-          <p className="text-lg font-bold text-white mt-0.5">{estimatedMinutes} min</p>
-        </div>
+        <GlassCard className="p-4">
+          <SectionHeader
+            title="Workout"
+            subtitle="Everything you need in one flow"
+            right={
+              <div className="text-[11px] text-slate-200/80 glass-soft px-2.5 py-1 rounded-full border border-white/10">
+                ⏱️ {estimatedMinutes} min
+              </div>
+            }
+          />
+
+          <div className="mt-3 space-y-2">
+            {generating ? (
+              <ExerciseListSkeleton count={5} />
+            ) : (
+              currentDay?.exercises?.map((exercise, index) => {
+                const meta = parseSetsReps(exercise.sets_reps)
+                return (
+                  <div
+                    key={index}
+                    className="flex items-start justify-between gap-3 bg-white/5 border border-white/10 rounded-2xl px-3.5 py-3"
+                  >
+                    <div className="min-w-0">
+                      <p className="text-sm font-medium text-white/90 truncate">{exercise.name}</p>
+                      <p className="mt-0.5 text-xs text-slate-300/70 truncate">{exercise.sets_reps}</p>
+                    </div>
+
+                    <div className="shrink-0 flex flex-col items-end gap-1 text-[11px] text-slate-200/80">
+                      <div className="flex items-center gap-1.5">
+                        {typeof meta.sets === 'number' ? (
+                          <span className="inline-flex items-center rounded-full bg-white/5 border border-white/10 px-2 py-0.5">
+                            {meta.sets} sets
+                          </span>
+                        ) : null}
+                        {typeof meta.reps === 'number' ? (
+                          <span className="inline-flex items-center rounded-full bg-white/5 border border-white/10 px-2 py-0.5">
+                            {meta.reps} reps
+                          </span>
+                        ) : null}
+                      </div>
+                      {typeof meta.restSeconds === 'number' ? (
+                        <span className="inline-flex items-center rounded-full bg-emerald-400/10 border border-emerald-400/20 px-2 py-0.5 text-emerald-100">
+                          Rest {meta.restSeconds}s
+                        </span>
+                      ) : null}
+                    </div>
+                  </div>
+                )
+              })
+            )}
+          </div>
+
+          <div className="mt-4">
+            <AnimatedButton
+              onClick={() => onNavigateToWorkout(selectedDay)}
+              variant="primary"
+              fullWidth
+              icon={
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                </svg>
+              }
+            >
+              Start workout
+            </AnimatedButton>
+          </div>
+        </GlassCard>
       </div>
 
       {/* Action Buttons */}
       {!viewingHistory && (
-        <div className="px-4 pt-3 space-y-2">
-        {/* Ready for Next Week indicator */}
-        {completionPercentage >= 80 && (
-          <div className="glass-soft rounded-lg p-3 mb-2 border border-emerald-500/30">
-            <div className="flex items-center gap-2 text-emerald-300 mb-1">
-              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-              <span className="text-sm font-semibold">Great Progress!</span>
-            </div>
-            <p className="text-xs text-slate-300/70">You've completed {completionPercentage}% of this week. Ready to advance?</p>
-          </div>
-        )}
+        <div className="px-4 pt-3">
+          <GlassCard className="p-4">
+            <Collapsible
+              open={manageOpen}
+              onToggle={() => setManageOpen(v => !v)}
+              header={
+                <div className="flex items-center justify-between px-1">
+                  <div>
+                    <p className="text-sm font-semibold text-white">Manage plan</p>
+                    <p className="text-xs text-slate-300/70">
+                      You&apos;ve completed {completionPercentage}% this week
+                    </p>
+                  </div>
+                  <svg className="w-5 h-5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                  </svg>
+                </div>
+              }
+            >
+              <div className="space-y-2">
+                {completionPercentage >= 80 ? (
+                  <AnimatedButton
+                    onClick={onGenerateNextWeek}
+                    disabled={generating}
+                    loading={generating}
+                    variant="secondary"
+                    fullWidth
+                  >
+                    {generating ? 'Generating...' : `Generate Week ${currentWeekNumber + 1}`}
+                  </AnimatedButton>
+                ) : null}
 
-        {/* Next Week Button */}
-        {completionPercentage >= 80 && (
-          <button
-            onClick={onGenerateNextWeek}
-            disabled={generating}
-            className="w-full py-3 px-4 rounded-xl bg-gradient-to-r from-emerald-500 to-green-600 text-white font-semibold shadow-lg shadow-emerald-500/20 hover:shadow-emerald-500/30 transition-all text-sm disabled:opacity-50 flex items-center justify-center gap-2"
-          >
-            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
-            </svg>
-            <span>{generating ? 'Generating...' : `Generate Week ${currentWeekNumber + 1}`}</span>
-          </button>
-        )}
-        
-        {/* Regenerate Current Week */}
-        <button
-          onClick={onGenerateRoutine}
-          disabled={generating}
-          className="w-full py-2.5 px-4 rounded-lg glass-soft text-slate-100 hover:text-white hover:bg-white/10 transition text-sm font-medium disabled:opacity-50 flex items-center justify-center gap-2"
-        >
-          <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-          </svg>
-          <span>Regenerate This Week</span>
-        </button>
-      </div>
+                <AnimatedButton
+                  onClick={onGenerateRoutine}
+                  disabled={generating}
+                  loading={generating}
+                  variant="ghost"
+                  fullWidth
+                >
+                  Regenerate this week
+                </AnimatedButton>
+              </div>
+            </Collapsible>
+          </GlassCard>
+        </div>
       )}
 
-      {/* Diet Display */}
-      <div className="px-4 pb-8">
-         <DietDisplay diet={diet} />
-      </div>
+      {/* Nutrition (secondary) */}
+      {diet ? (
+        <div className="px-4 pt-3 pb-8">
+          <GlassCard className="p-4">
+            <Collapsible
+              open={nutritionOpen}
+              onToggle={() => setNutritionOpen(v => !v)}
+              header={
+                <div className="flex items-center justify-between px-1">
+                  <div>
+                    <p className="text-sm font-semibold text-white">Nutrition plan</p>
+                    <p className="text-xs text-slate-300/70">Weekly meal plan synced to your routine</p>
+                  </div>
+                  <svg className="w-5 h-5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                  </svg>
+                </div>
+              }
+            >
+              <DietDisplay diet={diet} />
+            </Collapsible>
+          </GlassCard>
+        </div>
+      ) : (
+        <div className="px-4 pb-8" />
+      )}
 
     </div>
   )

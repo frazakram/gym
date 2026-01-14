@@ -78,7 +78,7 @@ export function WorkoutView({
         {/* Progress Bar */}
         <div className="mt-2 w-full bg-slate-700 rounded-full h-1.5">
           <div
-            className="bg-gradient-to-r from-emerald-500 to-cyan-500 h-1.5 rounded-full transition-all duration-300"
+            className="bg-gradient-to-r from-teal-400 to-emerald-400 h-1.5 rounded-full transition-all duration-300"
             style={{ width: `${progressPercentage}%` }}
           />
         </div>
@@ -106,7 +106,7 @@ export function WorkoutView({
           <div className="glass rounded-xl p-4 text-center bg-gradient-to-r from-emerald-500/10 to-cyan-500/10 border border-emerald-500/20">
             <div className="text-4xl mb-2">🎉</div>
             <h3 className="text-base font-bold text-white mb-1">Workout Complete!</h3>
-            <p className="text-xs text-slate-300/70">Great job finishing today's workout</p>
+            <p className="text-xs text-slate-300/70">Great job finishing today&apos;s workout</p>
           </div>
         </div>
       )}

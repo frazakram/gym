@@ -49,8 +49,8 @@ export function CircularProgress({
           />
           <defs>
             <linearGradient id="progressGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-              <stop offset="0%" stopColor="#22d3ee" />
-              <stop offset="100%" stopColor="#a78bfa" />
+              <stop offset="0%" stopColor="#14b8a6" />
+              <stop offset="100%" stopColor="#10b981" />
             </linearGradient>
           </defs>
         </svg>

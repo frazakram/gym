@@ -1,11 +1,15 @@
 'use client'
 
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { Profile } from '@/types'
-import { GlassSelect } from '../GlassSelect'
+import { GlassCard } from '../ui/GlassCard'
+import { SectionHeader } from '../ui/SectionHeader'
+import { Chip } from '../ui/Chip'
+import { AnimatedButton, IconButton } from '../ui/AnimatedButton'
+import { Collapsible } from '../ui/Collapsible'
 
 interface ProfileViewProps {
-  profile: Profile | null
+  profile: (Profile & { username?: string }) | null
   age: number | ''
   weight: number | ''
   height: number | ''
@@ -30,7 +34,7 @@ interface ProfileViewProps {
   cookingLevel: string
   budget: string
   resolvedHeightCm: number | null
-  onUpdateField: (field: string, value: any) => void
+  onUpdateField: (field: string, value: unknown) => void
   onSaveProfile: (e: React.FormEvent) => void
   onResetRoutines: () => void
   onLogout: () => void
@@ -68,38 +72,39 @@ export function ProfileView({
   onLogout,
   loading,
 }: ProfileViewProps) {
-  const [expandedSection, setExpandedSection] = useState<string | null>(null)
+  const [advancedNutritionOpen, setAdvancedNutritionOpen] = useState(false)
+  const [notesOpen, setNotesOpen] = useState(false)
 
-  const toggleSection = (section: string) => {
-    setExpandedSection(expandedSection === section ? null : section)
-  }
+  const goalOptions: Profile['goal'][] = useMemo(
+    () => ['General fitness', 'Fat loss', 'Muscle gain', 'Strength', 'Recomposition', 'Endurance'],
+    []
+  )
+  const levelOptions: Array<'Beginner' | 'Regular' | 'Expert'> = useMemo(
+    () => ['Beginner', 'Regular', 'Expert'],
+    []
+  )
+  const genderOptions: Profile['gender'][] = useMemo(
+    () => ['Male', 'Female', 'Non-binary', 'Prefer not to say'],
+    []
+  )
 
-  const levelOptions = [
-    { value: 'Beginner', label: 'Beginner' },
-    { value: 'Regular', label: 'Regular' },
-    { value: 'Expert', label: 'Expert' },
-  ]
+  const dietTypeOptions = useMemo(
+    () => [
+      'No Restrictions',
+      'Vegetarian',
+      'Vegan',
+      'Pescatarian',
+      'Keto',
+      'Paleo',
+      'Strictly Non-Vegetarian',
+      'Halal',
+      'Kosher',
+      'Gluten-Free',
+    ],
+    []
+  )
 
-  const genderOptions = [
-    { value: 'Male', label: 'Male' },
-    { value: 'Female', label: 'Female' },
-    { value: 'Non-binary', label: 'Non-binary' },
-    { value: 'Prefer not to say', label: 'Prefer not to say' },
-  ]
-
-  const goalOptions = [
-    { value: 'General fitness', label: 'General fitness' },
-    { value: 'Fat loss', label: 'Fat loss' },
-    { value: 'Muscle gain', label: 'Muscle gain' },
-    { value: 'Strength', label: 'Strength' },
-    { value: 'Recomposition', label: 'Recomposition' },
-    { value: 'Endurance', label: 'Endurance' },
-  ]
-
-  const heightUnitOptions = [
-    { value: 'cm', label: 'cm' },
-    { value: 'ftin', label: 'ft + in' },
-  ]
+  const allergyOptions = useMemo(() => ['Dairy', 'Gluten', 'Nuts', 'Shellfish', 'Eggs', 'Soy'], [])
 
   // Get avatar emoji based on gender
   const getAvatarEmoji = () => {
@@ -112,537 +117,452 @@ export function ProfileView({
   }
 
   return (
-    <div className="pb-24 px-4 py-4 space-y-4">
-      {/* User Card */}
-      <div className="glass rounded-xl p-4">
-        <div className="flex items-center gap-3 mb-4">
-          {/* Profile Photo - Gender-based Avatar */}
-          <div className="w-16 h-16 rounded-full bg-gradient-to-br from-cyan-500 to-blue-600 flex items-center justify-center text-3xl">
+    <form onSubmit={onSaveProfile} className="pb-24 px-4 pt-5 space-y-4 view-transition">
+      {/* Header */}
+      <GlassCard className="p-4">
+        <div className="flex items-center gap-3">
+          <div className="w-14 h-14 rounded-2xl bg-emerald-400/12 border border-emerald-400/20 flex items-center justify-center text-3xl">
             {getAvatarEmoji()}
           </div>
-          
-          {/* User Info */}
           <div className="flex-1 min-w-0">
-            <h2 className="text-lg font-bold text-white mb-0.5 truncate">
-              {(profile as any)?.username || 'User'}
-            </h2>
-            <p className="text-xs text-slate-300/70">
-              {age} yrs • {gender}
+            <p className="text-[15px] font-semibold tracking-tight text-white truncate">
+              {profile?.username || 'Profile'}
+            </p>
+            <p className="mt-0.5 text-xs text-slate-300/70">
+              {age || '—'} yrs • {gender}
             </p>
           </div>
-
-          {/* Logout */}
-          <button
-            onClick={onLogout}
-            className="p-2 rounded-lg glass-soft hover:bg-red-500/10 text-slate-300 hover:text-red-300 transition flex-shrink-0"
-            aria-label="Logout"
-          >
+          <IconButton onClick={onLogout} ariaLabel="Logout" className="hover:bg-red-500/10 hover:text-red-200">
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"
+              />
             </svg>
-          </button>
+          </IconButton>
         </div>
 
-        {/* Stats Grid */}
-        <div className="grid grid-cols-3 gap-2">
-          <div className="glass-soft rounded-lg p-2 text-center">
-            <p className="text-lg font-bold text-white">{weight || '—'}</p>
+        <div className="mt-4 grid grid-cols-3 gap-2">
+          <div className="glass-soft rounded-2xl border border-white/10 p-2 text-center">
+            <p className="text-[16px] font-semibold text-white">{weight || '—'}</p>
             <p className="text-[10px] text-slate-300/60 mt-0.5">kg</p>
           </div>
-          <div className="glass-soft rounded-lg p-2 text-center">
-            <p className="text-lg font-bold text-white">{resolvedHeightCm || '—'}</p>
+          <div className="glass-soft rounded-2xl border border-white/10 p-2 text-center">
+            <p className="text-[16px] font-semibold text-white">{resolvedHeightCm || '—'}</p>
             <p className="text-[10px] text-slate-300/60 mt-0.5">cm</p>
           </div>
-          <div className="glass-soft rounded-lg p-2 text-center">
-            <p className="text-sm font-bold text-white">{level}</p>
-            <p className="text-[10px] text-slate-300/60 mt-0.5">Level</p>
+          <div className="glass-soft rounded-2xl border border-white/10 p-2 text-center">
+            <p className="text-[14px] font-semibold text-white">{level}</p>
+            <p className="text-[10px] text-slate-300/60 mt-0.5">level</p>
           </div>
         </div>
-      </div>
+      </GlassCard>
 
-      {/* Goals Section */}
-      <div className="glass rounded-xl p-4">
-        <h3 className="text-sm font-semibold text-white mb-3">Goals</h3>
-        
-        {/* Current Goal */}
-        <button
-          onClick={() => toggleSection('goal')}
-          className="w-full flex items-center justify-between p-4 glass-soft rounded-xl hover:bg-white/10 transition"
-        >
-          <div className="text-left">
-            <p className="text-sm text-slate-300/70">Current Goal</p>
-            <p className="font-semibold text-white">{goal}</p>
+      {/* Fitness */}
+      <GlassCard className="p-4">
+        <SectionHeader title="Fitness" subtitle="Set the basics that drive your plan" />
+
+        <div className="mt-4 space-y-4">
+          <div>
+            <p className="text-xs text-slate-300/70 mb-2">Goal</p>
+            <div className="flex flex-wrap gap-2">
+              {goalOptions.map((g) => (
+                <Chip key={g} selected={goal === g} onClick={() => onUpdateField('goal', g)}>
+                  {g}
+                </Chip>
+              ))}
+            </div>
           </div>
-          <svg className="w-5 h-5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-          </svg>
-        </button>
 
-        {expandedSection === 'goal' && (
-          <div className="mt-3 p-4 glass-soft rounded-xl space-y-3">
-            <GlassSelect
-              label="Select Goal"
-              value={goal}
-              options={goalOptions as any}
-              onChange={(v) => onUpdateField('goal', v)}
+          <div>
+            <p className="text-xs text-slate-300/70 mb-2">Level</p>
+            <div className="flex flex-wrap gap-2">
+              {levelOptions.map((l) => (
+                <Chip key={l} selected={level === l} onClick={() => onUpdateField('level', l)}>
+                  {l}
+                </Chip>
+              ))}
+            </div>
+          </div>
+
+          <div>
+            <p className="text-xs text-slate-300/70 mb-2">Gender</p>
+            <div className="flex flex-wrap gap-2">
+              {genderOptions.map((g) => (
+                <Chip key={g} selected={gender === g} onClick={() => onUpdateField('gender', g)}>
+                  {g}
+                </Chip>
+              ))}
+            </div>
+          </div>
+        </div>
+      </GlassCard>
+
+      {/* Body metrics */}
+      <GlassCard className="p-4">
+        <SectionHeader title="Body" subtitle="Used for calorie and training estimates" />
+
+        <div className="mt-4 grid grid-cols-2 gap-3">
+          <div>
+            <label className="block text-xs text-slate-300/70 mb-2">Age</label>
+            <input
+              inputMode="numeric"
+              type="number"
+              value={age}
+              onChange={(e) => onUpdateField('age', e.target.value === '' ? '' : Number(e.target.value))}
+              min="16"
+              max="100"
+              className="w-full px-4 py-3 glass-soft rounded-2xl text-white ui-focus-ring border border-white/10"
             />
           </div>
-        )}
-
-        {/* Goal Weight */}
-        <button
-          onClick={() => toggleSection('goalWeight')}
-          className="w-full flex items-center justify-between p-4 glass-soft rounded-xl hover:bg-white/10 transition mt-3"
-        >
-          <div className="text-left">
-            <p className="text-sm text-slate-300/70">Goal Weight</p>
-            <p className="font-semibold text-white">{goalWeight ? `${goalWeight} kg` : 'Not set'}</p>
-          </div>
-          <svg className="w-5 h-5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-          </svg>
-        </button>
-
-        {expandedSection === 'goalWeight' && (
-          <div className="mt-3 p-4 glass-soft rounded-xl">
-            <label className="block text-sm font-medium text-slate-200/90 mb-2">Goal Weight (kg)</label>
+          <div>
+            <label className="block text-xs text-slate-300/70 mb-2">Weight (kg)</label>
             <input
+              inputMode="decimal"
               type="number"
-              value={goalWeight}
-              onChange={(e) => {
-                const v = e.target.value
-                onUpdateField('goalWeight', v === '' ? '' : Number(v))
-              }}
+              value={weight}
+              onChange={(e) => onUpdateField('weight', e.target.value === '' ? '' : Number(e.target.value))}
               min="30"
               max="300"
               step="0.1"
-              placeholder="e.g., 72"
-              className="w-full px-4 py-3 glass-soft rounded-xl text-white placeholder:text-slate-300/50 focus:outline-none focus:ring-2 focus:ring-cyan-400/60"
+              className="w-full px-4 py-3 glass-soft rounded-2xl text-white ui-focus-ring border border-white/10"
             />
           </div>
-        )}
-      </div>
+        </div>
 
-      {/* Preferences Section */}
-      <div className="glass rounded-xl p-4">
-        <h3 className="text-sm font-semibold text-white mb-3">Preferences</h3>
-
-        {/* Stats */}
-        <button
-          onClick={() => toggleSection('stats')}
-          className="w-full flex items-center justify-between p-4 glass-soft rounded-xl hover:bg-white/10 transition"
-        >
-          <div className="text-left">
-            <p className="text-sm text-slate-300/70">Basic Stats</p>
-            <p className="font-semibold text-white">Age, Weight, Height</p>
+        <div className="mt-4">
+          <p className="text-xs text-slate-300/70 mb-2">Height unit</p>
+          <div className="flex gap-2">
+            <Chip selected={heightUnit === 'cm'} onClick={() => onUpdateField('heightUnit', 'cm')}>
+              cm
+            </Chip>
+            <Chip selected={heightUnit === 'ftin'} onClick={() => onUpdateField('heightUnit', 'ftin')}>
+              ft + in
+            </Chip>
           </div>
-          <svg className="w-5 h-5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-          </svg>
-        </button>
+        </div>
 
-        {expandedSection === 'stats' && (
-          <div className="mt-3 p-4 glass-soft rounded-xl space-y-4">
+        <div className="mt-3">
+          {heightUnit === 'cm' ? (
             <div>
-              <label className="block text-sm font-medium text-slate-200/90 mb-2">Age</label>
+              <label className="block text-xs text-slate-300/70 mb-2">Height (cm)</label>
               <input
+                inputMode="decimal"
                 type="number"
-                value={age}
-                onChange={(e) => {
-                  const v = e.target.value
-                  onUpdateField('age', v === '' ? '' : Number(v))
-                }}
-                min="16"
-                max="100"
-                className="w-full px-4 py-3 glass-soft rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-cyan-400/60"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-slate-200/90 mb-2">Weight (kg)</label>
-              <input
-                type="number"
-                value={weight}
-                onChange={(e) => {
-                  const v = e.target.value
-                  onUpdateField('weight', v === '' ? '' : Number(v))
-                }}
-                min="30"
-                max="300"
+                value={height}
+                onChange={(e) => onUpdateField('height', e.target.value === '' ? '' : Number(e.target.value))}
+                min="100"
+                max="250"
                 step="0.1"
-                className="w-full px-4 py-3 glass-soft rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-cyan-400/60"
+                className="w-full px-4 py-3 glass-soft rounded-2xl text-white ui-focus-ring border border-white/10"
               />
             </div>
-            <div>
-              <GlassSelect
-                label="Height unit"
-                value={heightUnit}
-                options={heightUnitOptions as any}
-                onChange={(v) => onUpdateField('heightUnit', v as 'cm' | 'ftin')}
-              />
-            </div>
-            {heightUnit === 'cm' ? (
+          ) : (
+            <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="block text-sm font-medium text-slate-200/90 mb-2">Height (cm)</label>
+                <label className="block text-xs text-slate-300/70 mb-2">Feet</label>
                 <input
+                  inputMode="numeric"
                   type="number"
-                  value={height}
-                  onChange={(e) => {
-                    const v = e.target.value
-                    onUpdateField('height', v === '' ? '' : Number(v))
-                  }}
-                  min="100"
-                  max="250"
-                  step="0.1"
-                  className="w-full px-4 py-3 glass-soft rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-cyan-400/60"
+                  value={heightFeet}
+                  onChange={(e) => onUpdateField('heightFeet', e.target.value === '' ? '' : Number(e.target.value))}
+                  min="3"
+                  max="8"
+                  className="w-full px-4 py-3 glass-soft rounded-2xl text-white ui-focus-ring border border-white/10"
                 />
               </div>
-            ) : (
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-sm font-medium text-slate-200/90 mb-2">Feet</label>
-                  <input
-                    type="number"
-                    value={heightFeet}
-                    onChange={(e) => {
-                      const v = e.target.value
-                      onUpdateField('heightFeet', v === '' ? '' : Number(v))
-                    }}
-                    min="3"
-                    max="8"
-                    className="w-full px-4 py-3 glass-soft rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-cyan-400/60"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-slate-200/90 mb-2">Inches</label>
-                  <input
-                    type="number"
-                    value={heightInches}
-                    onChange={(e) => {
-                      const v = e.target.value
-                      onUpdateField('heightInches', v === '' ? '' : Number(v))
-                    }}
-                    onWheel={(e) => e.currentTarget.blur()}
-                    min="0"
-                    max="11.9"
-                    step="0.1"
-                    className="w-full px-4 py-3 glass-soft rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-cyan-400/60"
-                  />
-                </div>
+              <div>
+                <label className="block text-xs text-slate-300/70 mb-2">Inches</label>
+                <input
+                  inputMode="decimal"
+                  type="number"
+                  value={heightInches}
+                  onChange={(e) => onUpdateField('heightInches', e.target.value === '' ? '' : Number(e.target.value))}
+                  onWheel={(e) => e.currentTarget.blur()}
+                  min="0"
+                  max="11.9"
+                  step="0.1"
+                  className="w-full px-4 py-3 glass-soft rounded-2xl text-white ui-focus-ring border border-white/10"
+                />
               </div>
-            )}
-          </div>
-        )}
+            </div>
+          )}
+        </div>
+      </GlassCard>
 
-        {/* Level & Gender */}
-        <button
-          onClick={() => toggleSection('level')}
-          className="w-full flex items-center justify-between p-4 glass-soft rounded-xl hover:bg-white/10 transition mt-3"
-        >
-          <div className="text-left">
-            <p className="text-sm text-slate-300/70">Level & Gender</p>
-            <p className="font-semibold text-white">{level} • {gender}</p>
-          </div>
-          <svg className="w-5 h-5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-          </svg>
-        </button>
-
-        {expandedSection === 'level' && (
-          <div className="mt-3 p-4 glass-soft rounded-xl space-y-4">
-            <GlassSelect
-              label="Experience Level"
-              value={level}
-              options={levelOptions as any}
-              onChange={(v) => onUpdateField('level', v)}
-            />
-            <GlassSelect
-              label="Gender"
-              value={gender}
-              options={genderOptions as any}
-              onChange={(v) => onUpdateField('gender', v)}
-            />
-          </div>
-        )}
-
-        {/* Training Duration */}
-        <button
-          onClick={() => toggleSection('duration')}
-          className="w-full flex items-center justify-between p-4 glass-soft rounded-xl hover:bg-white/10 transition mt-3"
-        >
-          <div className="text-left">
-            <p className="text-sm text-slate-300/70">Training Duration</p>
-            <p className="font-semibold text-white">{tenure || 'Not set'}</p>
-          </div>
-          <svg className="w-5 h-5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-          </svg>
-        </button>
-
-        {expandedSection === 'duration' && (
-          <div className="mt-3 p-4 glass-soft rounded-xl">
-            <label className="block text-sm font-medium text-slate-200/90 mb-2">Training Duration</label>
+      {/* Training */}
+      <GlassCard className="p-4">
+        <SectionHeader title="Training" subtitle="Helps the AI match volume and recovery" />
+        <div className="mt-4 space-y-3">
+          <div>
+            <label className="block text-xs text-slate-300/70 mb-2">Training duration</label>
             <input
               type="text"
               value={tenure}
               onChange={(e) => onUpdateField('tenure', e.target.value)}
-              placeholder="e.g., '6 months' or 'Just started'"
-              className="w-full px-4 py-3 glass-soft rounded-xl text-white placeholder:text-slate-300/50 focus:outline-none focus:ring-2 focus:ring-cyan-400/60"
+              placeholder="e.g., Just started, 6 months, 2 years"
+              className="w-full px-4 py-3 glass-soft rounded-2xl text-white placeholder:text-slate-400/70 ui-focus-ring border border-white/10"
             />
           </div>
-        )}
-
-        {/* Notes */}
-        <button
-          onClick={() => toggleSection('notes')}
-          className="w-full flex items-center justify-between p-4 glass-soft rounded-xl hover:bg-white/10 transition mt-3"
-        >
-          <div className="text-left">
-            <p className="text-sm text-slate-300/70">Additional Notes</p>
-            <p className="font-semibold text-white truncate">{notes || 'None'}</p>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block text-xs text-slate-300/70 mb-2">Goal weight (kg)</label>
+              <input
+                inputMode="decimal"
+                type="number"
+                value={goalWeight}
+                onChange={(e) => onUpdateField('goalWeight', e.target.value === '' ? '' : Number(e.target.value))}
+                min="30"
+                max="300"
+                step="0.1"
+                placeholder="Optional"
+                className="w-full px-4 py-3 glass-soft rounded-2xl text-white placeholder:text-slate-400/70 ui-focus-ring border border-white/10"
+              />
+            </div>
+            <div>
+              <label className="block text-xs text-slate-300/70 mb-2">Goal timeline</label>
+              <input
+                type="text"
+                value={goalDuration}
+                onChange={(e) => onUpdateField('goalDuration', e.target.value)}
+                placeholder="Optional"
+                className="w-full px-4 py-3 glass-soft rounded-2xl text-white placeholder:text-slate-400/70 ui-focus-ring border border-white/10"
+              />
+            </div>
           </div>
-          <svg className="w-5 h-5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-          </svg>
-        </button>
 
-        {expandedSection === 'notes' && (
-          <div className="mt-3 p-4 glass-soft rounded-xl">
-            <label className="block text-sm font-medium text-slate-200/90 mb-2">Additional Notes</label>
+          <Collapsible
+            open={notesOpen}
+            onToggle={() => setNotesOpen(v => !v)}
+            header={
+              <div className="flex items-center justify-between px-1">
+                <div>
+                  <p className="text-sm font-semibold text-white">Notes</p>
+                  <p className="text-xs text-slate-300/70 truncate">
+                    {notes ? 'Used to avoid injuries and match preferences' : 'Add injuries, constraints, or preferences'}
+                  </p>
+                </div>
+                <svg className="w-5 h-5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                </svg>
+              </div>
+            }
+            className="mt-2"
+          >
             <textarea
               value={notes}
               onChange={(e) => onUpdateField('notes', e.target.value)}
               rows={4}
-              placeholder="Injuries, preferences, goals..."
-              className="w-full px-4 py-3 glass-soft rounded-xl text-white placeholder:text-slate-300/50 focus:outline-none focus:ring-2 focus:ring-cyan-400/60 resize-none"
+              placeholder="Example: knee pain (avoid heavy squats), prefer dumbbells, 45 min sessions."
+              className="w-full px-4 py-3 glass-soft rounded-2xl text-white placeholder:text-slate-400/70 ui-focus-ring border border-white/10 resize-none"
             />
-          </div>
-        )}
-      </div>
+          </Collapsible>
+        </div>
+      </GlassCard>
 
-      {/* Nutrition Preferences */}
-      <div className="glass rounded-xl p-4">
-        <h3 className="text-sm font-semibold text-white mb-3">Nutrition Preferences</h3>
+      {/* Nutrition preferences */}
+      <GlassCard className="p-4">
+        <SectionHeader title="Nutrition" subtitle="Diet rules and meal structure" />
 
-        <button
-          onClick={() => toggleSection('nutrition')}
-          className="w-full flex items-center justify-between p-4 glass-soft rounded-xl hover:bg-white/10 transition"
-        >
-          <div className="text-left">
-            <p className="text-sm text-slate-300/70">Diet & Meals</p>
-            <p className="font-semibold text-white">{(dietType && dietType.length > 0) ? (dietType.length > 1 ? `${dietType.length} Selected` : dietType[0]) : 'Any'} • {cuisine || 'Any'}</p>
-          </div>
-          <svg className="w-5 h-5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-          </svg>
-        </button>
-
-        {expandedSection === 'nutrition' && (
-          <div className="mt-3 p-4 glass-soft rounded-xl">
-            <div className="space-y-6">
-            <div className="pb-2 border-b border-white/5">
-                <h3 className="text-lg font-medium text-white/90 flex items-center gap-2">
-                    <span className="text-xl">🥗</span> Nutrition Preferences
-                </h3>
-                <p className="text-sm text-slate-400 mt-1">Customize your meal plan engine.</p>
+        <div className="mt-4 space-y-4">
+          <div>
+            <p className="text-xs text-slate-300/70 mb-2">Diet type</p>
+            <div className="flex flex-wrap gap-2">
+              {dietTypeOptions.map((t) => {
+                const selected = (dietType || []).includes(t)
+                return (
+                  <Chip
+                    key={t}
+                    selected={selected}
+                    onClick={() => {
+                      const current = dietType || []
+                      let next: string[]
+                      if (t === 'No Restrictions') {
+                        next = ['No Restrictions']
+                      } else {
+                        const filtered = current.filter(x => x !== 'No Restrictions')
+                        next = selected ? filtered.filter(x => x !== t) : [...filtered, t]
+                      }
+                      if (next.length === 0) next = ['No Restrictions']
+                      onUpdateField('dietType', next)
+                    }}
+                  >
+                    {t}
+                  </Chip>
+                )
+              })}
             </div>
-             
-             {/* Diet Type (Multi-select) */}
-             <div>
-                <label className="block text-sm font-medium text-slate-200/90 mb-2">Dietary Type (Select all that apply)</label>
-                <div className="flex flex-wrap gap-2">
-                  {[
-                    'No Restrictions', 'Vegetarian', 'Vegan', 'Pescatarian', 
-                    'Keto', 'Paleo', 'Strictly Non-Vegetarian', 'Halal', 'Kosher', 'Gluten-Free'
-                  ].map((type) => {
-                    const isSelected = (dietType || []).includes(type);
-                    return (
-                      <button
-                        key={type}
-                        onClick={() => {
-                          const current = dietType || [];
-                          let newTypes;
-                          if (type === 'No Restrictions') {
-                             newTypes = ['No Restrictions'];
-                          } else {
-                             // Remove 'No Restrictions' if other is selected
-                             const filtered = current.filter(t => t !== 'No Restrictions');
-                             if (isSelected) {
-                               newTypes = filtered.filter(t => t !== type);
-                             } else {
-                               newTypes = [...filtered, type];
-                             }
-                          }
-                          if (newTypes.length === 0) newTypes = ['No Restrictions'];
-                          onUpdateField('dietType', newTypes);
-                        }}
-                        className={`px-3 py-1.5 rounded-lg text-xs font-medium transition border ${
-                          isSelected 
-                            ? 'bg-cyan-500/20 border-cyan-500 text-cyan-200 shadow-sm shadow-cyan-500/10' 
-                            : 'bg-white/5 border-white/10 text-slate-400 hover:bg-white/10 hover:text-slate-200'
-                        }`}
-                      >
-                        {type}
-                      </button>
-                    );
-                  })}
+          </div>
+
+          <div>
+            <p className="text-xs text-slate-300/70 mb-2">Allergies (optional)</p>
+            <div className="flex flex-wrap gap-2">
+              {allergyOptions.map((a) => {
+                const selected = (allergies || []).includes(a)
+                return (
+                  <Chip
+                    key={a}
+                    selected={selected}
+                    onClick={() => {
+                      const current = allergies || []
+                      const next = selected ? current.filter(x => x !== a) : [...current, a]
+                      onUpdateField('allergies', next)
+                    }}
+                  >
+                    {a}
+                  </Chip>
+                )
+              })}
+              <Chip selected={(allergies || []).length === 0} onClick={() => onUpdateField('allergies', [])}>
+                None
+              </Chip>
+            </div>
+          </div>
+
+          <div>
+            <p className="text-xs text-slate-300/70 mb-2">Meals per day</p>
+            <div className="flex flex-wrap gap-2">
+              {[2, 3, 4, 5, 6].map((m) => (
+                <Chip key={m} selected={mealsPerDay === m} onClick={() => onUpdateField('mealsPerDay', m)}>
+                  {m}
+                </Chip>
+              ))}
+            </div>
+          </div>
+
+          <Collapsible
+            open={advancedNutritionOpen}
+            onToggle={() => setAdvancedNutritionOpen(v => !v)}
+            header={
+              <div className="flex items-center justify-between px-1">
+                <div>
+                  <p className="text-sm font-semibold text-white">Advanced nutrition</p>
+                  <p className="text-xs text-slate-300/70">Cuisine, protein powder, strict inclusions</p>
                 </div>
-             </div>
-
-             {/* Allergies (Multi-select) */}
-             <div>
-                <label className="block text-sm font-medium text-slate-200/90 mb-2">Allergies / Intolerances</label>
-                <div className="flex flex-wrap gap-2">
+                <svg className="w-5 h-5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                </svg>
+              </div>
+            }
+          >
+            <div className="space-y-3">
+              <div>
+                <label className="block text-xs text-slate-300/70 mb-2">Cuisine</label>
+                <select
+                  value={cuisine || 'No Preference'}
+                  onChange={(e) => onUpdateField('cuisine', e.target.value)}
+                  className="w-full px-4 py-3 glass-soft rounded-2xl text-white ui-focus-ring border border-white/10 bg-transparent"
+                >
                   {[
-                    'None', 'Dairy', 'Gluten', 'Nuts', 'Shellfish', 'Eggs', 'Soy'
-                  ].map((allergy) => {
-                    const isSelected = (allergies || []).includes(allergy);
-                    return (
-                      <button
-                        key={allergy}
-                        onClick={() => {
-                          const current = allergies || [];
-                          let newAllergies: string[];
-                          if (allergy === 'None') {
-                             newAllergies = []; // Empty array means None
-                          } else {
-                             if (isSelected) {
-                               newAllergies = current.filter(t => t !== allergy);
-                             } else {
-                               newAllergies = [...current, allergy];
-                             }
-                          }
-                          onUpdateField('allergies', newAllergies);
-                        }}
-                        className={`px-3 py-1.5 rounded-lg text-xs font-medium transition border ${
-                           isSelected 
-                            ? 'bg-red-500/20 border-red-500 text-red-200 shadow-sm shadow-red-500/10' 
-                            : 'bg-white/5 border-white/10 text-slate-400 hover:bg-white/10 hover:text-slate-200'
-                        }`}
-                      >
-                        {allergy}
-                      </button>
-                    );
-                  })}
+                    'No Preference',
+                    'North Indian',
+                    'South Indian',
+                    'Mughlai',
+                    'Mediterranean',
+                    'American',
+                    'Mexican',
+                    'Asian',
+                  ].map((c) => (
+                    <option key={c} value={c} className="bg-slate-900">
+                      {c}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <p className="text-xs text-slate-300/70 mb-2">Protein powder</p>
+                <div className="flex gap-2">
+                  <Chip selected={proteinPowder === 'Yes'} onClick={() => onUpdateField('proteinPowder', 'Yes')}>
+                    Yes
+                  </Chip>
+                  <Chip selected={proteinPowder !== 'Yes'} onClick={() => onUpdateField('proteinPowder', 'No')}>
+                    No
+                  </Chip>
                 </div>
-             </div>
+              </div>
 
-             <GlassSelect
-               label="Cuisine / Region"
-               value={cuisine || 'No Preference'}
-               options={[
-                  { value: 'No Preference', label: 'No Preference' },
-                  { value: 'North Indian', label: 'North Indian' },
-                  { value: 'South Indian', label: 'South Indian' },
-                  { value: 'Mughlai', label: 'Mughlai' },
-                  { value: 'Mediterranean', label: 'Mediterranean' },
-                  { value: 'American', label: 'American' },
-                  { value: 'Mexican', label: 'Mexican' },
-                  { value: 'Asian', label: 'Asian' },
-               ] as any}
-               onChange={(v) => onUpdateField('cuisine', v)}
-             />
+              {proteinPowder === 'Yes' ? (
+                <div>
+                  <label className="block text-xs text-slate-300/70 mb-2">Protein from powder (g/day)</label>
+                  <input
+                    inputMode="numeric"
+                    type="number"
+                    value={proteinPowderAmount || ''}
+                    onChange={(e) => onUpdateField('proteinPowderAmount', e.target.value === '' ? 0 : Number(e.target.value))}
+                    onWheel={(e) => e.currentTarget.blur()}
+                    placeholder="e.g. 25"
+                  className="w-full px-4 py-3 glass-soft rounded-2xl text-white ui-focus-ring border border-white/10"
+                  />
+                </div>
+              ) : null}
 
-             <div className="grid grid-cols-2 gap-3">
-                <GlassSelect
-                   label="Meals Per Day"
-                   value={String(mealsPerDay)}
-                   options={[
-                      { value: '2', label: '2 Meals' },
-                      { value: '3', label: '3 Meals' },
-                      { value: '4', label: '4 Meals' },
-                      { value: '5', label: '5 Meals' },
-                      { value: '6', label: '6 Meals' },
-                   ] as any}
-                   onChange={(v) => onUpdateField('mealsPerDay', Number(v))}
-                />
-                <GlassSelect
-                  label="Protein Powder?"
-                  value={proteinPowder || 'No'}
-                  options={[
-                      { value: 'Yes', label: 'Yes' },
-                      { value: 'No', label: 'No' },
-                  ] as any}
-                  onChange={(v) => onUpdateField('proteinPowder', v)}
-                />
-                {(proteinPowder === 'Yes') && (
-                  <div className="animate-in fade-in slide-in-from-top-2 duration-300">
-                    <label className="block text-sm font-medium text-slate-200/90 mb-2">Protein Intake from Powder (g/day)</label>
-                    <div className="relative">
-                        <input
-                        type="number"
-                        value={proteinPowderAmount || ''}
-                        onChange={(e) => onUpdateField('proteinPowderAmount', e.target.value === '' ? 0 : Number(e.target.value))}
-                        onWheel={(e) => e.currentTarget.blur()}
-                        placeholder="e.g. 25"
-                        className="w-full pl-4 pr-12 py-3 glass-soft rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-cyan-400/60"
-                        />
-                        <span className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 text-sm">g</span>
-                    </div>
-                  </div>
-                )}
-             </div>
-
-             {/* Specific Food Preferences */}
-             <div className="p-4 rounded-xl bg-white/5 border border-white/10 space-y-3">
-                <label className="block text-sm font-medium text-slate-200/90 flex items-center gap-2">
-                    <span>📝</span> Specific Food Inclusions / Exclusions
-                </label>
+              <div>
+                <label className="block text-xs text-slate-300/70 mb-2">Specific inclusions / exclusions</label>
                 <textarea
                   value={specificFoodPreferences || ''}
                   onChange={(e) => onUpdateField('specificFoodPreferences', e.target.value)}
-                  placeholder="e.g. Include oats for breakfast, exclude mushrooms. I hate bell peppers."
                   rows={3}
-                  className="w-full px-4 py-3 glass-soft rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-cyan-400/60 placeholder-slate-500/50"
+                  placeholder="Example: include oats daily, exclude mushrooms; no bell peppers."
+                  className="w-full px-4 py-3 glass-soft rounded-2xl text-white ui-focus-ring border border-white/10 placeholder:text-slate-400/70 resize-none"
                 />
-                <p className="text-xs text-slate-400/70">
-                    The AI will treat these as strict rules for your diet plan.
-                </p>
-             </div>
+              </div>
 
-             <div className="grid grid-cols-2 gap-3">
-                 <GlassSelect
-                   label="Cooking Level"
-                   value={cookingLevel || 'Moderate'}
-                   options={[
-                      { value: 'Full Prep', label: 'Full Prep' },
-                      { value: 'Moderate', label: 'Moderate' },
-                      { value: 'Minimal', label: 'Minimal' },
-                      { value: 'No Cooking', label: 'No Cooking' },
-                   ] as any}
-                   onChange={(v) => onUpdateField('cookingLevel', v)}
-                 />
-                 <GlassSelect
-                   label="Budget"
-                   value={budget || 'Standard'}
-                   options={[
-                      { value: 'Budget-Friendly', label: 'Budget-Friendly' },
-                      { value: 'Standard', label: 'Standard' },
-                      { value: 'Premium', label: 'Premium' },
-                   ] as any}
-                   onChange={(v) => onUpdateField('budget', v)}
-                 />
-             </div>
-          </div>
-          </div>
-        )}
-      </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs text-slate-300/70 mb-2">Cooking</label>
+                  <select
+                    value={cookingLevel || 'Moderate'}
+                    onChange={(e) => onUpdateField('cookingLevel', e.target.value)}
+                    className="w-full px-4 py-3 glass-soft rounded-2xl text-white ui-focus-ring border border-white/10 bg-transparent"
+                  >
+                    {['Full Prep', 'Moderate', 'Minimal', 'No Cooking'].map((v) => (
+                      <option key={v} value={v} className="bg-slate-900">
+                        {v}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-xs text-slate-300/70 mb-2">Budget</label>
+                  <select
+                    value={budget || 'Standard'}
+                    onChange={(e) => onUpdateField('budget', e.target.value)}
+                    className="w-full px-4 py-3 glass-soft rounded-2xl text-white ui-focus-ring border border-white/10 bg-transparent"
+                  >
+                    {['Budget-Friendly', 'Standard', 'Premium'].map((v) => (
+                      <option key={v} value={v} className="bg-slate-900">
+                        {v}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+            </div>
+          </Collapsible>
+        </div>
+      </GlassCard>
 
-      {/* Save Button */}
-      <button
-        onClick={onSaveProfile}
+      {/* Save / danger */}
+      <AnimatedButton
+        variant="primary"
+        fullWidth
         disabled={loading}
-        className="w-full py-2.5 px-4 rounded-lg bg-gradient-to-r from-cyan-500 to-blue-600 text-white font-semibold text-sm shadow-lg shadow-cyan-500/20 hover:shadow-cyan-500/30 transition-all disabled:opacity-50"
+        loading={loading}
+        className="rounded-2xl"
       >
-        {loading ? 'Saving...' : 'Save Profile'}
-      </button>
+        {loading ? 'Saving...' : 'Save changes'}
+      </AnimatedButton>
 
-      {/* Reset Button */}
       <button
+        type="button"
         onClick={onResetRoutines}
-        className="w-full py-2.5 px-4 rounded-lg bg-red-500/15 hover:bg-red-500/20 text-red-300 text-sm font-medium transition border border-red-500/30"
+        className="w-full py-3 px-4 rounded-2xl bg-red-500/12 hover:bg-red-500/16 text-red-200 text-sm font-medium transition border border-red-500/25 ui-focus-ring"
       >
-        Reset Routine Data
+        Reset routine data
       </button>
-    </div>
+    </form>
   )
 }

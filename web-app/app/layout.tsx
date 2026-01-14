@@ -1,5 +1,12 @@
 import type { Metadata } from 'next'
+import { Inter } from 'next/font/google'
 import './globals.css'
+
+const inter = Inter({
+  subsets: ['latin'],
+  display: 'swap',
+  variable: '--font-inter',
+})
 
 export const metadata: Metadata = {
   title: 'Gym Bro - AI - Powered Gym Routine Generator',
@@ -13,7 +20,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body className="min-h-screen text-slate-100">
+      <body className={`min-h-screen text-slate-100 ${inter.variable}`}>
         <div className="app-shell">
           <div className="app-bg" />
           <div className="app-atmos" />

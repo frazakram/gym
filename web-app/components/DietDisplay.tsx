@@ -1,74 +1,136 @@
 
-import React, { useState } from 'react';
-import { WeeklyDiet } from '@/types';
-import { ChevronDown, ChevronUp, Salad, Flame, Utensils } from 'lucide-react';
+import React, { useMemo, useState } from 'react'
+import { WeeklyDiet } from '@/types'
+import { ChevronDown, Flame, Salad, Utensils } from 'lucide-react'
+import { GlassCard } from '@/components/ui/GlassCard'
+import { SectionHeader } from '@/components/ui/SectionHeader'
+import { Collapsible } from '@/components/ui/Collapsible'
 
 interface DietDisplayProps {
-  diet: WeeklyDiet | null;
+  diet: WeeklyDiet | null
 }
 
 export const DietDisplay: React.FC<DietDisplayProps> = ({ diet }) => {
-  const [expanded, setExpanded] = useState(false);
+  const [openDay, setOpenDay] = useState<number | null>(0)
 
-  if (!diet) return null;
+  const summary = useMemo(() => {
+    if (!diet?.days?.length) {
+      return { totalCalories: 0, totalProtein: 0, avgCalories: 0, avgProtein: 0 }
+    }
+    const totalCalories = diet.days.reduce((sum, d) => sum + (d.total_calories || 0), 0)
+    const totalProtein = diet.days.reduce((sum, d) => sum + (d.total_protein || 0), 0)
+    const avgCalories = Math.round(totalCalories / diet.days.length)
+    const avgProtein = Math.round(totalProtein / diet.days.length)
+    return { totalCalories, totalProtein, avgCalories, avgProtein }
+  }, [diet])
+
+  if (!diet) return null
 
   return (
-    <div className="w-full bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl overflow-hidden mt-8">
-      <div 
-        className="p-6 cursor-pointer flex items-center justify-between"
-        onClick={() => setExpanded(!expanded)}
-      >
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-green-500/20 flex items-center justify-center text-green-400">
-            <Salad className="w-6 h-6" />
+    <GlassCard className="w-full p-4">
+      <SectionHeader
+        title="Weekly meal plan"
+        subtitle="Tap a day to expand meals and macros"
+        right={
+          <div className="w-9 h-9 rounded-2xl bg-emerald-400/12 border border-emerald-400/20 flex items-center justify-center text-emerald-200">
+            <Salad className="w-5 h-5" />
           </div>
-          <div>
-            <h2 className="text-xl font-bold text-white">Weekly Meal Plan</h2>
-            <p className="text-sm text-white/50">Personalized nutrition to fuel your gains</p>
+        }
+      />
+
+      {/* Summary */}
+      <div className="mt-4 grid grid-cols-2 gap-3">
+        <div className="glass-soft rounded-2xl border border-white/10 p-3">
+          <div className="flex items-center justify-between">
+            <p className="text-[11px] text-slate-300/70">Avg calories/day</p>
+            <Flame className="w-4 h-4 text-orange-300/90" />
           </div>
+          <p className="mt-1 text-[20px] font-semibold tracking-tight text-white">
+            {summary.avgCalories}
+            <span className="ml-1 text-xs text-slate-300/70">kcal</span>
+          </p>
         </div>
-        
-        {expanded ? <ChevronUp className="w-5 h-5 text-white/50" /> : <ChevronDown className="w-5 h-5 text-white/50" />}
+        <div className="glass-soft rounded-2xl border border-emerald-400/20 p-3 bg-emerald-400/6">
+          <div className="flex items-center justify-between">
+            <p className="text-[11px] text-slate-300/70">Avg protein/day</p>
+            <Utensils className="w-4 h-4 text-emerald-200/90" />
+          </div>
+          <p className="mt-1 text-[20px] font-semibold tracking-tight text-white">
+            {summary.avgProtein}
+            <span className="ml-1 text-xs text-slate-300/70">g</span>
+          </p>
+        </div>
       </div>
 
-      {expanded && (
-        <div className="px-6 pb-6 space-y-6">
-          {diet.days.map((day, i) => (
-            <div key={i} className="bg-white/5 rounded-xl p-4 border border-white/5">
-              <div className="flex items-center justify-between mb-4 pb-3 border-b border-white/5">
-                <h3 className="font-bold text-lg text-green-400">{day.day}</h3>
-                <div className="flex gap-4 text-sm text-white/60">
-                  <div className="flex items-center gap-1">
-                    <Flame className="w-4 h-4 text-orange-400" />
-                    <span>{day.total_calories} kcal</span>
+      {/* Days accordion */}
+      <div className="mt-4 space-y-2">
+        {diet.days.map((day, i) => {
+          const open = openDay === i
+          return (
+            <GlassCard key={i} variant="soft" className="p-3">
+              <Collapsible
+                open={open}
+                onToggle={() => setOpenDay(open ? null : i)}
+                header={
+                  <div className="flex items-center justify-between gap-3">
+                    <div className="min-w-0">
+                      <p className="text-sm font-semibold text-white truncate">{day.day}</p>
+                      <div className="mt-1 flex items-center gap-2 text-[11px] text-slate-300/70">
+                        <span className="inline-flex items-center gap-1 rounded-full bg-white/5 border border-white/10 px-2 py-0.5">
+                          🔥 {day.total_calories} kcal
+                        </span>
+                        <span className="inline-flex items-center gap-1 rounded-full bg-emerald-400/10 border border-emerald-400/20 px-2 py-0.5 text-emerald-100">
+                          🥩 {day.total_protein}g
+                        </span>
+                      </div>
+                    </div>
+                    <ChevronDown
+                      className={`w-5 h-5 text-slate-400 transition-transform ${open ? 'rotate-180' : ''}`}
+                    />
                   </div>
-                  <div className="flex items-center gap-1">
-                    <Utensils className="w-4 h-4 text-blue-400" />
-                    <span>{day.total_protein}g Protein</span>
-                  </div>
-                </div>
-              </div>
-
-              <div className="grid gap-3">
-                {day.meals.map((meal, j) => (
-                  <div key={j} className="flex flex-col sm:flex-row sm:items-start gap-4 p-3 bg-black/20 rounded-lg">
-                     <div className="min-w-[120px]">
-                        <span className="text-sm font-semibold text-white/90 block">{meal.name}</span>
-                        <div className="text-xs text-white/40 mt-1 space-y-0.5">
-                           <div>{meal.calories} kcal</div>
-                           <div>P: {meal.protein}g C: {meal.carbs}g F: {meal.fats}g</div>
+                }
+              >
+                <div className="space-y-2">
+                  {day.meals.map((meal, j) => (
+                    <div
+                      key={j}
+                      className="rounded-2xl border border-white/10 bg-white/5 px-3.5 py-3"
+                    >
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="min-w-0">
+                          <p className="text-sm font-medium text-white/90 truncate">{meal.name}</p>
+                          <p className="mt-0.5 text-[11px] text-slate-300/70">
+                            {meal.calories} kcal
+                          </p>
                         </div>
-                     </div>
-                     <div className="flex-1">
-                        <p className="text-sm text-white/70 leading-relaxed">{meal.ingredients}</p>
-                     </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
-    </div>
-  );
-};
+                        <div className="shrink-0 text-right text-[11px] text-slate-200/80">
+                          <div className="flex items-center justify-end gap-2">
+                            <span className="inline-flex items-center gap-1">
+                              <span className="w-1.5 h-1.5 rounded-full bg-emerald-300" />
+                              P {meal.protein}g
+                            </span>
+                            <span className="inline-flex items-center gap-1">
+                              <span className="w-1.5 h-1.5 rounded-full bg-sky-300" />
+                              C {meal.carbs}g
+                            </span>
+                            <span className="inline-flex items-center gap-1">
+                              <span className="w-1.5 h-1.5 rounded-full bg-amber-300" />
+                              F {meal.fats}g
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                      <p className="mt-2 text-sm text-white/70 leading-relaxed">
+                        {meal.ingredients}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              </Collapsible>
+            </GlassCard>
+          )
+        })}
+      </div>
+    </GlassCard>
+  )
+}
