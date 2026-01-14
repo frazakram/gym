@@ -67,30 +67,44 @@ export const DietDisplay: React.FC<DietDisplayProps> = ({ diet }) => {
         {diet.days.map((day, i) => {
           const open = openDay === i
           
-          // Compute weekday name
-          const date = new Date()
-          date.setDate(date.getDate() + i)
-          const weekdayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
-          const weekdayName = weekdayNames[date.getDay()]
-          
-          let displayDay = `${weekdayName}`
-          if (i === 0) displayDay = `Today ${weekdayName}`
-          else if (i === 1) displayDay = `Tomorrow ${weekdayName}`
+          const weekdayNames = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
+          const displayDay = weekdayNames[i]
+          const todayIndex = (new Date().getDay() + 6) % 7 // Mon=0
+          const isToday = i === todayIndex
 
           return (
-            <GlassCard key={i} variant="soft" className="p-3">
+            <GlassCard 
+              key={i} 
+              variant="soft" 
+              className={`p-3 transition-colors ${
+                isToday 
+                  ? 'bg-emerald-400/14 border-emerald-400/25 shadow-[0_8px_30px_rgb(16,185,129,0.1)]' 
+                  : ''
+              }`}
+            >
               <Collapsible
                 open={open}
                 onToggle={() => setOpenDay(open ? null : i)}
                 header={
                   <div className="flex items-center justify-between gap-3">
                     <div className="min-w-0">
-                      <p className="text-sm font-semibold text-white truncate">{displayDay}</p>
+                      <div className="flex items-center gap-2">
+                        <p className={`text-sm font-semibold truncate ${isToday ? 'text-emerald-50' : 'text-white'}`}>
+                          {displayDay}
+                        </p>
+                        {isToday && (
+                          <span className="px-1.5 py-0.5 rounded-md bg-emerald-400/20 border border-emerald-400/30 text-[9px] font-bold text-emerald-200 tracking-wider uppercase">
+                            Today
+                          </span>
+                        )}
+                      </div>
                       <div className="mt-1 flex items-center gap-2 text-[11px] text-slate-300/70">
                         <span className="inline-flex items-center gap-1 rounded-full bg-white/5 border border-white/10 px-2 py-0.5">
                           🔥 {day.total_calories} kcal
                         </span>
-                        <span className="inline-flex items-center gap-1 rounded-full bg-emerald-400/10 border border-emerald-400/20 px-2 py-0.5 text-emerald-100">
+                        <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 ${
+                          isToday ? 'bg-emerald-400/20 border-emerald-400/30 text-emerald-100' : 'bg-emerald-400/10 border-emerald-400/20 text-emerald-100'
+                        }`}>
                           🥩 {day.total_protein}g
                         </span>
                       </div>
