@@ -10,7 +10,7 @@ import { Collapsible } from '../ui/Collapsible'
 
 interface ProfileViewProps {
   profile: (Profile & { username?: string }) | null
-  name?: string
+  name: string
   age: number | ''
   weight: number | ''
   height: number | ''
@@ -128,7 +128,7 @@ export function ProfileView({
           </div>
           <div className="flex-1 min-w-0">
             <p className="text-[15px] font-semibold tracking-tight text-white truncate">
-              {name || profile?.username || 'Profile'}
+              {profile?.username || 'Profile'}
             </p>
             <p className="mt-0.5 text-xs text-slate-300/70">
               {age || '—'} yrs • {gender}
@@ -206,7 +206,18 @@ export function ProfileView({
       <GlassCard className="p-4">
         <SectionHeader title="Body" subtitle="Used for calorie and training estimates" />
 
-        <div className="mt-4 grid grid-cols-2 gap-3">
+        <div className="mt-4 space-y-3">
+          <div>
+             <label className="block text-xs text-slate-300/70 mb-2">Display Name (optional)</label>
+             <input
+               type="text"
+               value={name}
+               onChange={(e) => onUpdateField('name', e.target.value)}
+               placeholder={profile?.username?.split('@')[0] || 'Your Name'}
+               className="w-full px-4 py-3 glass-soft rounded-2xl text-white placeholder:text-slate-400/70 ui-focus-ring border border-white/10"
+             />
+          </div>
+          <div className="grid grid-cols-2 gap-3">
           <div>
             <label className="block text-xs text-slate-300/70 mb-2">Age</label>
             <input
@@ -233,6 +244,7 @@ export function ProfileView({
             />
           </div>
         </div>
+      </div>
 
         <div className="mt-4">
           <p className="text-xs text-slate-300/70 mb-2">Height unit</p>
