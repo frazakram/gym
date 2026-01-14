@@ -425,7 +425,7 @@ export default function DashboardPage() {
 
 
 
-  const handleGenerateDiet = async () => {
+  const handleGenerateDiet = async (isNextWeek = false) => {
      if (!profile) return;
      setGeneratingDiet(true);
      setError('');
@@ -454,7 +454,7 @@ export default function DashboardPage() {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-              weekNumber: currentWeekNumber,
+              weekNumber: isNextWeek ? currentWeekNumber + 1 : currentWeekNumber,
               diet: dietData.dietPlan
             })
           });
