@@ -66,6 +66,17 @@ export const DietDisplay: React.FC<DietDisplayProps> = ({ diet }) => {
       <div className="mt-4 space-y-2">
         {diet.days.map((day, i) => {
           const open = openDay === i
+          
+          // Compute weekday name
+          const date = new Date()
+          date.setDate(date.getDate() + i)
+          const weekdayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
+          const weekdayName = weekdayNames[date.getDay()]
+          
+          let displayDay = `${weekdayName}`
+          if (i === 0) displayDay = `Today ${weekdayName}`
+          else if (i === 1) displayDay = `Tomorrow ${weekdayName}`
+
           return (
             <GlassCard key={i} variant="soft" className="p-3">
               <Collapsible
@@ -74,7 +85,7 @@ export const DietDisplay: React.FC<DietDisplayProps> = ({ diet }) => {
                 header={
                   <div className="flex items-center justify-between gap-3">
                     <div className="min-w-0">
-                      <p className="text-sm font-semibold text-white truncate">{day.day}</p>
+                      <p className="text-sm font-semibold text-white truncate">{displayDay}</p>
                       <div className="mt-1 flex items-center gap-2 text-[11px] text-slate-300/70">
                         <span className="inline-flex items-center gap-1 rounded-full bg-white/5 border border-white/10 px-2 py-0.5">
                           🔥 {day.total_calories} kcal

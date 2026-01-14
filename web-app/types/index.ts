@@ -8,6 +8,7 @@ export interface User {
 export interface Profile {
     id: number;
     user_id: number;
+    name?: string;
     age: number;
     weight: number;
     height: number;
