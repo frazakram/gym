@@ -3,8 +3,8 @@
 import { motion } from 'framer-motion'
 
 interface BottomNavProps {
-  activeView: 'home' | 'routine' | 'workout' | 'profile' | 'diet'
-  onViewChange: (view: 'home' | 'routine' | 'workout' | 'profile' | 'diet') => void
+  activeView: 'home' | 'routine' | 'workout' | 'profile' | 'diet' | 'analytics'
+  onViewChange: (view: 'home' | 'routine' | 'workout' | 'profile' | 'diet' | 'analytics') => void
 }
 
 export function BottomNav({ activeView, onViewChange }: BottomNavProps) {
@@ -33,6 +33,15 @@ export function BottomNav({ activeView, onViewChange }: BottomNavProps) {
       icon: (
         <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
+        </svg>
+      ),
+    },
+    {
+      id: 'analytics' as const,
+      label: 'Analytics',
+      icon: (
+        <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 19V5m0 14h16M8 17V9m4 8v-5m4 5V7" />
         </svg>
       ),
     },

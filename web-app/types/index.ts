@@ -135,3 +135,11 @@ export interface CompletionStats {
         completed: number;
     }[];
 }
+
+// Billing / Premium
+export interface PremiumStatus {
+    premium: boolean;
+    status: string | null;
+    subscription_id: string | null;
+    current_end: string | null; // serialized from API
+}
