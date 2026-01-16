@@ -876,18 +876,10 @@ export async function getPremiumStatus(userId: number): Promise<PremiumStatus> {
 
     const now = Date.now();
     const currentEndOk = current_end ? current_end.getTime() > now : false;
-
-    // Premium if:
-    // - active, OR
-    // - cancelled but still within paid period (current_end in future)
     const premium = status === "active" || (status === "cancelled" && currentEndOk);
 
     return { premium, status, subscription_id, current_end };
   } catch (error) {
-    if (allowMockAuth()) {
-      console.warn("getPremiumStatus DB failed, using mock:", error);
-      return { premium: true, status: "active", subscription_id: "mock_sub", current_end: new Date(Date.now() + 86400_000) };
-    }
     console.error("getPremiumStatus DB failed:", error);
     return { premium: false, status: null, subscription_id: null, current_end: null };
   }
@@ -902,41 +894,31 @@ export async function upsertSubscriptionFromRazorpay(input: {
   currentStart?: number | null; // unix seconds
   currentEnd?: number | null; // unix seconds
 }): Promise<void> {
-  try {
-    const start = typeof input.currentStart === "number" ? new Date(input.currentStart * 1000) : null;
-    const end = typeof input.currentEnd === "number" ? new Date(input.currentEnd * 1000) : null;
+  const start = typeof input.currentStart === "number" ? new Date(input.currentStart * 1000) : null;
+  const end = typeof input.currentEnd === "number" ? new Date(input.currentEnd * 1000) : null;
 
-    // userId can be null if we couldn't map the webhook; in that case, try update by subscription_id only.
-    if (input.userId == null) {
-      await pool.query(
-        `UPDATE subscriptions
-         SET status = $2, plan_id = COALESCE($3, plan_id), current_start = COALESCE($4, current_start), current_end = COALESCE($5, current_end),
-             updated_at = CURRENT_TIMESTAMP
-         WHERE subscription_id = $1`,
-        [input.subscriptionId, input.status, input.planId ?? null, start, end]
-      );
-      return;
-    }
-
+  if (input.userId == null) {
     await pool.query(
-      `INSERT INTO subscriptions (user_id, provider, plan_id, subscription_id, status, current_start, current_end)
-       VALUES ($1, $2, $3, $4, $5, $6, $7)
-       ON CONFLICT (subscription_id) DO UPDATE
-       SET user_id = EXCLUDED.user_id,
-           plan_id = COALESCE(EXCLUDED.plan_id, subscriptions.plan_id),
-           status = EXCLUDED.status,
-           current_start = COALESCE(EXCLUDED.current_start, subscriptions.current_start),
-           current_end = COALESCE(EXCLUDED.current_end, subscriptions.current_end),
-           updated_at = CURRENT_TIMESTAMP`,
-      [input.userId, input.provider, input.planId ?? null, input.subscriptionId, input.status, start, end]
+      `UPDATE subscriptions
+       SET status = $2, plan_id = COALESCE($3, plan_id), current_start = COALESCE($4, current_start), current_end = COALESCE($5, current_end),
+           updated_at = CURRENT_TIMESTAMP
+       WHERE subscription_id = $1`,
+      [input.subscriptionId, input.status, input.planId ?? null, start, end]
     );
-  } catch (error) {
-    if (allowMockAuth()) {
-      console.warn("upsertSubscriptionFromRazorpay DB failed, ignoring (mock):", error);
-      return;
-    }
-    console.error("upsertSubscriptionFromRazorpay DB failed:", error);
-    throw error;
+    return;
   }
+
+  await pool.query(
+    `INSERT INTO subscriptions (user_id, provider, plan_id, subscription_id, status, current_start, current_end)
+     VALUES ($1, $2, $3, $4, $5, $6, $7)
+     ON CONFLICT (subscription_id) DO UPDATE
+     SET user_id = EXCLUDED.user_id,
+         plan_id = COALESCE(EXCLUDED.plan_id, subscriptions.plan_id),
+         status = EXCLUDED.status,
+         current_start = COALESCE(EXCLUDED.current_start, subscriptions.current_start),
+         current_end = COALESCE(EXCLUDED.current_end, subscriptions.current_end),
+         updated_at = CURRENT_TIMESTAMP`,
+    [input.userId, input.provider, input.planId ?? null, input.subscriptionId, input.status, start, end]
+  );
 }
 

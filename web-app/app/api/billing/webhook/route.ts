@@ -40,7 +40,6 @@ function verifyWebhookSignature(rawBody: string, signatureHeader: string | null,
 }
 
 export async function POST(req: NextRequest) {
-  // Webhook must be fast + safe. Do minimal work, upsert subscription state, return 200.
   let raw = "";
   try {
     raw = await req.text();
@@ -57,7 +56,6 @@ export async function POST(req: NextRequest) {
     const eventVal = isRecord(body) ? body["event"] : undefined;
     const event = typeof eventVal === "string" ? eventVal : "";
 
-    // Prefer subscription entity if present.
     const subEntity = getNested(body, ["payload", "subscription", "entity"]);
     const payEntity = getNested(body, ["payload", "payment", "entity"]);
 
@@ -75,7 +73,6 @@ export async function POST(req: NextRequest) {
 
     let sub: unknown = subEntity;
     if (!sub) {
-      // Fetch from API as fallback (e.g. payment.* webhooks)
       const keyId = requireEnv("RAZORPAY_KEY_ID");
       const keySecret = requireEnv("RAZORPAY_KEY_SECRET");
       const razorpay = new Razorpay({ key_id: keyId, key_secret: keySecret });
@@ -113,7 +110,6 @@ export async function POST(req: NextRequest) {
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : String(error);
     console.error("Razorpay webhook error:", message);
-    // Still return 200 to avoid repeated retries if the event is malformed; but for signature/env issues, we returned 401/500 above.
     return NextResponse.json({ ok: true }, { status: 200 });
   }
 }

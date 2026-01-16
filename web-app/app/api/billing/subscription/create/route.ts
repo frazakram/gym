@@ -20,10 +20,7 @@ export async function POST(req: NextRequest) {
 
     const current = await getPremiumStatus(session.userId);
     if (current.premium) {
-      return NextResponse.json(
-        { error: "You already have an active subscription." },
-        { status: 409 }
-      );
+      return NextResponse.json({ error: "You already have an active subscription." }, { status: 409 });
     }
 
     const keyId = requireEnv("RAZORPAY_KEY_ID");
@@ -32,12 +29,11 @@ export async function POST(req: NextRequest) {
 
     const razorpay = new Razorpay({ key_id: keyId, key_secret: keySecret });
 
-    // Notes let us map webhook events back to the correct user securely.
-    void req; // (keeps signature stable; payload not needed)
+    void req; // payload not needed
 
     const params = {
       plan_id: planId,
-      total_count: 1200, // ~100 years monthly (effectively "until cancel")
+      total_count: 1200,
       quantity: 1,
       customer_notify: false,
       notes: {
@@ -61,7 +57,6 @@ export async function POST(req: NextRequest) {
       currentEnd: subscription.current_end ?? null,
     });
 
-    // Client uses keyId + subscriptionId to open Razorpay Checkout.
     return NextResponse.json(
       {
         keyId,

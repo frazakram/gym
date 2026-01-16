@@ -218,7 +218,6 @@ export default function DashboardPage() {
   }, [fetchProfile, fetchLatestRoutine, fetchLatestDiet, fetchPremiumStatus])
 
   useEffect(() => {
-    // keep premium status fresh when returning to tab
     const onFocus = () => fetchPremiumStatus()
     window.addEventListener('focus', onFocus)
     return () => window.removeEventListener('focus', onFocus)
@@ -742,10 +741,7 @@ export default function DashboardPage() {
         )}
 
         {activeView === 'analytics' && (
-          <AnalyticsView
-            premiumStatus={effectivePremium}
-            onUpgrade={() => setUpgradeOpen(true)}
-          />
+          <AnalyticsView premiumStatus={effectivePremium} onUpgrade={() => setUpgradeOpen(true)} />
         )}
 
         {activeView === 'profile' && (

@@ -1,7 +1,5 @@
 'use client'
 
-import { motion } from 'framer-motion'
-
 interface BottomNavProps {
   activeView: 'home' | 'routine' | 'workout' | 'profile' | 'diet' | 'analytics'
   onViewChange: (view: 'home' | 'routine' | 'workout' | 'profile' | 'diet' | 'analytics') => void
@@ -75,31 +73,21 @@ export function BottomNav({ activeView, onViewChange }: BottomNavProps) {
               <button
                 key={item.id}
                 onClick={() => onViewChange(item.id)}
-                className={`relative flex flex-col items-center justify-center px-4 py-2 rounded-2xl min-w-[72px] transition-colors ui-focus-ring ${
-                  isActive ? 'text-emerald-200' : 'text-slate-400 hover:text-slate-200'
+                className={`flex flex-col items-center justify-center px-4 py-2 rounded-xl min-w-[72px] transition-all ${
+                  isActive
+                    ? 'text-cyan-400'
+                    : 'text-slate-400 hover:text-slate-200'
                 }`}
               >
-                {isActive ? (
-                  <motion.div
-                    layoutId="bottom-nav-active"
-                    transition={{ type: 'spring', stiffness: 520, damping: 38 }}
-                    className="absolute inset-0 rounded-2xl bg-emerald-400/10 border border-emerald-400/20"
-                  />
-                ) : null}
-
-                <div className={`relative transition-transform ${isActive ? 'scale-110' : ''}`}>
+                <div className={`transition-transform ${isActive ? 'scale-110' : ''}`}>
                   {item.icon}
                 </div>
-                <span className={`relative text-xs mt-1 font-medium ${isActive ? 'text-emerald-200' : 'text-slate-400'}`}>
+                <span className={`text-xs mt-1 font-medium ${isActive ? 'text-cyan-400' : 'text-slate-400'}`}>
                   {item.label}
                 </span>
-                {isActive ? (
-                  <motion.div
-                    initial={{ opacity: 0, y: 2 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className="absolute -bottom-0.5 left-1/2 -translate-x-1/2 w-1 h-1 bg-emerald-300 rounded-full"
-                  />
-                ) : null}
+                {isActive && (
+                  <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-1 h-1 bg-cyan-400 rounded-full" />
+                )}
               </button>
             )
           })}
