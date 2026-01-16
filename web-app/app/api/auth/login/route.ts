@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { authenticateUser, initializeDatabase } from '@/lib/db';
-import { createSession, setSessionCookie } from '@/lib/auth';
+import { createSession } from '@/lib/auth';
 
 export async function POST(request: NextRequest) {
   try {
@@ -26,12 +26,22 @@ export async function POST(request: NextRequest) {
     }
 
     const token = await createSession(userId);
-    await setSessionCookie(token);
 
-    return NextResponse.json(
+    const res = NextResponse.json(
       { message: 'Login successful', userId, username },
       { status: 200 }
     );
+
+    // IMPORTANT: In Route Handlers, set cookies on the response (not via next/headers cookies().set).
+    res.cookies.set('session', token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      maxAge: 60 * 60 * 24 * 7, // 7 days
+      path: '/',
+    });
+
+    return res;
   } catch (error) {
     console.error('Login error:', error);
     return NextResponse.json(
