@@ -48,14 +48,16 @@ export default function DashboardPage() {
     setToasts(prev => prev.filter(t => t.id !== id))
   }
 
-  const fetchPremiumStatus = useCallback(async () => {
+  const fetchPremiumStatus = useCallback(async (): Promise<PremiumStatus | null> => {
     try {
       const res = await fetch('/api/billing/status', { cache: 'no-store' })
-      if (!res.ok) return
+      if (!res.ok) return null
       const data = (await res.json()) as PremiumStatus
       setPremiumStatus(data)
+      return data
     } catch {
       // ignore
+      return null
     }
   }, [])
 
@@ -225,6 +227,9 @@ export default function DashboardPage() {
 
   const effectivePremium: PremiumStatus = premiumStatus ?? {
     premium: false,
+    access: false,
+    trial_active: false,
+    trial_end: null,
     status: null,
     subscription_id: null,
     current_end: null,
@@ -232,7 +237,24 @@ export default function DashboardPage() {
 
   const handleViewChange = (view: 'home' | 'routine' | 'workout' | 'profile' | 'diet' | 'analytics') => {
     if (view === 'analytics') {
-      if (effectivePremium.premium) {
+      if (premiumStatus == null) {
+        // Avoid showing the paywall incorrectly before we know trial/premium state.
+        void fetchPremiumStatus().then((s) => {
+          const eff: PremiumStatus = s ?? {
+            premium: false,
+            access: false,
+            trial_active: false,
+            trial_end: null,
+            status: null,
+            subscription_id: null,
+            current_end: null,
+          }
+          if (eff.access) setActiveView('analytics')
+          else setUpgradeOpen(true)
+        })
+        return
+      }
+      if (effectivePremium.access) {
         setActiveView('analytics')
       } else {
         setUpgradeOpen(true)
