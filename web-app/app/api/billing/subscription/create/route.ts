@@ -23,9 +23,13 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "You already have an active subscription." }, { status: 409 });
     }
 
-    const keyId = requireEnv("RAZORPAY_KEY_ID");
-    const keySecret = requireEnv("RAZORPAY_KEY_SECRET");
-    const planId = requireEnv("RAZORPAY_PLAN_ID_ANALYTICS_MONTHLY");
+    const keyId = process.env.RAZORPAY_KEY_ID;
+    const keySecret = process.env.RAZORPAY_KEY_SECRET;
+    const planId = process.env.RAZORPAY_PLAN_ID_ANALYTICS_MONTHLY;
+
+    if (!keyId || !keySecret || !planId) {
+        throw new Error("Razorpay configuration is missing (RAZORPAY_KEY_ID, RAZORPAY_KEY_SECRET, or RAZORPAY_PLAN_ID_ANALYTICS_MONTHLY)");
+    }
 
     const razorpay = new Razorpay({ key_id: keyId, key_secret: keySecret });
 
@@ -68,6 +72,7 @@ export async function POST(req: NextRequest) {
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : String(error);
     console.error("Create subscription error:", message);
+    
     return NextResponse.json({ error: message || "Internal server error" }, { status: 500 });
   }
 }

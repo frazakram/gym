@@ -1,4 +1,4 @@
-import { Pool } from 'pg';
+import { Pool } from '@neondatabase/serverless';
 import bcrypt from 'bcryptjs';
 import { User, Profile } from '@/types';
 import { unstable_cache, revalidateTag } from 'next/cache';
@@ -39,8 +39,15 @@ const pool = new Pool({
   connectionString,
   ssl: {
     rejectUnauthorized: false,
+    checkServerIdentity: () => undefined, // Bypass identity check for aliases
   },
+  connectionTimeoutMillis: 10000, // 10s timeout - long enough for Neon cold start, short enough to not hang forever
+  max: 10,
+  idleTimeoutMillis: 30000,
+  keepAlive: true,
 });
+
+let isInitialized = false;
 
 // --- MOCK DATA FOR FALLBACK ---
 const MOCK_USER_ID = 999;
@@ -81,6 +88,8 @@ function allowMockAuth(): boolean {
 }
 
 export async function initializeDatabase() {
+  if (isInitialized) return;
+  
   try {
     const client = await pool.connect();
     try {
@@ -218,12 +227,15 @@ export async function initializeDatabase() {
       `);
 
       console.log('Database initialized successfully');
+      isInitialized = true;
     } finally {
       client.release();
     }
   } catch (error) {
     if (allowMockAuth()) {
       console.error('Error initializing database (continuing with mock mode):', error);
+      // We set isInitialized = true so we don't keep attempting this expensive/hanging call on every single request
+      isInitialized = true;
       return;
     }
     console.error('Error initializing database:', error);
@@ -413,7 +425,7 @@ export async function saveProfile(
     const existing = await getProfile(userId);
 
     // Fallback trigger if user is the mock user
-    if (userId === MOCK_USER_ID) {
+    if (userId === MOCK_USER_ID && allowMockAuth()) {
       mockProfileStore.set(userId, { ...mockReturn, updated_at: new Date() });
       return mockReturn;
     }
@@ -894,31 +906,42 @@ export async function upsertSubscriptionFromRazorpay(input: {
   currentStart?: number | null; // unix seconds
   currentEnd?: number | null; // unix seconds
 }): Promise<void> {
-  const start = typeof input.currentStart === "number" ? new Date(input.currentStart * 1000) : null;
-  const end = typeof input.currentEnd === "number" ? new Date(input.currentEnd * 1000) : null;
-
-  if (input.userId == null) {
-    await pool.query(
-      `UPDATE subscriptions
-       SET status = $2, plan_id = COALESCE($3, plan_id), current_start = COALESCE($4, current_start), current_end = COALESCE($5, current_end),
-           updated_at = CURRENT_TIMESTAMP
-       WHERE subscription_id = $1`,
-      [input.subscriptionId, input.status, input.planId ?? null, start, end]
-    );
+  // Never try to save mock user subscriptions to the real DB
+  if (input.userId === MOCK_USER_ID && allowMockAuth()) {
+    console.log("Mock Mode: Skipping DB save for mock user subscription");
     return;
   }
 
-  await pool.query(
-    `INSERT INTO subscriptions (user_id, provider, plan_id, subscription_id, status, current_start, current_end)
-     VALUES ($1, $2, $3, $4, $5, $6, $7)
-     ON CONFLICT (subscription_id) DO UPDATE
-     SET user_id = EXCLUDED.user_id,
-         plan_id = COALESCE(EXCLUDED.plan_id, subscriptions.plan_id),
-         status = EXCLUDED.status,
-         current_start = COALESCE(EXCLUDED.current_start, subscriptions.current_start),
-         current_end = COALESCE(EXCLUDED.current_end, subscriptions.current_end),
-         updated_at = CURRENT_TIMESTAMP`,
-    [input.userId, input.provider, input.planId ?? null, input.subscriptionId, input.status, start, end]
-  );
+  try {
+    const start = typeof input.currentStart === "number" ? new Date(input.currentStart * 1000) : null;
+    const end = typeof input.currentEnd === "number" ? new Date(input.currentEnd * 1000) : null;
+
+    if (input.userId == null) {
+      await pool.query(
+        `UPDATE subscriptions
+         SET status = $2, plan_id = COALESCE($3, plan_id), current_start = COALESCE($4, current_start), current_end = COALESCE($5, current_end),
+             updated_at = CURRENT_TIMESTAMP
+         WHERE subscription_id = $1`,
+        [input.subscriptionId, input.status, input.planId ?? null, start, end]
+      );
+      return;
+    }
+
+    await pool.query(
+      `INSERT INTO subscriptions (user_id, provider, plan_id, subscription_id, status, current_start, current_end)
+       VALUES ($1, $2, $3, $4, $5, $6, $7)
+       ON CONFLICT (subscription_id) DO UPDATE
+       SET user_id = EXCLUDED.user_id,
+           plan_id = COALESCE(EXCLUDED.plan_id, subscriptions.plan_id),
+           status = EXCLUDED.status,
+           current_start = COALESCE(EXCLUDED.current_start, subscriptions.current_start),
+           current_end = COALESCE(EXCLUDED.current_end, subscriptions.current_end),
+           updated_at = CURRENT_TIMESTAMP`,
+      [input.userId, input.provider, input.planId ?? null, input.subscriptionId, input.status, start, end]
+    );
+  } catch (error) {
+    console.error("upsertSubscriptionFromRazorpay DB failed:", error);
+    throw error;
+  }
 }
 

@@ -107,6 +107,29 @@ export function UpgradeModal({ open, status, onClose, onUnlocked, showToast }: U
         name: 'GymBro AI',
         description: 'Pro Analytics (₹1/month)',
         theme: { color: '#10B981' },
+        // Try to force UPI if available for this subscription/account
+        config: {
+          display: {
+            blocks: {
+              methods: {
+                name: 'Payment Methods',
+                instruments: [
+                  { method: 'upi' },
+                  { method: 'card' }
+                ],
+              },
+            },
+            sequence: ['block.methods'],
+            preferences: {
+              show_default_blocks: true,
+            },
+          },
+        },
+        prefill: {
+          name: '', // User can fill or we can pull from profile
+          email: '',
+          contact: ''
+        },
         modal: {
           ondismiss: () => {
             // No-op: user may close checkout; keep modal open
