@@ -98,7 +98,8 @@ export async function initializeDatabase() {
           id SERIAL PRIMARY KEY,
           username VARCHAR(255) UNIQUE NOT NULL,
           password_hash VARCHAR(255) NOT NULL,
-          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+          analytics_trial_start TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         );
       `);
 
@@ -120,6 +121,9 @@ export async function initializeDatabase() {
       `);
 
       // Backward-compatible migrations for existing DBs
+      // Analytics free-trial tracking (safe to run repeatedly)
+      await client.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS analytics_trial_start TIMESTAMP;`);
+      await client.query(`ALTER TABLE users ALTER COLUMN analytics_trial_start SET DEFAULT CURRENT_TIMESTAMP;`);
       await client.query(`ALTER TABLE profiles ADD COLUMN IF NOT EXISTS gender VARCHAR(32);`);
       await client.query(`ALTER TABLE profiles ADD COLUMN IF NOT EXISTS notes TEXT;`);
       await client.query(`ALTER TABLE profiles ADD COLUMN IF NOT EXISTS goal VARCHAR(32);`);
@@ -897,27 +901,37 @@ export async function getPremiumStatus(userId: number): Promise<PremiumStatus> {
     const currentEndOk = current_end ? current_end.getTime() > now : false;
     const premium = status === "active" || (status === "cancelled" && currentEndOk);
 
-    // 7-day free trial from account creation time
+    // 7-day free trial (persisted).
+    // - New users: analytics_trial_start defaults to created time.
+    // - Existing users: first time we check status, we set analytics_trial_start = NOW to grant a one-time 7-day trial.
     let trial_end: Date | null = null;
     let trial_active = false;
     try {
-      const u = await pool.query<{ created_at?: Date | string }>(
-        `SELECT created_at FROM users WHERE id = $1 LIMIT 1`,
+      const u = await pool.query<{ analytics_trial_start?: Date | string | null }>(
+        `SELECT analytics_trial_start FROM users WHERE id = $1 LIMIT 1`,
         [userId]
       );
-      const created_raw = u.rows?.[0]?.created_at ?? null;
-      const created =
-        created_raw instanceof Date
-          ? created_raw
-          : typeof created_raw === "string"
-            ? new Date(created_raw)
+      let trial_start_raw = u.rows?.[0]?.analytics_trial_start ?? null;
+      if (trial_start_raw == null) {
+        // Initialize for existing users
+        const upd = await pool.query<{ analytics_trial_start?: Date | string | null }>(
+          `UPDATE users SET analytics_trial_start = CURRENT_TIMESTAMP WHERE id = $1 RETURNING analytics_trial_start`,
+          [userId]
+        );
+        trial_start_raw = upd.rows?.[0]?.analytics_trial_start ?? null;
+      }
+      const trial_start =
+        trial_start_raw instanceof Date
+          ? trial_start_raw
+          : typeof trial_start_raw === 'string'
+            ? new Date(trial_start_raw)
             : null;
-      if (created && !Number.isNaN(created.getTime())) {
-        trial_end = new Date(created.getTime() + 7 * 24 * 60 * 60 * 1000);
+      if (trial_start && !Number.isNaN(trial_start.getTime())) {
+        trial_end = new Date(trial_start.getTime() + 7 * 24 * 60 * 60 * 1000);
         trial_active = trial_end.getTime() > now;
       }
     } catch {
-      // If we can't read created_at, just treat trial as inactive.
+      // If we can't read/write trial_start, treat trial as inactive.
     }
 
     const access = premium || trial_active;
