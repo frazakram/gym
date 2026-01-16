@@ -1,10 +1,8 @@
 'use client'
 
-import { motion } from 'framer-motion'
-
 interface BottomNavProps {
-  activeView: 'home' | 'routine' | 'workout' | 'profile' | 'diet'
-  onViewChange: (view: 'home' | 'routine' | 'workout' | 'profile' | 'diet') => void
+  activeView: 'home' | 'routine' | 'workout' | 'profile' | 'diet' | 'analytics'
+  onViewChange: (view: 'home' | 'routine' | 'workout' | 'profile' | 'diet' | 'analytics') => void
 }
 
 export function BottomNav({ activeView, onViewChange }: BottomNavProps) {
@@ -33,6 +31,15 @@ export function BottomNav({ activeView, onViewChange }: BottomNavProps) {
       icon: (
         <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
+        </svg>
+      ),
+    },
+    {
+      id: 'analytics' as const,
+      label: 'Analytics',
+      icon: (
+        <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 19V5m0 14h16M8 17V9m4 8v-5m4 5V7" />
         </svg>
       ),
     },
@@ -66,31 +73,21 @@ export function BottomNav({ activeView, onViewChange }: BottomNavProps) {
               <button
                 key={item.id}
                 onClick={() => onViewChange(item.id)}
-                className={`relative flex flex-col items-center justify-center px-4 py-2 rounded-2xl min-w-[72px] transition-colors ui-focus-ring ${
-                  isActive ? 'text-emerald-200' : 'text-slate-400 hover:text-slate-200'
+                className={`flex flex-col items-center justify-center px-4 py-2 rounded-xl min-w-[72px] transition-all ${
+                  isActive
+                    ? 'text-cyan-400'
+                    : 'text-slate-400 hover:text-slate-200'
                 }`}
               >
-                {isActive ? (
-                  <motion.div
-                    layoutId="bottom-nav-active"
-                    transition={{ type: 'spring', stiffness: 520, damping: 38 }}
-                    className="absolute inset-0 rounded-2xl bg-emerald-400/10 border border-emerald-400/20"
-                  />
-                ) : null}
-
-                <div className={`relative transition-transform ${isActive ? 'scale-110' : ''}`}>
+                <div className={`transition-transform ${isActive ? 'scale-110' : ''}`}>
                   {item.icon}
                 </div>
-                <span className={`relative text-xs mt-1 font-medium ${isActive ? 'text-emerald-200' : 'text-slate-400'}`}>
+                <span className={`text-xs mt-1 font-medium ${isActive ? 'text-cyan-400' : 'text-slate-400'}`}>
                   {item.label}
                 </span>
-                {isActive ? (
-                  <motion.div
-                    initial={{ opacity: 0, y: 2 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className="absolute -bottom-0.5 left-1/2 -translate-x-1/2 w-1 h-1 bg-emerald-300 rounded-full"
-                  />
-                ) : null}
+                {isActive && (
+                  <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-1 h-1 bg-cyan-400 rounded-full" />
+                )}
               </button>
             )
           })}

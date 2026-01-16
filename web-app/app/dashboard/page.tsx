@@ -2,19 +2,21 @@
 
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import { useRouter } from 'next/navigation'
-import { WeeklyRoutine, Profile, WeeklyDiet } from '@/types'
+import { WeeklyRoutine, Profile, WeeklyDiet, PremiumStatus } from '@/types'
 import { BottomNav } from '@/components/BottomNav'
 import { HomeView } from '@/components/views/HomeView'
 import { RoutineView } from '@/components/views/RoutineView'
 import { WorkoutView } from '@/components/views/WorkoutView'
 import { ProfileView } from '@/components/views/ProfileView'
 import { DietView } from '@/components/views/DietView'
+import { AnalyticsView } from '@/components/views/AnalyticsView'
 import { Sidebar } from '@/components/Sidebar'
 import { Toast, ToastType } from '@/components/ui/Toast'
+import { UpgradeModal } from '@/components/ui/UpgradeModal'
 
 export default function DashboardPage() {
   const router = useRouter()
-  const [activeView, setActiveView] = useState<'home' | 'routine' | 'workout' | 'profile' | 'diet'>('home')
+  const [activeView, setActiveView] = useState<'home' | 'routine' | 'workout' | 'profile' | 'diet' | 'analytics'>('home')
   const [isSidebarOpen, setIsSidebarOpen] = useState(false)
   const [historyRoutines, setHistoryRoutines] = useState<any[]>([])
   const [loadingHistory, setLoadingHistory] = useState(false)
@@ -24,6 +26,10 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
+
+  // Billing / Premium
+  const [premiumStatus, setPremiumStatus] = useState<PremiumStatus | null>(null)
+  const [upgradeOpen, setUpgradeOpen] = useState(false)
 
   // Toast notifications
   interface ToastItem {
@@ -41,6 +47,17 @@ export default function DashboardPage() {
   const removeToast = (id: string) => {
     setToasts(prev => prev.filter(t => t.id !== id))
   }
+
+  const fetchPremiumStatus = useCallback(async () => {
+    try {
+      const res = await fetch('/api/billing/status', { cache: 'no-store' })
+      if (!res.ok) return
+      const data = (await res.json()) as PremiumStatus
+      setPremiumStatus(data)
+    } catch {
+      // ignore
+    }
+  }, [])
 
   // Auto-show toast when error/success changes
   useEffect(() => {
@@ -197,7 +214,33 @@ export default function DashboardPage() {
     fetchProfile()
     fetchLatestRoutine()
     fetchLatestDiet()
-  }, [fetchProfile, fetchLatestRoutine, fetchLatestDiet])
+    fetchPremiumStatus()
+  }, [fetchProfile, fetchLatestRoutine, fetchLatestDiet, fetchPremiumStatus])
+
+  useEffect(() => {
+    const onFocus = () => fetchPremiumStatus()
+    window.addEventListener('focus', onFocus)
+    return () => window.removeEventListener('focus', onFocus)
+  }, [fetchPremiumStatus])
+
+  const effectivePremium: PremiumStatus = premiumStatus ?? {
+    premium: false,
+    status: null,
+    subscription_id: null,
+    current_end: null,
+  }
+
+  const handleViewChange = (view: 'home' | 'routine' | 'workout' | 'profile' | 'diet' | 'analytics') => {
+    if (view === 'analytics') {
+      if (effectivePremium.premium) {
+        setActiveView('analytics')
+      } else {
+        setUpgradeOpen(true)
+      }
+      return
+    }
+    setActiveView(view)
+  }
 
   const fetchHistory = async () => {
     setLoadingHistory(true)
@@ -697,6 +740,10 @@ export default function DashboardPage() {
           />
         )}
 
+        {activeView === 'analytics' && (
+          <AnalyticsView premiumStatus={effectivePremium} onUpgrade={() => setUpgradeOpen(true)} />
+        )}
+
         {activeView === 'profile' && (
           <ProfileView
             profile={profile}
@@ -734,7 +781,7 @@ export default function DashboardPage() {
       </div>
 
       {/* Bottom Navigation */}
-      <BottomNav activeView={activeView} onViewChange={setActiveView} />
+      <BottomNav activeView={activeView} onViewChange={handleViewChange} />
 
       {/* Toast Notifications */}
       {toasts.map((toast, index) => (
@@ -796,6 +843,18 @@ export default function DashboardPage() {
           </div>
         </div>
       )}
+
+      <UpgradeModal
+        open={upgradeOpen}
+        status={premiumStatus}
+        onClose={() => setUpgradeOpen(false)}
+        onUnlocked={(s) => {
+          setPremiumStatus(s)
+          setUpgradeOpen(false)
+          setActiveView('analytics')
+        }}
+        showToast={showToast}
+      />
     </div>
   )
 }
