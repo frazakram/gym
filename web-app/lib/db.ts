@@ -858,7 +858,14 @@ export async function getDietByWeek(userId: number, weekNumber: number): Promise
 // ============= BILLING / SUBSCRIPTIONS (PREMIUM) =============
 
 export type PremiumStatus = {
+  /** Paid subscription active (or cancelled but still within current_end) */
   premium: boolean;
+  /** Access to analytics (paid OR trial) */
+  access: boolean;
+  /** 7-day trial is currently active */
+  trial_active: boolean;
+  /** Trial end timestamp (if known) */
+  trial_end: Date | null;
   status: string | null;
   subscription_id: string | null;
   current_end: Date | null;
@@ -890,10 +897,43 @@ export async function getPremiumStatus(userId: number): Promise<PremiumStatus> {
     const currentEndOk = current_end ? current_end.getTime() > now : false;
     const premium = status === "active" || (status === "cancelled" && currentEndOk);
 
-    return { premium, status, subscription_id, current_end };
+    // 7-day free trial from account creation time
+    let trial_end: Date | null = null;
+    let trial_active = false;
+    try {
+      const u = await pool.query<{ created_at?: Date | string }>(
+        `SELECT created_at FROM users WHERE id = $1 LIMIT 1`,
+        [userId]
+      );
+      const created_raw = u.rows?.[0]?.created_at ?? null;
+      const created =
+        created_raw instanceof Date
+          ? created_raw
+          : typeof created_raw === "string"
+            ? new Date(created_raw)
+            : null;
+      if (created && !Number.isNaN(created.getTime())) {
+        trial_end = new Date(created.getTime() + 7 * 24 * 60 * 60 * 1000);
+        trial_active = trial_end.getTime() > now;
+      }
+    } catch {
+      // If we can't read created_at, just treat trial as inactive.
+    }
+
+    const access = premium || trial_active;
+
+    return { premium, access, trial_active, trial_end, status, subscription_id, current_end };
   } catch (error) {
     console.error("getPremiumStatus DB failed:", error);
-    return { premium: false, status: null, subscription_id: null, current_end: null };
+    return {
+      premium: false,
+      access: false,
+      trial_active: false,
+      trial_end: null,
+      status: null,
+      subscription_id: null,
+      current_end: null,
+    };
   }
 }
 
@@ -944,4 +984,3 @@ export async function upsertSubscriptionFromRazorpay(input: {
     throw error;
   }
 }
-

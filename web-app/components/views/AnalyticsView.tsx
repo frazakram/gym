@@ -8,7 +8,9 @@ interface AnalyticsViewProps {
 }
 
 export function AnalyticsView({ premiumStatus, onUpgrade }: AnalyticsViewProps) {
-  if (!premiumStatus.premium) {
+  if (!premiumStatus.access) {
+    const trialEndedText =
+      premiumStatus.trial_end ? new Date(premiumStatus.trial_end).toLocaleString() : null
     return (
       <div className="pb-24 px-4 py-6">
         <div className="glass rounded-2xl p-8 border border-white/10">
@@ -16,7 +18,9 @@ export function AnalyticsView({ premiumStatus, onUpgrade }: AnalyticsViewProps) 
             <div>
               <h2 className="text-2xl font-bold text-white mb-2">Analytics (Pro)</h2>
               <p className="text-slate-300/70 text-sm leading-relaxed">
-                Upgrade to unlock your progress dashboard: workout history, completion trends, and consistency insights.
+                {trialEndedText
+                  ? `Your free trial ended on ${trialEndedText}. Upgrade to unlock your progress dashboard: workout history, completion trends, and consistency insights.`
+                  : 'Upgrade to unlock your progress dashboard: workout history, completion trends, and consistency insights.'}
               </p>
             </div>
             <span className="px-2.5 py-1 rounded-full text-xs font-semibold bg-amber-400/10 text-amber-200 border border-amber-400/20">
@@ -53,6 +57,10 @@ export function AnalyticsView({ premiumStatus, onUpgrade }: AnalyticsViewProps) 
     )
   }
 
+  const isTrial = !premiumStatus.premium && premiumStatus.trial_active
+  const trialEndsText =
+    premiumStatus.trial_end ? new Date(premiumStatus.trial_end).toLocaleString() : null
+
   return (
     <div className="pb-24 px-4 py-6">
       <div className="glass rounded-2xl p-8 border border-white/10">
@@ -60,20 +68,33 @@ export function AnalyticsView({ premiumStatus, onUpgrade }: AnalyticsViewProps) 
           <div>
             <h2 className="text-2xl font-bold text-white mb-2">Analytics</h2>
             <p className="text-slate-300/70 text-sm leading-relaxed">
-              Your Pro analytics will appear here. (Next: charts + history panels.)
+              {isTrial
+                ? 'Your free trial is active. Your analytics will appear here. (Next: charts + history panels.)'
+                : 'Your Pro analytics will appear here. (Next: charts + history panels.)'}
             </p>
           </div>
-          <span className="px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-400/10 text-emerald-200 border border-emerald-400/20">
-            Pro Active
-          </span>
+          {isTrial ? (
+            <span className="px-2.5 py-1 rounded-full text-xs font-semibold bg-cyan-400/10 text-cyan-200 border border-cyan-400/20">
+              Trial Active
+            </span>
+          ) : (
+            <span className="px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-400/10 text-emerald-200 border border-emerald-400/20">
+              Pro Active
+            </span>
+          )}
         </div>
 
         <div className="mt-6 grid gap-3">
           <div className="glass-soft rounded-xl p-4 border border-white/10">
-            <div className="text-sm font-semibold text-white">Subscription</div>
+            <div className="text-sm font-semibold text-white">{isTrial ? 'Trial' : 'Subscription'}</div>
             <div className="text-xs text-slate-300/70 mt-1">
               Status: {premiumStatus.status ?? 'unknown'}
             </div>
+            {isTrial && trialEndsText && (
+              <div className="text-xs text-slate-300/70 mt-1">
+                Trial ends: {trialEndsText}
+              </div>
+            )}
             {premiumStatus.current_end && (
               <div className="text-xs text-slate-300/70 mt-1">
                 Current period ends: {new Date(premiumStatus.current_end).toLocaleString()}

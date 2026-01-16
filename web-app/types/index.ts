@@ -138,7 +138,14 @@ export interface CompletionStats {
 
 // Billing / Premium
 export interface PremiumStatus {
+    /** Paid subscription active (or cancelled but still within current_end) */
     premium: boolean;
+    /** Access to analytics (paid OR trial) */
+    access: boolean;
+    /** 7-day trial is currently active */
+    trial_active: boolean;
+    /** Trial end timestamp (ISO string) */
+    trial_end: string | null;
     status: string | null;
     subscription_id: string | null;
     current_end: string | null; // serialized from API

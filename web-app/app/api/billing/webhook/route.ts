@@ -110,7 +110,9 @@ export async function POST(req: NextRequest) {
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : String(error);
     console.error("Razorpay webhook error:", message);
-    return NextResponse.json({ ok: true }, { status: 200 });
+    // IMPORTANT: Return non-2xx so Razorpay retries the webhook delivery on transient failures.
+    // (Signature verification failures are handled above with 401.)
+    return NextResponse.json({ ok: false, error: "Webhook processing failed" }, { status: 500 });
   }
 }
 
