@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { generateDiet } from '@/lib/diet-agent';
 import { getSession } from '@/lib/auth';
-import { getProfile } from '@/lib/db';
+import { getProfile, initializeDatabase } from '@/lib/db';
 import { rateLimit, RATE_LIMITS } from '@/lib/rate-limit';
 
 export async function POST(request: NextRequest) {
@@ -10,6 +10,8 @@ export async function POST(request: NextRequest) {
     if (!session) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
+
+    await initializeDatabase();
 
     // Rate limit AI generation to protect credits (no-op if Redis not configured)
     {

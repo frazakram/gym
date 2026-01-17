@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSession } from "@/lib/auth";
 import { getDayCompletions, initializeDatabase, toggleDayCompletion } from "@/lib/db";
-import { redisDel } from "@/lib/redis";
+import { redisIncr } from "@/lib/redis";
 
 export const runtime = "nodejs";
 
@@ -40,12 +40,8 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Failed to update rest-day completion" }, { status: 403 });
   }
 
-  // Invalidate derived analytics cache so charts update immediately after edits.
-  await Promise.all([
-    redisDel(`analytics:${session.userId}:90`),
-    redisDel(`analytics:${session.userId}:30`),
-    redisDel(`analytics:${session.userId}:365`),
-  ]);
+  // Invalidate derived analytics cache for ALL `days=` values (best-effort).
+  await redisIncr(`analytics_ver:${session.userId}`);
 
   return NextResponse.json({ success: true }, { status: 200 });
 }

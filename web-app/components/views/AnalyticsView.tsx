@@ -43,6 +43,7 @@ function TrendLineChart({ points }: { points: TrendPoint[] }) {
     const vv = clamp(v, 0, 100)
     return padT + (1 - vv / 100) * (h - padT - padB)
   }
+  const baselineY = h - padB
 
   // Build a segmented path so missing days don't connect visually
   const segments: Array<Array<{ x: number; y: number; v: number; key: string; tooltip: string }>> = []
@@ -62,6 +63,14 @@ function TrendLineChart({ points }: { points: TrendPoint[] }) {
   const gridYs = [0, 25, 50, 75, 100]
   // Keep labels readable. Daily series (30 points) needs wider spacing to avoid overlap.
   const labelEvery = points.length >= 24 ? 6 : points.length > 14 ? 4 : points.length > 8 ? 2 : 1
+
+  const dotPoints = points.map((p, i) => {
+    const x = padL + i * stepX
+    const isMissing = p.value == null || !Number.isFinite(p.value)
+    const v = isMissing ? 0 : clamp(p.value as number, 0, 100)
+    const y = isMissing ? baselineY : yFor(v)
+    return { x, y, key: p.key, tooltip: p.tooltip, isMissing }
+  })
 
   return (
     <svg viewBox={`0 0 ${w} ${h}`} className="w-full h-[190px]">
@@ -117,17 +126,27 @@ function TrendLineChart({ points }: { points: TrendPoint[] }) {
               d={`${d} L ${lastX.toFixed(2)} ${(h - padB).toFixed(2)} L ${firstX.toFixed(2)} ${(h - padB).toFixed(2)} Z`}
               fill="url(#trendFill)"
             />
-            {seg.map((p, i) => (
-              <g key={i}>
-                <circle cx={p.x} cy={p.y} r="3.1" fill="rgba(16,185,129,0.95)" />
-                <title>
-                  {p.tooltip}
-                </title>
-              </g>
-            ))}
           </g>
         )
       })}
+
+      {/* dots + hover targets for every x (including missing dates) */}
+      {dotPoints.map((p) => (
+        <g key={p.key}>
+          <circle
+            cx={p.x}
+            cy={p.y}
+            r={p.isMissing ? 3 : 3.2}
+            fill={p.isMissing ? 'rgba(148,163,184,0.10)' : 'rgba(16,185,129,0.95)'}
+            stroke={p.isMissing ? 'rgba(148,163,184,0.35)' : 'rgba(16,185,129,0.0)'}
+            strokeWidth={p.isMissing ? 1.2 : 0}
+          />
+          {/* bigger invisible hit target so tooltips are easy to trigger */}
+          <circle cx={p.x} cy={p.y} r={10} fill="transparent">
+            <title>{p.tooltip}</title>
+          </circle>
+        </g>
+      ))}
     </svg>
   )
 }
@@ -607,15 +626,25 @@ export function AnalyticsView({ premiumStatus, onUpgrade }: AnalyticsViewProps) 
                 : 'Your Pro analytics will appear here. (Next: charts + history panels.)'}
             </p>
           </div>
-          {isTrial ? (
-            <span className="px-2.5 py-1 rounded-full text-xs font-semibold bg-cyan-400/10 text-cyan-200 border border-cyan-400/20">
-              Trial Active
-            </span>
-          ) : (
-            <span className="px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-400/10 text-emerald-200 border border-emerald-400/20">
-              Pro Active
-            </span>
-          )}
+          <div className="flex items-center gap-2 shrink-0">
+            {isTrial ? (
+              <>
+                <button
+                  onClick={onUpgrade}
+                  className="px-3.5 py-2 rounded-2xl text-xs font-semibold bg-gradient-to-r from-amber-400 to-orange-500 text-slate-950 shadow-lg shadow-amber-500/20 hover:shadow-amber-500/30 transition"
+                >
+                  🚀 Upgrade now
+                </button>
+                <span className="px-2.5 py-1 rounded-full text-xs font-semibold bg-cyan-400/10 text-cyan-200 border border-cyan-400/20">
+                  Trial Active
+                </span>
+              </>
+            ) : (
+              <span className="px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-400/10 text-emerald-200 border border-emerald-400/20">
+                Pro Active
+              </span>
+            )}
+          </div>
         </div>
 
         <div className="mt-6 grid gap-3">

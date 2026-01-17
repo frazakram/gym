@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getProfile, saveProfile } from '@/lib/db';
+import { getProfile, initializeDatabase, saveProfile } from '@/lib/db';
 import { getSession } from '@/lib/auth';
 
 export async function GET() {
@@ -9,6 +9,8 @@ export async function GET() {
     if (!session) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
+
+    await initializeDatabase();
 
     const { getUser } = await import('@/lib/db');
     const [profile, user] = await Promise.all([
@@ -36,6 +38,8 @@ export async function PUT(request: NextRequest) {
     if (!session) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
+
+    await initializeDatabase();
 
     const { 
       age, weight, height, gender, goal, level, tenure, goal_weight, notes, goal_duration,

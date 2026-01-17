@@ -41,3 +41,11 @@ export async function redisDel(key: string): Promise<void> {
   await r.del(key);
 }
 
+export async function redisIncr(key: string): Promise<number | null> {
+  const r = getRedis();
+  if (!r) return null;
+  // Upstash returns number for INCR
+  const v = await r.incr(key);
+  return typeof v === "number" ? v : Number(v);
+}
+

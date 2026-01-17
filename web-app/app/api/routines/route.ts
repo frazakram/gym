@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { saveRoutine, getLatestRoutine, getRoutinesByUser } from '@/lib/db';
+import { saveRoutine, getLatestRoutine, getRoutinesByUser, initializeDatabase } from '@/lib/db';
 import { getSession } from '@/lib/auth';
 
 export async function POST(req: NextRequest) {
@@ -8,6 +8,8 @@ export async function POST(req: NextRequest) {
     if (!session) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
+
+    await initializeDatabase();
 
     const { weekNumber, routine } = await req.json();
 
@@ -44,6 +46,8 @@ export async function GET(req: NextRequest) {
     if (!session) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
+
+    await initializeDatabase();
 
     const { searchParams } = new URL(req.url);
     const getAll = searchParams.get('all') === 'true';
