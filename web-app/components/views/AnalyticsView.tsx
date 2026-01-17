@@ -537,7 +537,9 @@ export function AnalyticsView({ premiumStatus, onUpgrade }: AnalyticsViewProps) 
                         {formatDateShort(w.date)} · {w.day_name}
                       </div>
                       <div className="text-[11px] text-slate-300/70">
-                        {w.completed_exercises}/{w.total_exercises} exercises
+                        {w.day_name.toLowerCase().includes('rest')
+                          ? 'Rest day completed'
+                          : `${w.completed_exercises}/${w.total_exercises} exercises`}
                         {w.week_number != null ? ` · Week ${w.week_number}` : ''}
                       </div>
                     </div>

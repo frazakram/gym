@@ -126,6 +126,7 @@ export default function DashboardPage() {
   const [currentRoutineId, setCurrentRoutineId] = useState<number | null>(null)
   const [currentWeekNumber, setCurrentWeekNumber] = useState(1)
   const [exerciseCompletions, setExerciseCompletions] = useState<Map<string, boolean>>(new Map())
+  const [dayCompletions, setDayCompletions] = useState<Map<number, boolean>>(new Map())
   const [userId, setUserId] = useState<number | null>(null)
 
   const resolvedHeightCm = useMemo(() => {
@@ -190,6 +191,18 @@ export default function DashboardPage() {
           map.set(`${c.day_index}-${c.exercise_index}`, c.completed)
         })
         setExerciseCompletions(map)
+
+        try {
+          const dayRes = await fetch(`/api/day-completions?routineId=${routine.id}`)
+          const dayData = await dayRes.json().catch(() => ({}))
+          const dmap = new Map<number, boolean>()
+          ;(dayData?.days || []).forEach((d: any) => {
+            dmap.set(Number(d.day_index), Boolean(d.completed))
+          })
+          setDayCompletions(dmap)
+        } catch {
+          setDayCompletions(new Map())
+        }
 
         const dayIdx = (new Date().getDay() + 6) % 7
         const safeIdx = Math.min(dayIdx, routine.routine_json.days.length - 1)
@@ -311,6 +324,18 @@ export default function DashboardPage() {
           map.set(`${c.day_index}-${c.exercise_index}`, c.completed)
         })
       setExerciseCompletions(map)
+
+      try {
+        const dayRes = await fetch(`/api/day-completions?routineId=${historyItem.id}`)
+        const dayData = await dayRes.json().catch(() => ({}))
+        const dmap = new Map<number, boolean>()
+        ;(dayData?.days || []).forEach((d: any) => {
+          dmap.set(Number(d.day_index), Boolean(d.completed))
+        })
+        setDayCompletions(dmap)
+      } catch {
+        setDayCompletions(new Map())
+      }
       
       // Determine if this is the latest
       // For simplicity, let's assume if it came from the sidebar click, we treat it as "viewing history"
@@ -472,10 +497,23 @@ export default function DashboardPage() {
             map.set(`${c.day_index}-${c.exercise_index}`, c.completed)
           })
           setExerciseCompletions(map)
+
+          try {
+            const dayRes = await fetch(`/api/day-completions?routineId=${data.routine_id}`)
+            const dayData = await dayRes.json().catch(() => ({}))
+            const dmap = new Map<number, boolean>()
+            ;(dayData?.days || []).forEach((d: any) => {
+              dmap.set(Number(d.day_index), Boolean(d.completed))
+            })
+            setDayCompletions(dmap)
+          } catch {
+            setDayCompletions(new Map())
+          }
         }
       } else {
         setSuccess('Routine generated successfully.')
         setExerciseCompletions(new Map())
+        setDayCompletions(new Map())
         await saveRoutineToDatabase(data.routine)
         
         // Auto-trigger diet generation if routine is new
@@ -637,6 +675,11 @@ export default function DashboardPage() {
     let total = 0
     let completed = 0
     routine.days.forEach((day, dIdx) => {
+      if ((day.exercises?.length || 0) === 0) {
+        total++
+        if (dayCompletions.get(dIdx)) completed++
+        return
+      }
       day.exercises.forEach((_, eIdx) => {
         total++
         if (exerciseCompletions.get(`${dIdx}-${eIdx}`)) completed++
@@ -681,6 +724,43 @@ export default function DashboardPage() {
     })
   }
 
+  const handleToggleRestDay = async (dayIndex: number, completed: boolean) => {
+    let rid = currentRoutineId
+    if (!rid && routine) {
+      rid = await saveRoutineToDatabase(routine)
+    }
+    if (!rid) return
+
+    // Optimistic update
+    setDayCompletions(prev => {
+      const next = new Map(prev)
+      next.set(dayIndex, completed)
+      return next
+    })
+
+    try {
+      const res = await fetch('/api/day-completions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ routineId: rid, dayIndex, completed }),
+      })
+      if (!res.ok) {
+        // Revert
+        setDayCompletions(prev => {
+          const next = new Map(prev)
+          next.set(dayIndex, !completed)
+          return next
+        })
+      }
+    } catch {
+      setDayCompletions(prev => {
+        const next = new Map(prev)
+        next.set(dayIndex, !completed)
+        return next
+      })
+    }
+  }
+
   return (
     <div className="min-h-screen bg-transparent">
       <Sidebar 
@@ -716,6 +796,7 @@ export default function DashboardPage() {
             routine={routine}
             diet={dietPlan}
             exerciseCompletions={exerciseCompletions}
+            dayCompletions={dayCompletions}
             currentWeekNumber={currentWeekNumber}
             onNavigateToWorkout={() => setActiveView('workout')}
             onGenerateRoutine={() => handleGenerateRoutine(false)}
@@ -748,7 +829,9 @@ export default function DashboardPage() {
             selectedDayIndex={selectedDayIndex}
             currentRoutineId={currentRoutineId}
             exerciseCompletions={exerciseCompletions}
+            dayCompletions={dayCompletions}
             onToggleExercise={handleToggleExercise}
+            onToggleRestDay={handleToggleRestDay}
             onEnsureRoutineSaved={() => routine ? saveRoutineToDatabase(routine) : Promise.resolve(null)}
             onBack={() => setActiveView('routine')}
           />

@@ -15,6 +15,7 @@ interface HomeViewProps {
   routine: WeeklyRoutine | null
   diet: WeeklyDiet | null
   exerciseCompletions: Map<string, boolean>
+  dayCompletions: Map<number, boolean>
   currentWeekNumber: number
   onNavigateToWorkout: () => void
   onGenerateRoutine: () => void
@@ -28,6 +29,7 @@ export function HomeView({
   routine,
   diet,
   exerciseCompletions,
+  dayCompletions,
   currentWeekNumber,
   onNavigateToWorkout,
   onGenerateRoutine,
@@ -68,6 +70,11 @@ export function HomeView({
     let completed = 0
     
     routine.days.forEach((day, dIdx) => {
+      if ((day.exercises?.length || 0) === 0) {
+        total++
+        if (dayCompletions.get(dIdx)) completed++
+        return
+      }
       day.exercises.forEach((_, eIdx) => {
         total++
         if (exerciseCompletions.get(`${dIdx}-${eIdx}`)) completed++
@@ -172,7 +179,7 @@ export function HomeView({
         <GlassCard className="p-4">
           <SectionHeader
             title="Weekly progress"
-            subtitle={`${progress.completed}/${progress.total} exercises completed`}
+            subtitle={`${progress.completed}/${progress.total} items completed`}
           />
           <div className="mt-3 flex justify-center">
             <CircularProgress percentage={progress.percentage} size={104} strokeWidth={7} />

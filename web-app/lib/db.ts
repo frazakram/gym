@@ -230,12 +230,27 @@ export async function initializeDatabase() {
         );
       `);
 
+      // Rest-day completion tracking (day-level)
+      await client.query(`
+        CREATE TABLE IF NOT EXISTS day_completions (
+          id SERIAL PRIMARY KEY,
+          routine_id INTEGER REFERENCES routines(id) ON DELETE CASCADE,
+          day_index INTEGER NOT NULL,
+          completed BOOLEAN DEFAULT FALSE,
+          completed_at TIMESTAMP,
+          UNIQUE (routine_id, day_index)
+        );
+      `);
+
       // Helpful indexes for analytics + progress queries (safe to run repeatedly)
       await client.query(
         `CREATE INDEX IF NOT EXISTS idx_exercise_completions_routine_day ON exercise_completions (routine_id, day_index);`
       );
       await client.query(
         `CREATE INDEX IF NOT EXISTS idx_exercise_completions_completed_at ON exercise_completions (completed_at);`
+      );
+      await client.query(
+        `CREATE INDEX IF NOT EXISTS idx_day_completions_completed_at ON day_completions (completed_at);`
       );
       await client.query(
         `CREATE INDEX IF NOT EXISTS idx_routines_user_created_at ON routines (user_id, created_at DESC);`
@@ -557,6 +572,8 @@ const mockRoutineStore = new Map<number, any>();
 const mockDietStore = new Map<number, any>();
 // Key: routineId -> Array of execution records
 const mockCompletionStore = new Map<number, Map<string, boolean>>();
+// Key: routineId -> Map<dayIndex, { completed: boolean; completed_at: Date | null }>
+const mockDayCompletionStore = new Map<number, Map<number, { completed: boolean; completed_at: Date | null }>>();
 
 export async function saveRoutine(
   userId: number,
@@ -728,6 +745,81 @@ export async function toggleExerciseCompletion(
       return true;
     }
     console.error("toggleExerciseCompletion DB failed:", error);
+    throw error;
+  }
+}
+
+export async function getDayCompletions(
+  userId: number,
+  routineId: number
+): Promise<Array<{ day_index: number; completed: boolean }>> {
+  try {
+    const ownership = await pool.query(
+      'SELECT id FROM routines WHERE id = $1 AND user_id = $2',
+      [routineId, userId]
+    );
+    if (ownership.rows.length === 0) return [];
+
+    const res = await pool.query<{ day_index: number; completed: boolean }>(
+      `SELECT day_index, completed
+       FROM day_completions
+       WHERE routine_id = $1`,
+      [routineId]
+    );
+    return res.rows.map((r) => ({ day_index: Number(r.day_index), completed: Boolean(r.completed) }));
+  } catch (error) {
+    if (allowMockAuth()) {
+      const store = mockDayCompletionStore.get(routineId);
+      if (!store) return [];
+      return Array.from(store.entries()).map(([day_index, v]) => ({ day_index, completed: v.completed }));
+    }
+    console.error("getDayCompletions DB failed:", error);
+    throw error;
+  }
+}
+
+export async function toggleDayCompletion(
+  userId: number,
+  routineId: number,
+  dayIndex: number,
+  completed: boolean
+): Promise<boolean> {
+  try {
+    // Verify ownership + fetch routine_json to ensure this is a rest day
+    const r = await pool.query<{ routine_json: any }>(
+      'SELECT routine_json FROM routines WHERE id = $1 AND user_id = $2',
+      [routineId, userId]
+    );
+    if (r.rows.length === 0) return false;
+
+    let routine_json: any = (r.rows[0] as any).routine_json;
+    if (typeof routine_json === 'string') {
+      try {
+        routine_json = JSON.parse(routine_json);
+      } catch {
+        routine_json = null;
+      }
+    }
+    const day = Array.isArray(routine_json?.days) ? routine_json.days[dayIndex] : null;
+    const isRestDay = Array.isArray(day?.exercises) && day.exercises.length === 0;
+    if (!isRestDay) return false;
+
+    await pool.query(
+      `INSERT INTO day_completions (routine_id, day_index, completed, completed_at)
+       VALUES ($1, $2, $3, $4)
+       ON CONFLICT (routine_id, day_index) DO UPDATE
+       SET completed = EXCLUDED.completed,
+           completed_at = EXCLUDED.completed_at`,
+      [routineId, dayIndex, completed, completed ? new Date() : null]
+    );
+    return true;
+  } catch (error) {
+    if (allowMockAuth()) {
+      if (!mockDayCompletionStore.has(routineId)) mockDayCompletionStore.set(routineId, new Map());
+      mockDayCompletionStore.get(routineId)!.set(dayIndex, { completed, completed_at: completed ? new Date() : null });
+      return true;
+    }
+    console.error("toggleDayCompletion DB failed:", error);
     throw error;
   }
 }
@@ -930,6 +1022,25 @@ export async function getUserAnalytics(
       [userId, since]
     );
 
+    const restRes = await pool.query<{
+      routine_id: number;
+      day_index: number;
+      workout_at: Date | string;
+    }>(
+      `
+      SELECT dc.routine_id, dc.day_index, MAX(dc.completed_at) AS workout_at
+      FROM day_completions dc
+      JOIN routines r ON r.id = dc.routine_id
+      WHERE r.user_id = $1
+        AND dc.completed = TRUE
+        AND dc.completed_at IS NOT NULL
+        AND dc.completed_at >= $2
+      GROUP BY dc.routine_id, dc.day_index
+      ORDER BY workout_at DESC
+      `,
+      [userId, since]
+    );
+
     const sessions = sessionsRes.rows
       .map((s) => ({
         routine_id: Number(s.routine_id),
@@ -938,7 +1049,17 @@ export async function getUserAnalytics(
       }))
       .filter((s) => Number.isFinite(s.routine_id) && Number.isFinite(s.day_index) && !Number.isNaN(s.workout_at.getTime()));
 
-    const routineIds = Array.from(new Set(sessions.map((s) => s.routine_id)));
+    const restSessions = restRes.rows
+      .map((s) => ({
+        routine_id: Number(s.routine_id),
+        day_index: Number(s.day_index),
+        workout_at: s.workout_at instanceof Date ? s.workout_at : new Date(String(s.workout_at)),
+      }))
+      .filter((s) => Number.isFinite(s.routine_id) && Number.isFinite(s.day_index) && !Number.isNaN(s.workout_at.getTime()));
+
+    const allSessions = sessions.concat(restSessions);
+
+    const routineIds = Array.from(new Set(allSessions.map((s) => s.routine_id)));
     if (routineIds.length === 0) {
       const calendar = Array.from({ length: rangeDays }, (_, i) => {
         const d = new Date(now.getTime() - (rangeDays - 1 - i) * 86400000);
@@ -1004,7 +1125,7 @@ export async function getUserAnalytics(
     }
 
     // Step 4: Build workout_history sessions with totals from routine_json
-    const workoutSessions: AnalyticsPayload["workout_history"] = sessions
+    const workoutSessions: AnalyticsPayload["workout_history"] = allSessions
       .map((s) => {
         const routine = routineById.get(s.routine_id);
         const days = routine?.routine_json?.days;
@@ -1013,21 +1134,22 @@ export async function getUserAnalytics(
         const total = Array.isArray(exercises) ? exercises.length : 0;
         const key = `${s.routine_id}:${s.day_index}`;
         const completed = completedCountByKey.get(key) ?? 0;
-        const pct = total > 0 ? (completed / total) * 100 : 0;
+        const isRestDay = total === 0;
+        const unitTotal = isRestDay ? 1 : total;
+        const unitCompleted = isRestDay ? 1 : Math.min(completed, unitTotal || completed);
+        const pct = unitTotal > 0 ? (unitCompleted / unitTotal) * 100 : 0;
         return {
           workout_at: s.workout_at.toISOString(),
           date: toYmdUTC(s.workout_at),
           routine_id: s.routine_id,
           week_number: routine?.week_number ?? null,
           day_index: s.day_index,
-          day_name: typeof dayObj?.day === "string" ? dayObj.day : `Day ${s.day_index + 1}`,
-          completed_exercises: Math.min(completed, total || completed),
-          total_exercises: total,
+          day_name: typeof dayObj?.day === "string" ? dayObj.day : isRestDay ? "Rest Day" : `Day ${s.day_index + 1}`,
+          completed_exercises: unitCompleted,
+          total_exercises: unitTotal,
           completion_percentage: clampPct(pct),
         };
       })
-      // Only keep sessions where we can compute a total exercise count
-      .filter((w) => w.total_exercises > 0)
       .sort((a, b) => (a.workout_at < b.workout_at ? 1 : -1));
 
     // Trends + calendar are derived from workout sessions (weighted by total exercises)
