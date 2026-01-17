@@ -19,13 +19,13 @@ function formatDateShort(ymd: string) {
   return dt.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })
 }
 
-type TrendPoint = { date: string; value: number | null; workouts: number }
+type TrendPoint = { key: string; xLabel: string; value: number | null; tooltip: string }
 
 function TrendLineChart({ points }: { points: TrendPoint[] }) {
   const w = 680
   const h = 190
   const padL = 36
-  const padR = 12
+  const padR = 24
   const padT = 14
   const padB = 26
 
@@ -45,8 +45,8 @@ function TrendLineChart({ points }: { points: TrendPoint[] }) {
   }
 
   // Build a segmented path so missing days don't connect visually
-  const segments: Array<Array<{ x: number; y: number; v: number; date: string }>> = []
-  let cur: Array<{ x: number; y: number; v: number; date: string }> = []
+  const segments: Array<Array<{ x: number; y: number; v: number; key: string; tooltip: string }>> = []
+  let cur: Array<{ x: number; y: number; v: number; key: string; tooltip: string }> = []
   points.forEach((p, i) => {
     const x = padL + i * stepX
     if (p.value == null || !Number.isFinite(p.value)) {
@@ -55,12 +55,12 @@ function TrendLineChart({ points }: { points: TrendPoint[] }) {
       return
     }
     const v = clamp(p.value, 0, 100)
-    cur.push({ x, y: yFor(v), v, date: p.date })
+    cur.push({ x, y: yFor(v), v, key: p.key, tooltip: p.tooltip })
   })
   if (cur.length) segments.push(cur)
 
   const gridYs = [0, 25, 50, 75, 100]
-  const labelEvery = points.length > 14 ? 7 : 3
+  const labelEvery = points.length > 14 ? 3 : points.length > 8 ? 2 : 1
 
   return (
     <svg viewBox={`0 0 ${w} ${h}`} className="w-full h-[190px]">
@@ -88,9 +88,18 @@ function TrendLineChart({ points }: { points: TrendPoint[] }) {
       {points.map((p, i) => {
         if (i % labelEvery !== 0 && i !== points.length - 1) return null
         const x = padL + i * stepX
+        const isFirst = i === 0
+        const isLast = i === points.length - 1
         return (
-          <text key={p.date} x={x} y={h - 8} fontSize="10" fill="rgba(148,163,184,0.7)" textAnchor="middle">
-            {formatDateShort(p.date)}
+          <text
+            key={p.key}
+            x={x}
+            y={h - 8}
+            fontSize="10"
+            fill="rgba(148,163,184,0.7)"
+            textAnchor={isFirst ? 'start' : isLast ? 'end' : 'middle'}
+          >
+            {p.xLabel}
           </text>
         )
       })}
@@ -111,7 +120,7 @@ function TrendLineChart({ points }: { points: TrendPoint[] }) {
               <g key={i}>
                 <circle cx={p.x} cy={p.y} r="3.1" fill="rgba(16,185,129,0.95)" />
                 <title>
-                  {p.date}: {pctText(p.v)} completion
+                  {p.tooltip}
                 </title>
               </g>
             ))}
@@ -133,6 +142,25 @@ function detectMuscleGroup(label: string): MuscleGroup {
   if (/(arm|bicep|tricep|curl)/.test(s)) return 'arms'
   if (/(core|abs|abdominal|plank)/.test(s)) return 'core'
   return 'full'
+}
+
+function muscleLabel(group: MuscleGroup): string {
+  switch (group) {
+    case 'legs':
+      return 'Legs'
+    case 'chest':
+      return 'Chest'
+    case 'back':
+      return 'Back'
+    case 'shoulders':
+      return 'Shoulders'
+    case 'arms':
+      return 'Arms'
+    case 'core':
+      return 'Core'
+    default:
+      return 'Full body'
+  }
 }
 
 function MuscleIcon({ group }: { group: MuscleGroup }) {
@@ -337,6 +365,8 @@ export function AnalyticsView({ premiumStatus, onUpgrade }: AnalyticsViewProps) 
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string>('')
   const [data, setData] = useState<AnalyticsPayload | null>(null)
+  const [trendMode, setTrendMode] = useState<'daily' | 'weekly' | 'monthly'>('weekly')
+  const [openIconKey, setOpenIconKey] = useState<string | null>(null)
 
   useEffect(() => {
     let cancelled = false
@@ -363,18 +393,45 @@ export function AnalyticsView({ premiumStatus, onUpgrade }: AnalyticsViewProps) 
     }
   }, [])
 
-  const last30 = useMemo(() => {
-    const cal = data?.calendar ?? []
-    return cal.slice(-30)
-  }, [data])
+  const trendPoints = useMemo<TrendPoint[]>(() => {
+    if (!data) return []
 
-  const trendPoints = useMemo(() => {
-    return last30.map((d) => ({
-      date: d.date,
-      value: d.workouts ? d.completion_percentage : null,
-      workouts: d.workouts,
-    }))
-  }, [last30])
+    if (trendMode === 'daily') {
+      const cal = data.calendar.slice(-30)
+      return cal.map((d) => ({
+        key: d.date,
+        xLabel: formatDateShort(d.date),
+        value: d.workouts ? d.completion_percentage : null,
+        tooltip: `${d.date}: ${d.workouts ? `${d.workouts} workout(s), ${pctText(d.completion_percentage)}` : 'No workout'}`,
+      }))
+    }
+
+    if (trendMode === 'monthly') {
+      const pts = (data.trends.monthly ?? []).slice(-12)
+      return pts.map((m) => {
+        const [y, mo] = m.month.split('-').map(Number)
+        const dt = new Date(Date.UTC(y || 1970, (mo || 1) - 1, 1))
+        const xLabel = dt.toLocaleDateString(undefined, { month: 'short' })
+        return {
+          key: m.month,
+          xLabel,
+          value: m.workouts ? m.completion_percentage : null,
+          tooltip: `${m.month}: ${m.workouts} workout(s), ${pctText(m.completion_percentage)}`,
+        }
+      })
+    }
+
+    const pts = (data.trends.weekly ?? []).slice(-12)
+    return pts.map((w) => {
+      const xLabel = w.week.includes('-W') ? w.week.split('-W')[1] : w.week
+      return {
+        key: w.week,
+        xLabel: `W${xLabel}`,
+        value: w.workouts ? w.completion_percentage : null,
+        tooltip: `${w.week}: ${w.workouts} workout(s), ${pctText(w.completion_percentage)}`,
+      }
+    })
+  }, [data, trendMode])
 
   const historyThumbs = useMemo(() => {
     return (data?.workout_history ?? []).map((w) => ({
@@ -454,7 +511,13 @@ export function AnalyticsView({ premiumStatus, onUpgrade }: AnalyticsViewProps) 
             <div className="flex items-start justify-between gap-4">
               <div>
                 <div className="text-sm font-semibold text-white">Completion trends</div>
-                <div className="text-xs text-slate-300/70 mt-1">Last 30 days (weighted by total exercises)</div>
+                <div className="text-xs text-slate-300/70 mt-1">
+                  {trendMode === 'daily'
+                    ? 'Daily (last 30 days)'
+                    : trendMode === 'weekly'
+                      ? 'Weekly (last 12 weeks)'
+                      : 'Monthly (last 12 months)'}
+                </div>
               </div>
               <div className="text-right">
                 <div className="text-[11px] text-slate-300/70">Workouts</div>
@@ -462,6 +525,22 @@ export function AnalyticsView({ premiumStatus, onUpgrade }: AnalyticsViewProps) 
                   {data ? (data.calendar?.reduce((a, d) => a + (d.workouts || 0), 0) ?? 0) : '—'}
                 </div>
               </div>
+            </div>
+
+            <div className="mt-3 flex items-center gap-2">
+              {(['daily', 'weekly', 'monthly'] as const).map((m) => (
+                <button
+                  key={m}
+                  onClick={() => setTrendMode(m)}
+                  className={`px-3 py-1.5 rounded-full text-xs font-semibold border transition ${
+                    trendMode === m
+                      ? 'bg-emerald-400/12 border-emerald-400/25 text-emerald-100'
+                      : 'bg-white/5 border-white/10 text-slate-200/80 hover:bg-white/10'
+                  }`}
+                >
+                  {m === 'daily' ? 'Daily' : m === 'weekly' ? 'Weekly' : 'Monthly'}
+                </button>
+              ))}
             </div>
 
             <div className="mt-3">
@@ -515,8 +594,22 @@ export function AnalyticsView({ premiumStatus, onUpgrade }: AnalyticsViewProps) 
                     className="rounded-2xl border border-white/10 bg-white/5 hover:bg-white/7 transition p-3 flex items-center gap-3"
                     title={`${w.date} · ${w.dayName} · ${pctText(w.completion)}`}
                   >
-                    <div className="w-9 h-9 rounded-xl bg-emerald-400/10 border border-emerald-400/15 text-emerald-200 flex items-center justify-center shrink-0">
-                      <MuscleIcon group={w.group} />
+                    <div className="relative shrink-0">
+                      <button
+                        type="button"
+                        onClick={() => setOpenIconKey((prev) => (prev === w.key ? null : w.key))}
+                        className="w-9 h-9 rounded-xl bg-emerald-400/10 border border-emerald-400/15 text-emerald-200 flex items-center justify-center"
+                        title={`Muscle group: ${muscleLabel(w.group)}`}
+                        aria-label={`Muscle group: ${muscleLabel(w.group)}`}
+                      >
+                        <MuscleIcon group={w.group} />
+                      </button>
+                      {openIconKey === w.key && (
+                        <div className="absolute left-0 top-11 z-20 w-44 rounded-xl bg-slate-950/90 border border-white/10 text-[11px] text-slate-100 px-3 py-2 shadow-xl">
+                          <div className="font-semibold">{muscleLabel(w.group)}</div>
+                          <div className="text-slate-200/75 mt-0.5">This icon represents the workout’s main muscle group.</div>
+                        </div>
+                      )}
                     </div>
                     <div className="min-w-0">
                       <div className="text-sm text-white font-semibold truncate">{formatDateShort(w.date)}</div>

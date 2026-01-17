@@ -868,6 +868,7 @@ type AnalyticsPayload = {
   trends: {
     daily: Array<{ date: string; completion_percentage: number; workouts: number }>;
     weekly: Array<{ week: string; completion_percentage: number; workouts: number }>;
+    monthly: Array<{ month: string; completion_percentage: number; workouts: number }>;
   };
   streak: { current: number; longest: number; last_workout_date: string | null };
   calendar: Array<{ date: string; workouts: number; completion_percentage: number | null }>;
@@ -984,6 +985,7 @@ export async function getUserAnalytics(
     }
     const daily = [{ date: today, completion_percentage: workout_history[0]?.completion_percentage ?? 0, workouts: workout_history.length }];
     const weekly = [{ week: isoWeekKey(now), completion_percentage: daily[0].completion_percentage, workouts: daily[0].workouts }];
+    const monthly = [{ month: today.slice(0, 7), completion_percentage: daily[0].completion_percentage, workouts: daily[0].workouts }];
     const streak = computeStreak(workout_history.length ? [today] : []);
     const calendar = Array.from({ length: rangeDays }, (_, i) => {
       const d = new Date(now.getTime() - (rangeDays - 1 - i) * 86400000);
@@ -994,7 +996,7 @@ export async function getUserAnalytics(
     return {
       range_days: rangeDays,
       generated_at: now.toISOString(),
-      trends: { daily, weekly },
+      trends: { daily, weekly, monthly },
       streak,
       calendar,
       workout_history: workout_history.slice(0, 10),
@@ -1068,7 +1070,7 @@ export async function getUserAnalytics(
       return {
         range_days: rangeDays,
         generated_at: now.toISOString(),
-        trends: { daily: [], weekly: [] },
+        trends: { daily: [], weekly: [], monthly: [] },
         streak: { current: 0, longest: 0, last_workout_date: null },
         calendar,
         workout_history: [],
@@ -1201,13 +1203,30 @@ export async function getUserAnalytics(
       }))
       .sort((a, b) => (a.week < b.week ? -1 : 1));
 
+    const monthlyAgg = new Map<string, { completed: number; total: number; workouts: number }>();
+    for (const w of workoutSessions) {
+      const month = String(w.date).slice(0, 7); // YYYY-MM
+      const agg = monthlyAgg.get(month) ?? { completed: 0, total: 0, workouts: 0 };
+      agg.completed += w.completed_exercises;
+      agg.total += w.total_exercises;
+      agg.workouts += 1;
+      monthlyAgg.set(month, agg);
+    }
+    const monthly: AnalyticsPayload["trends"]["monthly"] = [...monthlyAgg.entries()]
+      .map(([month, agg]) => ({
+        month,
+        completion_percentage: clampPct((agg.completed / Math.max(1, agg.total)) * 100),
+        workouts: agg.workouts,
+      }))
+      .sort((a, b) => (a.month < b.month ? -1 : 1));
+
     const uniqueDatesDesc = [...new Set(workoutSessions.map((w) => w.date))].sort((a, b) => (a < b ? 1 : -1));
     const streak = computeStreak(uniqueDatesDesc);
 
     return {
       range_days: rangeDays,
       generated_at: now.toISOString(),
-      trends: { daily, weekly },
+      trends: { daily, weekly, monthly },
       streak,
       calendar,
       workout_history: workoutSessions.slice(0, 10),
@@ -1221,7 +1240,7 @@ export async function getUserAnalytics(
     return {
       range_days: rangeDays,
       generated_at: now.toISOString(),
-      trends: { daily: [], weekly: [] },
+      trends: { daily: [], weekly: [], monthly: [] },
       streak: { current: 0, longest: 0, last_workout_date: null },
       calendar,
       workout_history: [],
