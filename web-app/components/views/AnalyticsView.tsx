@@ -19,83 +19,204 @@ function formatDateShort(ymd: string) {
   return dt.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })
 }
 
-function MiniLineChart({ points }: { points: Array<{ xLabel: string; value: number }> }) {
-  const w = 520
-  const h = 160
-  const pad = 16
+type TrendPoint = { date: string; value: number | null; workouts: number }
 
-  if (!points.length) {
+function TrendLineChart({ points }: { points: TrendPoint[] }) {
+  const w = 680
+  const h = 190
+  const padL = 36
+  const padR = 12
+  const padT = 14
+  const padB = 26
+
+  const hasAny = points.some((p) => p.value != null && Number.isFinite(p.value))
+  if (!hasAny) {
     return (
-      <div className="h-[160px] flex items-center justify-center text-sm text-slate-300/70">
-        No data yet — complete a workout to see trends.
+      <div className="h-[190px] flex items-center justify-center text-sm text-slate-300/70">
+        No trend data yet — complete a workout to start tracking.
       </div>
     )
   }
 
-  const values = points.map((p) => clamp(p.value, 0, 100))
-  const minV = 0
-  const maxV = 100
-  const stepX = points.length > 1 ? (w - pad * 2) / (points.length - 1) : 0
+  const stepX = points.length > 1 ? (w - padL - padR) / (points.length - 1) : 0
+  const yFor = (v: number) => {
+    const vv = clamp(v, 0, 100)
+    return padT + (1 - vv / 100) * (h - padT - padB)
+  }
 
-  const pts = values.map((v, i) => {
-    const x = pad + i * stepX
-    const y = pad + (1 - (v - minV) / (maxV - minV)) * (h - pad * 2)
-    return { x, y, v }
+  // Build a segmented path so missing days don't connect visually
+  const segments: Array<Array<{ x: number; y: number; v: number; date: string }>> = []
+  let cur: Array<{ x: number; y: number; v: number; date: string }> = []
+  points.forEach((p, i) => {
+    const x = padL + i * stepX
+    if (p.value == null || !Number.isFinite(p.value)) {
+      if (cur.length) segments.push(cur)
+      cur = []
+      return
+    }
+    const v = clamp(p.value, 0, 100)
+    cur.push({ x, y: yFor(v), v, date: p.date })
   })
+  if (cur.length) segments.push(cur)
 
-  const d = pts
-    .map((p, i) => `${i === 0 ? 'M' : 'L'} ${p.x.toFixed(2)} ${p.y.toFixed(2)}`)
-    .join(' ')
+  const gridYs = [0, 25, 50, 75, 100]
+  const labelEvery = points.length > 14 ? 7 : 3
 
   return (
-    <svg viewBox={`0 0 ${w} ${h}`} className="w-full h-[160px]">
+    <svg viewBox={`0 0 ${w} ${h}`} className="w-full h-[190px]">
       <defs>
-        <linearGradient id="trend" x1="0" x2="0" y1="0" y2="1">
-          <stop offset="0%" stopColor="rgba(16,185,129,0.28)" />
+        <linearGradient id="trendFill" x1="0" x2="0" y1="0" y2="1">
+          <stop offset="0%" stopColor="rgba(16,185,129,0.22)" />
           <stop offset="100%" stopColor="rgba(16,185,129,0.02)" />
         </linearGradient>
       </defs>
 
-      <path d={d} fill="none" stroke="rgba(16,185,129,0.9)" strokeWidth="2.5" strokeLinejoin="round" />
-      <path
-        d={`${d} L ${pad + (points.length - 1) * stepX} ${h - pad} L ${pad} ${h - pad} Z`}
-        fill="url(#trend)"
-      />
+      {/* grid */}
+      {gridYs.map((g) => {
+        const y = yFor(g)
+        return (
+          <g key={g}>
+            <line x1={padL} x2={w - padR} y1={y} y2={y} stroke="rgba(148,163,184,0.18)" strokeWidth="1" />
+            <text x={padL - 8} y={y + 4} fontSize="10" fill="rgba(148,163,184,0.7)" textAnchor="end">
+              {g}
+            </text>
+          </g>
+        )
+      })}
 
-      {pts.map((p, i) => (
-        <g key={i}>
-          <circle cx={p.x} cy={p.y} r="3.2" fill="rgba(16,185,129,0.95)" />
-        </g>
-      ))}
+      {/* x labels */}
+      {points.map((p, i) => {
+        if (i % labelEvery !== 0 && i !== points.length - 1) return null
+        const x = padL + i * stepX
+        return (
+          <text key={p.date} x={x} y={h - 8} fontSize="10" fill="rgba(148,163,184,0.7)" textAnchor="middle">
+            {formatDateShort(p.date)}
+          </text>
+        )
+      })}
+
+      {/* trend */}
+      {segments.map((seg, si) => {
+        const d = seg.map((p, i) => `${i === 0 ? 'M' : 'L'} ${p.x.toFixed(2)} ${p.y.toFixed(2)}`).join(' ')
+        const lastX = seg[seg.length - 1].x
+        const firstX = seg[0].x
+        return (
+          <g key={si}>
+            <path d={d} fill="none" stroke="rgba(16,185,129,0.92)" strokeWidth="2.5" strokeLinejoin="round" />
+            <path
+              d={`${d} L ${lastX.toFixed(2)} ${(h - padB).toFixed(2)} L ${firstX.toFixed(2)} ${(h - padB).toFixed(2)} Z`}
+              fill="url(#trendFill)"
+            />
+            {seg.map((p, i) => (
+              <g key={i}>
+                <circle cx={p.x} cy={p.y} r="3.1" fill="rgba(16,185,129,0.95)" />
+                <title>
+                  {p.date}: {pctText(p.v)} completion
+                </title>
+              </g>
+            ))}
+          </g>
+        )
+      })}
     </svg>
   )
 }
 
-function MiniBarChart({ items }: { items: Array<{ label: string; value: number }> }) {
-  const max = Math.max(1, ...items.map((x) => x.value))
-  if (!items.length) return null
+type MuscleGroup = 'chest' | 'back' | 'legs' | 'shoulders' | 'arms' | 'core' | 'full'
 
-  return (
-    <div className="grid grid-cols-10 gap-2 items-end">
-      {items.slice(0, 10).map((it) => {
-        const h = clamp((it.value / max) * 100, 0, 100)
-        return (
-          <div key={it.label} className="flex flex-col items-center gap-2">
-            <div className="w-full h-20 flex items-end">
-              <div
-                className="w-full rounded-md bg-emerald-400/30 border border-emerald-400/20"
-                style={{ height: `${Math.max(6, h)}%` }}
-                title={`${it.label}: ${pctText(it.value)}`}
-              />
-            </div>
-            <div className="text-[10px] text-slate-300/70 text-center leading-tight truncate w-full" title={it.label}>
-              {it.label}
-            </div>
-          </div>
-        )
-      })}
-    </div>
-  )
+function detectMuscleGroup(label: string): MuscleGroup {
+  const s = (label || '').toLowerCase()
+  if (/(leg|lower|glute|quad|hamstring|calf)/.test(s)) return 'legs'
+  if (/(chest|bench|pec)/.test(s)) return 'chest'
+  if (/(back|pull|row|lat)/.test(s)) return 'back'
+  if (/(shoulder|deltoid|overhead)/.test(s)) return 'shoulders'
+  if (/(arm|bicep|tricep|curl)/.test(s)) return 'arms'
+  if (/(core|abs|abdominal|plank)/.test(s)) return 'core'
+  return 'full'
+}
+
+function MuscleIcon({ group }: { group: MuscleGroup }) {
+  const common = 'w-5 h-5'
+  switch (group) {
+    case 'legs':
+      return (
+        <svg className={common} viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <path
+            d="M10 3c1.8 0 3 1.2 3 3v3c0 1.2.8 2 2 2h1v7c0 1.1-.9 2-2 2h-2v-7h-2v7H8c-1.1 0-2-.9-2-2v-7h1c1.2 0 2-.8 2-2V6c0-1.8 1.2-3 3-3Z"
+            stroke="currentColor"
+            strokeWidth="1.6"
+            strokeLinejoin="round"
+          />
+        </svg>
+      )
+    case 'chest':
+      return (
+        <svg className={common} viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <path
+            d="M6.5 6.5c2 0 3 1.5 3.5 3.5.6 2.6 1.2 4 2 4s1.4-1.4 2-4c.5-2 1.5-3.5 3.5-3.5 2.2 0 3.5 1.8 3.5 4.5 0 5-4.5 9-9 9s-9-4-9-9c0-2.7 1.3-4.5 3.5-4.5Z"
+            stroke="currentColor"
+            strokeWidth="1.6"
+            strokeLinejoin="round"
+          />
+        </svg>
+      )
+    case 'back':
+      return (
+        <svg className={common} viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <path
+            d="M8 4h8c2.2 0 4 1.8 4 4v6c0 3.9-3.1 7-7 7h-2c-3.9 0-7-3.1-7-7V8c0-2.2 1.8-4 4-4Z"
+            stroke="currentColor"
+            strokeWidth="1.6"
+          />
+          <path d="M12 7v11" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" opacity="0.7" />
+        </svg>
+      )
+    case 'shoulders':
+      return (
+        <svg className={common} viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <path
+            d="M7 10c0-2.8 2.2-5 5-5s5 2.2 5 5v1c2 .3 3.5 2 3.5 4v4H3.5v-4c0-2 1.5-3.7 3.5-4v-1Z"
+            stroke="currentColor"
+            strokeWidth="1.6"
+            strokeLinejoin="round"
+          />
+        </svg>
+      )
+    case 'arms':
+      return (
+        <svg className={common} viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <path
+            d="M8 13c0-2 1.6-3.5 3.5-3.5H13v-2c0-1.4 1.1-2.5 2.5-2.5H17v3l2 2v4c0 3.3-2.7 6-6 6h-3c-2.8 0-5-2.2-5-5v-2c0-1.1.9-2 2-2h1Z"
+            stroke="currentColor"
+            strokeWidth="1.6"
+            strokeLinejoin="round"
+          />
+        </svg>
+      )
+    case 'core':
+      return (
+        <svg className={common} viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <path
+            d="M12 3c3 0 5 3 5 6v6c0 3-2 6-5 6s-5-3-5-6V9c0-3 2-6 5-6Z"
+            stroke="currentColor"
+            strokeWidth="1.6"
+          />
+          <path d="M9 9h6M9 12h6M9 15h6" stroke="currentColor" strokeWidth="1.2" opacity="0.7" />
+        </svg>
+      )
+    default:
+      return (
+        <svg className={common} viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <path
+            d="M12 3c5 0 9 4 9 9s-4 9-9 9-9-4-9-9 4-9 9-9Z"
+            stroke="currentColor"
+            strokeWidth="1.6"
+          />
+          <path d="M8 12h8" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" opacity="0.7" />
+          <path d="M12 8v8" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" opacity="0.7" />
+        </svg>
+      )
+  }
 }
 
 function StreakCalendar({ days }: { days: AnalyticsPayload['calendar'] }) {
@@ -243,17 +364,29 @@ export function AnalyticsView({ premiumStatus, onUpgrade }: AnalyticsViewProps) 
   }, [])
 
   const last30 = useMemo(() => {
-    const daily = data?.trends?.daily ?? []
-    return daily.slice(-30)
+    const cal = data?.calendar ?? []
+    return cal.slice(-30)
   }, [data])
 
   const trendPoints = useMemo(() => {
-    return last30.map((p) => ({ xLabel: p.date, value: p.completion_percentage }))
+    return last30.map((d) => ({
+      date: d.date,
+      value: d.workouts ? d.completion_percentage : null,
+      workouts: d.workouts,
+    }))
   }, [last30])
 
-  const historyBars = useMemo(() => {
-    const items = (data?.workout_history ?? []).slice().reverse()
-    return items.map((w) => ({ label: formatDateShort(w.date), value: w.completion_percentage }))
+  const historyThumbs = useMemo(() => {
+    return (data?.workout_history ?? []).map((w) => ({
+      key: `${w.routine_id}-${w.day_index}-${w.workout_at}`,
+      date: w.date,
+      dayName: w.day_name,
+      completion: w.completion_percentage,
+      completed: w.completed_exercises,
+      total: w.total_exercises,
+      week: w.week_number,
+      group: detectMuscleGroup(w.day_name),
+    }))
   }, [data])
 
   return (
@@ -339,7 +472,7 @@ export function AnalyticsView({ premiumStatus, onUpgrade }: AnalyticsViewProps) 
                   {error}
                 </div>
               ) : (
-                <MiniLineChart points={trendPoints} />
+                <TrendLineChart points={trendPoints} />
               )}
             </div>
           </div>
@@ -373,7 +506,27 @@ export function AnalyticsView({ premiumStatus, onUpgrade }: AnalyticsViewProps) 
               </div>
               <div className="text-xs text-slate-300/70">Completion %</div>
             </div>
-            <div className="mt-3">{!loading && !error ? <MiniBarChart items={historyBars} /> : null}</div>
+
+            {!loading && !error && (data?.workout_history?.length ?? 0) > 0 && (
+              <div className="mt-3 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2">
+                {historyThumbs.map((w) => (
+                  <div
+                    key={w.key}
+                    className="rounded-2xl border border-white/10 bg-white/5 hover:bg-white/7 transition p-3 flex items-center gap-3"
+                    title={`${w.date} · ${w.dayName} · ${pctText(w.completion)}`}
+                  >
+                    <div className="w-9 h-9 rounded-xl bg-emerald-400/10 border border-emerald-400/15 text-emerald-200 flex items-center justify-center shrink-0">
+                      <MuscleIcon group={w.group} />
+                    </div>
+                    <div className="min-w-0">
+                      <div className="text-sm text-white font-semibold truncate">{formatDateShort(w.date)}</div>
+                      <div className="text-[11px] text-slate-300/70 truncate">{w.dayName}</div>
+                    </div>
+                    <div className="ml-auto text-sm font-semibold text-emerald-200 shrink-0">{pctText(w.completion)}</div>
+                  </div>
+                ))}
+              </div>
+            )}
 
             {!loading && !error && (data?.workout_history?.length ?? 0) > 0 && (
               <div className="mt-4 grid gap-2">
