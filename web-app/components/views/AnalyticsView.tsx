@@ -60,7 +60,8 @@ function TrendLineChart({ points }: { points: TrendPoint[] }) {
   if (cur.length) segments.push(cur)
 
   const gridYs = [0, 25, 50, 75, 100]
-  const labelEvery = points.length > 14 ? 3 : points.length > 8 ? 2 : 1
+  // Keep labels readable. Daily series (30 points) needs wider spacing to avoid overlap.
+  const labelEvery = points.length >= 24 ? 6 : points.length > 14 ? 4 : points.length > 8 ? 2 : 1
 
   return (
     <svg viewBox={`0 0 ${w} ${h}`} className="w-full h-[190px]">
@@ -160,6 +161,25 @@ function muscleLabel(group: MuscleGroup): string {
       return 'Core'
     default:
       return 'Full body'
+  }
+}
+
+function muscleHelp(group: MuscleGroup): string {
+  switch (group) {
+    case 'legs':
+      return 'Leg-focused workout (squats/hinges/lunges).'
+    case 'chest':
+      return 'Chest-focused workout (pressing/fly patterns).'
+    case 'back':
+      return 'Back-focused workout (rows/pulls).'
+    case 'shoulders':
+      return 'Shoulder-focused workout (press/raises).'
+    case 'arms':
+      return 'Arm-focused workout (biceps/triceps).'
+    case 'core':
+      return 'Core-focused workout (abs/anti-rotation).'
+    default:
+      return 'Full-body / mixed focus.'
   }
 }
 
@@ -303,6 +323,94 @@ function StreakCalendar({ days }: { days: AnalyticsPayload['calendar'] }) {
   )
 }
 
+function MonthlyStreakCalendar({
+  month,
+  days,
+}: {
+  /** YYYY-MM */
+  month: string | null
+  days: AnalyticsPayload['calendar']
+}) {
+  if (!month) {
+    return <div className="text-sm text-slate-300/70">Select a month to view.</div>
+  }
+
+  const color = (v: number | null, workouts: number) => {
+    if (!workouts || v == null) return 'bg-white/5 border-white/10'
+    if (v >= 85) return 'bg-emerald-400/70 border-emerald-300/30'
+    if (v >= 60) return 'bg-emerald-400/45 border-emerald-300/25'
+    if (v >= 35) return 'bg-amber-400/35 border-amber-300/25'
+    return 'bg-rose-400/30 border-rose-300/25'
+  }
+
+  const parseYmdUtc = (ymd: string) => {
+    const [y, m, d] = ymd.split('-').map(Number)
+    return new Date(Date.UTC(y, (m || 1) - 1, d || 1))
+  }
+
+  const y = Number(month.split('-')[0] || 0)
+  const m0 = Number(month.split('-')[1] || 1) - 1
+  const first = new Date(Date.UTC(y, m0, 1))
+  const nextMonth = new Date(Date.UTC(y, m0 + 1, 1))
+  const daysInMonth = Math.round((nextMonth.getTime() - first.getTime()) / 86400000)
+
+  // weekday: Mon=0..Sun=6
+  const weekday = (dt: Date) => {
+    const wd = dt.getUTCDay()
+    return (wd + 6) % 7
+  }
+  const startPad = weekday(first)
+
+  const byDate = new Map<string, AnalyticsPayload['calendar'][number]>()
+  days.forEach((d) => byDate.set(d.date, d))
+
+  const cells: Array<{ ymd: string; data: AnalyticsPayload['calendar'][number] | null } | null> = []
+  for (let i = 0; i < startPad; i++) cells.push(null)
+  for (let i = 0; i < daysInMonth; i++) {
+    const dt = new Date(first.getTime() + i * 86400000)
+    const ymd = dt.toISOString().slice(0, 10)
+    const data = byDate.get(ymd) ?? null
+    cells.push({ ymd, data })
+  }
+
+  const weeks = Math.ceil(cells.length / 7)
+  const weekDayLabels = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
+
+  return (
+    <div>
+      <div className="grid grid-cols-7 gap-1 text-[10px] text-slate-300/60 mb-2">
+        {weekDayLabels.map((d) => (
+          <div key={d} className="text-center">
+            {d}
+          </div>
+        ))}
+      </div>
+
+      <div className="grid gap-1" style={{ gridTemplateRows: `repeat(${weeks}, minmax(0, 1fr))` }}>
+        {Array.from({ length: weeks }, (_, wi) => {
+          const row = cells.slice(wi * 7, wi * 7 + 7)
+          return (
+            <div key={wi} className="grid grid-cols-7 gap-1">
+              {row.map((c, i) => {
+                if (!c) return <div key={i} className="w-3.5 h-3.5" />
+                const v = c.data?.completion_percentage ?? null
+                const workouts = c.data?.workouts ?? 0
+                return (
+                  <div
+                    key={c.ymd}
+                    className={`w-3.5 h-3.5 rounded-[5px] border ${color(v, workouts)}`}
+                    title={`${c.ymd}: ${workouts ? `${workouts} workout(s), ${pctText(v)}` : 'No workout'}`}
+                  />
+                )
+              })}
+            </div>
+          )
+        })}
+      </div>
+    </div>
+  )
+}
+
 interface AnalyticsViewProps {
   premiumStatus: PremiumStatus
   onUpgrade: () => void
@@ -367,6 +475,8 @@ export function AnalyticsView({ premiumStatus, onUpgrade }: AnalyticsViewProps) 
   const [data, setData] = useState<AnalyticsPayload | null>(null)
   const [trendMode, setTrendMode] = useState<'daily' | 'weekly' | 'monthly'>('weekly')
   const [openIconKey, setOpenIconKey] = useState<string | null>(null)
+  const [calendarMode, setCalendarMode] = useState<'weeks' | 'month'>('weeks')
+  const [activeMonth, setActiveMonth] = useState<string | null>(null) // YYYY-MM
 
   useEffect(() => {
     let cancelled = false
@@ -392,6 +502,45 @@ export function AnalyticsView({ premiumStatus, onUpgrade }: AnalyticsViewProps) 
       cancelled = true
     }
   }, [])
+
+  useEffect(() => {
+    // Initialize month selection to the newest month we have.
+    if (!data?.calendar?.length) return
+    if (activeMonth != null) return
+    const latest = data.calendar[data.calendar.length - 1]?.date?.slice(0, 7) ?? null
+    if (latest) setActiveMonth(latest)
+  }, [data, activeMonth])
+
+  useEffect(() => {
+    // Close icon tooltip when clicking outside.
+    if (!openIconKey) return
+    const onDoc = (e: MouseEvent | TouchEvent) => {
+      const t = e.target as HTMLElement | null
+      if (!t) return
+      if (!t.closest?.('[data-muscle-popover="root"]')) setOpenIconKey(null)
+    }
+    document.addEventListener('mousedown', onDoc)
+    document.addEventListener('touchstart', onDoc)
+    return () => {
+      document.removeEventListener('mousedown', onDoc)
+      document.removeEventListener('touchstart', onDoc)
+    }
+  }, [openIconKey])
+
+  const monthOptions = useMemo(() => {
+    const months = new Set<string>()
+    ;(data?.calendar ?? []).forEach((d) => {
+      if (d?.date) months.add(d.date.slice(0, 7))
+    })
+    return [...months].sort()
+  }, [data])
+
+  const monthlyCalendarDays = useMemo(() => {
+    const cal = data?.calendar ?? []
+    const m = activeMonth
+    if (!m) return []
+    return cal.filter((d) => d.date.startsWith(m))
+  }, [data, activeMonth])
 
   const trendPoints = useMemo<TrendPoint[]>(() => {
     if (!data) return []
@@ -560,9 +709,33 @@ export function AnalyticsView({ premiumStatus, onUpgrade }: AnalyticsViewProps) 
             <div className="flex items-start justify-between gap-4">
               <div>
                 <div className="text-sm font-semibold text-white">Streak calendar</div>
-                <div className="text-xs text-slate-300/70 mt-1">Last 12 weeks</div>
+                <div className="text-xs text-slate-300/70 mt-1">
+                  {calendarMode === 'weeks' ? 'Last 12 weeks' : activeMonth ? `Month: ${activeMonth}` : 'Month view'}
+                </div>
               </div>
-              <div className="text-xs text-slate-300/70">Darker = higher completion</div>
+              <div className="flex items-center gap-2">
+                <div className="text-xs text-slate-300/70 hidden sm:block">Darker = higher completion</div>
+                <button
+                  onClick={() => setCalendarMode('weeks')}
+                  className={`px-3 py-1.5 rounded-full text-xs font-semibold border transition ${
+                    calendarMode === 'weeks'
+                      ? 'bg-emerald-400/12 border-emerald-400/25 text-emerald-100'
+                      : 'bg-white/5 border-white/10 text-slate-200/80 hover:bg-white/10'
+                  }`}
+                >
+                  12 weeks
+                </button>
+                <button
+                  onClick={() => setCalendarMode('month')}
+                  className={`px-3 py-1.5 rounded-full text-xs font-semibold border transition ${
+                    calendarMode === 'month'
+                      ? 'bg-emerald-400/12 border-emerald-400/25 text-emerald-100'
+                      : 'bg-white/5 border-white/10 text-slate-200/80 hover:bg-white/10'
+                  }`}
+                >
+                  Month
+                </button>
+              </div>
             </div>
             <div className="mt-3">
               {loading ? (
@@ -572,7 +745,31 @@ export function AnalyticsView({ premiumStatus, onUpgrade }: AnalyticsViewProps) 
                   {error}
                 </div>
               ) : (
-                <StreakCalendar days={data?.calendar ?? []} />
+                <>
+                  {calendarMode === 'month' && monthOptions.length > 1 ? (
+                    <div className="mb-3 flex items-center gap-2 overflow-x-auto pb-1">
+                      {monthOptions.slice(-6).map((m) => (
+                        <button
+                          key={m}
+                          onClick={() => setActiveMonth(m)}
+                          className={`px-3 py-1.5 rounded-full text-xs font-semibold border transition ${
+                            activeMonth === m
+                              ? 'bg-white/10 border-white/15 text-white'
+                              : 'bg-white/5 border-white/10 text-slate-200/80 hover:bg-white/10'
+                          }`}
+                        >
+                          {m}
+                        </button>
+                      ))}
+                    </div>
+                  ) : null}
+
+                  {calendarMode === 'weeks' ? (
+                    <StreakCalendar days={data?.calendar ?? []} />
+                  ) : (
+                    <MonthlyStreakCalendar month={activeMonth} days={monthlyCalendarDays} />
+                  )}
+                </>
               )}
             </div>
           </div>
@@ -594,7 +791,7 @@ export function AnalyticsView({ premiumStatus, onUpgrade }: AnalyticsViewProps) 
                     className="rounded-2xl border border-white/10 bg-white/5 hover:bg-white/7 transition p-3 flex items-center gap-3"
                     title={`${w.date} · ${w.dayName} · ${pctText(w.completion)}`}
                   >
-                    <div className="relative shrink-0">
+                    <div className="relative shrink-0" data-muscle-popover="root">
                       <button
                         type="button"
                         onClick={() => setOpenIconKey((prev) => (prev === w.key ? null : w.key))}
@@ -607,7 +804,7 @@ export function AnalyticsView({ premiumStatus, onUpgrade }: AnalyticsViewProps) 
                       {openIconKey === w.key && (
                         <div className="absolute left-0 top-11 z-20 w-44 rounded-xl bg-slate-950/90 border border-white/10 text-[11px] text-slate-100 px-3 py-2 shadow-xl">
                           <div className="font-semibold">{muscleLabel(w.group)}</div>
-                          <div className="text-slate-200/75 mt-0.5">This icon represents the workout’s main muscle group.</div>
+                          <div className="text-slate-200/75 mt-0.5">{muscleHelp(w.group)}</div>
                         </div>
                       )}
                     </div>
