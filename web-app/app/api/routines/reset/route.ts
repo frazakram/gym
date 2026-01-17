@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSession } from '@/lib/auth';
-import { deleteAllUserRoutines } from '@/lib/db';
+import { deleteAllUserRoutines, initializeDatabase } from '@/lib/db';
 
 export async function DELETE(request: NextRequest) {
     try {
@@ -10,6 +10,7 @@ export async function DELETE(request: NextRequest) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
 
+        await initializeDatabase();
         await deleteAllUserRoutines(session.userId);
 
         return NextResponse.json({

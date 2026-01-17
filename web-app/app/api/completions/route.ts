@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { toggleExerciseCompletion, getCompletionStats } from '@/lib/db';
+import { getCompletionStats, initializeDatabase, toggleExerciseCompletion } from '@/lib/db';
 import { getSession } from '@/lib/auth';
-import { redisDel } from '@/lib/redis';
+import { redisIncr } from '@/lib/redis';
 
 export async function POST(req: NextRequest) {
   try {
@@ -9,6 +9,8 @@ export async function POST(req: NextRequest) {
     if (!session) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
+
+    await initializeDatabase();
 
     const { routineId, dayIndex, exerciseIndex, completed } = await req.json();
 
@@ -34,13 +36,8 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Invalidate derived analytics cache so charts update immediately after edits.
-    // (Best-effort; no-op if Redis not configured.)
-    await Promise.all([
-      redisDel(`analytics:${session.userId}:90`),
-      redisDel(`analytics:${session.userId}:30`),
-      redisDel(`analytics:${session.userId}:365`),
-    ]);
+    // Invalidate derived analytics cache for ALL `days=` values (best-effort).
+    await redisIncr(`analytics_ver:${session.userId}`);
 
     return NextResponse.json({ success: true });
   } catch (error) {
@@ -58,6 +55,8 @@ export async function GET(req: NextRequest) {
     if (!session) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
+
+    await initializeDatabase();
 
     const { searchParams } = new URL(req.url);
     const routineId = searchParams.get('routineId');

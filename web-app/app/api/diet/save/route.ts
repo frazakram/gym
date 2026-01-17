@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { saveDiet, getProfile } from '@/lib/db';
+import { initializeDatabase, saveDiet } from '@/lib/db';
 import { getSession } from '@/lib/auth';
 
 export async function POST(request: NextRequest) {
@@ -8,6 +8,8 @@ export async function POST(request: NextRequest) {
     if (!session) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
+
+    await initializeDatabase();
 
     const { weekNumber, diet } = await request.json();
 

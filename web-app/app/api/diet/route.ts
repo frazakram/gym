@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getLatestDiet, getDietByWeek } from '@/lib/db';
+import { getLatestDiet, getDietByWeek, initializeDatabase } from '@/lib/db';
 import { getSession } from '@/lib/auth';
 
 export async function GET(request: NextRequest) {
@@ -8,6 +8,8 @@ export async function GET(request: NextRequest) {
     if (!session) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
+
+    await initializeDatabase();
 
     const { searchParams } = new URL(request.url);
     const weekParam = searchParams.get('week');

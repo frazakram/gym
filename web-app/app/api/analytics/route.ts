@@ -13,7 +13,10 @@ export async function GET(req: NextRequest) {
   const daysRaw = searchParams.get("days");
   const days = Math.max(7, Math.min(365, Number(daysRaw ?? 90) || 90));
 
-  const cacheKey = `analytics:${session.userId}:${days}`;
+  // Versioned cache key so any `days=` value can be invalidated globally for a user.
+  const verKey = `analytics_ver:${session.userId}`;
+  const ver = (await redisGetJson<number>(verKey)) ?? 0;
+  const cacheKey = `analytics:${session.userId}:${days}:v${ver}`;
   const cached = await redisGetJson<unknown>(cacheKey);
   if (cached) return NextResponse.json(cached, { status: 200 });
 
