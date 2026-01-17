@@ -8,7 +8,9 @@ interface WorkoutViewProps {
   selectedDayIndex: number
   currentRoutineId: number | null
   exerciseCompletions: Map<string, boolean>
+  dayCompletions: Map<number, boolean>
   onToggleExercise: (dayIndex: number, exerciseIndex: number, completed: boolean) => void
+  onToggleRestDay: (dayIndex: number, completed: boolean) => Promise<void>
   onEnsureRoutineSaved: () => Promise<number | null>
   onBack: () => void
 }
@@ -18,7 +20,9 @@ export function WorkoutView({
   selectedDayIndex,
   currentRoutineId,
   exerciseCompletions,
+  dayCompletions,
   onToggleExercise,
+  onToggleRestDay,
   onEnsureRoutineSaved,
   onBack,
 }: WorkoutViewProps) {
@@ -52,6 +56,8 @@ export function WorkoutView({
   ).length
   const totalCount = day.exercises.length
   const progressPercentage = totalCount > 0 ? Math.round((completedCount / totalCount) * 100) : 0
+  const isRestDay = totalCount === 0
+  const restDone = Boolean(dayCompletions.get(selectedDayIndex))
 
   return (
     <div className="pb-24">
@@ -70,7 +76,7 @@ export function WorkoutView({
           <div className="flex-1 min-w-0">
             <h1 className="text-base font-bold text-white truncate">{day.day}</h1>
             <p className="text-xs text-slate-300/70">
-              {completedCount}/{totalCount} completed • {progressPercentage}%
+              {isRestDay ? (restDone ? 'Rest day completed' : 'Rest day') : `${completedCount}/${totalCount} completed • ${progressPercentage}%`}
             </p>
           </div>
         </div>
@@ -79,25 +85,63 @@ export function WorkoutView({
         <div className="mt-2 w-full bg-slate-700 rounded-full h-1.5">
           <div
             className="bg-gradient-to-r from-teal-400 to-emerald-400 h-1.5 rounded-full transition-all duration-300"
-            style={{ width: `${progressPercentage}%` }}
+            style={{ width: `${isRestDay ? (restDone ? 100 : 0) : progressPercentage}%` }}
           />
         </div>
       </div>
 
       {/* Exercise Cards */}
       <div className="px-4 pt-4 space-y-4">
-        {day.exercises.map((exercise, exerciseIndex) => (
-          <ExerciseCard
-            key={exerciseIndex}
-            exercise={exercise}
-            dayIndex={selectedDayIndex}
-            exerciseIndex={exerciseIndex}
-            routineId={currentRoutineId}
-            isCompleted={exerciseCompletions.get(`${selectedDayIndex}-${exerciseIndex}`) || false}
-            onToggle={(completed) => onToggleExercise(selectedDayIndex, exerciseIndex, completed)}
-            onEnsureRoutineSaved={onEnsureRoutineSaved}
-          />
-        ))}
+        {isRestDay ? (
+          <div className="glass rounded-2xl p-5 border border-white/10">
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <div className="text-base font-semibold text-white">Rest day</div>
+                <div className="text-xs text-slate-300/70 mt-1">
+                  Take recovery seriously. You can still mark today as complete.
+                </div>
+              </div>
+              <span className="px-2.5 py-1 rounded-full text-xs font-semibold bg-slate-200/10 text-slate-200 border border-white/10">
+                Recovery
+              </span>
+            </div>
+
+            <div className="mt-4">
+              <button
+                onClick={async () => {
+                  // Ensure routine is saved before we can persist rest-day completion
+                  if (!currentRoutineId) {
+                    const rid = await onEnsureRoutineSaved()
+                    if (!rid) return
+                  }
+                  await onToggleRestDay(selectedDayIndex, !restDone)
+                }}
+                className={`w-full px-5 py-3 rounded-2xl font-semibold text-sm transition border ${
+                  restDone
+                    ? 'bg-emerald-400/10 border-emerald-400/25 text-emerald-100 hover:bg-emerald-400/15'
+                    : 'bg-white/5 border-white/10 text-white/90 hover:bg-white/10'
+                }`}
+              >
+                {restDone ? '✓ Marked complete' : 'Mark rest day complete'}
+              </button>
+            </div>
+          </div>
+        ) : (
+          <>
+            {day.exercises.map((exercise, exerciseIndex) => (
+              <ExerciseCard
+                key={exerciseIndex}
+                exercise={exercise}
+                dayIndex={selectedDayIndex}
+                exerciseIndex={exerciseIndex}
+                routineId={currentRoutineId}
+                isCompleted={exerciseCompletions.get(`${selectedDayIndex}-${exerciseIndex}`) || false}
+                onToggle={(completed) => onToggleExercise(selectedDayIndex, exerciseIndex, completed)}
+                onEnsureRoutineSaved={onEnsureRoutineSaved}
+              />
+            ))}
+          </>
+        )}
       </div>
 
       {/* Completion Message */}
