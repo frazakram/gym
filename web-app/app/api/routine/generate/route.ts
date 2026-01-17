@@ -3,6 +3,7 @@ import { generateRoutine } from '@/lib/ai-agent';
 import { getSession } from '@/lib/auth';
 import { generateRoutineOpenAI } from '@/lib/openai-routine';
 import { buildHistoricalContext, formatHistoricalContextForPrompt } from '@/lib/historical-context';
+import { rateLimit, RATE_LIMITS } from '@/lib/rate-limit';
 
 
 export async function POST(request: NextRequest) {
@@ -11,6 +12,47 @@ export async function POST(request: NextRequest) {
 
     if (!session) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    // Rate limit AI generation to protect credits (no-op if Redis not configured)
+    {
+      const burst = await rateLimit({
+        key: `rl:routine_generate:minute:${session.userId}`,
+        limit: RATE_LIMITS.routinePerMinute(),
+        windowSeconds: 60,
+      });
+      if (!burst.allowed) {
+        return NextResponse.json(
+          { error: `Too many requests. Try again in ${burst.retryAfterSeconds}s.` },
+          {
+            status: 429,
+            headers: {
+              'Retry-After': String(burst.retryAfterSeconds),
+              'X-RateLimit-Limit': String(burst.limit),
+              'X-RateLimit-Remaining': String(burst.remaining),
+            },
+          }
+        );
+      }
+
+      const rl = await rateLimit({
+        key: `rl:routine_generate:hour:${session.userId}`,
+        limit: RATE_LIMITS.routinePerHour(),
+        windowSeconds: 60 * 60,
+      });
+      if (!rl.allowed) {
+        return NextResponse.json(
+          { error: `Too many routine generations. Try again in ${rl.retryAfterSeconds}s.` },
+          {
+            status: 429,
+            headers: {
+              'Retry-After': String(rl.retryAfterSeconds),
+              'X-RateLimit-Limit': String(rl.limit),
+              'X-RateLimit-Remaining': String(rl.remaining),
+            },
+          }
+        );
+      }
     }
 
     const body = await request.json();
