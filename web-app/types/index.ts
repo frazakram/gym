@@ -150,3 +150,63 @@ export interface PremiumStatus {
     subscription_id: string | null;
     current_end: string | null; // serialized from API
 }
+
+// ============= Analytics (Premium) =============
+
+export type AnalyticsTrendPoint = {
+    /** YYYY-MM-DD */
+    date: string;
+    /** 0..100 */
+    completion_percentage: number;
+    workouts: number;
+};
+
+export type AnalyticsWeekPoint = {
+    /** ISO week key like 2026-W03 */
+    week: string;
+    /** 0..100 */
+    completion_percentage: number;
+    workouts: number;
+};
+
+export type AnalyticsStreak = {
+    current: number;
+    longest: number;
+    /** YYYY-MM-DD or null */
+    last_workout_date: string | null;
+};
+
+export type AnalyticsCalendarDay = {
+    /** YYYY-MM-DD */
+    date: string;
+    workouts: number;
+    /** 0..100 weighted completion, null if no workout that day */
+    completion_percentage: number | null;
+};
+
+export type AnalyticsWorkout = {
+    /** ISO timestamp */
+    workout_at: string;
+    /** YYYY-MM-DD (derived server-side, UTC) */
+    date: string;
+    routine_id: number;
+    week_number: number | null;
+    day_index: number;
+    day_name: string;
+    completed_exercises: number;
+    total_exercises: number;
+    /** 0..100 */
+    completion_percentage: number;
+};
+
+export type AnalyticsPayload = {
+    range_days: number;
+    generated_at: string;
+    trends: {
+        daily: AnalyticsTrendPoint[];
+        weekly: AnalyticsWeekPoint[];
+    };
+    streak: AnalyticsStreak;
+    calendar: AnalyticsCalendarDay[];
+    workout_history: AnalyticsWorkout[];
+};

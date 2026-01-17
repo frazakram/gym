@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import Razorpay from "razorpay";
 import { getSession } from "@/lib/auth";
 import { getPremiumStatus, initializeDatabase, upsertSubscriptionFromRazorpay } from "@/lib/db";
+import { redisDel } from "@/lib/redis";
 
 export const runtime = "nodejs";
 
@@ -60,6 +61,9 @@ export async function POST(req: NextRequest) {
       currentStart: subscription.current_start ?? null,
       currentEnd: subscription.current_end ?? null,
     });
+
+    // Invalidate cached billing status for this user (if Redis is configured)
+    await redisDel(`billing_status:${session.userId}`);
 
     return NextResponse.json(
       {

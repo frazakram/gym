@@ -26,9 +26,6 @@ export function ExerciseCheckbox({
     setCompleted(initialCompleted);
   }, [initialCompleted]);
 
-  // Debug log
-  console.log('ExerciseButton render:', { routineId, dayIndex, exerciseIndex, completed });
-
   const handleToggle = async () => {
     let activeRoutineId = routineId;
     

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getSession } from "@/lib/auth";
 import { ChatAnthropic } from "@langchain/anthropic";
 import { wrapUntrustedBlock } from "@/lib/prompt-safety";
+import { rateLimit, RATE_LIMITS } from "@/lib/rate-limit";
 
 function sanitizeApiKey(raw: string): string {
   return String(raw || "")
@@ -32,6 +33,47 @@ export async function POST(request: NextRequest) {
   try {
     const session = await getSession();
     if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+    // Rate limit AI usage to protect credits (no-op if Redis not configured)
+    {
+      const burst = await rateLimit({
+        key: `rl:notes_improve:minute:${session.userId}`,
+        limit: RATE_LIMITS.notesPerMinute(),
+        windowSeconds: 60,
+      });
+      if (!burst.allowed) {
+        return NextResponse.json(
+          { error: `Too many requests. Try again in ${burst.retryAfterSeconds}s.` },
+          {
+            status: 429,
+            headers: {
+              "Retry-After": String(burst.retryAfterSeconds),
+              "X-RateLimit-Limit": String(burst.limit),
+              "X-RateLimit-Remaining": String(burst.remaining),
+            },
+          }
+        );
+      }
+
+      const rl = await rateLimit({
+        key: `rl:notes_improve:hour:${session.userId}`,
+        limit: RATE_LIMITS.notesPerHour(),
+        windowSeconds: 60 * 60,
+      });
+      if (!rl.allowed) {
+        return NextResponse.json(
+          { error: `Too many requests. Try again in ${rl.retryAfterSeconds}s.` },
+          {
+            status: 429,
+            headers: {
+              "Retry-After": String(rl.retryAfterSeconds),
+              "X-RateLimit-Limit": String(rl.limit),
+              "X-RateLimit-Remaining": String(rl.remaining),
+            },
+          }
+        );
+      }
+    }
 
     const body = await request.json().catch(() => ({}));
     const {

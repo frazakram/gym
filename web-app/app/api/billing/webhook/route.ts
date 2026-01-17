@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import crypto from "crypto";
 import Razorpay from "razorpay";
 import { initializeDatabase, upsertSubscriptionFromRazorpay } from "@/lib/db";
+import { redisDel } from "@/lib/redis";
 
 export const runtime = "nodejs";
 
@@ -105,6 +106,11 @@ export async function POST(req: NextRequest) {
         return typeof v === "number" ? v : null;
       })(),
     });
+
+    // Invalidate cached billing status for this user (if Redis is configured)
+    if (typeof userId === "number") {
+      await redisDel(`billing_status:${userId}`);
+    }
 
     return NextResponse.json({ ok: true }, { status: 200 });
   } catch (error: unknown) {
