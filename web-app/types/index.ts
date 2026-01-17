@@ -169,6 +169,14 @@ export type AnalyticsWeekPoint = {
     workouts: number;
 };
 
+export type AnalyticsMonthPoint = {
+    /** Month key like 2026-01 */
+    month: string;
+    /** 0..100 */
+    completion_percentage: number;
+    workouts: number;
+};
+
 export type AnalyticsStreak = {
     current: number;
     longest: number;
@@ -205,6 +213,7 @@ export type AnalyticsPayload = {
     trends: {
         daily: AnalyticsTrendPoint[];
         weekly: AnalyticsWeekPoint[];
+        monthly: AnalyticsMonthPoint[];
     };
     streak: AnalyticsStreak;
     calendar: AnalyticsCalendarDay[];
