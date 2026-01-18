@@ -51,10 +51,12 @@ export async function GET(req: NextRequest) {
 
     const { searchParams } = new URL(req.url);
     const getAll = searchParams.get('all') === 'true';
+    const includeArchived = searchParams.get('includeArchived') === 'true';
+    const archivedOnly = searchParams.get('archivedOnly') === 'true';
 
     // Use session userId instead of accepting it from query params
     if (getAll) {
-      const routines = await getRoutinesByUser(session.userId);
+      const routines = await getRoutinesByUser(session.userId, { includeArchived, archivedOnly });
       return NextResponse.json({ routines });
     } else {
       const routine = await getLatestRoutine(session.userId);

@@ -280,7 +280,7 @@ export default function DashboardPage() {
   const fetchHistory = async () => {
     setLoadingHistory(true)
     try {
-      const res = await fetch('/api/routines?all=true')
+      const res = await fetch('/api/routines?all=true&includeArchived=true')
       const data = await res.json()
       if (data.routines) {
         setHistoryRoutines(data.routines)
@@ -289,7 +289,42 @@ export default function DashboardPage() {
       console.error('Failed to fetch history:', err)
     } finally {
       setLoadingHistory(false)
+    }
   }
+
+  const handleArchiveRoutine = async (routineId: number, archived: boolean) => {
+    try {
+      const res = await fetch(`/api/routines/${routineId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ archived }),
+      })
+      if (!res.ok) throw new Error('Failed to update routine')
+      await fetchHistory()
+    } catch (e) {
+      console.error('Archive routine failed:', e)
+    }
+  }
+
+  const handleDeleteRoutine = async (routineId: number) => {
+    const ok = window.confirm('Delete this routine permanently? This cannot be undone.')
+    if (!ok) return
+
+    try {
+      const res = await fetch(`/api/routines/${routineId}`, { method: 'DELETE' })
+      if (!res.ok) throw new Error('Failed to delete routine')
+
+      if (currentRoutineId === routineId) {
+        setViewingHistory(false)
+        await fetchLatestRoutine()
+        await fetchLatestDiet()
+        setActiveView('home')
+      }
+
+      await fetchHistory()
+    } catch (e) {
+      console.error('Delete routine failed:', e)
+    }
   }
 
   const handleSelectHistoryRoutine = async (historyItem: any) => {
@@ -782,6 +817,8 @@ export default function DashboardPage() {
         routines={historyRoutines}
         currentRoutineId={currentRoutineId}
         onSelectRoutine={handleSelectHistoryRoutine}
+        onArchiveRoutine={handleArchiveRoutine}
+        onDeleteRoutine={handleDeleteRoutine}
         loading={loadingHistory}
       />
 
