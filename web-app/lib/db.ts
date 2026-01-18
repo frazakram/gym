@@ -187,11 +187,19 @@ export async function initializeDatabase() {
           week_number INTEGER NOT NULL,
           routine_json JSONB NOT NULL,
           week_start_date DATE,
+          archived BOOLEAN NOT NULL DEFAULT FALSE,
+          archived_at TIMESTAMP,
           created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         );
       `);
       // Backfill/migration for older DBs
       await client.query(`ALTER TABLE routines ADD COLUMN IF NOT EXISTS week_start_date DATE;`);
+      await client.query(`ALTER TABLE routines ADD COLUMN IF NOT EXISTS archived BOOLEAN;`);
+      await client.query(`ALTER TABLE routines ADD COLUMN IF NOT EXISTS archived_at TIMESTAMP;`);
+      await client.query(`UPDATE routines SET archived = FALSE WHERE archived IS NULL;`);
+      await client.query(`ALTER TABLE routines ALTER COLUMN archived SET DEFAULT FALSE;`);
+      await client.query(`ALTER TABLE routines ALTER COLUMN archived SET NOT NULL;`);
+      await client.query(`CREATE INDEX IF NOT EXISTS idx_routines_user_archived ON routines (user_id, archived);`);
 
       await client.query(`
         CREATE TABLE IF NOT EXISTS diets (
@@ -586,8 +594,8 @@ export async function saveRoutine(
 ): Promise<number | null> {
   try {
     const result = await pool.query(
-      `INSERT INTO routines (user_id, week_number, routine_json, week_start_date)
-       VALUES ($1, $2, $3, $4)
+      `INSERT INTO routines (user_id, week_number, routine_json, week_start_date, archived)
+       VALUES ($1, $2, $3, $4, FALSE)
        RETURNING id`,
       [userId, weekNumber, JSON.stringify(routine), weekStartDate ?? null]
     );
@@ -618,6 +626,7 @@ export async function getLatestRoutine(userId: number): Promise<any | null> {
       `SELECT id, user_id, week_number, routine_json, week_start_date, created_at
        FROM routines
        WHERE user_id = $1
+         AND archived = FALSE
        ORDER BY week_number DESC, week_start_date DESC NULLS LAST, created_at DESC
        LIMIT 1`,
       [userId]
@@ -651,13 +660,22 @@ export async function getLatestRoutine(userId: number): Promise<any | null> {
   }
 }
 
-export async function getRoutinesByUser(userId: number): Promise<any[]> {
+export async function getRoutinesByUser(
+  userId: number,
+  opts?: { includeArchived?: boolean; archivedOnly?: boolean }
+): Promise<any[]> {
   try {
+    const includeArchived = Boolean(opts?.includeArchived);
+    const archivedOnly = Boolean(opts?.archivedOnly);
+    const where =
+      archivedOnly ? `archived = TRUE` : includeArchived ? `TRUE` : `archived = FALSE`;
+
     const result = await pool.query(
-      `SELECT id, user_id, week_number, routine_json, week_start_date, created_at
+      `SELECT id, user_id, week_number, routine_json, week_start_date, archived, archived_at, created_at
        FROM routines
        WHERE user_id = $1
-       ORDER BY week_number DESC, week_start_date DESC NULLS LAST, created_at DESC`,
+         AND ${where}
+       ORDER BY archived ASC, week_number DESC, week_start_date DESC NULLS LAST, created_at DESC`,
       [userId]
     );
     return result.rows;
@@ -680,7 +698,8 @@ export async function getRoutineByWeek(userId: number, weekNumber: number): Prom
       `SELECT id, user_id, week_number, routine_json, week_start_date, created_at
        FROM routines
        WHERE user_id = $1 AND week_number = $2
-       ORDER BY created_at DESC
+         AND archived = FALSE
+       ORDER BY week_start_date DESC NULLS LAST, created_at DESC
        LIMIT 1`,
       [userId, weekNumber]
     );
@@ -696,6 +715,54 @@ export async function getRoutineByWeek(userId: number, weekNumber: number): Prom
   }
 }
 
+export async function setRoutineArchived(userId: number, routineId: number, archived: boolean): Promise<boolean> {
+  try {
+    const res = await pool.query(
+      `UPDATE routines
+       SET archived = $3,
+           archived_at = CASE WHEN $3 THEN CURRENT_TIMESTAMP ELSE NULL END
+       WHERE id = $1 AND user_id = $2`,
+      [routineId, userId, archived]
+    );
+    return (res.rowCount ?? 0) > 0;
+  } catch (error) {
+    if (allowMockAuth()) {
+      const r = mockRoutineStore.get(routineId);
+      if (r && r.user_id === userId) {
+        r.archived = archived;
+        r.archived_at = archived ? new Date() : null;
+        mockRoutineStore.set(routineId, r);
+        return true;
+      }
+      return false;
+    }
+    console.error("setRoutineArchived DB failed:", error);
+    throw error;
+  }
+}
+
+export async function deleteRoutineById(userId: number, routineId: number): Promise<boolean> {
+  try {
+    const res = await pool.query(
+      `DELETE FROM routines WHERE id = $1 AND user_id = $2`,
+      [routineId, userId]
+    );
+    return (res.rowCount ?? 0) > 0;
+  } catch (error) {
+    if (allowMockAuth()) {
+      const r = mockRoutineStore.get(routineId);
+      if (r && r.user_id === userId) {
+        mockRoutineStore.delete(routineId);
+        mockCompletionStore.delete(routineId);
+        mockDayCompletionStore.delete(routineId);
+        return true;
+      }
+      return false;
+    }
+    console.error("deleteRoutineById DB failed:", error);
+    throw error;
+  }
+}
 export async function toggleExerciseCompletion(
   userId: number,
   routineId: number,
