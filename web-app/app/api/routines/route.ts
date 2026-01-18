@@ -11,7 +11,7 @@ export async function POST(req: NextRequest) {
 
     await initializeDatabase();
 
-    const { weekNumber, routine } = await req.json();
+    const { weekNumber, routine, weekStartDate } = await req.json();
 
     if (!weekNumber || !routine) {
       return NextResponse.json(
@@ -21,7 +21,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Use session userId instead of accepting it from client
-    const routineId = await saveRoutine(session.userId, weekNumber, routine);
+    const routineId = await saveRoutine(session.userId, weekNumber, routine, weekStartDate ?? null);
 
     if (!routineId) {
       return NextResponse.json(

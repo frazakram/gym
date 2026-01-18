@@ -5,6 +5,7 @@ import { useEffect, useRef } from 'react'
 interface RoutineHistoryItem {
   id: number
   week_number: number
+  week_start_date?: string | null
   created_at: string
   routine_json: any
 }
@@ -84,7 +85,8 @@ export function Sidebar({
             ) : (
               routines.map((routine) => {
                 const isSelected = currentRoutineId === routine.id
-                const date = new Date(routine.created_at).toLocaleDateString(undefined, {
+                const raw = routine.week_start_date || routine.created_at
+                const date = new Date(raw).toLocaleDateString(undefined, {
                   month: 'short', 
                   day: 'numeric'
                 })
