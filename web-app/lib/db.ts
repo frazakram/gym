@@ -186,9 +186,12 @@ export async function initializeDatabase() {
           user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
           week_number INTEGER NOT NULL,
           routine_json JSONB NOT NULL,
+          week_start_date DATE,
           created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         );
       `);
+      // Backfill/migration for older DBs
+      await client.query(`ALTER TABLE routines ADD COLUMN IF NOT EXISTS week_start_date DATE;`);
 
       await client.query(`
         CREATE TABLE IF NOT EXISTS diets (
@@ -578,14 +581,15 @@ const mockDayCompletionStore = new Map<number, Map<number, { completed: boolean;
 export async function saveRoutine(
   userId: number,
   weekNumber: number,
-  routine: any
+  routine: any,
+  weekStartDate?: Date | string | null
 ): Promise<number | null> {
   try {
     const result = await pool.query(
-      `INSERT INTO routines (user_id, week_number, routine_json)
-       VALUES ($1, $2, $3)
+      `INSERT INTO routines (user_id, week_number, routine_json, week_start_date)
+       VALUES ($1, $2, $3, $4)
        RETURNING id`,
-      [userId, weekNumber, JSON.stringify(routine)]
+      [userId, weekNumber, JSON.stringify(routine), weekStartDate ?? null]
     );
     return result.rows[0]?.id || null;
   } catch (error) {
@@ -598,6 +602,7 @@ export async function saveRoutine(
         user_id: userId,
         week_number: weekNumber,
         routine_json: routine,
+        week_start_date: weekStartDate ?? null,
         created_at: new Date()
       });
       return mockId;
@@ -610,10 +615,10 @@ export async function saveRoutine(
 export async function getLatestRoutine(userId: number): Promise<any | null> {
   try {
     const result = await pool.query(
-      `SELECT id, user_id, week_number, routine_json, created_at
+      `SELECT id, user_id, week_number, routine_json, week_start_date, created_at
        FROM routines
        WHERE user_id = $1
-       ORDER BY week_number DESC, created_at DESC
+       ORDER BY week_number DESC, week_start_date DESC NULLS LAST, created_at DESC
        LIMIT 1`,
       [userId]
     );
@@ -649,10 +654,10 @@ export async function getLatestRoutine(userId: number): Promise<any | null> {
 export async function getRoutinesByUser(userId: number): Promise<any[]> {
   try {
     const result = await pool.query(
-      `SELECT id, user_id, week_number, routine_json, created_at
+      `SELECT id, user_id, week_number, routine_json, week_start_date, created_at
        FROM routines
        WHERE user_id = $1
-       ORDER BY week_number DESC, created_at DESC`,
+       ORDER BY week_number DESC, week_start_date DESC NULLS LAST, created_at DESC`,
       [userId]
     );
     return result.rows;
@@ -672,7 +677,7 @@ export async function getRoutinesByUser(userId: number): Promise<any[]> {
 export async function getRoutineByWeek(userId: number, weekNumber: number): Promise<any | null> {
   try {
     const result = await pool.query(
-      `SELECT id, user_id, week_number, routine_json, created_at
+      `SELECT id, user_id, week_number, routine_json, week_start_date, created_at
        FROM routines
        WHERE user_id = $1 AND week_number = $2
        ORDER BY created_at DESC

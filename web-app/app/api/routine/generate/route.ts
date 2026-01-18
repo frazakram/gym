@@ -4,6 +4,7 @@ import { getSession } from '@/lib/auth';
 import { generateRoutineOpenAI } from '@/lib/openai-routine';
 import { buildHistoricalContext, formatHistoricalContextForPrompt } from '@/lib/historical-context';
 import { rateLimit, RATE_LIMITS } from '@/lib/rate-limit';
+import { initializeDatabase } from '@/lib/db';
 
 
 export async function POST(request: NextRequest) {
@@ -13,6 +14,9 @@ export async function POST(request: NextRequest) {
     if (!session) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
+
+    // Ensure DB schema exists before we try to fetch an existing routine by week.
+    await initializeDatabase();
 
     // Rate limit AI generation to protect credits (no-op if Redis not configured)
     {
@@ -200,6 +204,7 @@ export async function POST(request: NextRequest) {
             routine: existing.routine_json,
             source: 'db',
             week_number: existing.week_number,
+            week_start_date: existing.week_start_date ?? null,
             routine_id: existing.id // Return ID so front-end can track it
           });
         }
@@ -221,7 +226,14 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    return NextResponse.json({ routine, source: 'ai' }, { status: 200 });
+    return NextResponse.json(
+      {
+        routine,
+        source: 'ai',
+        week_number: typeof body.week_number === 'number' ? body.week_number : null,
+      },
+      { status: 200 }
+    );
   } catch (error: unknown) {
     // Don't leak secrets in logs — log the message only
     const message = error instanceof Error ? error.message : String(error);

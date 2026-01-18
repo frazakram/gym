@@ -367,7 +367,16 @@ export default function DashboardPage() {
     }
   }, [error])
 
-  const saveRoutineToDatabase = async (routineData: WeeklyRoutine) => {
+  function mondayOfThisWeekLocal(d: Date): Date {
+    // Mon=0..Sun=6
+    const dayIdx = (d.getDay() + 6) % 7
+    const out = new Date(d)
+    out.setHours(0, 0, 0, 0)
+    out.setDate(out.getDate() - dayIdx)
+    return out
+  }
+
+  const saveRoutineToDatabase = async (routineData: WeeklyRoutine, weekNumberOverride?: number, weekStartDateOverride?: Date) => {
     try {
       let currentUserId = userId
       if (!currentUserId) {
@@ -386,8 +395,9 @@ export default function DashboardPage() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          weekNumber: currentWeekNumber,
+          weekNumber: typeof weekNumberOverride === 'number' ? weekNumberOverride : currentWeekNumber,
           routine: routineData,
+          weekStartDate: (weekStartDateOverride ?? mondayOfThisWeekLocal(new Date())).toISOString().slice(0, 10),
         }),
       })
 
@@ -445,6 +455,9 @@ export default function DashboardPage() {
 
     try {
       const targetWeekNumber = isNextWeek ? currentWeekNumber + 1 : currentWeekNumber
+      const baseMonday = mondayOfThisWeekLocal(new Date())
+      const targetWeekStart = new Date(baseMonday)
+      targetWeekStart.setDate(baseMonday.getDate() + (isNextWeek ? 7 : 0))
 
       const response = await fetch('/api/routine/generate', {
         method: 'POST',
@@ -514,7 +527,7 @@ export default function DashboardPage() {
         setSuccess('Routine generated successfully.')
         setExerciseCompletions(new Map())
         setDayCompletions(new Map())
-        await saveRoutineToDatabase(data.routine)
+        await saveRoutineToDatabase(data.routine, targetWeekNumber, targetWeekStart)
         
         // Auto-trigger diet generation if routine is new
         handleGenerateDiet();
