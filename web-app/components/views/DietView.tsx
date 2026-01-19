@@ -1,4 +1,6 @@
 
+'use client'
+
 import React from 'react'
 import { WeeklyDiet } from '@/types'
 import { DietDisplay } from '@/components/DietDisplay'

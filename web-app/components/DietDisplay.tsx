@@ -1,4 +1,6 @@
 
+'use client'
+
 import React, { useMemo, useState } from 'react'
 import { WeeklyDiet } from '@/types'
 import { ChevronDown, Flame, Salad, Utensils } from 'lucide-react'
