@@ -207,6 +207,10 @@ export async function initializeDatabase() {
       await client.query(`ALTER TABLE profiles ADD COLUMN IF NOT EXISTS gym_photos JSONB;`);
       await client.query(`ALTER TABLE profiles ADD COLUMN IF NOT EXISTS gym_equipment_analysis JSONB;`);
 
+      // Body composition columns for profiles (NEW)
+      await client.query(`ALTER TABLE profiles ADD COLUMN IF NOT EXISTS body_photos JSONB;`);
+      await client.query(`ALTER TABLE profiles ADD COLUMN IF NOT EXISTS body_composition_analysis JSONB;`);
+
       await client.query(`
         CREATE TABLE IF NOT EXISTS diets (
           id SERIAL PRIMARY KEY,
