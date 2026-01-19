@@ -10,13 +10,14 @@ import { WorkoutView } from '@/components/views/WorkoutView'
 import { ProfileView } from '@/components/views/ProfileView'
 import { DietView } from '@/components/views/DietView'
 import { AnalyticsView } from '@/components/views/AnalyticsView'
+import { CoachView } from '@/components/views/CoachView'
 import { Sidebar } from '@/components/Sidebar'
 import { Toast, ToastType } from '@/components/ui/Toast'
 import { UpgradeModal } from '@/components/ui/UpgradeModal'
 
 export default function DashboardPage() {
   const router = useRouter()
-  const [activeView, setActiveView] = useState<'home' | 'routine' | 'workout' | 'profile' | 'diet' | 'analytics'>('home')
+  const [activeView, setActiveView] = useState<'home' | 'routine' | 'workout' | 'profile' | 'diet' | 'analytics' | 'coach'>('home')
   const [isSidebarOpen, setIsSidebarOpen] = useState(false)
   const [historyRoutines, setHistoryRoutines] = useState<any[]>([])
   const [loadingHistory, setLoadingHistory] = useState(false)
@@ -30,6 +31,9 @@ export default function DashboardPage() {
   // Billing / Premium
   const [premiumStatus, setPremiumStatus] = useState<PremiumStatus | null>(null)
   const [upgradeOpen, setUpgradeOpen] = useState(false)
+
+  // Admin
+  const [isAdmin, setIsAdmin] = useState(false)
 
   // Toast notifications
   interface ToastItem {
@@ -58,6 +62,20 @@ export default function DashboardPage() {
     } catch {
       // ignore
       return null
+    }
+  }, [])
+
+  const fetchAdminStatus = useCallback(async (): Promise<boolean> => {
+    try {
+      const res = await fetch('/api/admin/whoami', { cache: 'no-store' })
+      if (!res.ok) return false
+      const data = (await res.json()) as { isAdmin?: boolean }
+      const ok = Boolean(data?.isAdmin)
+      setIsAdmin(ok)
+      return ok
+    } catch {
+      setIsAdmin(false)
+      return false
     }
   }, [])
 
@@ -230,7 +248,8 @@ export default function DashboardPage() {
     fetchLatestRoutine()
     fetchLatestDiet()
     fetchPremiumStatus()
-  }, [fetchProfile, fetchLatestRoutine, fetchLatestDiet, fetchPremiumStatus])
+    fetchAdminStatus()
+  }, [fetchProfile, fetchLatestRoutine, fetchLatestDiet, fetchPremiumStatus, fetchAdminStatus])
 
   useEffect(() => {
     const onFocus = () => fetchPremiumStatus()
@@ -248,8 +267,8 @@ export default function DashboardPage() {
     current_end: null,
   }
 
-  const handleViewChange = (view: 'home' | 'routine' | 'workout' | 'profile' | 'diet' | 'analytics') => {
-    if (view === 'analytics') {
+  const handleViewChange = (view: 'home' | 'routine' | 'workout' | 'profile' | 'diet' | 'analytics' | 'coach') => {
+    if (view === 'analytics' || view === 'coach') {
       if (premiumStatus == null) {
         // Avoid showing the paywall incorrectly before we know trial/premium state.
         void fetchPremiumStatus().then((s) => {
@@ -262,13 +281,13 @@ export default function DashboardPage() {
             subscription_id: null,
             current_end: null,
           }
-          if (eff.access) setActiveView('analytics')
+          if (eff.access) setActiveView(view)
           else setUpgradeOpen(true)
         })
         return
       }
       if (effectivePremium.access) {
-        setActiveView('analytics')
+        setActiveView(view)
       } else {
         setUpgradeOpen(true)
       }
@@ -849,6 +868,7 @@ export default function DashboardPage() {
             dayCompletions={dayCompletions}
             currentWeekNumber={currentWeekNumber}
             onNavigateToWorkout={() => setActiveView('workout')}
+            onNavigateToCoach={() => handleViewChange('coach')}
             onGenerateRoutine={() => handleGenerateRoutine(false)}
             onGenerateNextWeek={handleGenerateNextWeek}
             generating={generating}
@@ -899,9 +919,18 @@ export default function DashboardPage() {
           <AnalyticsView premiumStatus={effectivePremium} onUpgrade={() => setUpgradeOpen(true)} />
         )}
 
+        {activeView === 'coach' && (
+          <CoachView
+            onUpgrade={() => setUpgradeOpen(true)}
+            showToast={showToast}
+          />
+        )}
+
         {activeView === 'profile' && (
           <ProfileView
             profile={profile}
+            isAdmin={isAdmin}
+            onOpenAdminCoachBookings={() => router.push('/admin/coach-bookings')}
             name={name}
             age={age}
             weight={weight}

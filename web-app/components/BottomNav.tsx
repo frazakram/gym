@@ -1,8 +1,8 @@
 'use client'
 
 interface BottomNavProps {
-  activeView: 'home' | 'routine' | 'workout' | 'profile' | 'diet' | 'analytics'
-  onViewChange: (view: 'home' | 'routine' | 'workout' | 'profile' | 'diet' | 'analytics') => void
+  activeView: 'home' | 'routine' | 'workout' | 'profile' | 'diet' | 'analytics' | 'coach'
+  onViewChange: (view: 'home' | 'routine' | 'workout' | 'profile' | 'diet' | 'analytics' | 'coach') => void
 }
 
 export function BottomNav({ activeView, onViewChange }: BottomNavProps) {

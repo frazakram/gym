@@ -52,5 +52,9 @@ export const RATE_LIMITS = {
   notesPerMinute: () => intFromEnv("RATE_LIMIT_NOTES_PER_MINUTE", 10),
 
   authPerMinuteByIp: () => intFromEnv("RATE_LIMIT_AUTH_PER_MINUTE_PER_IP", 10),
+
+  // Coach booking (Premium/Trial). Defaults are conservative to prevent spam.
+  coachBookPerDay: () => intFromEnv("RATE_LIMIT_COACH_BOOK_PER_DAY", 3),
+  coachBookPerMinute: () => intFromEnv("RATE_LIMIT_COACH_BOOK_PER_MINUTE", 1),
 };
 

@@ -10,6 +10,8 @@ import { Collapsible } from '../ui/Collapsible'
 
 interface ProfileViewProps {
   profile: (Profile & { username?: string }) | null
+  isAdmin?: boolean
+  onOpenAdminCoachBookings?: () => void
   name?: string
   age: number | ''
   weight: number | ''
@@ -44,6 +46,8 @@ interface ProfileViewProps {
 
 export function ProfileView({
   profile,
+  isAdmin,
+  onOpenAdminCoachBookings,
   name,
   age,
   weight,
@@ -161,6 +165,26 @@ export function ProfileView({
           </div>
         </div>
       </GlassCard>
+
+      {/* Admin tools */}
+      {isAdmin ? (
+        <GlassCard className="p-4">
+          <SectionHeader title="Admin tools" subtitle="Manage coach booking requests" />
+          <div className="mt-3">
+            <AnimatedButton
+              type="button"
+              variant="secondary"
+              fullWidth
+              onClick={onOpenAdminCoachBookings}
+            >
+              Open Coach Bookings Admin
+            </AnimatedButton>
+            <p className="mt-2 text-xs text-slate-300/70">
+              You can update booking status: pending → confirmed/cancelled/completed.
+            </p>
+          </div>
+        </GlassCard>
+      ) : null}
 
       {/* Fitness */}
       <GlassCard className="p-4">

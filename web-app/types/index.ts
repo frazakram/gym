@@ -151,6 +151,26 @@ export interface PremiumStatus {
     current_end: string | null; // serialized from API
 }
 
+// ============= Personal Coach (Premium / Trial) =============
+
+export type Coach = {
+    id: string;
+    name: string;
+    phone: string;
+    email: string;
+};
+
+export type CoachBooking = {
+    id: number;
+    coach_name: string;
+    coach_phone: string;
+    coach_email: string;
+    preferred_at: string | null; // ISO
+    message: string | null;
+    status: string;
+    created_at: string; // ISO
+};
+
 // ============= Analytics (Premium) =============
 
 export type AnalyticsTrendPoint = {

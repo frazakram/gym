@@ -227,6 +227,24 @@ export async function initializeDatabase() {
         );
       `);
 
+      // Coach booking (Premium feature: Personal Coach)
+      // Phase 1 uses a hard-coded coach but stores booking requests in DB.
+      await client.query(`
+        CREATE TABLE IF NOT EXISTS coach_bookings (
+          id SERIAL PRIMARY KEY,
+          user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+          coach_name TEXT NOT NULL,
+          coach_phone TEXT NOT NULL,
+          coach_email TEXT NOT NULL,
+          preferred_at TIMESTAMP,
+          message TEXT,
+          status VARCHAR(32) NOT NULL DEFAULT 'pending',
+          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+          updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        );
+      `);
+      await client.query(`CREATE INDEX IF NOT EXISTS idx_coach_bookings_user_created_at ON coach_bookings (user_id, created_at DESC);`);
+
       await client.query(`
         CREATE TABLE IF NOT EXISTS exercise_completions (
           id SERIAL PRIMARY KEY,
@@ -1560,4 +1578,127 @@ export async function upsertSubscriptionFromRazorpay(input: {
     console.error("upsertSubscriptionFromRazorpay DB failed:", error);
     throw error;
   }
+}
+
+// ============= COACH BOOKINGS (PREMIUM/TRIAL) =============
+
+export type CoachBooking = {
+  id: number;
+  user_id: number;
+  coach_name: string;
+  coach_phone: string;
+  coach_email: string;
+  preferred_at: Date | null;
+  message: string | null;
+  status: string;
+  created_at: Date;
+};
+
+export type AdminCoachBookingRow = {
+  id: number;
+  user_id: number;
+  username: string | null;
+  coach_name: string;
+  coach_phone: string;
+  coach_email: string;
+  preferred_at: Date | null;
+  message: string | null;
+  status: string;
+  created_at: Date;
+};
+
+function safeDateOrNull(value: unknown): Date | null {
+  if (value instanceof Date && !Number.isNaN(value.getTime())) return value;
+  if (typeof value === "string") {
+    const d = new Date(value);
+    if (!Number.isNaN(d.getTime())) return d;
+  }
+  return null;
+}
+
+export async function createCoachBooking(input: {
+  userId: number;
+  coach: { name: string; phone: string; email: string };
+  preferredAt?: string | null;
+  message?: string | null;
+}): Promise<Pick<CoachBooking, "id" | "status" | "created_at">> {
+  const preferredAt = safeDateOrNull(input.preferredAt ?? null);
+  const message = typeof input.message === "string" && input.message.trim() ? input.message.trim() : null;
+
+  const res = await pool.query<Pick<CoachBooking, "id" | "status" | "created_at">>(
+    `INSERT INTO coach_bookings (user_id, coach_name, coach_phone, coach_email, preferred_at, message, status)
+     VALUES ($1, $2, $3, $4, $5, $6, 'pending')
+     RETURNING id, status, created_at`,
+    [input.userId, input.coach.name, input.coach.phone, input.coach.email, preferredAt, message]
+  );
+
+  const row = res.rows?.[0];
+  if (!row) throw new Error("Failed to create booking");
+  return row;
+}
+
+export async function listCoachBookings(userId: number, limit = 10): Promise<CoachBooking[]> {
+  const lim = Math.max(1, Math.min(50, Math.floor(limit)));
+  const res = await pool.query<CoachBooking>(
+    `SELECT id, user_id, coach_name, coach_phone, coach_email, preferred_at, message, status, created_at
+     FROM coach_bookings
+     WHERE user_id = $1
+     ORDER BY created_at DESC
+     LIMIT $2`,
+    [userId, lim]
+  );
+
+  // Ensure `preferred_at` is a Date in JS
+  return res.rows.map((r: any) => ({
+    ...r,
+    preferred_at: r.preferred_at ? (r.preferred_at instanceof Date ? r.preferred_at : new Date(String(r.preferred_at))) : null,
+    created_at: r.created_at instanceof Date ? r.created_at : new Date(String(r.created_at)),
+  }));
+}
+
+export async function listAllCoachBookingsAdmin(opts?: {
+  status?: string;
+  limit?: number;
+  offset?: number;
+}): Promise<AdminCoachBookingRow[]> {
+  const limit = Math.max(1, Math.min(100, Math.floor(opts?.limit ?? 50)));
+  const offset = Math.max(0, Math.floor(opts?.offset ?? 0));
+  const status = typeof opts?.status === "string" && opts.status.trim() ? opts.status.trim() : null;
+
+  const res = await pool.query<AdminCoachBookingRow>(
+    `
+    SELECT cb.id, cb.user_id, u.username, cb.coach_name, cb.coach_phone, cb.coach_email,
+           cb.preferred_at, cb.message, cb.status, cb.created_at
+    FROM coach_bookings cb
+    LEFT JOIN users u ON u.id = cb.user_id
+    WHERE ($1::text IS NULL OR cb.status = $1)
+    ORDER BY cb.created_at DESC
+    LIMIT $2 OFFSET $3
+    `,
+    [status, limit, offset]
+  );
+
+  return res.rows.map((r: any) => ({
+    ...r,
+    preferred_at: r.preferred_at ? (r.preferred_at instanceof Date ? r.preferred_at : new Date(String(r.preferred_at))) : null,
+    created_at: r.created_at instanceof Date ? r.created_at : new Date(String(r.created_at)),
+  }));
+}
+
+export async function updateCoachBookingStatusAdmin(input: {
+  id: number;
+  status: string;
+}): Promise<boolean> {
+  const id = Math.floor(Number(input.id));
+  const status = String(input.status || "").trim();
+  if (!Number.isFinite(id) || id <= 0) throw new Error("Invalid booking id");
+  if (!status) throw new Error("Invalid status");
+
+  const res = await pool.query(
+    `UPDATE coach_bookings
+     SET status = $2, updated_at = CURRENT_TIMESTAMP
+     WHERE id = $1`,
+    [id, status]
+  );
+  return (res.rowCount ?? 0) > 0;
 }
