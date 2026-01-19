@@ -144,8 +144,8 @@ export default function AdminCoachApprovalsPage() {
               Refresh
             </AnimatedButton>
 
-            <AnimatedButton type="button" variant="ghost" onClick={() => router.push('/dashboard')} fullWidth>
-              Back to Dashboard
+            <AnimatedButton type="button" variant="ghost" onClick={() => router.push('/admin/coach-bookings')} fullWidth>
+              Coach requests
             </AnimatedButton>
           </div>
 

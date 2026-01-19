@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSession } from "@/lib/auth";
-import { getPremiumStatus, initializeDatabase, listCoachBookings } from "@/lib/db";
+import { initializeDatabase, listCoachBookings } from "@/lib/db";
 
 export const runtime = "nodejs";
 
@@ -12,11 +12,6 @@ export async function GET(req: NextRequest) {
   const limit = Math.max(1, Math.min(50, Number(searchParams.get("limit") ?? 10) || 10));
 
   await initializeDatabase();
-  const premium = await getPremiumStatus(session.userId);
-  if (!premium.access) {
-    return NextResponse.json({ error: "Personal Coach is a premium feature." }, { status: 403 });
-  }
-
   const bookings = await listCoachBookings(session.userId, limit);
   return NextResponse.json(
     {

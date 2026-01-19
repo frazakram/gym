@@ -3,6 +3,7 @@ import { z } from "zod";
 import { getSession } from "@/lib/auth";
 import {
   createCoachBooking,
+  getActiveCoachBookingForUser,
   getApprovedCoachPublicById,
   getPremiumStatus,
   initializeDatabase,
@@ -31,6 +32,26 @@ export async function POST(req: NextRequest) {
     const premium = await getPremiumStatus(session.userId);
     if (!premium.access) {
       return NextResponse.json({ error: "Personal Coach is a premium feature." }, { status: 403 });
+    }
+
+    // Enforce: user can have only ONE active booking at a time (pending/confirmed)
+    {
+      const active = await getActiveCoachBookingForUser(session.userId);
+      if (active) {
+        return NextResponse.json(
+          {
+            error: `You already have an active coach booking (#${active.id}, ${active.status}). Cancel it before booking again.`,
+            activeBooking: {
+              id: active.id,
+              status: active.status,
+              coachName: active.coach_name,
+              preferredAt: active.preferred_at ? active.preferred_at.toISOString() : null,
+              createdAt: active.created_at.toISOString(),
+            },
+          },
+          { status: 409 }
+        );
+      }
     }
 
     // Rate limit (no-op if Redis not configured)

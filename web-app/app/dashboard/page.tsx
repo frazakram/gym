@@ -10,7 +10,7 @@ export default async function DashboardPage() {
   if (!session) redirect('/login')
 
   const isAdmin = await isAdminUser(session.userId)
-  if (isAdmin) redirect('/admin/coach-bookings')
+  if (isAdmin) redirect('/admin')
 
   return <DashboardClient />
 }

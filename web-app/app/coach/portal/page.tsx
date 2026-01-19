@@ -247,9 +247,6 @@ export default function CoachPortalPage() {
                   <AnimatedButton type="button" variant="ghost" fullWidth onClick={() => router.push('/dashboard')}>
                     Back to Dashboard
                   </AnimatedButton>
-                  <AnimatedButton type="button" variant="secondary" fullWidth onClick={() => router.push('/admin/coach-approvals')}>
-                    Admin approvals
-                  </AnimatedButton>
                 </div>
               </div>
             </div>

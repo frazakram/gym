@@ -1738,6 +1738,93 @@ export async function listCoachBookings(userId: number, limit = 10): Promise<Coa
   }));
 }
 
+export async function getActiveCoachBookingForUser(userId: number): Promise<Pick<
+  CoachBooking,
+  "id" | "user_id" | "coach_id" | "coach_name" | "preferred_at" | "status" | "created_at"
+> | null> {
+  const res = await pool.query<any>(
+    `SELECT id, user_id, coach_id, coach_name, preferred_at, status, created_at
+     FROM coach_bookings
+     WHERE user_id = $1 AND status IN ('pending', 'confirmed')
+     ORDER BY created_at DESC
+     LIMIT 1`,
+    [userId]
+  );
+  const r = res.rows?.[0];
+  if (!r) return null;
+  return {
+    id: Number(r.id),
+    user_id: Number(r.user_id),
+    coach_id: r.coach_id != null ? Number(r.coach_id) : null,
+    coach_name: String(r.coach_name),
+    preferred_at: r.preferred_at ? (r.preferred_at instanceof Date ? r.preferred_at : new Date(String(r.preferred_at))) : null,
+    status: String(r.status || ""),
+    created_at: r.created_at instanceof Date ? r.created_at : new Date(String(r.created_at)),
+  };
+}
+
+export async function getCoachBookingByIdForUser(
+  userId: number,
+  id: number
+): Promise<CoachBooking | null> {
+  const bid = Math.floor(Number(id));
+  if (!Number.isFinite(bid) || bid <= 0) return null;
+  const res = await pool.query<any>(
+    `SELECT id, user_id, coach_name, coach_phone, coach_email, user_name, user_email, user_phone, coach_id, preferred_at, message, status, created_at
+     FROM coach_bookings
+     WHERE id = $1 AND user_id = $2
+     LIMIT 1`,
+    [bid, userId]
+  );
+  const r = res.rows?.[0];
+  if (!r) return null;
+  return {
+    id: Number(r.id),
+    user_id: Number(r.user_id),
+    coach_name: String(r.coach_name),
+    coach_phone: String(r.coach_phone),
+    coach_email: String(r.coach_email),
+    user_name: r.user_name ?? null,
+    user_email: r.user_email ?? null,
+    user_phone: r.user_phone ?? null,
+    coach_id: r.coach_id != null ? Number(r.coach_id) : null,
+    preferred_at: r.preferred_at ? (r.preferred_at instanceof Date ? r.preferred_at : new Date(String(r.preferred_at))) : null,
+    message: r.message ?? null,
+    status: String(r.status || ""),
+    created_at: r.created_at instanceof Date ? r.created_at : new Date(String(r.created_at)),
+  };
+}
+
+export async function updateCoachBookingStatusForUser(input: {
+  userId: number;
+  id: number;
+  status: string;
+}): Promise<boolean> {
+  const id = Math.floor(Number(input.id));
+  const userId = Math.floor(Number(input.userId));
+  const status = String(input.status || "").trim();
+  if (!Number.isFinite(id) || id <= 0) throw new Error("Invalid booking id");
+  if (!Number.isFinite(userId) || userId <= 0) throw new Error("Invalid user id");
+  if (!status) throw new Error("Invalid status");
+
+  const res = await pool.query(
+    `UPDATE coach_bookings
+     SET status = $3, updated_at = CURRENT_TIMESTAMP
+     WHERE id = $1 AND user_id = $2`,
+    [id, userId, status]
+  );
+  return (res.rowCount ?? 0) > 0;
+}
+
+export async function deleteCoachBookingForUser(input: { userId: number; id: number }): Promise<boolean> {
+  const id = Math.floor(Number(input.id));
+  const userId = Math.floor(Number(input.userId));
+  if (!Number.isFinite(id) || id <= 0) throw new Error("Invalid booking id");
+  if (!Number.isFinite(userId) || userId <= 0) throw new Error("Invalid user id");
+  const res = await pool.query(`DELETE FROM coach_bookings WHERE id = $1 AND user_id = $2`, [id, userId]);
+  return (res.rowCount ?? 0) > 0;
+}
+
 export async function listAllCoachBookingsAdmin(opts?: {
   status?: string;
   limit?: number;
