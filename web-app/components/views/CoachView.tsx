@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { GlassCard } from '@/components/ui/GlassCard'
 import { SectionHeader } from '@/components/ui/SectionHeader'
 import { AnimatedButton } from '@/components/ui/AnimatedButton'
@@ -59,6 +59,34 @@ export function CoachView({
 
   const [bookings, setBookings] = useState<CoachBooking[]>([])
   const [loadingBookings, setLoadingBookings] = useState(false)
+  const [mutatingBookingId, setMutatingBookingId] = useState<number | null>(null)
+
+  const activeBooking = useMemo(() => {
+    return bookings.find((b) => b.status === 'pending' || b.status === 'confirmed') ?? null
+  }, [bookings])
+
+  const minutesUntil = useCallback((iso: string | null): number | null => {
+    if (!iso) return null
+    const t = new Date(iso).getTime()
+    if (!Number.isFinite(t)) return null
+    return Math.floor((t - Date.now()) / (60 * 1000))
+  }, [])
+
+  const canCancelBooking = useCallback(
+    (b: CoachBooking): { ok: boolean; reason?: string } => {
+      if (b.status !== 'pending' && b.status !== 'confirmed') return { ok: false, reason: 'Not cancellable' }
+      if (!b.preferred_at) return { ok: true }
+      const mins = minutesUntil(b.preferred_at)
+      if (mins == null) return { ok: true }
+      if (mins <= 60) return { ok: false, reason: `Can't cancel within 60 minutes (${mins}m left)` }
+      return { ok: true }
+    },
+    [minutesUntil]
+  )
+
+  const canDeleteBooking = useCallback((b: CoachBooking): boolean => {
+    return b.status === 'cancelled' || b.status === 'completed'
+  }, [])
 
   const telHref = useMemo(() => {
     const n = coach?.phone?.replace(/[^\d+]/g, '') || ''
@@ -109,7 +137,6 @@ export function CoachView({
     try {
       const res = await fetch('/api/coach/bookings?limit=10', { cache: 'no-store' })
       const data = await res.json().catch(() => ({}))
-      if (res.status === 403) return
       if (!res.ok) throw new Error(data?.error || 'Failed to load bookings')
       setBookings((data.bookings || []) as CoachBooking[])
     } catch (e: unknown) {
@@ -148,6 +175,13 @@ export function CoachView({
         onUpgrade()
         return
       }
+      if (res.status === 409) {
+        // e.g. single-active-booking rule
+        const msg = data?.error || 'You already have an active booking.'
+        showToast(String(msg), 'warning')
+        await fetchBookings()
+        return
+      }
       if (!res.ok) throw new Error(data?.error || 'Failed to create booking')
 
       showToast('Booking request submitted. Coach has been notified by email.', 'success')
@@ -159,6 +193,44 @@ export function CoachView({
       showToast(msg, 'error')
     } finally {
       setSubmitting(false)
+    }
+  }
+
+  const cancelBooking = async (id: number) => {
+    setMutatingBookingId(id)
+    try {
+      const res = await fetch(`/api/coach/bookings/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'cancel' }),
+      })
+      const data = await res.json().catch(() => ({}))
+      if (!res.ok) throw new Error(data?.error || 'Failed to cancel booking')
+      showToast('Booking cancelled.', 'success')
+      await fetchBookings()
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : String(e)
+      showToast(msg, 'error')
+    } finally {
+      setMutatingBookingId(null)
+    }
+  }
+
+  const deleteBooking = async (id: number) => {
+    const ok = window.confirm('Delete this booking from your history? This cannot be undone.')
+    if (!ok) return
+    setMutatingBookingId(id)
+    try {
+      const res = await fetch(`/api/coach/bookings/${id}`, { method: 'DELETE' })
+      const data = await res.json().catch(() => ({}))
+      if (!res.ok) throw new Error(data?.error || 'Failed to delete booking')
+      showToast('Booking deleted.', 'success')
+      await fetchBookings()
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : String(e)
+      showToast(msg, 'error')
+    } finally {
+      setMutatingBookingId(null)
     }
   }
 
@@ -256,6 +328,32 @@ export function CoachView({
               <p className="text-xs text-slate-300/70 mt-1">
                 Enter your contact info so the coach can reach you, plus your preferred time and goals.
               </p>
+              {activeBooking ? (
+                <div className="mt-3 rounded-xl border border-amber-400/20 bg-amber-400/10 p-3">
+                  <p className="text-xs text-amber-100">
+                    You already have an active booking <span className="font-semibold">#{activeBooking.id}</span> (
+                    {activeBooking.status}). Cancel it to book another coach.
+                  </p>
+                  {(() => {
+                    const c = canCancelBooking(activeBooking)
+                    return (
+                      <div className="mt-2">
+                        <AnimatedButton
+                          type="button"
+                          variant="secondary"
+                          fullWidth
+                          disabled={!c.ok || mutatingBookingId === activeBooking.id}
+                          loading={mutatingBookingId === activeBooking.id}
+                          onClick={() => cancelBooking(activeBooking.id)}
+                        >
+                          Cancel booking
+                        </AnimatedButton>
+                        {!c.ok && c.reason ? <div className="mt-2 text-[11px] text-amber-100/80">{c.reason}</div> : null}
+                      </div>
+                    )
+                  })()}
+                </div>
+              ) : null}
 
               <div className="mt-3 space-y-2">
                 <label className="block text-xs text-slate-300/70">Your name</label>
@@ -264,6 +362,7 @@ export function CoachView({
                   value={userName}
                   onChange={(e) => setUserName(e.target.value)}
                   placeholder="e.g. Harshit"
+                  disabled={Boolean(activeBooking)}
                   className="w-full rounded-xl bg-slate-900/60 border border-white/10 px-3 py-2 text-sm text-white outline-none focus:ring-2 focus:ring-cyan-400/30"
                 />
 
@@ -275,6 +374,7 @@ export function CoachView({
                       value={userEmail}
                       onChange={(e) => setUserEmail(e.target.value)}
                       placeholder="you@example.com"
+                      disabled={Boolean(activeBooking)}
                       className="w-full rounded-xl bg-slate-900/60 border border-white/10 px-3 py-2 text-sm text-white outline-none focus:ring-2 focus:ring-cyan-400/30"
                     />
                   </div>
@@ -285,6 +385,7 @@ export function CoachView({
                       value={userPhone}
                       onChange={(e) => setUserPhone(e.target.value)}
                       placeholder="9000000000"
+                      disabled={Boolean(activeBooking)}
                       className="w-full rounded-xl bg-slate-900/60 border border-white/10 px-3 py-2 text-sm text-white outline-none focus:ring-2 focus:ring-cyan-400/30"
                     />
                   </div>
@@ -295,6 +396,7 @@ export function CoachView({
                   type="datetime-local"
                   value={preferredAt}
                   onChange={(e) => setPreferredAt(e.target.value)}
+                  disabled={Boolean(activeBooking)}
                   className="w-full rounded-xl bg-slate-900/60 border border-white/10 px-3 py-2 text-sm text-white outline-none focus:ring-2 focus:ring-cyan-400/30"
                 />
 
@@ -305,20 +407,21 @@ export function CoachView({
                   rows={4}
                   maxLength={1000}
                   placeholder="Example: Knee pain on squats, want form check + 4-week strength plan."
+                  disabled={Boolean(activeBooking)}
                   className="w-full rounded-xl bg-slate-900/60 border border-white/10 px-3 py-2 text-sm text-white outline-none focus:ring-2 focus:ring-cyan-400/30 resize-none"
                 />
 
                 <div className="pt-2">
                   <AnimatedButton
                     onClick={handleBook}
-                    disabled={submitting || !userName.trim() || !userEmail.trim() || !userPhone.trim()}
+                    disabled={Boolean(activeBooking) || submitting || !userName.trim() || !userEmail.trim() || !userPhone.trim()}
                     loading={submitting}
                     variant="primary"
                     fullWidth
                   >
                     Submit booking request
                   </AnimatedButton>
-                  {(!userName.trim() || !userEmail.trim() || !userPhone.trim()) ? (
+                  {!activeBooking && (!userName.trim() || !userEmail.trim() || !userPhone.trim()) ? (
                     <p className="mt-2 text-xs text-slate-300/70">
                       Please enter your name, email and phone so the coach can contact you.
                     </p>
@@ -334,8 +437,8 @@ export function CoachView({
 
       <GlassCard className="p-4">
         <SectionHeader
-          title="Your recent requests"
-          subtitle="Latest 10 booking requests"
+          title="Your bookings"
+          subtitle="Status and schedule for your account only"
           right={
             <button
               onClick={() => void fetchBookings()}
@@ -367,6 +470,46 @@ export function CoachView({
                     {b.message ? (
                       <p className="text-xs text-slate-200/80 mt-2 whitespace-pre-wrap">{b.message}</p>
                     ) : null}
+                    <div className="mt-3 flex flex-col sm:flex-row gap-2">
+                      {(() => {
+                        const c = canCancelBooking(b)
+                        if (c.ok) {
+                          return (
+                            <AnimatedButton
+                              type="button"
+                              variant="secondary"
+                              size="sm"
+                              fullWidth
+                              disabled={mutatingBookingId === b.id}
+                              loading={mutatingBookingId === b.id}
+                              onClick={() => cancelBooking(b.id)}
+                            >
+                              Cancel
+                            </AnimatedButton>
+                          )
+                        }
+                        return null
+                      })()}
+                      {canDeleteBooking(b) ? (
+                        <AnimatedButton
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          fullWidth
+                          disabled={mutatingBookingId === b.id}
+                          loading={mutatingBookingId === b.id}
+                          onClick={() => deleteBooking(b.id)}
+                        >
+                          Delete
+                        </AnimatedButton>
+                      ) : null}
+                    </div>
+                    {(() => {
+                      const c = canCancelBooking(b)
+                      return !c.ok && c.reason ? (
+                        <div className="mt-2 text-[11px] text-amber-200/90">{c.reason}</div>
+                      ) : null
+                    })()}
                   </div>
                   <div className="shrink-0 text-[11px] text-slate-200/80 glass-soft px-2.5 py-1 rounded-full border border-white/10">
                     {b.status}
