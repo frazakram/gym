@@ -33,6 +33,10 @@ export function CoachView({
   const [coach, setCoach] = useState<Coach | null>(null)
   const [loadingCoach, setLoadingCoach] = useState(false)
 
+  const [userName, setUserName] = useState<string>('')
+  const [userEmail, setUserEmail] = useState<string>('')
+  const [userPhone, setUserPhone] = useState<string>('')
+
   const [preferredAt, setPreferredAt] = useState<string>('')
   const [message, setMessage] = useState<string>('')
   const [submitting, setSubmitting] = useState(false)
@@ -95,6 +99,9 @@ export function CoachView({
     setSubmitting(true)
     try {
       const body = {
+        userName: userName.trim(),
+        userEmail: userEmail.trim(),
+        userPhone: userPhone.trim(),
         preferredAt: preferredAt ? new Date(preferredAt).toISOString() : null,
         message: message.trim() ? message.trim() : null,
       }
@@ -110,7 +117,7 @@ export function CoachView({
       }
       if (!res.ok) throw new Error(data?.error || 'Failed to create booking')
 
-      showToast('Booking request submitted. We will contact you soon.', 'success')
+      showToast('Booking request submitted. Coach has been notified by email.', 'success')
       setPreferredAt('')
       setMessage('')
       await fetchBookings()
@@ -169,10 +176,42 @@ export function CoachView({
             <div className="rounded-xl border border-white/10 bg-white/5 p-3">
               <p className="text-sm font-semibold text-white">Request a session</p>
               <p className="text-xs text-slate-300/70 mt-1">
-                Share your preferred time and what you want to work on. We’ll contact you on your registered details.
+                Enter your contact info so the coach can reach you, plus your preferred time and goals.
               </p>
 
               <div className="mt-3 space-y-2">
+                <label className="block text-xs text-slate-300/70">Your name</label>
+                <input
+                  type="text"
+                  value={userName}
+                  onChange={(e) => setUserName(e.target.value)}
+                  placeholder="e.g. Harshit"
+                  className="w-full rounded-xl bg-slate-900/60 border border-white/10 px-3 py-2 text-sm text-white outline-none focus:ring-2 focus:ring-cyan-400/30"
+                />
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                  <div>
+                    <label className="block text-xs text-slate-300/70">Your email</label>
+                    <input
+                      type="email"
+                      value={userEmail}
+                      onChange={(e) => setUserEmail(e.target.value)}
+                      placeholder="you@example.com"
+                      className="w-full rounded-xl bg-slate-900/60 border border-white/10 px-3 py-2 text-sm text-white outline-none focus:ring-2 focus:ring-cyan-400/30"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs text-slate-300/70">Your phone</label>
+                    <input
+                      type="tel"
+                      value={userPhone}
+                      onChange={(e) => setUserPhone(e.target.value)}
+                      placeholder="9000000000"
+                      className="w-full rounded-xl bg-slate-900/60 border border-white/10 px-3 py-2 text-sm text-white outline-none focus:ring-2 focus:ring-cyan-400/30"
+                    />
+                  </div>
+                </div>
+
                 <label className="block text-xs text-slate-300/70">Preferred date & time</label>
                 <input
                   type="datetime-local"
@@ -194,13 +233,18 @@ export function CoachView({
                 <div className="pt-2">
                   <AnimatedButton
                     onClick={handleBook}
-                    disabled={submitting}
+                    disabled={submitting || !userName.trim() || !userEmail.trim() || !userPhone.trim()}
                     loading={submitting}
                     variant="primary"
                     fullWidth
                   >
                     Submit booking request
                   </AnimatedButton>
+                  {(!userName.trim() || !userEmail.trim() || !userPhone.trim()) ? (
+                    <p className="mt-2 text-xs text-slate-300/70">
+                      Please enter your name, email and phone so the coach can contact you.
+                    </p>
+                  ) : null}
                 </div>
               </div>
             </div>

@@ -236,6 +236,9 @@ export async function initializeDatabase() {
           coach_name TEXT NOT NULL,
           coach_phone TEXT NOT NULL,
           coach_email TEXT NOT NULL,
+          user_name TEXT,
+          user_email TEXT,
+          user_phone TEXT,
           preferred_at TIMESTAMP,
           message TEXT,
           status VARCHAR(32) NOT NULL DEFAULT 'pending',
@@ -243,6 +246,10 @@ export async function initializeDatabase() {
           updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         );
       `);
+      // Backward-compatible migrations
+      await client.query(`ALTER TABLE coach_bookings ADD COLUMN IF NOT EXISTS user_name TEXT;`);
+      await client.query(`ALTER TABLE coach_bookings ADD COLUMN IF NOT EXISTS user_email TEXT;`);
+      await client.query(`ALTER TABLE coach_bookings ADD COLUMN IF NOT EXISTS user_phone TEXT;`);
       await client.query(`CREATE INDEX IF NOT EXISTS idx_coach_bookings_user_created_at ON coach_bookings (user_id, created_at DESC);`);
 
       await client.query(`
@@ -1588,6 +1595,9 @@ export type CoachBooking = {
   coach_name: string;
   coach_phone: string;
   coach_email: string;
+  user_name: string | null;
+  user_email: string | null;
+  user_phone: string | null;
   preferred_at: Date | null;
   message: string | null;
   status: string;
@@ -1601,6 +1611,9 @@ export type AdminCoachBookingRow = {
   coach_name: string;
   coach_phone: string;
   coach_email: string;
+  user_name: string | null;
+  user_email: string | null;
+  user_phone: string | null;
   preferred_at: Date | null;
   message: string | null;
   status: string;
@@ -1619,17 +1632,21 @@ function safeDateOrNull(value: unknown): Date | null {
 export async function createCoachBooking(input: {
   userId: number;
   coach: { name: string; phone: string; email: string };
+  user?: { name?: string | null; email?: string | null; phone?: string | null };
   preferredAt?: string | null;
   message?: string | null;
 }): Promise<Pick<CoachBooking, "id" | "status" | "created_at">> {
   const preferredAt = safeDateOrNull(input.preferredAt ?? null);
   const message = typeof input.message === "string" && input.message.trim() ? input.message.trim() : null;
+  const user_name = typeof input.user?.name === "string" && input.user.name.trim() ? input.user.name.trim() : null;
+  const user_email = typeof input.user?.email === "string" && input.user.email.trim() ? input.user.email.trim() : null;
+  const user_phone = typeof input.user?.phone === "string" && input.user.phone.trim() ? input.user.phone.trim() : null;
 
   const res = await pool.query<Pick<CoachBooking, "id" | "status" | "created_at">>(
-    `INSERT INTO coach_bookings (user_id, coach_name, coach_phone, coach_email, preferred_at, message, status)
-     VALUES ($1, $2, $3, $4, $5, $6, 'pending')
+    `INSERT INTO coach_bookings (user_id, coach_name, coach_phone, coach_email, user_name, user_email, user_phone, preferred_at, message, status)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, 'pending')
      RETURNING id, status, created_at`,
-    [input.userId, input.coach.name, input.coach.phone, input.coach.email, preferredAt, message]
+    [input.userId, input.coach.name, input.coach.phone, input.coach.email, user_name, user_email, user_phone, preferredAt, message]
   );
 
   const row = res.rows?.[0];
@@ -1640,7 +1657,7 @@ export async function createCoachBooking(input: {
 export async function listCoachBookings(userId: number, limit = 10): Promise<CoachBooking[]> {
   const lim = Math.max(1, Math.min(50, Math.floor(limit)));
   const res = await pool.query<CoachBooking>(
-    `SELECT id, user_id, coach_name, coach_phone, coach_email, preferred_at, message, status, created_at
+    `SELECT id, user_id, coach_name, coach_phone, coach_email, user_name, user_email, user_phone, preferred_at, message, status, created_at
      FROM coach_bookings
      WHERE user_id = $1
      ORDER BY created_at DESC
@@ -1668,6 +1685,7 @@ export async function listAllCoachBookingsAdmin(opts?: {
   const res = await pool.query<AdminCoachBookingRow>(
     `
     SELECT cb.id, cb.user_id, u.username, cb.coach_name, cb.coach_phone, cb.coach_email,
+           cb.user_name, cb.user_email, cb.user_phone,
            cb.preferred_at, cb.message, cb.status, cb.created_at
     FROM coach_bookings cb
     LEFT JOIN users u ON u.id = cb.user_id

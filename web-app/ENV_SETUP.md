@@ -68,6 +68,39 @@ You can override defaults with:
 - `RATE_LIMIT_NOTES_PER_MINUTE` (default: 10)
 - `RATE_LIMIT_AUTH_PER_MINUTE_PER_IP` (default: 10)
 
+### 3.4) Personal Coach booking (email notifications)
+
+To notify the coach by email when a user books a session, configure SMTP.
+
+Required:
+
+- `SMTP_HOST`
+- `SMTP_PORT` (default: 587; use 465 for Gmail SSL)
+- `SMTP_SECURE` (`true` for port 465; otherwise omit/false)
+- `SMTP_USER`
+- `SMTP_PASS`
+- `SMTP_FROM` (example: `GymBro AI <no-reply@yourdomain.com>`)
+
+Optional:
+
+- `APP_BASE_URL` (example: `https://YOUR_DOMAIN`) — used to include an admin link inside the email.
+
+**Gmail example** (recommended for quick setup):
+- Set `SMTP_HOST=smtp.gmail.com`
+- Set `SMTP_PORT=465`
+- Set `SMTP_SECURE=true`
+- `SMTP_USER=your_gmail@gmail.com`
+- `SMTP_PASS=your_gmail_app_password` (create an “App Password” in Google Account security)
+- `SMTP_FROM=GymBro AI <your_gmail@gmail.com>`
+
+### 3.5) Admin access (manage bookings inside the app)
+
+Admin routes are protected server-side. Configure who is admin using ONE of:
+
+- `ADMIN_USER_IDS` (recommended): comma-separated numeric IDs, e.g. `ADMIN_USER_IDS=1,2`
+- `ADMIN_USER_ID`: single numeric ID, e.g. `ADMIN_USER_ID=1`
+- `ADMIN_USERNAMES` (fallback): comma-separated usernames, e.g. `ADMIN_USERNAMES=admin,harshit`
+
 ### 4) Local dev example (DO NOT COMMIT)
 
 ```
@@ -87,6 +120,16 @@ RATE_LIMIT_DIET_PER_MINUTE=2
 RATE_LIMIT_NOTES_PER_HOUR=30
 RATE_LIMIT_NOTES_PER_MINUTE=10
 RATE_LIMIT_AUTH_PER_MINUTE_PER_IP=10
+RATE_LIMIT_COACH_BOOK_PER_DAY=3
+RATE_LIMIT_COACH_BOOK_PER_MINUTE=1
+SMTP_HOST=smtp.gmail.com
+SMTP_PORT=465
+SMTP_SECURE=true
+SMTP_USER=your_gmail@gmail.com
+SMTP_PASS=your_app_password
+SMTP_FROM=GymBro AI <your_gmail@gmail.com>
+APP_BASE_URL=http://localhost:3000
+ADMIN_USER_IDS=1
 ```
 
 
