@@ -12,6 +12,19 @@ type Coach = {
   email: string
 }
 
+type CoachPublic = {
+  coach_id: number
+  display_name: string
+  bio: string | null
+  experience_years: number | null
+  certifications: string | null
+  specialties: string[] | null
+  languages: string[] | null
+  timezone: string | null
+  phone: string | null
+  email: string | null
+}
+
 type CoachBooking = {
   id: number
   coach_name: string
@@ -32,6 +45,9 @@ export function CoachView({
 }) {
   const [coach, setCoach] = useState<Coach | null>(null)
   const [loadingCoach, setLoadingCoach] = useState(false)
+
+  const [coaches, setCoaches] = useState<CoachPublic[]>([])
+  const [selectedCoachId, setSelectedCoachId] = useState<number | null>(null)
 
   const [userName, setUserName] = useState<string>('')
   const [userEmail, setUserEmail] = useState<string>('')
@@ -73,6 +89,21 @@ export function CoachView({
     }
   }
 
+  const fetchCoaches = async () => {
+    try {
+      const res = await fetch('/api/coaches?limit=50', { cache: 'no-store' })
+      const data = await res.json().catch(() => ({}))
+      if (!res.ok) return
+      const list = (data.coaches || []) as CoachPublic[]
+      setCoaches(list)
+      if (list.length > 0 && selectedCoachId == null) {
+        setSelectedCoachId(list[0]!.coach_id)
+      }
+    } catch {
+      // ignore
+    }
+  }
+
   const fetchBookings = async () => {
     setLoadingBookings(true)
     try {
@@ -91,6 +122,7 @@ export function CoachView({
 
   useEffect(() => {
     void fetchCoach()
+    void fetchCoaches()
     void fetchBookings()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
@@ -102,6 +134,7 @@ export function CoachView({
         userName: userName.trim(),
         userEmail: userEmail.trim(),
         userPhone: userPhone.trim(),
+        coachId: selectedCoachId,
         preferredAt: preferredAt ? new Date(preferredAt).toISOString() : null,
         message: message.trim() ? message.trim() : null,
       }
@@ -146,6 +179,51 @@ export function CoachView({
           <div className="mt-4 text-sm text-slate-300/70">Loading coach…</div>
         ) : coach ? (
           <div className="mt-4 space-y-3">
+            {/* Marketplace coaches (approved) */}
+            {coaches.length > 0 ? (
+              <div className="rounded-xl border border-white/10 bg-white/5 p-3">
+                <p className="text-sm font-semibold text-white">Choose a coach</p>
+                <p className="text-xs text-slate-300/70 mt-1">
+                  These coaches signed up and were approved by admin. If you don’t select, default coach is used.
+                </p>
+                <div className="mt-3">
+                  <select
+                    value={selectedCoachId ?? ''}
+                    onChange={(e) => setSelectedCoachId(e.target.value ? Number(e.target.value) : null)}
+                    className="w-full px-4 py-3 glass-soft rounded-2xl text-white ui-focus-ring border border-white/10 bg-transparent"
+                  >
+                    {coaches.map((c) => (
+                      <option key={c.coach_id} value={c.coach_id} className="bg-slate-900">
+                        {c.display_name}
+                        {c.experience_years != null ? ` • ${c.experience_years}y` : ''}
+                      </option>
+                    ))}
+                    <option value="" className="bg-slate-900">
+                      Use default coach
+                    </option>
+                  </select>
+                  {selectedCoachId ? (
+                    <div className="mt-2 text-xs text-slate-200/80">
+                      {(() => {
+                        const c = coaches.find((x) => x.coach_id === selectedCoachId)
+                        if (!c) return null
+                        return (
+                          <div className="space-y-1">
+                            <div>
+                              <span className="text-slate-300/70">Bio:</span> {c.bio || '—'}
+                            </div>
+                            <div>
+                              <span className="text-slate-300/70">Certifications:</span> {c.certifications || '—'}
+                            </div>
+                          </div>
+                        )
+                      })()}
+                    </div>
+                  ) : null}
+                </div>
+              </div>
+            ) : null}
+
             <div className="rounded-xl border border-white/10 bg-white/5 p-3">
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0">

@@ -931,6 +931,8 @@ export default function DashboardPage() {
             profile={profile}
             isAdmin={isAdmin}
             onOpenAdminCoachBookings={() => router.push('/admin/coach-bookings')}
+            onOpenCoachApply={() => router.push('/coach/apply')}
+            onOpenCoachPortal={() => router.push('/coach/portal')}
             name={name}
             age={age}
             weight={weight}
