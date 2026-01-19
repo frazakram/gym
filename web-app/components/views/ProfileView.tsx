@@ -42,6 +42,8 @@ interface ProfileViewProps {
   onResetRoutines: () => void
   onLogout: () => void
   loading: boolean
+  onOpenCoachApply?: () => void
+  onOpenCoachPortal?: () => void
 }
 
 export function ProfileView({
@@ -77,6 +79,8 @@ export function ProfileView({
   onResetRoutines,
   onLogout,
   loading,
+  onOpenCoachApply,
+  onOpenCoachPortal,
 }: ProfileViewProps) {
   const [advancedNutritionOpen, setAdvancedNutritionOpen] = useState(false)
   const [notesOpen, setNotesOpen] = useState(false)
@@ -179,12 +183,38 @@ export function ProfileView({
             >
               Open Coach Bookings Admin
             </AnimatedButton>
+            <div className="mt-2">
+              <AnimatedButton
+                type="button"
+                variant="ghost"
+                fullWidth
+                onClick={() => (window.location.href = '/admin/coach-approvals')}
+              >
+                Coach Approvals (Admin)
+              </AnimatedButton>
+            </div>
             <p className="mt-2 text-xs text-slate-300/70">
               You can update booking status: pending → confirmed/cancelled/completed.
             </p>
           </div>
         </GlassCard>
       ) : null}
+
+      {/* Coach tools */}
+      <GlassCard className="p-4">
+        <SectionHeader title="Coach" subtitle="Apply to be listed as a coach" />
+        <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-2">
+          <AnimatedButton type="button" variant="secondary" fullWidth onClick={onOpenCoachApply}>
+            Apply as coach
+          </AnimatedButton>
+          <AnimatedButton type="button" variant="ghost" fullWidth onClick={onOpenCoachPortal}>
+            Coach portal
+          </AnimatedButton>
+        </div>
+        <p className="mt-2 text-xs text-slate-300/70">
+          Open signup is enabled, but you must be approved by admin before users can see your profile.
+        </p>
+      </GlassCard>
 
       {/* Fitness */}
       <GlassCard className="p-4">

@@ -1,7 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { getSession } from "@/lib/auth";
-import { createCoachBooking, getPremiumStatus, initializeDatabase } from "@/lib/db";
+import {
+  createCoachBooking,
+  getApprovedCoachPublicById,
+  getPremiumStatus,
+  initializeDatabase,
+} from "@/lib/db";
 import { HARD_CODED_COACH } from "@/lib/coach";
 import { rateLimit, RATE_LIMITS } from "@/lib/rate-limit";
 import { sendEmail } from "@/lib/email";
@@ -12,6 +17,7 @@ const BodySchema = z.object({
   userName: z.string().min(2).max(80),
   userEmail: z.string().email(),
   userPhone: z.string().min(7).max(20),
+  coachId: z.coerce.number().int().positive().optional().nullable(),
   preferredAt: z.string().datetime().optional().nullable(),
   message: z.string().max(1000).optional().nullable(),
 });
@@ -72,10 +78,30 @@ export async function POST(req: NextRequest) {
     const raw = await req.json().catch(() => ({}));
     const body = BodySchema.parse(raw);
 
+    // Resolve coach: either selected approved coach, or fallback to the hard-coded coach.
+    const selectedCoach =
+      typeof body.coachId === "number" ? await getApprovedCoachPublicById(body.coachId) : null;
+    const coach = selectedCoach
+      ? {
+          id: String(selectedCoach.coach_id),
+          name: selectedCoach.display_name,
+          phone: selectedCoach.phone || "",
+          email: selectedCoach.email || "",
+        }
+      : HARD_CODED_COACH;
+
+    if (selectedCoach && (!coach.email || !coach.phone)) {
+      return NextResponse.json(
+        { error: "Selected coach is missing contact info. Ask the coach to update their profile." },
+        { status: 409 }
+      );
+    }
+
     const booking = await createCoachBooking({
       userId: session.userId,
-      coach: { name: HARD_CODED_COACH.name, phone: HARD_CODED_COACH.phone, email: HARD_CODED_COACH.email },
+      coach: { name: coach.name, phone: coach.phone, email: coach.email },
       user: { name: body.userName, email: body.userEmail, phone: body.userPhone },
+      coachId: selectedCoach ? selectedCoach.coach_id : null,
       preferredAt: body.preferredAt ?? null,
       message: body.message ?? null,
     });
@@ -132,7 +158,7 @@ export async function POST(req: NextRequest) {
       `.trim();
 
       await sendEmail({
-        to: HARD_CODED_COACH.email,
+        to: coach.email,
         subject,
         text,
         html,
@@ -145,7 +171,7 @@ export async function POST(req: NextRequest) {
         bookingId: booking.id,
         status: booking.status,
         createdAt: booking.created_at instanceof Date ? booking.created_at.toISOString() : String(booking.created_at),
-        coach: HARD_CODED_COACH,
+        coach,
       },
       { status: 200 }
     );
