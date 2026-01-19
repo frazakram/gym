@@ -194,29 +194,57 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    // Non-streaming mode (Consistency Check)
+    // Non-streaming mode (Consistency Check with Profile-based Cache Invalidation)
     if (typeof body.week_number === 'number' && body.regenerate !== true) {
       try {
-        const { getRoutineByWeek } = await import('@/lib/db');
-        const existing = await getRoutineByWeek(session.userId, body.week_number);
+        const { getRoutineByWeek, getProfile, hasSignificantProfileChange } = await import('@/lib/db');
+        const [existing, currentProfile] = await Promise.all([
+          getRoutineByWeek(session.userId, body.week_number),
+          getProfile(session.userId)
+        ]);
+        
         if (existing) {
-          return NextResponse.json({
-            routine: existing.routine_json,
-            source: 'db',
-            week_number: existing.week_number,
-            week_start_date: existing.week_start_date ?? null,
-            routine_id: existing.id // Return ID so front-end can track it
-          });
+          // Parse profile snapshot if it exists
+          let profileSnapshot = existing.profile_snapshot;
+          if (typeof profileSnapshot === 'string') {
+            try {
+              profileSnapshot = JSON.parse(profileSnapshot);
+            } catch {
+              profileSnapshot = null;
+            }
+          }
+          
+          // Check if profile has changed significantly
+          const profileChanged = hasSignificantProfileChange(profileSnapshot, currentProfile);
+          
+          if (!profileChanged) {
+            // Profile hasn't changed significantly, return cached routine
+            return NextResponse.json({
+              routine: existing.routine_json,
+              source: 'db',
+              week_number: existing.week_number,
+              week_start_date: existing.week_start_date ?? null,
+              routine_id: existing.id
+            });
+          } else {
+            // Profile changed significantly, log and continue to generate new routine
+            console.log(`Profile changed significantly for user ${session.userId}, regenerating routine for week ${body.week_number}`);
+          }
         }
       } catch (err) {
         console.warn('Failed to check existing routine, proceeding to generate:', err);
       }
     }
 
-    // AI Generation
+    // AI Generation (with equipment and body composition analysis)
+    const { getProfile } = await import('@/lib/db');
+    const userProfile = await getProfile(session.userId);
+    const equipmentAnalysis = userProfile?.gym_equipment_analysis || null;
+    const bodyAnalysis = userProfile?.body_composition_analysis || null;
+
     const routine =
       provider === 'OpenAI'
-        ? await generateRoutineOpenAI(input, historicalContextStr)
+        ? await generateRoutineOpenAI(input, historicalContextStr, equipmentAnalysis, bodyAnalysis)
         : await generateRoutine(input, historicalContextStr);
 
     if (!routine) {

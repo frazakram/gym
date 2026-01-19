@@ -77,10 +77,24 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    return NextResponse.json(
-      { message: 'User created successfully', userId: user.id },
+    // Auto-login the user after successful registration
+    const token = await createSession(user.id);
+
+    const res = NextResponse.json(
+      { message: 'User created successfully', userId: user.id, username },
       { status: 201 }
     );
+
+    // Set session cookie on the response
+    res.cookies.set('session', token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      maxAge: 60 * 60 * 24 * 7, // 7 days
+      path: '/',
+    });
+
+    return res;
   } catch (error) {
     console.error('Registration error:', error);
     return NextResponse.json(

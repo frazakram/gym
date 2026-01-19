@@ -30,7 +30,53 @@ export interface Profile {
     specific_food_preferences?: string; // Users specific inclusions/exclusions
     cooking_level?: 'Beginner' | 'Moderate' | 'Advanced';
     budget?: 'Low' | 'Standard' | 'High';
+    // Gym Equipment
+    gym_photos?: GymPhoto[];
+    gym_equipment_analysis?: GymEquipmentAnalysis;
+    // Body Photos (NEW)
+    body_photos?: BodyPhoto[];
+    body_composition_analysis?: BodyCompositionAnalysis;
 }
+
+export interface GymPhoto {
+    id: string;                          // UUID
+    base64: string;                      // Image data
+    content_type: string;                // 'image/jpeg', 'image/png', 'image/webp'
+    size_bytes: number;
+    uploaded_at: string;                 // ISO timestamp
+}
+
+export interface GymEquipmentAnalysis {
+    equipment_detected: string[];        // E.g., ["barbell", "dumbbells", "bench"]
+    gym_type: 'home' | 'commercial' | 'specialized';
+    space_assessment: 'limited' | 'moderate' | 'spacious';
+    unique_features?: string[];          // E.g., ["cable machine", "smith machine"]
+    limitations?: string[];              // E.g., ["no squat rack", "light dumbbells only"]
+    confidence_score: number;            // 0-1 from AI analysis
+    analyzed_at: string;                 // ISO timestamp
+}
+
+export interface BodyPhoto {
+    id: string;                          // UUID
+    base64: string;                      // Image data
+    content_type: string;                // 'image/jpeg', 'image/png', 'image/webp'
+    size_bytes: number;
+    uploaded_at: string;                 // ISO timestamp
+}
+
+export interface BodyCompositionAnalysis {
+    body_type: 'lean' | 'average' | 'athletic' | 'muscular' | 'endomorph';
+    estimated_body_fat_range?: string;   // E.g., "15-18%"
+    muscle_development: 'beginner' | 'intermediate' | 'advanced';
+    posture_notes?: string[];            // E.g., ["slight forward shoulder", "good spine alignment"]
+    focus_areas: string[];               // E.g., ["chest development", "core strength"]
+    realistic_timeline?: string;         // E.g., "3-6 months for visible muscle gain"
+    exercise_modifications?: string[];   // E.g., ["start with lighter weights", "focus on form"]
+    overall_assessment: string;          // Detailed AI summary
+    confidence_score: number;            // 0-1 from AI analysis
+    analyzed_at: string;                 // ISO timestamp
+}
+
 
 export interface Meal {
     name: string;

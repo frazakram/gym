@@ -189,6 +189,7 @@ export async function initializeDatabase() {
           week_start_date DATE,
           archived BOOLEAN NOT NULL DEFAULT FALSE,
           archived_at TIMESTAMP,
+          profile_snapshot JSONB,
           created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         );
       `);
@@ -196,10 +197,15 @@ export async function initializeDatabase() {
       await client.query(`ALTER TABLE routines ADD COLUMN IF NOT EXISTS week_start_date DATE;`);
       await client.query(`ALTER TABLE routines ADD COLUMN IF NOT EXISTS archived BOOLEAN;`);
       await client.query(`ALTER TABLE routines ADD COLUMN IF NOT EXISTS archived_at TIMESTAMP;`);
+      await client.query(`ALTER TABLE routines ADD COLUMN IF NOT EXISTS profile_snapshot JSONB;`);
       await client.query(`UPDATE routines SET archived = FALSE WHERE archived IS NULL;`);
       await client.query(`ALTER TABLE routines ALTER COLUMN archived SET DEFAULT FALSE;`);
       await client.query(`ALTER TABLE routines ALTER COLUMN archived SET NOT NULL;`);
       await client.query(`CREATE INDEX IF NOT EXISTS idx_routines_user_archived ON routines (user_id, archived);`);
+
+      // Gym equipment columns for profiles
+      await client.query(`ALTER TABLE profiles ADD COLUMN IF NOT EXISTS gym_photos JSONB;`);
+      await client.query(`ALTER TABLE profiles ADD COLUMN IF NOT EXISTS gym_equipment_analysis JSONB;`);
 
       await client.query(`
         CREATE TABLE IF NOT EXISTS diets (
@@ -516,7 +522,11 @@ export async function saveProfile(
   cooking_level?: Profile['cooking_level'],
 
   budget?: Profile['budget'],
-  name?: string
+  name?: string,
+  gym_photos?: any,
+  gym_equipment_analysis?: any,
+  body_photos?: any,
+  body_composition_analysis?: any
 ): Promise<Profile | null> {
   // Safe cast since we handle string to strict union transition
   const validLevel = level as Profile['level'];
@@ -565,7 +575,8 @@ export async function saveProfile(
              goal_duration = $11, 
              diet_type = $12, cuisine = $13, protein_powder = $14, meals_per_day = $15, allergies = $16,
              cooking_level = $17, budget = $18, protein_powder_amount = $19, specific_food_preferences = $20,
-             name = $21,
+             name = $21, gym_photos = $22, gym_equipment_analysis = $23,
+             body_photos = $24, body_composition_analysis = $25,
              updated_at = CURRENT_TIMESTAMP
          WHERE user_id = $1
          RETURNING *`,
@@ -591,7 +602,11 @@ export async function saveProfile(
           protein_powder_amount || null,
 
           specific_food_preferences?.trim() ? specific_food_preferences.trim() : null,
-          name?.trim() ? name.trim() : null
+          name?.trim() ? name.trim() : null,
+          gym_photos || null,
+          gym_equipment_analysis || null,
+          body_photos || null,
+          body_composition_analysis || null
         ]
       );
       revalidateTag('user-profile', undefined as any);
@@ -600,9 +615,10 @@ export async function saveProfile(
       const result = await pool.query<Profile>(
         `INSERT INTO profiles (
            user_id, age, weight, height, gender, goal, level, tenure, goal_weight, notes, goal_duration,
-           diet_type, cuisine, protein_powder, meals_per_day, allergies, cooking_level, budget, protein_powder_amount, specific_food_preferences, name
+           diet_type, cuisine, protein_powder, meals_per_day, allergies, cooking_level, budget, protein_powder_amount, specific_food_preferences, name,
+           gym_photos, gym_equipment_analysis, body_photos, body_composition_analysis
          )
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25)
          RETURNING *`,
         [
           userId,
@@ -624,7 +640,12 @@ export async function saveProfile(
           cooking_level || null,
           budget || null,
           protein_powder_amount || null,
-          specific_food_preferences?.trim() ? specific_food_preferences.trim() : null
+          specific_food_preferences?.trim() ? specific_food_preferences.trim() : null,
+          name?.trim() ? name.trim() : null,
+          gym_photos || null,
+          gym_equipment_analysis || null,
+          body_photos || null,
+          body_composition_analysis || null
         ]
       );
       revalidateTag('user-profile', undefined as any);
@@ -662,6 +683,50 @@ export async function saveProfile(
   }
 }
 
+// ============= PROFILE COMPARISON HELPER =============
+
+/**
+ * Checks if there are significant changes between two profiles that would require regenerating a routine.
+ * Returns true if the profiles are significantly different, false otherwise.
+ */
+export function hasSignificantProfileChange(oldProfile: any, newProfile: any): boolean {
+  if (!oldProfile || !newProfile) return true; // If no comparison possible, assume changed
+
+  // Check gender change (always significant)
+  if (oldProfile.gender !== newProfile.gender) return true;
+
+  // Check goal change (always significant)
+  if (oldProfile.goal !== newProfile.goal) return true;
+
+  // Check level change (always significant)
+  if (oldProfile.level !== newProfile.level) return true;
+
+  // Check age change (±1 year is significant)
+  const ageDiff = Math.abs((newProfile.age || 0) - (oldProfile.age || 0));
+  if (ageDiff >= 1) return true;
+
+  // Check weight change (±3kg is significant)
+  const weightDiff = Math.abs((newProfile.weight || 0) - (oldProfile.weight || 0));
+  if (weightDiff >= 3) return true;
+
+  // Check height change (±2cm is significant)
+  const heightDiff = Math.abs((newProfile.height || 0) - (oldProfile.height || 0));
+  if (heightDiff >= 2) return true;
+
+  // Check goal_weight change if both are set (±3kg is significant)
+  if (oldProfile.goal_weight && newProfile.goal_weight) {
+    const goalWeightDiff = Math.abs(newProfile.goal_weight - oldProfile.goal_weight);
+    if (goalWeightDiff >= 3) return true;
+  } else if ((oldProfile.goal_weight || null) !== (newProfile.goal_weight || null)) {
+    // If one was set and now isn't (or vice versa), that's significant
+    return true;
+  }
+
+  // No significant changes detected
+  return false;
+}
+
+
 // ============= ROUTINE & PROGRESS TRACKING =============
 
 // Mock Storage
@@ -676,14 +741,15 @@ export async function saveRoutine(
   userId: number,
   weekNumber: number,
   routine: any,
-  weekStartDate?: Date | string | null
+  weekStartDate?: Date | string | null,
+  profileSnapshot?: any
 ): Promise<number | null> {
   try {
     const result = await pool.query(
-      `INSERT INTO routines (user_id, week_number, routine_json, week_start_date, archived)
-       VALUES ($1, $2, $3, $4, FALSE)
+      `INSERT INTO routines (user_id, week_number, routine_json, week_start_date, archived, profile_snapshot)
+       VALUES ($1, $2, $3, $4, FALSE, $5)
        RETURNING id`,
-      [userId, weekNumber, JSON.stringify(routine), weekStartDate ?? null]
+      [userId, weekNumber, JSON.stringify(routine), weekStartDate ?? null, profileSnapshot ? JSON.stringify(profileSnapshot) : null]
     );
     return result.rows[0]?.id || null;
   } catch (error) {
@@ -697,6 +763,7 @@ export async function saveRoutine(
         week_number: weekNumber,
         routine_json: routine,
         week_start_date: weekStartDate ?? null,
+        profile_snapshot: profileSnapshot,
         created_at: new Date()
       });
       return mockId;
@@ -781,7 +848,7 @@ export async function getRoutinesByUser(
 export async function getRoutineByWeek(userId: number, weekNumber: number): Promise<any | null> {
   try {
     const result = await pool.query(
-      `SELECT id, user_id, week_number, routine_json, week_start_date, created_at
+      `SELECT id, user_id, week_number, routine_json, week_start_date, profile_snapshot, created_at
        FROM routines
        WHERE user_id = $1 AND week_number = $2
          AND archived = FALSE

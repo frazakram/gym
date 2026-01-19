@@ -113,6 +113,14 @@ SECURITY / PROMPT-INJECTION RULE (CRITICAL):
       : "None"
   }
   
+  Body Composition Context (if available):
+  ${input.profile.body_composition_analysis ? `
+  - Body Type: ${input.profile.body_composition_analysis.body_type}
+  - Muscle Development: ${input.profile.body_composition_analysis.muscle_development}
+  - Focus Areas: ${input.profile.body_composition_analysis.focus_areas.join(', ')}
+  - Est Body Fat: ${input.profile.body_composition_analysis.estimated_body_fat_range || 'N/A'}` : 'N/A'
+  }
+  
   Workout Routine Context:
   ${input.routine ? JSON.stringify(input.routine.days.map(d => ({ day: d.day, muscle_focus: d.day }))) : "No specific routine found. Assume general active lifestyle."}`;
 
