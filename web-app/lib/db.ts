@@ -611,9 +611,9 @@ export async function saveProfile(
         `INSERT INTO profiles (
            user_id, age, weight, height, gender, goal, level, tenure, goal_weight, notes, goal_duration,
            diet_type, cuisine, protein_powder, meals_per_day, allergies, cooking_level, budget, protein_powder_amount, specific_food_preferences, name,
-           gym_photos, gym_equipment_analysis
+           gym_photos, gym_equipment_analysis, body_photos, body_composition_analysis
          )
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25)
          RETURNING *`,
         [
           userId,
@@ -636,7 +636,11 @@ export async function saveProfile(
           budget || null,
           protein_powder_amount || null,
           specific_food_preferences?.trim() ? specific_food_preferences.trim() : null,
-          name?.trim() ? name.trim() : null
+          name?.trim() ? name.trim() : null,
+          gym_photos || null,
+          gym_equipment_analysis || null,
+          body_photos || null,
+          body_composition_analysis || null
         ]
       );
       revalidateTag('user-profile', undefined as any);
