@@ -5,6 +5,7 @@ import { useState, ReactNode } from 'react'
 interface AnimatedButtonProps {
   children: ReactNode
   onClick?: () => void
+  type?: 'button' | 'submit' | 'reset'
   variant?: 'primary' | 'secondary' | 'ghost'
   size?: 'sm' | 'md' | 'lg'
   disabled?: boolean
@@ -17,6 +18,7 @@ interface AnimatedButtonProps {
 export function AnimatedButton({
   children,
   onClick,
+  type,
   variant = 'primary',
   size = 'md',
   disabled = false,
@@ -57,6 +59,7 @@ export function AnimatedButton({
 
   return (
     <button
+      type={type}
       onClick={handleClick}
       disabled={disabled || loading}
       className={`

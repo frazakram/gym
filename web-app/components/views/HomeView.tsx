@@ -18,6 +18,7 @@ interface HomeViewProps {
   dayCompletions: Map<number, boolean>
   currentWeekNumber: number
   onNavigateToWorkout: () => void
+  onNavigateToCoach: () => void
   onGenerateRoutine: () => void
   onGenerateNextWeek: () => void
   generating: boolean
@@ -32,6 +33,7 @@ export function HomeView({
   dayCompletions,
   currentWeekNumber,
   onNavigateToWorkout,
+  onNavigateToCoach,
   onGenerateRoutine,
   onGenerateNextWeek,
   generating,
@@ -186,6 +188,41 @@ export function HomeView({
           </div>
         </GlassCard>
       ) : null}
+
+      {/* Personal coach (Premium/Trial) */}
+      <GlassCard className="p-4">
+        <SectionHeader
+          title="Personal Coach"
+          subtitle="Premium (trial allowed) • Book a 1:1 session"
+          right={
+            <div className="text-[11px] text-amber-200 bg-amber-400/10 border border-amber-400/20 inline-flex px-2.5 py-1 rounded-full">
+              Premium
+            </div>
+          }
+        />
+        <div className="mt-3">
+          <AnimatedButton
+            onClick={onNavigateToCoach}
+            variant="secondary"
+            fullWidth
+            icon={
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M8 10h.01M12 10h.01M16 10h.01M21 12c0 4.418-4.03 8-9 8a9.77 9.77 0 01-4-.8L3 20l1.24-3.72A7.89 7.89 0 013 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
+                />
+              </svg>
+            }
+          >
+            Book a coach
+          </AnimatedButton>
+          <p className="mt-2 text-xs text-slate-300/70">
+            You’ll be able to call/email the coach and submit a booking request from the next screen.
+          </p>
+        </div>
+      </GlassCard>
 
       {/* Manage plan (secondary actions) */}
       {routine && !viewingHistory ? (
