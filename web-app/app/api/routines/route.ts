@@ -20,8 +20,18 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    // Fetch current profile to store as snapshot
+    const { getProfile } = await import('@/lib/db');
+    const currentProfile = await getProfile(session.userId);
+
     // Use session userId instead of accepting it from client
-    const routineId = await saveRoutine(session.userId, weekNumber, routine, weekStartDate ?? null);
+    const routineId = await saveRoutine(
+      session.userId, 
+      weekNumber, 
+      routine, 
+      weekStartDate ?? null,
+      currentProfile // Store profile snapshot
+    );
 
     if (!routineId) {
       return NextResponse.json(

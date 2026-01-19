@@ -44,7 +44,8 @@ export async function PUT(request: NextRequest) {
     const { 
       age, weight, height, gender, goal, level, tenure, goal_weight, notes, goal_duration,
       diet_type, cuisine, protein_powder, meals_per_day, allergies,
-      cooking_level, budget, protein_powder_amount, specific_food_preferences, name
+      cooking_level, budget, protein_powder_amount, specific_food_preferences, name,
+      gym_photos, gym_equipment_analysis
     } = await request.json();
 
     // Avoid falsy checks; validate presence
@@ -76,7 +77,9 @@ export async function PUT(request: NextRequest) {
       specific_food_preferences,
       cooking_level,
       budget,
-      name
+      name,
+      gym_photos,
+      gym_equipment_analysis
     );
 
     return NextResponse.json({ profile }, { status: 200 });

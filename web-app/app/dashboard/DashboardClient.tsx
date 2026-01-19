@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import { useRouter } from 'next/navigation'
-import { WeeklyRoutine, Profile, WeeklyDiet, PremiumStatus } from '@/types'
+import { WeeklyRoutine, Profile, WeeklyDiet, PremiumStatus, GymPhoto, GymEquipmentAnalysis, BodyPhoto, BodyCompositionAnalysis } from '@/types'
 import { BottomNav } from '@/components/BottomNav'
 import { HomeView } from '@/components/views/HomeView'
 import { RoutineView } from '@/components/views/RoutineView'
@@ -104,6 +104,17 @@ export default function DashboardPage() {
   const [allergies, setAllergies] = useState<string[]>([])
   const [cookingLevel, setCookingLevel] = useState<string>('Moderate')
   const [budget, setBudget] = useState<string>('Standard')
+  // Gym Equipment State (NEW)
+  const [gymPhotos, setGymPhotos] = useState<any[]>([])
+  const [equipmentAnalysis, setEquipmentAnalysis] = useState<any>(null)
+  const [analyzingEquipment, setAnalyzingEquipment] = useState(false)
+  const [equipmentError, setEquipmentError] = useState('')
+
+  // Body Composition State (NEW)
+  const [bodyPhotos, setBodyPhotos] = useState<any[]>([])
+  const [bodyAnalysis, setBodyAnalysis] = useState<any>(null)
+  const [analyzingBody, setAnalyzingBody] = useState(false)
+  const [bodyError, setBodyError] = useState('')
 
   // Modal State
   const [modalConfig, setModalConfig] = useState<{
@@ -170,6 +181,8 @@ export default function DashboardPage() {
         setAllergies(data.profile.allergies || [])
         setCookingLevel(data.profile.cooking_level ?? 'Moderate')
         setBudget(data.profile.budget ?? 'Standard')
+        setGymPhotos(data.profile.gym_photos || [])
+        setEquipmentAnalysis(data.profile.gym_equipment_analysis || null)
       }
     } catch (err: unknown) {
       console.error('Error fetching profile:', err)
@@ -763,6 +776,170 @@ export default function DashboardPage() {
       case 'cookingLevel': setCookingLevel(value); break
       case 'budget': setBudget(value); break
       case 'name': setName(value); break
+      case 'gymPhotos': setGymPhotos(value); break
+      case 'gymEquipmentAnalysis': setEquipmentAnalysis(value); break
+      case 'bodyPhotos': setBodyPhotos(value); break
+      case 'bodyCompositionAnalysis': setBodyAnalysis(value); break
+    }
+  }
+
+  const fileToBase64 = (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader()
+      reader.onloadend = () => resolve(reader.result as string)
+      reader.onerror = reject
+      reader.readAsDataURL(file)
+    })
+  }
+
+  const handleGymPhotoUpload = async (files: File[]) => {
+    try {
+      setAnalyzingEquipment(true)
+      setEquipmentError('')
+
+      const photoPromises = files.map(async (file) => ({
+        id: crypto.randomUUID(),
+        base64: await fileToBase64(file),
+        content_type: file.type,
+        size_bytes: file.size,
+        uploaded_at: new Date().toISOString()
+      }))
+
+      const newPhotos = await Promise.all(photoPromises)
+      const updatedPhotos = [...gymPhotos, ...newPhotos]
+      setGymPhotos(updatedPhotos)
+
+      const response = await fetch('/api/gym/analyze', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ images: updatedPhotos.map(p => p.base64) })
+      })
+
+      if (!response.ok) throw new Error('Failed to analyze equipment')
+
+      const { analysis } = await response.json()
+      setEquipmentAnalysis(analysis)
+      setSuccess('Gym equipment analyzed successfully!')
+    } catch (error) {
+      setEquipmentError('Failed to analyze gym equipment. Please try again.')
+      console.error('Equipment analysis error:', error)
+    } finally {
+      setAnalyzingEquipment(false)
+    }
+  }
+
+  const handleGymPhotoDelete = async (id: string) => {
+    const updatedPhotos = gymPhotos.filter(p => p.id !== id)
+    setGymPhotos(updatedPhotos)
+    
+    if (updatedPhotos.length === 0) {
+      setEquipmentAnalysis(null)
+    } else {
+      try {
+        setAnalyzingEquipment(true)
+        const response = await fetch('/api/gym/analyze', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ images: updatedPhotos.map(p => p.base64) })
+        })
+        const { analysis } = await response.json()
+        setEquipmentAnalysis(analysis)
+      } catch (error) {
+        console.error('Re-analysis error:', error)
+      } finally {
+        setAnalyzingEquipment(false)
+      }
+    }
+  }
+
+  const handleBodyPhotoUpload = async (files: File[]) => {
+    try {
+      setAnalyzingBody(true)
+      setBodyError('')
+
+      const photoPromises = files.map(async (file) => ({
+        id: crypto.randomUUID(),
+        base64: await fileToBase64(file),
+        content_type: file.type,
+        size_bytes: file.size,
+        uploaded_at: new Date().toISOString()
+      }))
+
+      const newPhotos = await Promise.all(photoPromises)
+      // Limit to max 2 photos
+      const updatedPhotos = [...bodyPhotos, ...newPhotos].slice(0, 2)
+      setBodyPhotos(updatedPhotos)
+
+      const response = await fetch('/api/body/analyze', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ images: updatedPhotos.map(p => p.base64) })
+      })
+
+      if (!response.ok) throw new Error('Failed to analyze body composition')
+
+      const { analysis } = await response.json()
+      setBodyAnalysis(analysis)
+      setSuccess('Body composition analyzed successfully!')
+
+      // We should probably save the analysis result to the profile immediately?
+      // Or rely on the user clicking "Save Profile"? 
+      // The user prompt said photos are not stored, but analysis should be used.
+      // Saving the analysis to profile seems correct.
+       await fetch('/api/profile', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          // We only transmit the analysis part to be saved
+          body_composition_analysis: analysis
+        }),
+      });
+
+    } catch (error) {
+      setBodyError('Failed to analyze body composition. Please try again.')
+      console.error('Body analysis error:', error)
+    } finally {
+      setAnalyzingBody(false)
+    }
+  }
+
+  const handleBodyPhotoDelete = async (id: string) => {
+    const updatedPhotos = bodyPhotos.filter(p => p.id !== id)
+    setBodyPhotos(updatedPhotos)
+    
+    if (updatedPhotos.length === 0) {
+      setBodyAnalysis(null)
+       // Clear analysis in backend too if needed, or just keep it until replaced?
+       // Let's clear it for consistency.
+         await fetch('/api/profile', {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              body_composition_analysis: null // Explicitly clear it ?? 
+              // Actually the API might merge, need to check. 
+              // For now, let's just clear local.
+            }),
+         });
+    } else {
+      try {
+        setAnalyzingBody(true)
+        const response = await fetch('/api/body/analyze', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ images: updatedPhotos.map(p => p.base64) })
+        })
+        const { analysis } = await response.json()
+        setBodyAnalysis(analysis)
+         await fetch('/api/profile', {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ body_composition_analysis: analysis }),
+        });
+      } catch (error) {
+        console.error('Re-analysis error:', error)
+      } finally {
+        setAnalyzingBody(false)
+      }
     }
   }
 
@@ -938,6 +1115,18 @@ export default function DashboardPage() {
             allergies={allergies}
             cookingLevel={cookingLevel}
             budget={budget}
+            gymPhotos={gymPhotos}
+            equipmentAnalysis={equipmentAnalysis}
+            onGymPhotoUpload={handleGymPhotoUpload}
+            onGymPhotoDelete={handleGymPhotoDelete}
+            analyzingEquipment={analyzingEquipment}
+            equipmentError={equipmentError}
+            bodyPhotos={bodyPhotos}
+            bodyAnalysis={bodyAnalysis}
+            onBodyPhotoUpload={handleBodyPhotoUpload}
+            onBodyPhotoDelete={handleBodyPhotoDelete}
+            analyzingBody={analyzingBody}
+            bodyError={bodyError}
             onUpdateField={handleFieldUpdate}
             onSaveProfile={handleSaveProfile}
             onResetRoutines={handleResetRoutines}

@@ -1,12 +1,15 @@
 'use client'
 
 import { useMemo, useState } from 'react'
-import { Profile } from '@/types'
+import { Profile, GymPhoto, GymEquipmentAnalysis, BodyPhoto, BodyCompositionAnalysis } from '@/types'
 import { GlassCard } from '../ui/GlassCard'
 import { SectionHeader } from '../ui/SectionHeader'
 import { Chip } from '../ui/Chip'
 import { AnimatedButton, IconButton } from '../ui/AnimatedButton'
 import { Collapsible } from '../ui/Collapsible'
+import { ImageUploadCard } from '../ui/ImageUploadCard'
+import { EquipmentSummary } from '../ui/EquipmentSummary'
+import { BodyCompositionSummary } from '../ui/BodyCompositionSummary'
 
 interface ProfileViewProps {
   profile: (Profile & { username?: string }) | null
@@ -37,6 +40,20 @@ interface ProfileViewProps {
   cookingLevel: string
   budget: string
   resolvedHeightCm: number | null
+  // Gym Photos
+  gymPhotos?: GymPhoto[]
+  equipmentAnalysis?: GymEquipmentAnalysis | null
+  onGymPhotoUpload?: (files: File[]) => Promise<void>
+  onGymPhotoDelete?: (id: string) => void
+  analyzingEquipment?: boolean
+  equipmentError?: string
+  // Body Photos
+  bodyPhotos?: BodyPhoto[]
+  bodyAnalysis?: BodyCompositionAnalysis | null
+  onBodyPhotoUpload?: (files: File[]) => Promise<void>
+  onBodyPhotoDelete?: (id: string) => void
+  analyzingBody?: boolean
+  bodyError?: string
   onUpdateField: (field: string, value: unknown) => void
   onSaveProfile: (e: React.FormEvent) => void
   onResetRoutines: () => void
@@ -74,6 +91,18 @@ export function ProfileView({
   cookingLevel,
   budget,
   resolvedHeightCm,
+  gymPhotos = [],
+  equipmentAnalysis,
+  onGymPhotoUpload,
+  onGymPhotoDelete,
+  analyzingEquipment = false,
+  equipmentError,
+  bodyPhotos = [],
+  bodyAnalysis,
+  onBodyPhotoUpload,
+  onBodyPhotoDelete,
+  analyzingBody = false,
+  bodyError,
   onUpdateField,
   onSaveProfile,
   onResetRoutines,
@@ -427,6 +456,61 @@ export function ProfileView({
               className="w-full px-4 py-3 glass-soft rounded-2xl text-white placeholder:text-slate-400/70 ui-focus-ring border border-white/10 resize-none"
             />
           </Collapsible>
+        </div>
+      </GlassCard>
+
+      {/* Gym Photos */}
+      <GlassCard className="p-4">
+        <SectionHeader 
+          title="Gym Photos" 
+          subtitle="Upload photos to detect available equipment" 
+        />
+        <div className="mt-4">
+          {onGymPhotoUpload && onGymPhotoDelete && (
+            <ImageUploadCard
+              images={gymPhotos}
+              maxImages={5}
+              maxSizeMB={5}
+              onUpload={onGymPhotoUpload}
+              onDelete={onGymPhotoDelete}
+              loading={analyzingEquipment}
+              error={equipmentError}
+            />
+          )}
+          {equipmentAnalysis && (
+            <EquipmentSummary analysis={equipmentAnalysis} />
+          )}
+        </div>
+      </GlassCard>
+
+      {/* Body Analysis */}
+      <GlassCard className="p-4">
+        <SectionHeader 
+          title="Body Analysis" 
+          subtitle="Optional: Upload photos for personalized physique analysis" 
+        />
+        <div className="mt-4">
+          <div className="bg-blue-500/10 border border-blue-500/20 rounded-xl p-3 mb-4">
+            <p className="text-xs text-blue-200">
+              <span className="font-bold">Privacy Note:</span> Your photos are processed securely by AI to analyze posture and body composition, then immediately discarded. They are <span className="underline">never saved</span> to our servers.
+            </p>
+          </div>
+          
+          {onBodyPhotoUpload && onBodyPhotoDelete && (
+            <ImageUploadCard
+              images={bodyPhotos}
+              maxImages={2}
+              maxSizeMB={5}
+              onUpload={onBodyPhotoUpload}
+              onDelete={onBodyPhotoDelete}
+              loading={analyzingBody}
+              error={bodyError}
+            />
+          )}
+
+          {bodyAnalysis && (
+            <BodyCompositionSummary analysis={bodyAnalysis} />
+          )}
         </div>
       </GlassCard>
 

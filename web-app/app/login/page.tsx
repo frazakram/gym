@@ -67,10 +67,8 @@ export default function LoginPage() {
       if (isLogin) {
         router.push('/dashboard')
       } else {
-        setError('')
-        setIsLogin(true)
-        setPassword('')
-        alert('Account created! Please log in.')
+        // User is now auto-logged in after registration, redirect to dashboard
+        router.push('/dashboard')
       }
     } catch (err) {
       setError('Network error. Please try again.')
