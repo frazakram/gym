@@ -524,7 +524,9 @@ export async function saveProfile(
   budget?: Profile['budget'],
   name?: string,
   gym_photos?: any,
-  gym_equipment_analysis?: any
+  gym_equipment_analysis?: any,
+  body_photos?: any,
+  body_composition_analysis?: any
 ): Promise<Profile | null> {
   // Safe cast since we handle string to strict union transition
   const validLevel = level as Profile['level'];
@@ -574,6 +576,7 @@ export async function saveProfile(
              diet_type = $12, cuisine = $13, protein_powder = $14, meals_per_day = $15, allergies = $16,
              cooking_level = $17, budget = $18, protein_powder_amount = $19, specific_food_preferences = $20,
              name = $21, gym_photos = $22, gym_equipment_analysis = $23,
+             body_photos = $24, body_composition_analysis = $25,
              updated_at = CURRENT_TIMESTAMP
          WHERE user_id = $1
          RETURNING *`,
@@ -601,7 +604,9 @@ export async function saveProfile(
           specific_food_preferences?.trim() ? specific_food_preferences.trim() : null,
           name?.trim() ? name.trim() : null,
           gym_photos || null,
-          gym_equipment_analysis || null
+          gym_equipment_analysis || null,
+          body_photos || null,
+          body_composition_analysis || null
         ]
       );
       revalidateTag('user-profile', undefined as any);
