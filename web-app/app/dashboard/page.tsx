@@ -34,6 +34,7 @@ export default function DashboardPage() {
 
   // Admin
   const [isAdmin, setIsAdmin] = useState(false)
+  const [adminChecked, setAdminChecked] = useState(false)
 
   // Toast notifications
   interface ToastItem {
@@ -76,6 +77,8 @@ export default function DashboardPage() {
     } catch {
       setIsAdmin(false)
       return false
+    } finally {
+      setAdminChecked(true)
     }
   }, [])
 
@@ -250,6 +253,22 @@ export default function DashboardPage() {
     fetchPremiumStatus()
     fetchAdminStatus()
   }, [fetchProfile, fetchLatestRoutine, fetchLatestDiet, fetchPremiumStatus, fetchAdminStatus])
+
+  // Force admins into admin-only UI
+  useEffect(() => {
+    if (!adminChecked) return
+    if (isAdmin) {
+      router.replace('/admin/coach-bookings')
+    }
+  }, [adminChecked, isAdmin, router])
+
+  if (adminChecked && isAdmin) {
+    return (
+      <div className="min-h-screen flex items-center justify-center text-slate-200/80">
+        Redirecting to Admin…
+      </div>
+    )
+  }
 
   useEffect(() => {
     const onFocus = () => fetchPremiumStatus()

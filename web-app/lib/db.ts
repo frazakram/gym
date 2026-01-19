@@ -1787,6 +1787,50 @@ export async function updateCoachBookingStatusAdmin(input: {
   return (res.rowCount ?? 0) > 0;
 }
 
+export async function getCoachBookingByIdAdmin(id: number): Promise<{
+  id: number;
+  user_id: number;
+  coach_id: number | null;
+  coach_name: string;
+  coach_phone: string;
+  coach_email: string;
+  user_name: string | null;
+  user_email: string | null;
+  user_phone: string | null;
+  preferred_at: Date | null;
+  message: string | null;
+  status: string;
+  created_at: Date;
+} | null> {
+  const bid = Math.floor(Number(id));
+  if (!Number.isFinite(bid) || bid <= 0) return null;
+  const res = await pool.query<any>(
+    `SELECT id, user_id, coach_id, coach_name, coach_phone, coach_email, user_name, user_email, user_phone,
+            preferred_at, message, status, created_at
+     FROM coach_bookings
+     WHERE id = $1
+     LIMIT 1`,
+    [bid]
+  );
+  const r = res.rows?.[0];
+  if (!r) return null;
+  return {
+    id: Number(r.id),
+    user_id: Number(r.user_id),
+    coach_id: r.coach_id != null ? Number(r.coach_id) : null,
+    coach_name: String(r.coach_name),
+    coach_phone: String(r.coach_phone),
+    coach_email: String(r.coach_email),
+    user_name: r.user_name ?? null,
+    user_email: r.user_email ?? null,
+    user_phone: r.user_phone ?? null,
+    preferred_at: r.preferred_at ? (r.preferred_at instanceof Date ? r.preferred_at : new Date(String(r.preferred_at))) : null,
+    message: r.message ?? null,
+    status: String(r.status || ""),
+    created_at: r.created_at instanceof Date ? r.created_at : new Date(String(r.created_at)),
+  };
+}
+
 // ============= COACH MARKETPLACE (SIGNUP + APPROVAL) =============
 
 export type CoachStatus = "pending" | "approved" | "rejected";
@@ -1839,6 +1883,15 @@ export async function getCoachApplicationByUserId(userId: number): Promise<Coach
     [userId]
   );
   return (res.rows?.[0] as any) ?? null;
+}
+
+export async function getApprovedCoachIdByUserId(userId: number): Promise<number | null> {
+  const res = await pool.query<{ id: number }>(
+    `SELECT id FROM coaches WHERE user_id = $1 AND status = 'approved' LIMIT 1`,
+    [userId]
+  );
+  const id = Number(res.rows?.[0]?.id);
+  return Number.isFinite(id) && id > 0 ? id : null;
 }
 
 export async function createCoachApplication(input: {
@@ -2046,4 +2099,41 @@ export async function setCoachApplicationStatusAdmin(input: {
     [id, status, notes]
   );
   return (res.rowCount ?? 0) > 0;
+}
+
+export async function listAssignedCoachBookings(coachId: number, limit = 50): Promise<Array<{
+  id: number;
+  coach_id: number;
+  coach_name: string;
+  status: string;
+  preferred_at: Date | null;
+  message: string | null;
+  user_name: string | null;
+  user_email: string | null;
+  user_phone: string | null;
+  created_at: Date;
+}>> {
+  const cid = Math.floor(Number(coachId));
+  if (!Number.isFinite(cid) || cid <= 0) return [];
+  const lim = Math.max(1, Math.min(100, Math.floor(limit)));
+  const res = await pool.query<any>(
+    `SELECT id, coach_id, coach_name, status, preferred_at, message, user_name, user_email, user_phone, created_at
+     FROM coach_bookings
+     WHERE coach_id = $1
+     ORDER BY created_at DESC
+     LIMIT $2`,
+    [cid, lim]
+  );
+  return res.rows.map((r: any) => ({
+    id: Number(r.id),
+    coach_id: Number(r.coach_id),
+    coach_name: String(r.coach_name),
+    status: String(r.status),
+    preferred_at: r.preferred_at ? (r.preferred_at instanceof Date ? r.preferred_at : new Date(String(r.preferred_at))) : null,
+    message: r.message ?? null,
+    user_name: r.user_name ?? null,
+    user_email: r.user_email ?? null,
+    user_phone: r.user_phone ?? null,
+    created_at: r.created_at instanceof Date ? r.created_at : new Date(String(r.created_at)),
+  }));
 }
