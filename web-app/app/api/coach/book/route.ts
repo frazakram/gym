@@ -107,12 +107,14 @@ export async function POST(req: NextRequest) {
     });
 
     // Notify coach via email (real SMTP)
+    // IMPORTANT: Do NOT include user phone/email until booking is confirmed by admin.
     {
       const preferred =
         body.preferredAt != null
           ? new Date(body.preferredAt).toLocaleString()
           : "Not specified";
       const appBase = (process.env.APP_BASE_URL || "").replace(/\/+$/, "");
+      // Coach may not be admin; keep link optional and generic.
       const adminLink = appBase ? `${appBase}/admin/coach-bookings` : "";
 
       const subject = `New coach booking request #${booking.id}`;
@@ -122,10 +124,10 @@ export async function POST(req: NextRequest) {
         `Booking ID: ${booking.id}`,
         `User ID: ${session.userId}`,
         `User Name: ${body.userName}`,
-        `User Email: ${body.userEmail}`,
-        `User Phone: ${body.userPhone}`,
         `Preferred time: ${preferred}`,
         body.message ? `Message: ${body.message}` : `Message: (none)`,
+        ``,
+        `NOTE: User contact details are shared after admin confirms the booking.`,
         adminLink ? `` : ``,
         adminLink ? `Admin page: ${adminLink}` : ``,
       ]
@@ -140,10 +142,11 @@ export async function POST(req: NextRequest) {
             <tr><td style="padding: 6px 0; color:#64748b;">Booking ID</td><td style="padding: 6px 0;"><b>#${booking.id}</b></td></tr>
             <tr><td style="padding: 6px 0; color:#64748b;">User ID</td><td style="padding: 6px 0;">${session.userId}</td></tr>
             <tr><td style="padding: 6px 0; color:#64748b;">Name</td><td style="padding: 6px 0;">${escapeHtml(body.userName)}</td></tr>
-            <tr><td style="padding: 6px 0; color:#64748b;">Email</td><td style="padding: 6px 0;"><a href="mailto:${encodeURIComponent(body.userEmail)}">${escapeHtml(body.userEmail)}</a></td></tr>
-            <tr><td style="padding: 6px 0; color:#64748b;">Phone</td><td style="padding: 6px 0;"><a href="tel:${escapeHtml(body.userPhone)}">${escapeHtml(body.userPhone)}</a></td></tr>
             <tr><td style="padding: 6px 0; color:#64748b;">Preferred time</td><td style="padding: 6px 0;">${escapeHtml(preferred)}</td></tr>
           </table>
+          <p style="margin-top:12px; color:#94a3b8; font-size:12px;">
+            Note: User contact details are shared after admin confirms the booking.
+          </p>
           ${
             body.message
               ? `<div style="margin-top:12px;"><div style="color:#64748b; font-size:12px;">Message</div><div style="white-space:pre-wrap; background:#0b1220; color:#e2e8f0; border:1px solid rgba(255,255,255,0.08); padding:12px; border-radius:12px;">${escapeHtml(body.message)}</div></div>`
@@ -157,13 +160,18 @@ export async function POST(req: NextRequest) {
         </div>
       `.trim();
 
-      await sendEmail({
-        to: coach.email,
-        subject,
-        text,
-        html,
-        replyTo: body.userEmail,
-      });
+      // Do not set replyTo to user's email before confirmation (privacy).
+      try {
+        await sendEmail({
+          to: coach.email,
+          subject,
+          text,
+          html,
+        });
+      } catch (e) {
+        console.error("Coach booking email failed:", e instanceof Error ? e.message : String(e));
+        // Booking should still succeed even if notification fails.
+      }
     }
 
     return NextResponse.json(

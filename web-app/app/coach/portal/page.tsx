@@ -23,6 +23,20 @@ export default function CoachPortalPage() {
   const [phone, setPhone] = useState('')
   const [email, setEmail] = useState('')
 
+  const [bookings, setBookings] = useState<
+    Array<{
+      id: number
+      status: string
+      preferred_at: string | null
+      message: string | null
+      user_name: string | null
+      user_email: string | null
+      user_phone: string | null
+      created_at: string
+    }>
+  >([])
+  const [loadingBookings, setLoadingBookings] = useState(false)
+
   const fetchMe = async () => {
     try {
       const res = await fetch('/api/coach/me', { cache: 'no-store' })
@@ -55,6 +69,22 @@ export default function CoachPortalPage() {
     void fetchMe()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
+
+  const fetchBookings = async () => {
+    setLoadingBookings(true)
+    try {
+      const res = await fetch('/api/coach/assigned-bookings?limit=50', { cache: 'no-store' })
+      const data = await res.json().catch(() => ({}))
+      if (res.ok) setBookings((data.bookings || []) as any)
+    } finally {
+      setLoadingBookings(false)
+    }
+  }
+
+  useEffect(() => {
+    if (status === 'approved') void fetchBookings()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [status])
 
   const save = async () => {
     setLoading(true)
@@ -222,6 +252,62 @@ export default function CoachPortalPage() {
                   </AnimatedButton>
                 </div>
               </div>
+            </div>
+          </GlassCard>
+        ) : null}
+
+        {status === 'approved' ? (
+          <GlassCard className="p-4">
+            <SectionHeader title="Assigned bookings" subtitle="User contact appears only after admin confirms" />
+            {loadingBookings && bookings.length === 0 ? (
+              <div className="mt-3 text-sm text-slate-300/70">Loading…</div>
+            ) : bookings.length === 0 ? (
+              <div className="mt-3 text-sm text-slate-300/70">No bookings yet.</div>
+            ) : (
+              <div className="mt-3 space-y-2">
+                {bookings.map((b) => (
+                  <div key={b.id} className="rounded-xl border border-white/10 bg-white/5 p-3">
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="min-w-0">
+                        <p className="text-sm font-semibold text-white">
+                          Booking #{b.id}{' '}
+                          <span className="text-slate-300/70 font-normal">• {b.status}</span>
+                        </p>
+                        <p className="text-xs text-slate-300/70 mt-1">
+                          Preferred:{' '}
+                          {b.preferred_at ? new Date(b.preferred_at).toLocaleString() : 'Not specified'}
+                        </p>
+                        {b.message ? (
+                          <p className="text-xs text-slate-200/80 mt-2 whitespace-pre-wrap">{b.message}</p>
+                        ) : null}
+                        <div className="mt-2 text-xs text-slate-200/80">
+                          <div>
+                            <span className="text-slate-300/70">User:</span> {b.user_name || '—'}
+                          </div>
+                          <div>
+                            <span className="text-slate-300/70">Email:</span> {b.user_email || 'Hidden until confirmed'}
+                          </div>
+                          <div>
+                            <span className="text-slate-300/70">Phone:</span> {b.user_phone || 'Hidden until confirmed'}
+                          </div>
+                        </div>
+                      </div>
+                      <div className="shrink-0 text-[11px] text-slate-200/80 glass-soft px-2.5 py-1 rounded-full border border-white/10">
+                        {b.status}
+                      </div>
+                    </div>
+                    <div className="mt-2 text-[11px] text-slate-300/60">
+                      Created: {new Date(b.created_at).toLocaleString()}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            <div className="mt-3">
+              <AnimatedButton type="button" variant="secondary" fullWidth onClick={() => void fetchBookings()}>
+                Refresh bookings
+              </AnimatedButton>
             </div>
           </GlassCard>
         ) : null}
