@@ -65,10 +65,11 @@ export default function LoginPage() {
       }
 
       if (isLogin) {
-        router.push('/dashboard')
+        // Use replace to remove login page from history
+        router.replace('/dashboard')
       } else {
         // User is now auto-logged in after registration, redirect to dashboard
-        router.push('/dashboard')
+        router.replace('/dashboard')
       }
     } catch (err) {
       setError('Network error. Please try again.')

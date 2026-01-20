@@ -246,7 +246,14 @@ export default function DashboardPage() {
     fetchLatestRoutine()
     fetchLatestDiet()
     fetchPremiumStatus()
+    
+    // Clear browser back history to login page on dashboard mount
+    // This prevents back button from going to login/Google OAuth pages
+    if (typeof window !== 'undefined') {
+      window.history.replaceState(null, '', window.location.href)
+    }
   }, [fetchProfile, fetchLatestRoutine, fetchLatestDiet, fetchPremiumStatus])
+
 
   useEffect(() => {
     const onFocus = () => fetchPremiumStatus()
