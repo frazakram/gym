@@ -39,6 +39,7 @@ export async function setSessionCookie(token: string) {
     secure: process.env.NODE_ENV === 'production',
     sameSite: 'lax',
     maxAge: 60 * 60 * 24 * 7, // 7 days
+    expires: new Date(Date.now() + 1000 * 60 * 60 * 24 * 7),
     path: '/',
   });
 }
