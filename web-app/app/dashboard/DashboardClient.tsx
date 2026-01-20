@@ -14,6 +14,7 @@ import { CoachView } from '@/components/views/CoachView'
 import { Sidebar } from '@/components/Sidebar'
 import { Toast, ToastType } from '@/components/ui/Toast'
 import { UpgradeModal } from '@/components/ui/UpgradeModal'
+import { compressImage } from '@/lib/image-utils'
 
 export default function DashboardPage() {
   const router = useRouter()
@@ -797,13 +798,19 @@ export default function DashboardPage() {
       setAnalyzingEquipment(true)
       setEquipmentError('')
 
-      const photoPromises = files.map(async (file) => ({
-        id: crypto.randomUUID(),
-        base64: await fileToBase64(file),
-        content_type: file.type,
-        size_bytes: file.size,
-        uploaded_at: new Date().toISOString()
-      }))
+      const photoPromises = files.map(async (file) => {
+        const compressedFile = await compressImage(file).catch(err => {
+          console.warn('Compression failed, using original:', err)
+          return file
+        })
+        return {
+          id: crypto.randomUUID(),
+          base64: await fileToBase64(compressedFile),
+          content_type: compressedFile.type,
+          size_bytes: compressedFile.size,
+          uploaded_at: new Date().toISOString()
+        }
+      })
 
       const newPhotos = await Promise.all(photoPromises)
       const updatedPhotos = [...gymPhotos, ...newPhotos]
@@ -857,13 +864,19 @@ export default function DashboardPage() {
       setAnalyzingBody(true)
       setBodyError('')
 
-      const photoPromises = files.map(async (file) => ({
-        id: crypto.randomUUID(),
-        base64: await fileToBase64(file),
-        content_type: file.type,
-        size_bytes: file.size,
-        uploaded_at: new Date().toISOString()
-      }))
+      const photoPromises = files.map(async (file) => {
+        const compressedFile = await compressImage(file).catch(err => {
+          console.warn('Compression failed, using original:', err)
+          return file
+        })
+        return {
+          id: crypto.randomUUID(),
+          base64: await fileToBase64(compressedFile),
+          content_type: compressedFile.type,
+          size_bytes: compressedFile.size,
+          uploaded_at: new Date().toISOString()
+        }
+      })
 
       const newPhotos = await Promise.all(photoPromises)
       // Limit to max 2 photos
