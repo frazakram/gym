@@ -72,6 +72,8 @@ export async function POST(request: NextRequest) {
       level,
       tenure,
       goal_weight,
+      goal_duration,
+      session_duration,
       notes,
       model_provider,
       api_key,
@@ -144,10 +146,23 @@ export async function POST(request: NextRequest) {
       level,
       tenure,
       goal_weight,
+      goal_duration,
+      session_duration: typeof session_duration === 'number' ? session_duration : undefined,
       notes,
       model_provider,
       apiKey: keyFromClient || undefined, // Passed from client (optional if server env has key)
     };
+
+    // Fetch equipment and body analysis upfront for both streaming and non-streaming modes
+    const { getProfile } = await import('@/lib/db');
+    const userProfile = await getProfile(session.userId);
+    const equipmentAnalysis = userProfile?.gym_equipment_analysis || null;
+    const bodyAnalysis = userProfile?.body_composition_analysis || null;
+
+    // Also use profile session_duration if not provided in request
+    if (!input.session_duration && userProfile?.session_duration) {
+      input.session_duration = userProfile.session_duration;
+    }
 
     // Streaming (SSE) mode for progress UI
     if (stream === true) {
@@ -169,8 +184,8 @@ export async function POST(request: NextRequest) {
 
             const routine =
               provider === 'OpenAI'
-                ? await generateRoutineOpenAI(input, historicalContextStr)
-                : await generateRoutine(input, historicalContextStr);
+                ? await generateRoutineOpenAI(input, historicalContextStr, equipmentAnalysis, bodyAnalysis)
+                : await generateRoutine(input, historicalContextStr, equipmentAnalysis, bodyAnalysis);
 
             clearInterval(tick);
             controller.enqueue(sse('progress', { pct: 100, stage: 'Done' }));
@@ -202,7 +217,7 @@ export async function POST(request: NextRequest) {
           getRoutineByWeek(session.userId, body.week_number),
           getProfile(session.userId)
         ]);
-        
+
         if (existing) {
           // Parse profile snapshot if it exists
           let profileSnapshot = existing.profile_snapshot;
@@ -213,10 +228,10 @@ export async function POST(request: NextRequest) {
               profileSnapshot = null;
             }
           }
-          
+
           // Check if profile has changed significantly
           const profileChanged = hasSignificantProfileChange(profileSnapshot, currentProfile);
-          
+
           if (!profileChanged) {
             // Profile hasn't changed significantly, return cached routine
             return NextResponse.json({
@@ -236,16 +251,11 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // AI Generation (with equipment and body composition analysis)
-    const { getProfile } = await import('@/lib/db');
-    const userProfile = await getProfile(session.userId);
-    const equipmentAnalysis = userProfile?.gym_equipment_analysis || null;
-    const bodyAnalysis = userProfile?.body_composition_analysis || null;
-
+    // AI Generation (with equipment and body composition analysis already fetched above)
     const routine =
       provider === 'OpenAI'
         ? await generateRoutineOpenAI(input, historicalContextStr, equipmentAnalysis, bodyAnalysis)
-        : await generateRoutine(input, historicalContextStr);
+        : await generateRoutine(input, historicalContextStr, equipmentAnalysis, bodyAnalysis);
 
     if (!routine) {
       return NextResponse.json(

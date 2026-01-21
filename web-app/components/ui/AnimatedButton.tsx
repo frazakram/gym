@@ -46,8 +46,8 @@ export function AnimatedButton({
   }
 
   const variantClasses = {
-    primary: 'btn-primary text-white',
-    secondary: 'btn-secondary',
+    primary: 'btn-primary text-white hover:shadow-[0_0_25px_rgba(16,185,129,0.35)]',
+    secondary: 'btn-secondary hover:shadow-[0_0_20px_rgba(96,165,250,0.25)]',
     ghost: 'glass-soft text-slate-100 hover:text-white hover:bg-white/10'
   }
 
