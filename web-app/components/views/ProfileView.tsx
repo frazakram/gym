@@ -28,6 +28,7 @@ interface ProfileViewProps {
   tenure: string
   goalWeight: number | ''
   goalDuration: string
+  sessionDuration: number | ''
   notes: string
   // Diet Props
   dietType: string[]
@@ -80,6 +81,7 @@ export function ProfileView({
   tenure,
   goalWeight,
   goalDuration,
+  sessionDuration,
   notes,
   dietType,
   cuisine,
@@ -147,7 +149,7 @@ export function ProfileView({
 
   // Get avatar emoji based on gender
   const getAvatarEmoji = () => {
-    switch(gender) {
+    switch (gender) {
       case 'Male': return '👨'
       case 'Female': return '👩'
       case 'Non-binary': return '🧑'
@@ -291,43 +293,43 @@ export function ProfileView({
 
         <div className="mt-4 space-y-3">
           <div>
-             <label className="block text-xs text-slate-300/70 mb-2">Display Name (optional)</label>
-             <input
-               type="text"
-               value={name}
-               onChange={(e) => onUpdateField('name', e.target.value)}
-               placeholder={profile?.username?.split('@')[0] || 'Your Name'}
-               className="w-full px-4 py-3 glass-soft rounded-2xl text-white placeholder:text-slate-400/70 ui-focus-ring border border-white/10"
-             />
+            <label className="block text-xs text-slate-300/70 mb-2">Display Name (optional)</label>
+            <input
+              type="text"
+              value={name}
+              onChange={(e) => onUpdateField('name', e.target.value)}
+              placeholder={profile?.username?.split('@')[0] || 'Your Name'}
+              className="w-full px-4 py-3 glass-soft rounded-2xl text-white placeholder:text-slate-400/70 ui-focus-ring border border-white/10"
+            />
           </div>
           <div className="grid grid-cols-2 gap-3">
-          <div>
-            <label className="block text-xs text-slate-300/70 mb-2">Age</label>
-            <input
-              inputMode="numeric"
-              type="number"
-              value={age}
-              onChange={(e) => onUpdateField('age', e.target.value === '' ? '' : Number(e.target.value))}
-              min="16"
-              max="100"
-              className="w-full px-4 py-3 glass-soft rounded-2xl text-white ui-focus-ring border border-white/10"
-            />
-          </div>
-          <div>
-            <label className="block text-xs text-slate-300/70 mb-2">Weight (kg)</label>
-            <input
-              inputMode="decimal"
-              type="number"
-              value={weight}
-              onChange={(e) => onUpdateField('weight', e.target.value === '' ? '' : Number(e.target.value))}
-              min="30"
-              max="300"
-              step="0.1"
-              className="w-full px-4 py-3 glass-soft rounded-2xl text-white ui-focus-ring border border-white/10"
-            />
+            <div>
+              <label className="block text-xs text-slate-300/70 mb-2">Age</label>
+              <input
+                inputMode="numeric"
+                type="number"
+                value={age}
+                onChange={(e) => onUpdateField('age', e.target.value === '' ? '' : Number(e.target.value))}
+                min="16"
+                max="100"
+                className="w-full px-4 py-3 glass-soft rounded-2xl text-white ui-focus-ring border border-white/10"
+              />
+            </div>
+            <div>
+              <label className="block text-xs text-slate-300/70 mb-2">Weight (kg)</label>
+              <input
+                inputMode="decimal"
+                type="number"
+                value={weight}
+                onChange={(e) => onUpdateField('weight', e.target.value === '' ? '' : Number(e.target.value))}
+                min="30"
+                max="300"
+                step="0.1"
+                className="w-full px-4 py-3 glass-soft rounded-2xl text-white ui-focus-ring border border-white/10"
+              />
+            </div>
           </div>
         </div>
-      </div>
 
         <div className="mt-4">
           <p className="text-xs text-slate-300/70 mb-2">Height unit</p>
@@ -430,6 +432,22 @@ export function ProfileView({
             </div>
           </div>
 
+          {/* Session Duration */}
+          <div>
+            <label className="block text-xs text-slate-300/70 mb-2">Session duration (minutes)</label>
+            <p className="text-[10px] text-slate-400/60 mb-2">How long is each workout session? This determines exercise count.</p>
+            <div className="flex flex-wrap gap-2">
+              {[30, 45, 60, 90, 120].map((mins) => (
+                <Chip
+                  key={mins}
+                  selected={sessionDuration === mins}
+                  onClick={() => onUpdateField('sessionDuration', mins)}
+                >
+                  {mins} min
+                </Chip>
+              ))}
+            </div>
+          </div>
           <Collapsible
             open={notesOpen}
             onToggle={() => setNotesOpen(v => !v)}
@@ -461,9 +479,9 @@ export function ProfileView({
 
       {/* Gym Photos */}
       <GlassCard className="p-4">
-        <SectionHeader 
-          title="Gym Photos" 
-          subtitle="Upload photos to detect available equipment" 
+        <SectionHeader
+          title="Gym Photos"
+          subtitle="Upload photos to detect available equipment"
         />
         <div className="mt-4">
           {onGymPhotoUpload && onGymPhotoDelete && (
@@ -485,9 +503,9 @@ export function ProfileView({
 
       {/* Body Analysis */}
       <GlassCard className="p-4">
-        <SectionHeader 
-          title="Body Analysis" 
-          subtitle="Optional: Upload photos for personalized physique analysis" 
+        <SectionHeader
+          title="Body Analysis"
+          subtitle="Optional: Upload photos for personalized physique analysis"
         />
         <div className="mt-4">
           <div className="bg-blue-500/10 border border-blue-500/20 rounded-xl p-3 mb-4">
@@ -495,7 +513,7 @@ export function ProfileView({
               <span className="font-bold">Privacy Note:</span> Your photos are processed securely by AI to analyze posture and body composition, then immediately discarded. They are <span className="underline">never saved</span> to our servers.
             </p>
           </div>
-          
+
           {onBodyPhotoUpload && onBodyPhotoDelete && (
             <ImageUploadCard
               images={bodyPhotos}
@@ -646,7 +664,7 @@ export function ProfileView({
                     onChange={(e) => onUpdateField('proteinPowderAmount', e.target.value === '' ? 0 : Number(e.target.value))}
                     onWheel={(e) => e.currentTarget.blur()}
                     placeholder="e.g. 25"
-                  className="w-full px-4 py-3 glass-soft rounded-2xl text-white ui-focus-ring border border-white/10"
+                    className="w-full px-4 py-3 glass-soft rounded-2xl text-white ui-focus-ring border border-white/10"
                   />
                 </div>
               ) : null}

@@ -12,9 +12,12 @@ import { DietView } from '@/components/views/DietView'
 import { AnalyticsView } from '@/components/views/AnalyticsView'
 import { CoachView } from '@/components/views/CoachView'
 import { Sidebar } from '@/components/Sidebar'
-import { Toast, ToastType } from '@/components/ui/Toast'
+import { ToastContainer, ToastType } from '@/components/ui/Toast'
+import { ConfirmModal } from '@/components/ui/ConfirmModal'
 import { UpgradeModal } from '@/components/ui/UpgradeModal'
 import { compressImage } from '@/lib/image-utils'
+import { OfflineIndicator } from '@/components/OfflineIndicator'
+import { useSessionPersistence, clearSessionIndicator } from '@/lib/useSessionPersistence'
 
 export default function DashboardPage() {
   const router = useRouter()
@@ -23,7 +26,7 @@ export default function DashboardPage() {
   const [historyRoutines, setHistoryRoutines] = useState<any[]>([])
   const [loadingHistory, setLoadingHistory] = useState(false)
   const [viewingHistory, setViewingHistory] = useState(false) // True if viewing a past routine
-  
+
   const [selectedDayIndex, setSelectedDayIndex] = useState(0)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
@@ -42,8 +45,14 @@ export default function DashboardPage() {
   const [toasts, setToasts] = useState<ToastItem[]>([])
 
   const showToast = (message: string, type: ToastType) => {
-    const id = `toast-${Date.now()}`
-    setToasts(prev => [...prev, { id, message, type }])
+    setToasts(prev => {
+      // Prevent duplicates: if the same message exists, don't add another one
+      if (prev.some(t => t.message === message)) {
+        return prev
+      }
+      const id = `toast-${Date.now()}`
+      return [...prev, { id, message, type }]
+    })
   }
 
   const removeToast = (id: string) => {
@@ -94,6 +103,7 @@ export default function DashboardPage() {
   const [tenure, setTenure] = useState('Just started')
   const [goalWeight, setGoalWeight] = useState<number | ''>('')
   const [goalDuration, setGoalDuration] = useState('')
+  const [sessionDuration, setSessionDuration] = useState<number | ''>(60)
   const [notes, setNotes] = useState('')
   // Diet State
   const [dietType, setDietType] = useState<string[]>(['No Restrictions'])
@@ -172,6 +182,7 @@ export default function DashboardPage() {
         setTenure(data.profile.tenure)
         setGoalWeight(data.profile.goal_weight != null ? Number(data.profile.goal_weight) : '')
         setGoalDuration(data.profile.goal_duration ?? '')
+        setSessionDuration(data.profile.session_duration ?? 60)
         setNotes(data.profile.notes ?? '')
         setDietType(data.profile.diet_type || ['No Restrictions'])
         setCuisine(data.profile.cuisine ?? 'No Preference')
@@ -212,9 +223,9 @@ export default function DashboardPage() {
           const dayRes = await fetch(`/api/day-completions?routineId=${routine.id}`)
           const dayData = await dayRes.json().catch(() => ({}))
           const dmap = new Map<number, boolean>()
-          ;(dayData?.days || []).forEach((d: any) => {
-            dmap.set(Number(d.day_index), Boolean(d.completed))
-          })
+            ; (dayData?.days || []).forEach((d: any) => {
+              dmap.set(Number(d.day_index), Boolean(d.completed))
+            })
           setDayCompletions(dmap)
         } catch {
           setDayCompletions(new Map())
@@ -241,18 +252,66 @@ export default function DashboardPage() {
     }
   }, []);
 
+  // Session persistence hook for Android
+  const { markSessionActive, refreshSession } = useSessionPersistence()
+
+  // Navigation history stack for back button handling
+  const viewHistoryRef = useRef<Array<'home' | 'routine' | 'workout' | 'profile' | 'diet' | 'analytics' | 'coach'>>(['home'])
+
   useEffect(() => {
     fetchProfile()
     fetchLatestRoutine()
     fetchLatestDiet()
     fetchPremiumStatus()
-    
+
+    // Mark session as active in localStorage for Android persistence
+    markSessionActive()
+
     // Clear browser back history to login page on dashboard mount
     // This prevents back button from going to login/Google OAuth pages
     if (typeof window !== 'undefined') {
-      window.history.replaceState(null, '', window.location.href)
+      // Replace current state to remove login/OAuth pages from history
+      window.history.replaceState({ view: 'home' }, '', '/dashboard')
+
+      // Push initial dashboard state
+      window.history.pushState({ view: 'home' }, '', '/dashboard')
     }
-  }, [fetchProfile, fetchLatestRoutine, fetchLatestDiet, fetchPremiumStatus])
+  }, [fetchProfile, fetchLatestRoutine, fetchLatestDiet, fetchPremiumStatus, markSessionActive])
+
+  // Handle browser back button / Android back gesture
+  useEffect(() => {
+    const handlePopState = (event: PopStateEvent) => {
+      // Prevent going back to login/OAuth pages
+      const currentHistory = viewHistoryRef.current
+
+      if (currentHistory.length > 1) {
+        // Go to previous view in our internal history
+        currentHistory.pop()
+        const previousView = currentHistory[currentHistory.length - 1] || 'home'
+        setActiveView(previousView)
+      } else {
+        // Already at home, stay on home (don't go back to login)
+        setActiveView('home')
+      }
+
+      // Push state back to prevent actual browser back navigation
+      window.history.pushState({ view: activeView }, '', '/dashboard')
+    }
+
+    window.addEventListener('popstate', handlePopState)
+    return () => window.removeEventListener('popstate', handlePopState)
+  }, [activeView])
+
+  // Refresh session timestamp on user activity
+  useEffect(() => {
+    const handleActivity = () => refreshSession()
+    window.addEventListener('click', handleActivity)
+    window.addEventListener('touchstart', handleActivity)
+    return () => {
+      window.removeEventListener('click', handleActivity)
+      window.removeEventListener('touchstart', handleActivity)
+    }
+  }, [refreshSession])
 
 
   useEffect(() => {
@@ -272,6 +331,16 @@ export default function DashboardPage() {
   }
 
   const handleViewChange = (view: 'home' | 'routine' | 'workout' | 'profile' | 'diet' | 'analytics' | 'coach') => {
+    // Track view history for back button handling
+    const trackViewChange = (newView: typeof view) => {
+      viewHistoryRef.current.push(newView)
+      // Keep history manageable
+      if (viewHistoryRef.current.length > 20) {
+        viewHistoryRef.current = viewHistoryRef.current.slice(-10)
+      }
+      setActiveView(newView)
+    }
+
     if (view === 'analytics' || view === 'coach') {
       if (premiumStatus == null) {
         // Avoid showing the paywall incorrectly before we know trial/premium state.
@@ -285,19 +354,19 @@ export default function DashboardPage() {
             subscription_id: null,
             current_end: null,
           }
-          if (eff.access) setActiveView(view)
+          if (eff.access) trackViewChange(view)
           else setUpgradeOpen(true)
         })
         return
       }
       if (effectivePremium.access) {
-        setActiveView(view)
+        trackViewChange(view)
       } else {
         setUpgradeOpen(true)
       }
       return
     }
-    setActiveView(view)
+    trackViewChange(view)
   }
 
   const fetchHistory = async () => {
@@ -354,7 +423,7 @@ export default function DashboardPage() {
     setRoutine(historyItem.routine_json)
     setCurrentRoutineId(historyItem.id)
     setCurrentWeekNumber(historyItem.week_number)
-    
+
     // Attempt to load associated diet for this week
     try {
       const dietRes = await fetch(`/api/diet?week=${historyItem.week_number}`);
@@ -372,34 +441,34 @@ export default function DashboardPage() {
     // Check if this is the "latest" routine to toggle viewingHistory mode
     // Ideally we comparing IDs, but for now assumption: any selection from history list implies "viewing" mode if strictly previous
     // Actually simpler: Just set viewingHistory = true, and have a "Back to Latest" button
-    
+
     // Fetch completions for this routine
     try {
       const compRes = await fetch(`/api/completions?routineId=${historyItem.id}`)
       const { completions } = await compRes.json()
       const map = new Map<string, boolean>()
-        completions.forEach((c: any) => {
-          map.set(`${c.day_index}-${c.exercise_index}`, c.completed)
-        })
+      completions.forEach((c: any) => {
+        map.set(`${c.day_index}-${c.exercise_index}`, c.completed)
+      })
       setExerciseCompletions(map)
 
       try {
         const dayRes = await fetch(`/api/day-completions?routineId=${historyItem.id}`)
         const dayData = await dayRes.json().catch(() => ({}))
         const dmap = new Map<number, boolean>()
-        ;(dayData?.days || []).forEach((d: any) => {
-          dmap.set(Number(d.day_index), Boolean(d.completed))
-        })
+          ; (dayData?.days || []).forEach((d: any) => {
+            dmap.set(Number(d.day_index), Boolean(d.completed))
+          })
         setDayCompletions(dmap)
       } catch {
         setDayCompletions(new Map())
       }
-      
+
       // Determine if this is the latest
       // For simplicity, let's assume if it came from the sidebar click, we treat it as "viewing history"
       // UNLESS it matches the very latest one.
-      
-      setViewingHistory(true) 
+
+      setViewingHistory(true)
       setActiveView('routine') // Go to routine view to see the plan
     } catch (err) {
       console.error('Error loading history completions:', err)
@@ -531,6 +600,7 @@ export default function DashboardPage() {
           goal_weight: profile.goal_weight,
           notes: profile.notes,
           goal_duration: profile.goal_duration,
+          session_duration: profile.session_duration || sessionDuration,
           model_provider: 'OpenAI',
           is_next_week: isNextWeek,
           week_number: targetWeekNumber,
@@ -540,7 +610,7 @@ export default function DashboardPage() {
       if (response.ok) {
         lastGenProfileRef.current = JSON.stringify({
           age, weight, height: resolvedHeightCm, gender, goal, level, tenure, goalWeight, goalDuration, notes,
-           dietType, cuisine, proteinPowder, mealsPerDay, allergies
+          dietType, cuisine, proteinPowder, mealsPerDay, allergies
         })
       }
 
@@ -573,9 +643,9 @@ export default function DashboardPage() {
             const dayRes = await fetch(`/api/day-completions?routineId=${data.routine_id}`)
             const dayData = await dayRes.json().catch(() => ({}))
             const dmap = new Map<number, boolean>()
-            ;(dayData?.days || []).forEach((d: any) => {
-              dmap.set(Number(d.day_index), Boolean(d.completed))
-            })
+              ; (dayData?.days || []).forEach((d: any) => {
+                dmap.set(Number(d.day_index), Boolean(d.completed))
+              })
             setDayCompletions(dmap)
           } catch {
             setDayCompletions(new Map())
@@ -586,7 +656,7 @@ export default function DashboardPage() {
         setExerciseCompletions(new Map())
         setDayCompletions(new Map())
         await saveRoutineToDatabase(data.routine, targetWeekNumber, targetWeekStart)
-        
+
         // Auto-trigger diet generation if routine is new
         handleGenerateDiet();
       }
@@ -600,46 +670,46 @@ export default function DashboardPage() {
 
 
   const handleGenerateDiet = async (isNextWeek = false) => {
-     if (!profile) return;
-     setGeneratingDiet(true);
-     setError('');
-     setSuccess('');
+    if (!profile) return;
+    setGeneratingDiet(true);
+    setError('');
+    setSuccess('');
 
-     try {
-       const dietRes = await fetch('/api/diet/generate', {
+    try {
+      const dietRes = await fetch('/api/diet/generate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          routine: routine, // Pass context if available
+          model_provider: 'OpenAI'
+        })
+      })
+      const dietData = await dietRes.json()
+      if (!dietRes.ok) throw new Error(dietData.error || 'Failed to generate diet');
+
+
+
+      if (dietData.dietPlan) {
+        setDietPlan(dietData.dietPlan)
+        setSuccess('Diet plan generated successfully!');
+
+        // Save diet
+        await fetch('/api/diet/save', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-             routine: routine, // Pass context if available
-             model_provider: 'OpenAI'
+            weekNumber: isNextWeek ? currentWeekNumber + 1 : currentWeekNumber,
+            diet: dietData.dietPlan
           })
-       })
-       const dietData = await dietRes.json()
-       if (!dietRes.ok) throw new Error(dietData.error || 'Failed to generate diet');
-       
-
-       
-       if (dietData.dietPlan) {
-          setDietPlan(dietData.dietPlan)
-          setSuccess('Diet plan generated successfully!');
-
-          // Save diet
-          await fetch('/api/diet/save', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              weekNumber: isNextWeek ? currentWeekNumber + 1 : currentWeekNumber,
-              diet: dietData.dietPlan
-            })
-          });
-       }
-     } catch (e: unknown) {
-        const msg = e instanceof Error ? e.message : String(e);
-        console.error("Diet gen error", msg)
-        setError(msg);
-     } finally {
-        setGeneratingDiet(false);
-     }
+        });
+      }
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : String(e);
+      console.error("Diet gen error", msg)
+      setError(msg);
+    } finally {
+      setGeneratingDiet(false);
+    }
   }
 
   const handleResetRoutines = () => {
@@ -703,6 +773,7 @@ export default function DashboardPage() {
           goal_weight: goalWeight === '' ? undefined : goalWeight,
           notes,
           goal_duration: goalDuration,
+          session_duration: typeof sessionDuration === 'number' ? sessionDuration : undefined,
           diet_type: dietType,
           cuisine,
           protein_powder: proteinPowder,
@@ -733,6 +804,8 @@ export default function DashboardPage() {
   }
 
   const handleLogout = async () => {
+    // Clear localStorage session indicator
+    clearSessionIndicator()
     await fetch('/api/auth/logout', { method: 'POST' })
     router.push('/login')
   }
@@ -760,7 +833,7 @@ export default function DashboardPage() {
   }
 
   const handleFieldUpdate = (field: string, value: any) => {
-    switch(field) {
+    switch (field) {
       case 'age': setAge(value); break
       case 'weight': setWeight(value); break
       case 'height': setHeight(value); break
@@ -773,6 +846,7 @@ export default function DashboardPage() {
       case 'tenure': setTenure(value); break
       case 'goalWeight': setGoalWeight(value); break
       case 'goalDuration': setGoalDuration(value); break
+      case 'sessionDuration': setSessionDuration(value); break
       case 'notes': setNotes(value); break
       case 'dietType': setDietType(value); break
       case 'cuisine': setCuisine(value); break
@@ -845,7 +919,7 @@ export default function DashboardPage() {
   const handleGymPhotoDelete = async (id: string) => {
     const updatedPhotos = gymPhotos.filter(p => p.id !== id)
     setGymPhotos(updatedPhotos)
-    
+
     if (updatedPhotos.length === 0) {
       setEquipmentAnalysis(null)
     } else {
@@ -906,7 +980,7 @@ export default function DashboardPage() {
       // Or rely on the user clicking "Save Profile"? 
       // The user prompt said photos are not stored, but analysis should be used.
       // Saving the analysis to profile seems correct.
-       await fetch('/api/profile', {
+      await fetch('/api/profile', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -926,20 +1000,20 @@ export default function DashboardPage() {
   const handleBodyPhotoDelete = async (id: string) => {
     const updatedPhotos = bodyPhotos.filter(p => p.id !== id)
     setBodyPhotos(updatedPhotos)
-    
+
     if (updatedPhotos.length === 0) {
       setBodyAnalysis(null)
-       // Clear analysis in backend too if needed, or just keep it until replaced?
-       // Let's clear it for consistency.
-         await fetch('/api/profile', {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              body_composition_analysis: null // Explicitly clear it ?? 
-              // Actually the API might merge, need to check. 
-              // For now, let's just clear local.
-            }),
-         });
+      // Clear analysis in backend too if needed, or just keep it until replaced?
+      // Let's clear it for consistency.
+      await fetch('/api/profile', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          body_composition_analysis: null // Explicitly clear it ?? 
+          // Actually the API might merge, need to check. 
+          // For now, let's just clear local.
+        }),
+      });
     } else {
       try {
         setAnalyzingBody(true)
@@ -950,10 +1024,10 @@ export default function DashboardPage() {
         })
         const { analysis } = await response.json()
         setBodyAnalysis(analysis)
-         await fetch('/api/profile', {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ body_composition_analysis: analysis }),
+        await fetch('/api/profile', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ body_composition_analysis: analysis }),
         });
       } catch (error) {
         console.error('Re-analysis error:', error)
@@ -1010,7 +1084,10 @@ export default function DashboardPage() {
 
   return (
     <div className="min-h-screen bg-transparent">
-      <Sidebar 
+      {/* Offline status indicator */}
+      <OfflineIndicator />
+
+      <Sidebar
         isOpen={isSidebarOpen}
         onClose={() => setIsSidebarOpen(false)}
         routines={historyRoutines}
@@ -1025,19 +1102,19 @@ export default function DashboardPage() {
       <div className="max-w-screen-md mx-auto relative">
         {/* Menu Button - positioned to not overlap with sticky headers */}
         <div className="fixed top-4 left-4 z-30">
-             <button 
-               onClick={() => {
-                 setIsSidebarOpen(true)
-                 fetchHistory()
-               }}
-               className="p-2 bg-slate-800/80 backdrop-blur rounded-full text-white shadow-lg border border-white/10 hover:bg-slate-700/80 transition-colors"
-             >
-               <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h7" />
-               </svg>
-             </button>
+          <button
+            onClick={() => {
+              setIsSidebarOpen(true)
+              fetchHistory()
+            }}
+            className="p-2 bg-slate-800/80 backdrop-blur rounded-full text-white shadow-lg border border-white/10 hover:bg-slate-700/80 transition-colors"
+          >
+            <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h7" />
+            </svg>
+          </button>
         </div>
-        
+
         {/* View Rendering */}
         {activeView === 'home' && (
           <HomeView
@@ -1124,6 +1201,7 @@ export default function DashboardPage() {
             tenure={tenure}
             goalWeight={goalWeight}
             goalDuration={goalDuration}
+            sessionDuration={sessionDuration}
             notes={notes}
             resolvedHeightCm={resolvedHeightCm}
             dietType={dietType}
@@ -1159,66 +1237,25 @@ export default function DashboardPage() {
       {/* Bottom Navigation */}
       <BottomNav activeView={activeView} onViewChange={handleViewChange} />
 
-      {/* Toast Notifications */}
-      {toasts.map((toast, index) => (
-        <div
-          key={toast.id}
-          style={{ bottom: `${6 + index * 5}rem` }}
-          className="fixed left-0 right-0 z-[60]"
-        >
-          <Toast
-            message={toast.message}
-            type={toast.type}
-            onClose={() => removeToast(toast.id)}
-          />
-        </div>
-      ))}
+      {/* Toast Notifications - Top Center */}
+      <ToastContainer toasts={toasts} onRemove={removeToast} />
 
-      {/* Modal */}
-      {modalConfig && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm animate-in fade-in duration-200">
-          <div className="w-full max-w-sm bg-slate-900 border border-white/10 rounded-3xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200 ring-1 ring-white/10">
-            <div className={`h-2 w-full ${modalConfig.type === 'error' ? 'bg-red-500' : 'bg-amber-400'}`} />
-            <div className="p-8 text-center">
-              <div className="text-5xl mb-6 animate-bounce-slow">
-                {modalConfig.emoji || (modalConfig.type === 'error' ? '💥' : '⚠️')}
-              </div>
-              <h3 className="text-xl font-bold text-white mb-2 tracking-tight">
-                {modalConfig.title}
-              </h3>
-              <p className="text-slate-300 leading-relaxed mb-8 text-sm">
-                {modalConfig.message}
-              </p>
-
-              <div className="flex gap-3 justify-center">
-                {modalConfig.onCancel && (
-                  <button
-                    onClick={() => {
-                      if (modalConfig.onCancel) modalConfig.onCancel()
-                      else setModalConfig(null)
-                    }}
-                    className="px-5 py-2.5 rounded-xl font-medium text-sm text-slate-300 hover:text-white hover:bg-white/5 transition-colors"
-                  >
-                    Cancel
-                  </button>
-                )}
-                <button
-                  onClick={() => {
-                    if (modalConfig.onConfirm) modalConfig.onConfirm()
-                    else setModalConfig(null)
-                  }}
-                  className={`px-6 py-2.5 rounded-xl font-semibold text-sm shadow-lg transform transition-all active:scale-95 ${modalConfig.type === 'error'
-                    ? 'bg-gradient-to-r from-red-500 to-rose-600 text-white shadow-red-500/20 hover:shadow-red-500/30'
-                    : 'bg-gradient-to-r from-amber-400 to-orange-500 text-slate-900 shadow-amber-500/20 hover:shadow-amber-500/30'
-                    }`}
-                >
-                  {modalConfig.type === 'error' ? 'Dismiss' : 'Continue'}
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
+      {/* Confirm Modal */}
+      <ConfirmModal
+        open={!!modalConfig}
+        type={modalConfig?.type || 'warning'}
+        title={modalConfig?.title || ''}
+        message={modalConfig?.message || ''}
+        confirmLabel={modalConfig?.type === 'error' ? 'Dismiss' : 'Continue'}
+        onConfirm={() => {
+          if (modalConfig?.onConfirm) modalConfig.onConfirm()
+          else setModalConfig(null)
+        }}
+        onCancel={modalConfig?.onCancel ? () => {
+          if (modalConfig?.onCancel) modalConfig.onCancel()
+          else setModalConfig(null)
+        } : undefined}
+      />
 
       <UpgradeModal
         open={upgradeOpen}

@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
 import { BrandLogo } from '@/components/BrandLogo'
 import { LoginMascot } from '@/components/LoginMascot'
+import { storeSessionIndicator } from '@/lib/useSessionPersistence'
 
 export default function LoginPage() {
   const router = useRouter()
@@ -64,6 +65,9 @@ export default function LoginPage() {
         return
       }
 
+      // Store session indicator in localStorage for Android persistence
+      storeSessionIndicator()
+
       if (isLogin) {
         // Use replace to remove login page from history
         router.replace('/dashboard')
@@ -77,6 +81,7 @@ export default function LoginPage() {
       setLoading(false)
     }
   }
+
 
   return (
     <div className="min-h-screen flex items-stretch overflow-hidden">

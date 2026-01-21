@@ -18,6 +18,7 @@ export interface Profile {
     tenure: string;
     goal_weight?: number;
     goal_duration?: string;
+    session_duration?: number; // Workout session duration in minutes (e.g., 30, 45, 60, 90, 120)
     notes?: string;
     updated_at?: Date;
     // Diet Preferences
@@ -145,6 +146,7 @@ export interface RoutineGenerationInput {
     tenure: string;
     goal_weight?: number;
     goal_duration?: string;
+    session_duration?: number; // Workout session duration in minutes
     notes?: string;
     model_provider: 'Anthropic' | 'OpenAI';
     apiKey?: string;

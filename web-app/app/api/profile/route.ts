@@ -41,8 +41,9 @@ export async function PUT(request: NextRequest) {
 
     await initializeDatabase();
 
-    const { 
+    const {
       age, weight, height, gender, goal, level, tenure, goal_weight, notes, goal_duration,
+      session_duration,
       diet_type, cuisine, protein_powder, meals_per_day, allergies,
       cooking_level, budget, protein_powder_amount, specific_food_preferences, name,
       gym_photos, gym_equipment_analysis,
@@ -69,6 +70,7 @@ export async function PUT(request: NextRequest) {
       goal_weight,
       notes,
       goal_duration,
+      session_duration,
       diet_type,
       cuisine,
       protein_powder,

@@ -23,7 +23,14 @@ export function GlassCard({
   as?: 'div' | 'section' | 'article'
 }) {
   return (
-    <Component className={`${variantClass[variant]} ui-card rounded-2xl ${className}`}>
+    <Component
+      className={`
+        ${variantClass[variant]} ui-card rounded-2xl 
+        transition-all duration-200 
+        hover:shadow-xl hover:shadow-black/15 hover:-translate-y-0.5
+        ${className}
+      `}
+    >
       {children}
     </Component>
   )

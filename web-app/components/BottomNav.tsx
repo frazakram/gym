@@ -73,20 +73,30 @@ export function BottomNav({ activeView, onViewChange }: BottomNavProps) {
               <button
                 key={item.id}
                 onClick={() => onViewChange(item.id)}
-                className={`flex flex-col items-center justify-center px-4 py-2 rounded-xl min-w-[72px] transition-all ${
-                  isActive
-                    ? 'text-cyan-400'
-                    : 'text-slate-400 hover:text-slate-200'
-                }`}
+                className={`
+                  relative flex flex-col items-center justify-center 
+                  px-4 py-2 rounded-xl min-w-[72px] 
+                  transition-all duration-200
+                  ${isActive
+                    ? 'text-cyan-400 scale-105'
+                    : 'text-slate-400 hover:text-slate-200 hover:bg-white/5 active:scale-95'
+                  }
+                `}
               >
-                <div className={`transition-transform ${isActive ? 'scale-110' : ''}`}>
+                <div className={`
+                  transition-all duration-200 
+                  ${isActive ? 'scale-110 drop-shadow-[0_0_8px_rgba(34,211,238,0.4)]' : ''}
+                `}>
                   {item.icon}
                 </div>
-                <span className={`text-xs mt-1 font-medium ${isActive ? 'text-cyan-400' : 'text-slate-400'}`}>
+                <span className={`
+                  text-xs mt-1 font-medium transition-colors duration-200
+                  ${isActive ? 'text-cyan-400' : 'text-slate-400'}
+                `}>
                   {item.label}
                 </span>
                 {isActive && (
-                  <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-1 h-1 bg-cyan-400 rounded-full" />
+                  <div className="absolute -bottom-0.5 left-1/2 -translate-x-1/2 w-1.5 h-1.5 bg-cyan-400 rounded-full shadow-[0_0_8px_rgba(34,211,238,0.6)]" />
                 )}
               </button>
             )

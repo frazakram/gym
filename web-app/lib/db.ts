@@ -89,7 +89,7 @@ function allowMockAuth(): boolean {
 
 export async function initializeDatabase() {
   if (isInitialized) return;
-  
+
   try {
     const client = await pool.connect();
     try {
@@ -130,11 +130,11 @@ export async function initializeDatabase() {
       await client.query(`ALTER TABLE profiles ADD COLUMN IF NOT EXISTS goal VARCHAR(32);`);
       await client.query(`ALTER TABLE profiles ADD COLUMN IF NOT EXISTS goal_weight DECIMAL(5,2);`);
       await client.query(`ALTER TABLE profiles ADD COLUMN IF NOT EXISTS goal_duration TEXT;`);
-      
+
       // Diet preference migrations
       // Convert older VARCHAR columns to arrays if they exist as single values, or create as arrays
       // We use safe conversion: If it was a string, make it an array of 1 item.
-      
+
       // diet_type
       await client.query(`
         DO $$
@@ -170,6 +170,9 @@ export async function initializeDatabase() {
 
       await client.query(`ALTER TABLE profiles ADD COLUMN IF NOT EXISTS specific_food_preferences TEXT;`);
       await client.query(`ALTER TABLE profiles ADD COLUMN IF NOT EXISTS name VARCHAR(255);`);
+
+      // Session duration column for workout length (in minutes)
+      await client.query(`ALTER TABLE profiles ADD COLUMN IF NOT EXISTS session_duration INTEGER;`);
 
       await client.query(`
         CREATE TABLE IF NOT EXISTS sessions (
@@ -411,8 +414,8 @@ export async function authenticateUser(username: string, password: string): Prom
 
     if (result.rows.length === 0) {
       if (allowMockAuth()) {
-         console.warn(`Mock Auth: User '${username}' not found, logging in as mock user`);
-         return MOCK_USER_ID;
+        console.warn(`Mock Auth: User '${username}' not found, logging in as mock user`);
+        return MOCK_USER_ID;
       }
       return null;
     }
@@ -421,8 +424,8 @@ export async function authenticateUser(username: string, password: string): Prom
     const isValid = await bcrypt.compare(password, user.password_hash);
 
     if (!isValid && allowMockAuth()) {
-       console.warn(`Mock Auth: Invalid password for '${username}', logging in as mock user`);
-       return MOCK_USER_ID;
+      console.warn(`Mock Auth: Invalid password for '${username}', logging in as mock user`);
+      return MOCK_USER_ID;
     }
 
     return isValid ? user.id : null;
@@ -516,6 +519,7 @@ export async function saveProfile(
   goal_weight?: number,
   notes?: string,
   goal_duration?: string,
+  session_duration?: number,
   diet_type?: string[],
   cuisine?: Profile['cuisine'],
   protein_powder?: 'Yes' | 'No',
@@ -549,6 +553,7 @@ export async function saveProfile(
       goal_weight: typeof goal_weight === 'number' && Number.isFinite(goal_weight) ? goal_weight : undefined,
       notes: notes?.trim() ? notes.trim() : undefined,
       goal_duration: goal_duration?.trim() ? goal_duration.trim() : undefined,
+      session_duration: typeof session_duration === 'number' && Number.isFinite(session_duration) ? session_duration : undefined,
       diet_type: diet_type || [],
       cuisine: cuisine,
       protein_powder,
@@ -576,11 +581,11 @@ export async function saveProfile(
         `UPDATE profiles 
          SET age = $2, weight = $3, height = $4, gender = $5,
              goal = $6, level = $7, tenure = $8, goal_weight = $9, notes = $10,
-             goal_duration = $11, 
-             diet_type = $12, cuisine = $13, protein_powder = $14, meals_per_day = $15, allergies = $16,
-             cooking_level = $17, budget = $18, protein_powder_amount = $19, specific_food_preferences = $20,
-             name = $21, gym_photos = $22, gym_equipment_analysis = $23,
-             body_photos = $24, body_composition_analysis = $25,
+             goal_duration = $11, session_duration = $12,
+             diet_type = $13, cuisine = $14, protein_powder = $15, meals_per_day = $16, allergies = $17,
+             cooking_level = $18, budget = $19, protein_powder_amount = $20, specific_food_preferences = $21,
+             name = $22, gym_photos = $23, gym_equipment_analysis = $24,
+             body_photos = $25, body_composition_analysis = $26,
              updated_at = CURRENT_TIMESTAMP
          WHERE user_id = $1
          RETURNING *`,
@@ -596,6 +601,7 @@ export async function saveProfile(
           typeof goal_weight === 'number' && Number.isFinite(goal_weight) ? goal_weight : null,
           notes?.trim() ? notes.trim() : null,
           goal_duration?.trim() ? goal_duration.trim() : null,
+          typeof session_duration === 'number' && Number.isFinite(session_duration) ? session_duration : null,
           diet_type || null,
           cuisine || null,
           protein_powder || null,
@@ -618,11 +624,11 @@ export async function saveProfile(
     } else {
       const result = await pool.query<Profile>(
         `INSERT INTO profiles (
-           user_id, age, weight, height, gender, goal, level, tenure, goal_weight, notes, goal_duration,
+           user_id, age, weight, height, gender, goal, level, tenure, goal_weight, notes, goal_duration, session_duration,
            diet_type, cuisine, protein_powder, meals_per_day, allergies, cooking_level, budget, protein_powder_amount, specific_food_preferences, name,
            gym_photos, gym_equipment_analysis, body_photos, body_composition_analysis
          )
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25, $26)
          RETURNING *`,
         [
           userId,
@@ -636,6 +642,7 @@ export async function saveProfile(
           typeof goal_weight === 'number' && Number.isFinite(goal_weight) ? goal_weight : null,
           notes?.trim() ? notes.trim() : null,
           goal_duration?.trim() ? goal_duration.trim() : null,
+          typeof session_duration === 'number' && Number.isFinite(session_duration) ? session_duration : null,
           diet_type || null,
           cuisine || null,
           protein_powder || null,
@@ -671,6 +678,7 @@ export async function saveProfile(
         goal_weight: typeof goal_weight === 'number' && Number.isFinite(goal_weight) ? goal_weight : undefined,
         notes: notes?.trim() ? notes.trim() : undefined,
         goal_duration: goal_duration?.trim() ? goal_duration.trim() : undefined,
+        session_duration: typeof session_duration === 'number' && Number.isFinite(session_duration) ? session_duration : undefined,
         diet_type,
         cuisine,
         protein_powder,
@@ -1492,7 +1500,7 @@ export async function deleteAllUserRoutines(userId: number): Promise<void> {
       for (const [key, val] of mockRoutineStore.entries()) {
         if (val.user_id === userId) mockRoutineStore.delete(key);
       }
-      return; 
+      return;
     }
     console.error("deleteAllUserRoutines DB failed:", error);
     throw error;
@@ -2221,18 +2229,18 @@ export async function listCoachApplicationsAdmin(opts?: { status?: CoachStatus; 
     username: typeof r.username === "string" ? r.username : null,
     profile: r.display_name
       ? {
-          coach_id: Number(r.id),
-          display_name: String(r.display_name),
-          bio: r.bio ?? null,
-          experience_years: r.experience_years != null ? Number(r.experience_years) : null,
-          certifications: r.certifications ?? null,
-          specialties: Array.isArray(r.specialties) ? r.specialties : null,
-          languages: Array.isArray(r.languages) ? r.languages : null,
-          timezone: r.timezone ?? null,
-          phone: r.phone ?? null,
-          email: r.email ?? null,
-          updated_at: r.profile_updated_at ? new Date(String(r.profile_updated_at)) : undefined,
-        }
+        coach_id: Number(r.id),
+        display_name: String(r.display_name),
+        bio: r.bio ?? null,
+        experience_years: r.experience_years != null ? Number(r.experience_years) : null,
+        certifications: r.certifications ?? null,
+        specialties: Array.isArray(r.specialties) ? r.specialties : null,
+        languages: Array.isArray(r.languages) ? r.languages : null,
+        timezone: r.timezone ?? null,
+        phone: r.phone ?? null,
+        email: r.email ?? null,
+        updated_at: r.profile_updated_at ? new Date(String(r.profile_updated_at)) : undefined,
+      }
       : null,
   }));
 }
