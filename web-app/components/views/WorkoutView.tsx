@@ -2,6 +2,7 @@
 
 import { WeeklyRoutine } from '@/types'
 import { ExerciseCard } from '../ExerciseCard'
+import { SwipeableExerciseWrapper } from '../ui/SwipeableExercise'
 
 interface WorkoutViewProps {
   routine: WeeklyRoutine | null
@@ -38,7 +39,7 @@ export function WorkoutView({
   }
 
   const day = routine.days[Math.min(selectedDayIndex, routine.days.length - 1)]
-  
+
   if (!day) {
     return (
       <div className="pb-24 px-4 py-6">
@@ -51,7 +52,7 @@ export function WorkoutView({
   }
 
   // Calculate progress for this day
-  const completedCount = day.exercises.filter((_, eIdx) => 
+  const completedCount = day.exercises.filter((_, eIdx) =>
     exerciseCompletions.get(`${selectedDayIndex}-${eIdx}`)
   ).length
   const totalCount = day.exercises.length
@@ -80,7 +81,7 @@ export function WorkoutView({
             </p>
           </div>
         </div>
-        
+
         {/* Progress Bar */}
         <div className="mt-2 w-full bg-slate-700 rounded-full h-1.5">
           <div
@@ -116,11 +117,10 @@ export function WorkoutView({
                   }
                   await onToggleRestDay(selectedDayIndex, !restDone)
                 }}
-                className={`w-full px-5 py-3 rounded-2xl font-semibold text-sm transition border ${
-                  restDone
+                className={`w-full px-5 py-3 rounded-2xl font-semibold text-sm transition border ${restDone
                     ? 'bg-emerald-400/10 border-emerald-400/25 text-emerald-100 hover:bg-emerald-400/15'
                     : 'bg-white/5 border-white/10 text-white/90 hover:bg-white/10'
-                }`}
+                  }`}
               >
                 {restDone ? '✓ Marked complete' : 'Mark rest day complete'}
               </button>
@@ -128,18 +128,36 @@ export function WorkoutView({
           </div>
         ) : (
           <>
-            {day.exercises.map((exercise, exerciseIndex) => (
-              <ExerciseCard
-                key={exerciseIndex}
-                exercise={exercise}
-                dayIndex={selectedDayIndex}
-                exerciseIndex={exerciseIndex}
-                routineId={currentRoutineId}
-                isCompleted={exerciseCompletions.get(`${selectedDayIndex}-${exerciseIndex}`) || false}
-                onToggle={(completed) => onToggleExercise(selectedDayIndex, exerciseIndex, completed)}
-                onEnsureRoutineSaved={onEnsureRoutineSaved}
-              />
-            ))}
+            {day.exercises.map((exercise, exerciseIndex) => {
+              const isCompleted = exerciseCompletions.get(`${selectedDayIndex}-${exerciseIndex}`) || false
+              return (
+                <SwipeableExerciseWrapper
+                  key={exerciseIndex}
+                  isCompleted={isCompleted}
+                  onComplete={async () => {
+                    if (!currentRoutineId) {
+                      const rid = await onEnsureRoutineSaved()
+                      if (!rid) return
+                    }
+                    onToggleExercise(selectedDayIndex, exerciseIndex, true)
+                  }}
+                  onSkip={() => {
+                    // Skip just marks as not completed (or could be a separate state)
+                    onToggleExercise(selectedDayIndex, exerciseIndex, false)
+                  }}
+                >
+                  <ExerciseCard
+                    exercise={exercise}
+                    dayIndex={selectedDayIndex}
+                    exerciseIndex={exerciseIndex}
+                    routineId={currentRoutineId}
+                    isCompleted={isCompleted}
+                    onToggle={(completed) => onToggleExercise(selectedDayIndex, exerciseIndex, completed)}
+                    onEnsureRoutineSaved={onEnsureRoutineSaved}
+                  />
+                </SwipeableExerciseWrapper>
+              )
+            })}
           </>
         )}
       </div>

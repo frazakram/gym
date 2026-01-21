@@ -24,11 +24,11 @@ export function Chip({
       aria-label={ariaLabel}
       aria-pressed={selected}
       className={[
-        'ui-chip inline-flex items-center gap-2 px-3 py-2 text-xs font-medium',
+        'ui-chip inline-flex items-center gap-2 px-3 py-2 text-xs font-medium rounded-xl',
         'transition-all active:scale-[0.98]',
         'border',
         selected
-          ? 'border-emerald-400/35 bg-emerald-400/12 text-emerald-100 shadow-[0_10px_30px_rgba(16,185,129,0.10)]'
+          ? 'border-[#FF6F61]/40 bg-[#FF6F61]/15 text-[#FFCCC7] shadow-[0_0_15px_rgba(255,111,97,0.15)]'
           : 'border-white/10 bg-white/5 text-slate-300 hover:bg-white/8 hover:text-slate-100',
         'ui-focus-ring',
         className,
