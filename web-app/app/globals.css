@@ -1,34 +1,45 @@
 @import "tailwindcss";
 
 :root {
-  /* --- Brand tokens (mobile fitness product) --- */
-  --background: #050913;
-  --foreground: #eef2ff;
+  /* --- Brand tokens: Zen Strength --- */
+  --background: #0F172A;
+  --foreground: #F1F5F9;
 
-  /* Navy → deep blue base */
-  --navy-0: #050913;
-  --navy-1: #07132a;
-  --navy-2: #0b1f3f;
-  --navy-3: #0a1533;
+  /* Warm Navy base */
+  --navy-0: #0F172A;
+  --navy-1: #1E293B;
+  --navy-2: #334155;
+  --navy-3: #1E293B;
 
-  /* Primary accent: emerald/teal */
+  /* Primary action: Warm Coral */
+  --coral: #FF6F61;
+  --coral-light: #FF8A65;
+  --coral-dark: #E55A4F;
+
+  /* Premium accent: Gold */
+  --gold: #F59E0B;
+  --gold-light: #FBBF24;
+  --gold-dark: #D97706;
+
+  /* Success: Emerald (keep) */
   --accent: #14b8a6;
-  /* teal-500 */
   --accent-2: #10b981;
-  /* emerald-500 */
   --accent-ink: #041212;
 
-  /* Secondary action: muted blue */
-  --secondary: #60a5fa;
-  /* blue-400 */
-  --secondary-2: #3b82f6;
-  /* blue-500 */
+  /* Secondary: Slate Blue */
+  --secondary: #64748B;
+  --secondary-2: #475569;
 
-  /* Surfaces */
-  --glass: rgba(255, 255, 255, 0.07);
-  --glass-soft: rgba(255, 255, 255, 0.055);
-  --glass-border: rgba(255, 255, 255, 0.12);
-  --glass-border-strong: rgba(255, 255, 255, 0.16);
+  /* Status colors */
+  --error: #F43F5E;
+  --warning: #F59E0B;
+  --info: #0EA5E9;
+
+  /* Surfaces - warmer tint */
+  --glass: rgba(30, 41, 59, 0.65);
+  --glass-soft: rgba(30, 41, 59, 0.5);
+  --glass-border: rgba(255, 255, 255, 0.1);
+  --glass-border-strong: rgba(255, 255, 255, 0.15);
 }
 
 @theme inline {
@@ -71,13 +82,14 @@ body {
   position: fixed;
   inset: 0;
   z-index: 0;
-  /* Navy → deep blue base with teal/emerald aurora (controlled, not noisy) */
+  /* Zen Strength: Warm navy with coral/gold/teal aurora */
   background:
-    radial-gradient(900px 520px at 50% 0%, rgba(255, 255, 255, 0.10), rgba(0, 0, 0, 0) 60%),
-    radial-gradient(1100px 620px at 22% 28%, rgba(20, 184, 166, 0.26), rgba(0, 0, 0, 0) 60%),
-    radial-gradient(1100px 620px at 78% 28%, rgba(16, 185, 129, 0.18), rgba(0, 0, 0, 0) 60%),
-    radial-gradient(900px 560px at 55% 70%, rgba(96, 165, 250, 0.10), rgba(0, 0, 0, 0) 62%),
-    linear-gradient(135deg, var(--navy-0), var(--navy-2) 46%, var(--navy-0));
+    radial-gradient(900px 520px at 50% 0%, rgba(255, 255, 255, 0.08), rgba(0, 0, 0, 0) 60%),
+    radial-gradient(1100px 620px at 18% 25%, rgba(255, 111, 97, 0.18), rgba(0, 0, 0, 0) 55%),
+    radial-gradient(1000px 600px at 82% 22%, rgba(245, 158, 11, 0.12), rgba(0, 0, 0, 0) 55%),
+    radial-gradient(1100px 620px at 50% 50%, rgba(20, 184, 166, 0.15), rgba(0, 0, 0, 0) 60%),
+    radial-gradient(900px 560px at 55% 75%, rgba(16, 185, 129, 0.10), rgba(0, 0, 0, 0) 62%),
+    linear-gradient(145deg, #0F172A, #1E293B 50%, #0F172A);
 }
 
 .app-bg::before {
@@ -251,23 +263,50 @@ body {
 
 .ui-focus-ring:focus-visible {
   outline: none;
-  box-shadow: 0 0 0 4px rgba(20, 184, 166, 0.22);
+  box-shadow: 0 0 0 4px rgba(255, 111, 97, 0.25);
 }
 
 .btn-primary {
-  background: linear-gradient(135deg, var(--accent), var(--accent-2));
+  background: linear-gradient(135deg, var(--coral), var(--coral-light));
   color: white;
-  box-shadow: 0 12px 34px rgba(16, 185, 129, 0.18);
+  box-shadow: 0 12px 34px rgba(255, 111, 97, 0.25);
 }
 
 .btn-primary:hover {
-  box-shadow: 0 14px 44px rgba(16, 185, 129, 0.24);
+  box-shadow: 0 14px 44px rgba(255, 111, 97, 0.35);
 }
 
 .btn-secondary {
-  background: linear-gradient(135deg, rgba(96, 165, 250, 0.22), rgba(59, 130, 246, 0.18));
-  border: 1px solid rgba(96, 165, 250, 0.25);
-  color: rgba(239, 246, 255, 0.92);
+  background: linear-gradient(135deg, rgba(100, 116, 139, 0.22), rgba(71, 85, 105, 0.18));
+  border: 1px solid rgba(100, 116, 139, 0.25);
+  color: rgba(241, 245, 249, 0.92);
+}
+
+/* Gradient border hover effect */
+.gradient-border-hover {
+  position: relative;
+  overflow: hidden;
+}
+
+.gradient-border-hover::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 1px;
+  background: linear-gradient(135deg, transparent, transparent);
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  opacity: 0;
+  transition: opacity 0.3s ease, background 0.3s ease;
+  pointer-events: none;
+}
+
+.gradient-border-hover:hover::before {
+  opacity: 1;
+  background: linear-gradient(135deg, var(--coral), var(--gold), var(--coral-light));
 }
 
 /* Hide scrollbar but keep functionality */

@@ -9,6 +9,7 @@ import { GlassCard } from '../ui/GlassCard'
 import { SectionHeader } from '../ui/SectionHeader'
 import { Collapsible } from '../ui/Collapsible'
 import { ProgressSkeleton, WorkoutCardSkeleton } from '../ui/SkeletonLoader'
+import { HeatMap } from '../ui/HeatMap'
 
 interface HomeViewProps {
   profile: (Profile & { username?: string }) | null
@@ -48,7 +49,7 @@ export function HomeView({
     if (hour < 18) return 'Good afternoon'
     return 'Good evening'
   }
-  
+
   const getDisplayName = () => {
     if (profile?.name) return profile.name;
     if (!profile?.username) return 'Friend';
@@ -60,17 +61,17 @@ export function HomeView({
   // Get today's workout
   const todayIndex = (new Date().getDay() + 6) % 7 // Mon=0
   const todaysPlan = routine?.days?.[Math.min(todayIndex, (routine.days?.length || 1) - 1)]
-  
+
   // Get today's diet
   const todaysDiet = diet?.days?.[Math.min(todayIndex, (diet.days?.length || 1) - 1)]
 
   // Calculate progress
   const calculateProgress = () => {
     if (!routine) return { completed: 0, total: 0, percentage: 0 }
-    
+
     let total = 0
     let completed = 0
-    
+
     routine.days.forEach((day, dIdx) => {
       if ((day.exercises?.length || 0) === 0) {
         total++
@@ -82,7 +83,7 @@ export function HomeView({
         if (exerciseCompletions.get(`${dIdx}-${eIdx}`)) completed++
       })
     })
-    
+
     const percentage = total > 0 ? Math.round((completed / total) * 100) : 0
     return { completed, total, percentage }
   }
@@ -180,11 +181,36 @@ export function HomeView({
       ) : routine ? (
         <GlassCard className="p-4">
           <SectionHeader
-            title="Weekly progress"
-            subtitle={`${progress.completed}/${progress.total} items completed`}
+            title="Activity Heatmap"
+            subtitle={`${progress.completed}/${progress.total} this week • ${progress.percentage}%`}
           />
-          <div className="mt-3 flex justify-center">
-            <CircularProgress percentage={progress.percentage} size={104} strokeWidth={7} />
+
+          {/* Heat Map - 12 week activity grid */}
+          <div className="mt-4">
+            <HeatMap
+              data={Array.from(dayCompletions.entries()).map(([dayIdx, completed]) => {
+                // Generate date strings for the current week
+                const today = new Date()
+                const startOfWeek = new Date(today)
+                startOfWeek.setDate(today.getDate() - ((today.getDay() + 6) % 7))
+                const date = new Date(startOfWeek)
+                date.setDate(startOfWeek.getDate() + dayIdx)
+                return {
+                  date: date.toISOString().split('T')[0],
+                  value: completed ? 1 : 0
+                }
+              })}
+              weeks={8}
+            />
+          </div>
+
+          {/* Circular progress - smaller */}
+          <div className="mt-4 pt-4 border-t border-white/10 flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-white">This Week</p>
+              <p className="text-xs text-slate-400">{progress.completed} of {progress.total} workouts</p>
+            </div>
+            <CircularProgress percentage={progress.percentage} size={64} strokeWidth={5} />
           </div>
         </GlassCard>
       ) : null}

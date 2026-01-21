@@ -6,7 +6,7 @@ interface AnimatedButtonProps {
   children: ReactNode
   onClick?: () => void
   type?: 'button' | 'submit' | 'reset'
-  variant?: 'primary' | 'secondary' | 'ghost'
+  variant?: 'primary' | 'secondary' | 'ghost' | 'premium'
   size?: 'sm' | 'md' | 'lg'
   disabled?: boolean
   loading?: boolean
@@ -46,9 +46,10 @@ export function AnimatedButton({
   }
 
   const variantClasses = {
-    primary: 'btn-primary text-white hover:shadow-[0_0_25px_rgba(16,185,129,0.35)]',
-    secondary: 'btn-secondary hover:shadow-[0_0_20px_rgba(96,165,250,0.25)]',
-    ghost: 'glass-soft text-slate-100 hover:text-white hover:bg-white/10'
+    primary: 'bg-gradient-to-r from-[#FF6F61] to-[#FF8A65] text-white shadow-lg hover:shadow-[0_0_30px_rgba(255,111,97,0.4)] hover:brightness-110',
+    secondary: 'bg-slate-700/60 border border-white/10 text-slate-100 hover:bg-slate-700/80 hover:shadow-[0_0_20px_rgba(100,116,139,0.25)]',
+    ghost: 'glass-soft text-slate-100 hover:text-white hover:bg-white/10',
+    premium: 'bg-gradient-to-r from-[#F59E0B] to-[#FBBF24] text-slate-900 font-bold shadow-lg hover:shadow-[0_0_30px_rgba(245,158,11,0.5)] hover:brightness-110'
   }
 
   const sizeClasses = {
