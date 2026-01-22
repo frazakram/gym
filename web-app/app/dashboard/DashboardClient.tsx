@@ -152,6 +152,10 @@ export default function DashboardPage() {
   const [exerciseCompletions, setExerciseCompletions] = useState<Map<string, boolean>>(new Map())
   const [dayCompletions, setDayCompletions] = useState<Map<number, boolean>>(new Map())
   const [userId, setUserId] = useState<number | null>(null)
+  
+  // Heatmap data for activity tracking
+  const [heatmapData, setHeatmapData] = useState<Array<{ date: string; value: number }>>([])
+  const [heatmapLoading, setHeatmapLoading] = useState(false)
 
   const resolvedHeightCm = useMemo(() => {
     if (heightUnit === 'cm') return typeof height === 'number' ? height : null
@@ -252,6 +256,21 @@ export default function DashboardPage() {
     }
   }, []);
 
+  const fetchHeatmapData = useCallback(async () => {
+    setHeatmapLoading(true)
+    try {
+      const res = await fetch('/api/heatmap?days=56') // 8 weeks
+      const data = await res.json()
+      if (data.heatmap) {
+        setHeatmapData(data.heatmap)
+      }
+    } catch (err) {
+      console.error('Error fetching heatmap data:', err)
+    } finally {
+      setHeatmapLoading(false)
+    }
+  }, [])
+
   // Session persistence hook for Android
   const { markSessionActive, refreshSession } = useSessionPersistence()
 
@@ -263,6 +282,7 @@ export default function DashboardPage() {
     fetchLatestRoutine()
     fetchLatestDiet()
     fetchPremiumStatus()
+    fetchHeatmapData()
 
     // Mark session as active in localStorage for Android persistence
     markSessionActive()
@@ -276,7 +296,7 @@ export default function DashboardPage() {
       // Push initial dashboard state
       window.history.pushState({ view: 'home' }, '', '/dashboard')
     }
-  }, [fetchProfile, fetchLatestRoutine, fetchLatestDiet, fetchPremiumStatus, markSessionActive])
+  }, [fetchProfile, fetchLatestRoutine, fetchLatestDiet, fetchPremiumStatus, fetchHeatmapData, markSessionActive])
 
   // Handle browser back button / Android back gesture
   useEffect(() => {
@@ -1043,6 +1063,8 @@ export default function DashboardPage() {
       next.set(`${dayIndex}-${exerciseIndex}`, completed)
       return next
     })
+    // Refresh heatmap data after completion is recorded
+    fetchHeatmapData()
   }
 
   const handleToggleRestDay = async (dayIndex: number, completed: boolean) => {
@@ -1072,6 +1094,9 @@ export default function DashboardPage() {
           next.set(dayIndex, !completed)
           return next
         })
+      } else {
+        // Refresh heatmap data after completion is recorded
+        fetchHeatmapData()
       }
     } catch {
       setDayCompletions(prev => {
@@ -1123,6 +1148,7 @@ export default function DashboardPage() {
             diet={dietPlan}
             exerciseCompletions={exerciseCompletions}
             dayCompletions={dayCompletions}
+            heatmapData={heatmapData}
             currentWeekNumber={currentWeekNumber}
             onNavigateToWorkout={() => setActiveView('workout')}
             onNavigateToCoach={() => handleViewChange('coach')}

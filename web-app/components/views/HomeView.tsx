@@ -17,6 +17,7 @@ interface HomeViewProps {
   diet: WeeklyDiet | null
   exerciseCompletions: Map<string, boolean>
   dayCompletions: Map<number, boolean>
+  heatmapData?: Array<{ date: string; value: number }>
   currentWeekNumber: number
   onNavigateToWorkout: () => void
   onNavigateToCoach: () => void
@@ -32,6 +33,7 @@ export function HomeView({
   diet,
   exerciseCompletions,
   dayCompletions,
+  heatmapData = [],
   currentWeekNumber,
   onNavigateToWorkout,
   onNavigateToCoach,
@@ -185,21 +187,10 @@ export function HomeView({
             subtitle={`${progress.completed}/${progress.total} this week • ${progress.percentage}%`}
           />
 
-          {/* Heat Map - 12 week activity grid */}
+          {/* Heat Map - 8 week activity grid */}
           <div className="mt-4">
             <HeatMap
-              data={Array.from(dayCompletions.entries()).map(([dayIdx, completed]) => {
-                // Generate date strings for the current week
-                const today = new Date()
-                const startOfWeek = new Date(today)
-                startOfWeek.setDate(today.getDate() - ((today.getDay() + 6) % 7))
-                const date = new Date(startOfWeek)
-                date.setDate(startOfWeek.getDate() + dayIdx)
-                return {
-                  date: date.toISOString().split('T')[0],
-                  value: completed ? 1 : 0
-                }
-              })}
+              data={heatmapData}
               weeks={8}
             />
           </div>
