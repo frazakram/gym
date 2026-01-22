@@ -1485,6 +1485,123 @@ export async function getUserAnalytics(
   }
 }
 
+// ============= HEATMAP DATA (FREE) =============
+
+export type HeatmapData = Array<{ date: string; value: number }>;
+
+export async function getHeatmapData(
+  userId: number,
+  days: number = 56 // 8 weeks by default
+): Promise<HeatmapData> {
+  const now = new Date();
+  const since = new Date(now.getTime() - days * 86400000);
+
+  // In mock mode, return empty heatmap data
+  if (allowMockAuth()) {
+    return Array.from({ length: days }, (_, i) => {
+      const d = new Date(now.getTime() - (days - 1 - i) * 86400000);
+      return { date: toYmdUTC(d), value: 0 };
+    });
+  }
+
+  try {
+    // Get all exercise completions with timestamps
+    const exerciseRes = await pool.query<{
+      routine_id: number;
+      day_index: number;
+      workout_at: Date | string;
+      completed_count: number;
+      total_count: number;
+    }>(
+      `
+      SELECT 
+        ec.routine_id, 
+        ec.day_index, 
+        DATE(ec.completed_at) as workout_at,
+        COUNT(CASE WHEN ec.completed = TRUE THEN 1 END) as completed_count,
+        COUNT(*) as total_count
+      FROM exercise_completions ec
+      JOIN routines r ON r.id = ec.routine_id
+      WHERE r.user_id = $1
+        AND ec.completed_at IS NOT NULL
+        AND ec.completed_at >= $2
+      GROUP BY ec.routine_id, ec.day_index, DATE(ec.completed_at)
+      `,
+      [userId, since]
+    );
+
+    // Also get rest day completions
+    const restRes = await pool.query<{
+      routine_id: number;
+      day_index: number;
+      workout_at: Date | string;
+    }>(
+      `
+      SELECT 
+        dc.routine_id, 
+        dc.day_index, 
+        DATE(dc.completed_at) as workout_at
+      FROM day_completions dc
+      JOIN routines r ON r.id = dc.routine_id
+      WHERE r.user_id = $1
+        AND dc.completed = TRUE
+        AND dc.completed_at IS NOT NULL
+        AND dc.completed_at >= $2
+      `,
+      [userId, since]
+    );
+
+    // Build a map of date -> completion percentage
+    const dailyCompletion = new Map<string, { completed: number; total: number }>();
+
+    // Process exercise completions
+    for (const row of exerciseRes.rows) {
+      const dateStr = row.workout_at instanceof Date 
+        ? toYmdUTC(row.workout_at) 
+        : String(row.workout_at).slice(0, 10);
+      const agg = dailyCompletion.get(dateStr) ?? { completed: 0, total: 0 };
+      agg.completed += Number(row.completed_count) || 0;
+      agg.total += Number(row.total_count) || 0;
+      dailyCompletion.set(dateStr, agg);
+    }
+
+    // Process rest day completions (count as 1/1 completed)
+    for (const row of restRes.rows) {
+      const dateStr = row.workout_at instanceof Date 
+        ? toYmdUTC(row.workout_at) 
+        : String(row.workout_at).slice(0, 10);
+      const agg = dailyCompletion.get(dateStr) ?? { completed: 0, total: 0 };
+      agg.completed += 1;
+      agg.total += 1;
+      dailyCompletion.set(dateStr, agg);
+    }
+
+    // Generate heatmap data for all days in range
+    const heatmapData: HeatmapData = Array.from({ length: days }, (_, i) => {
+      const d = new Date(now.getTime() - (days - 1 - i) * 86400000);
+      const dateStr = toYmdUTC(d);
+      const agg = dailyCompletion.get(dateStr);
+      
+      if (!agg || agg.total === 0) {
+        return { date: dateStr, value: 0 };
+      }
+      
+      // Value is completion percentage normalized to 0-1
+      const pct = agg.completed / agg.total;
+      return { date: dateStr, value: Math.round(pct * 100) / 100 };
+    });
+
+    return heatmapData;
+  } catch (error) {
+    console.error("getHeatmapData DB failed:", error);
+    // Return empty heatmap on error
+    return Array.from({ length: days }, (_, i) => {
+      const d = new Date(now.getTime() - (days - 1 - i) * 86400000);
+      return { date: toYmdUTC(d), value: 0 };
+    });
+  }
+}
+
 export async function deleteAllUserRoutines(userId: number): Promise<void> {
   try {
     // Due to ON DELETE CASCADE constraints, deleting routines will automatically
