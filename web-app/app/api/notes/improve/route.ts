@@ -3,6 +3,8 @@ import { getSession } from "@/lib/auth";
 import { ChatAnthropic } from "@langchain/anthropic";
 import { wrapUntrustedBlock } from "@/lib/prompt-safety";
 import { rateLimit, RATE_LIMITS } from "@/lib/rate-limit";
+import { NotesImproveSchema, safeParseWithError } from "@/lib/validations";
+import { requireCsrf } from "@/lib/csrf";
 
 function sanitizeApiKey(raw: string): string {
   return String(raw || "")
@@ -33,6 +35,10 @@ export async function POST(request: NextRequest) {
   try {
     const session = await getSession();
     if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+    // CSRF validation for state-changing request
+    const csrfError = await requireCsrf(request, session.userId);
+    if (csrfError) return csrfError;
 
     // Rate limit AI usage to protect credits (no-op if Redis not configured)
     {
@@ -75,21 +81,18 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    const body = await request.json().catch(() => ({}));
-    const {
-      notes,
-      model_provider,
-      api_key,
-      apiKey, // alt/backward name
-    } = body ?? {};
-
-    const provider = model_provider as "Anthropic" | "OpenAI" | undefined;
-    if (provider !== "Anthropic" && provider !== "OpenAI") {
-      return NextResponse.json({ error: "Invalid model_provider" }, { status: 400 });
+    // Validate input with Zod
+    const rawBody = await request.json().catch(() => ({}));
+    const parsed = safeParseWithError(NotesImproveSchema, rawBody);
+    
+    if (!parsed.success) {
+      return NextResponse.json({ error: parsed.error }, { status: 400 });
     }
 
-    const keyFromClientRaw = typeof api_key === "string" ? api_key : typeof apiKey === "string" ? apiKey : "";
-    const keyFromClient = sanitizeApiKey(keyFromClientRaw);
+    const { notes, model_provider, apiKey } = parsed.data;
+
+    const provider = model_provider;
+    const keyFromClient = sanitizeApiKey(apiKey || "");
 
     const hasServerKey =
       provider === "Anthropic" ? Boolean(process.env.ANTHROPIC_API_KEY) : Boolean(process.env.OPENAI_API_KEY);
@@ -101,7 +104,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const userNotes = typeof notes === "string" ? notes : "";
+    const userNotes = notes;
 
     const prompt = `You are helping a user write "Additional comments" for a gym routine generator.
 Rewrite the notes to be clearer and more actionable for a coach/AI.

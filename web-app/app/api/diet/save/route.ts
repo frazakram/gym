@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { initializeDatabase, saveDiet } from '@/lib/db';
 import { getSession } from '@/lib/auth';
+import { DietSaveSchema, safeParseWithError } from '@/lib/validations';
+import { requireCsrf } from '@/lib/csrf';
 
 export async function POST(request: NextRequest) {
   try {
@@ -9,13 +11,21 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
+    // CSRF validation for state-changing request
+    const csrfError = await requireCsrf(request, session.userId);
+    if (csrfError) return csrfError;
+
     await initializeDatabase();
 
-    const { weekNumber, diet } = await request.json();
-
-    if (!weekNumber || !diet) {
-      return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
+    // Validate input with Zod
+    const rawBody = await request.json().catch(() => ({}));
+    const parsed = safeParseWithError(DietSaveSchema, rawBody);
+    
+    if (!parsed.success) {
+      return NextResponse.json({ error: parsed.error }, { status: 400 });
     }
+
+    const { weekNumber, diet } = parsed.data;
 
     const savedId = await saveDiet(session.userId, weekNumber, diet);
 

@@ -5,6 +5,14 @@ import { generateRoutineOpenAI } from '@/lib/openai-routine';
 import { buildHistoricalContext, formatHistoricalContextForPrompt } from '@/lib/historical-context';
 import { rateLimit, RATE_LIMITS } from '@/lib/rate-limit';
 import { initializeDatabase } from '@/lib/db';
+import { RoutineGenerateSchema, safeParseWithError } from '@/lib/validations';
+import { requireCsrf } from '@/lib/csrf';
+import { 
+  hashCacheKey, 
+  getCachedAIResponse, 
+  setCachedAIResponse, 
+  AI_CACHE_TTL 
+} from '@/lib/redis';
 
 
 export async function POST(request: NextRequest) {
@@ -14,6 +22,10 @@ export async function POST(request: NextRequest) {
     if (!session) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
+
+    // CSRF validation for state-changing request
+    const csrfError = await requireCsrf(request, session.userId);
+    if (csrfError) return csrfError;
 
     // Ensure DB schema exists before we try to fetch an existing routine by week.
     await initializeDatabase();
@@ -59,7 +71,18 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    const body = await request.json();
+    // Validate input with Zod
+    const rawBody = await request.json().catch(() => ({}));
+    const parsed = safeParseWithError(RoutineGenerateSchema, rawBody);
+    
+    if (!parsed.success) {
+      return NextResponse.json(
+        { error: parsed.error },
+        { status: 400 }
+      );
+    }
+
+    const body = parsed.data;
     const {
       age,
       weight,
@@ -79,9 +102,9 @@ export async function POST(request: NextRequest) {
       api_key,
       apiKey, // backward/alt client name
       stream,
-    } = body ?? {};
+    } = body;
 
-    const provider = model_provider as 'Anthropic' | 'OpenAI' | undefined;
+    const provider = model_provider;
     const keyFromClientRaw = (typeof api_key === 'string' ? api_key : typeof apiKey === 'string' ? apiKey : '');
     const keyFromClient = keyFromClientRaw
       .normalize('NFKC')
@@ -93,23 +116,6 @@ export async function POST(request: NextRequest) {
         : provider === 'OpenAI'
           ? Boolean(process.env.OPENAI_API_KEY)
           : false;
-
-    // Validate required fields (avoid falsy checks; 0 is a valid number even if we don't expect it)
-    if (
-      age == null ||
-      weight == null ||
-      height == null ||
-      !gender ||
-      !goal ||
-      !level ||
-      !tenure ||
-      (provider !== 'Anthropic' && provider !== 'OpenAI')
-    ) {
-      return NextResponse.json(
-        { error: 'Missing required fields for routine generation' },
-        { status: 400 }
-      );
-    }
 
     // Only require a client key if we don't have a server-side key for the selected provider
     if (!keyFromClient && !hasServerKey) {
@@ -137,6 +143,10 @@ export async function POST(request: NextRequest) {
       // Continue without historical context
     }
 
+    // Helper to convert null to undefined (Zod nullable vs TypeScript optional)
+    const nullToUndefined = <T>(val: T | null | undefined): T | undefined => 
+      val === null ? undefined : val;
+
     const input = {
       age,
       weight,
@@ -145,10 +155,10 @@ export async function POST(request: NextRequest) {
       goal,
       level,
       tenure,
-      goal_weight,
-      goal_duration,
+      goal_weight: nullToUndefined(goal_weight),
+      goal_duration: nullToUndefined(goal_duration),
       session_duration: typeof session_duration === 'number' ? session_duration : undefined,
-      notes,
+      notes: nullToUndefined(notes),
       model_provider,
       apiKey: keyFromClient || undefined, // Passed from client (optional if server env has key)
     };
@@ -251,6 +261,41 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    // ========== REDIS CACHE CHECK (before expensive AI call) ==========
+    // Build cache key from input parameters (excluding API keys)
+    const cacheInputs = {
+      userId: session.userId,
+      age: input.age,
+      weight: input.weight,
+      height: input.height,
+      gender: input.gender,
+      goal: input.goal,
+      level: input.level,
+      tenure: input.tenure,
+      goal_weight: input.goal_weight,
+      session_duration: input.session_duration,
+      notes: input.notes,
+      provider,
+      // Include equipment/body analysis in cache key
+      equipmentHash: equipmentAnalysis ? JSON.stringify(equipmentAnalysis).slice(0, 100) : null,
+      bodyHash: bodyAnalysis ? JSON.stringify(bodyAnalysis).slice(0, 100) : null,
+    };
+    
+    const cacheKey = hashCacheKey('routine', cacheInputs);
+    
+    // Skip cache if regenerate is explicitly requested
+    if (body.regenerate !== true) {
+      const cached = await getCachedAIResponse<any>(cacheKey);
+      if (cached.hit) {
+        console.log(`[Routine] Cache hit for user ${session.userId}, saving AI cost!`);
+        return NextResponse.json({
+          routine: cached.data,
+          source: 'cache',
+          week_number: typeof body.week_number === 'number' ? body.week_number : null,
+        });
+      }
+    }
+
     // AI Generation (with equipment and body composition analysis already fetched above)
     const routine =
       provider === 'OpenAI'
@@ -262,6 +307,16 @@ export async function POST(request: NextRequest) {
         { error: 'Failed to generate routine. Check your API key and provider.' },
         { status: 500 }
       );
+    }
+
+    // ========== CACHE THE GENERATED ROUTINE ==========
+    // Store in Redis for future requests with same parameters
+    try {
+      await setCachedAIResponse(cacheKey, routine, AI_CACHE_TTL.routine);
+      console.log(`[Routine] Cached for user ${session.userId} (TTL: ${AI_CACHE_TTL.routine}s)`);
+    } catch (cacheErr) {
+      // Don't fail the request if caching fails
+      console.warn('[Routine] Failed to cache:', cacheErr);
     }
 
     return NextResponse.json(

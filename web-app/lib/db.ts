@@ -35,12 +35,49 @@ const connectionString = firstEnv(
   "gym_POSTGRES_PRISMA_URL"
 );
 
+/**
+ * SSL Configuration for Database Connection
+ * 
+ * Production: Full SSL verification enabled by default
+ * Development: Can be disabled with DB_SSL_REJECT_UNAUTHORIZED=false
+ * 
+ * For Neon/Vercel: SSL is required but hostname verification may need adjustment
+ * Set DB_SSL_MODE=require for cloud databases that use connection poolers
+ */
+function getSslConfig(): false | { rejectUnauthorized: boolean; checkServerIdentity?: () => undefined } {
+  // Disable SSL entirely (only for local development with local DB)
+  if (process.env.DB_SSL_DISABLED === "true") {
+    return false;
+  }
+
+  const isProduction = process.env.NODE_ENV === "production";
+  
+  // In production, always verify certificates unless explicitly disabled
+  // DB_SSL_REJECT_UNAUTHORIZED=false is NOT recommended for production
+  const rejectUnauthorized = 
+    process.env.DB_SSL_REJECT_UNAUTHORIZED === "false" ? false : isProduction;
+
+  // For cloud database poolers (Neon, Supabase, etc.) that use different hostnames
+  // Set DB_SSL_MODE=require to skip hostname verification while still validating certs
+  const sslMode = process.env.DB_SSL_MODE || "verify-full";
+  
+  if (sslMode === "require") {
+    // Validate certificate chain but skip hostname check (for poolers)
+    return {
+      rejectUnauthorized,
+      checkServerIdentity: () => undefined,
+    };
+  }
+
+  // Default: Full verification (recommended for direct connections)
+  return {
+    rejectUnauthorized,
+  };
+}
+
 const pool = new Pool({
   connectionString,
-  ssl: {
-    rejectUnauthorized: false,
-    checkServerIdentity: () => undefined, // Bypass identity check for aliases
-  },
+  ssl: getSslConfig(),
   connectionTimeoutMillis: 10000, // 10s timeout - long enough for Neon cold start, short enough to not hang forever
   max: 10,
   idleTimeoutMillis: 30000,

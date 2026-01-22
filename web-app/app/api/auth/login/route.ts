@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { authenticateUser, initializeDatabase } from '@/lib/db';
 import { createSession } from '@/lib/auth';
 import { rateLimit, RATE_LIMITS } from '@/lib/rate-limit';
+import { LoginSchema, safeParseWithError } from '@/lib/validations';
+import { generateCsrfToken } from '@/lib/csrf';
 
 function getClientIp(request: NextRequest): string {
   const xff = request.headers.get('x-forwarded-for');
@@ -29,14 +31,18 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    const { username, password } = await request.json();
-
-    if (!username || !password) {
+    // Validate input with Zod
+    const rawBody = await request.json().catch(() => ({}));
+    const parsed = safeParseWithError(LoginSchema, rawBody);
+    
+    if (!parsed.success) {
       return NextResponse.json(
-        { error: 'Username and password are required' },
+        { error: parsed.error },
         { status: 400 }
       );
     }
+
+    const { username, password } = parsed.data;
 
     // Ensure tables exist before trying to read
     await initializeDatabase();
@@ -52,8 +58,11 @@ export async function POST(request: NextRequest) {
 
     const token = await createSession(userId);
 
+    // Generate CSRF token for the authenticated user
+    const csrfToken = await generateCsrfToken(userId);
+
     const res = NextResponse.json(
-      { message: 'Login successful', userId, username },
+      { message: 'Login successful', userId, username, csrfToken },
       { status: 200 }
     );
 
@@ -64,6 +73,15 @@ export async function POST(request: NextRequest) {
       sameSite: 'lax',
       maxAge: 60 * 60 * 24 * 7, // 7 days
       expires: new Date(Date.now() + 1000 * 60 * 60 * 24 * 7),
+      path: '/',
+    });
+
+    // Set CSRF token cookie
+    res.cookies.set('csrf_token', csrfToken, {
+      httpOnly: false, // Must be readable by client JS
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict',
+      maxAge: 60 * 60, // 1 hour
       path: '/',
     });
 
