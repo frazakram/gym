@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createUser, initializeDatabase } from '@/lib/db';
 import { createSession, setSessionCookie } from '@/lib/auth';
 import { rateLimit, RATE_LIMITS } from '@/lib/rate-limit';
+import { RegisterSchema, safeParseWithError } from '@/lib/validations';
+import { generateCsrfToken } from '@/lib/csrf';
 
 function getClientIp(request: NextRequest): string {
   const xff = request.headers.get('x-forwarded-for');
@@ -29,41 +31,18 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    const { username, password } = await request.json();
-
-    if (!username || !password) {
+    // Validate input with Zod (includes all password requirements)
+    const rawBody = await request.json().catch(() => ({}));
+    const parsed = safeParseWithError(RegisterSchema, rawBody);
+    
+    if (!parsed.success) {
       return NextResponse.json(
-        { error: 'Username and password are required' },
+        { error: parsed.error },
         { status: 400 }
       );
     }
 
-    // Password Validation
-    if (password.length < 6) {
-      return NextResponse.json(
-        { error: 'Password must be at least 6 characters long' },
-        { status: 400 }
-      );
-    }
-    if (!/[A-Z]/.test(password)) {
-      return NextResponse.json(
-        { error: 'Password must contain at least one uppercase letter' },
-        { status: 400 }
-      );
-    }
-    if (!/[0-9]/.test(password)) {
-      return NextResponse.json(
-        { error: 'Password must contain at least one number' },
-        { status: 400 }
-      );
-    }
-    // Special characters: !@#$%^&*()_+-=[]{}|;':",./<>? and others
-    if (!/[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]/.test(password)) {
-      return NextResponse.json(
-        { error: 'Password must contain at least one special character' },
-        { status: 400 }
-      );
-    }
+    const { username, password } = parsed.data;
 
     // Ensure tables exist before trying to insert
     await initializeDatabase();
@@ -79,9 +58,12 @@ export async function POST(request: NextRequest) {
 
     // Auto-login the user after successful registration
     const token = await createSession(user.id);
+    
+    // Generate CSRF token for the newly registered user
+    const csrfToken = await generateCsrfToken(user.id);
 
     const res = NextResponse.json(
-      { message: 'User created successfully', userId: user.id, username },
+      { message: 'User created successfully', userId: user.id, username, csrfToken },
       { status: 201 }
     );
 
@@ -91,6 +73,15 @@ export async function POST(request: NextRequest) {
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',
       maxAge: 60 * 60 * 24 * 7, // 7 days
+      path: '/',
+    });
+
+    // Set CSRF token cookie
+    res.cookies.set('csrf_token', csrfToken, {
+      httpOnly: false, // Must be readable by client JS
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict',
+      maxAge: 60 * 60, // 1 hour
       path: '/',
     });
 

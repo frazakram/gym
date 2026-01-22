@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from "next/server";
-import { z } from "zod";
 import { getSession } from "@/lib/auth";
 import {
   createCoachBooking,
@@ -11,22 +10,19 @@ import {
 import { HARD_CODED_COACH } from "@/lib/coach";
 import { rateLimit, RATE_LIMITS } from "@/lib/rate-limit";
 import { sendEmail } from "@/lib/email";
+import { CoachBookingSchema, safeParseWithError } from "@/lib/validations";
+import { requireCsrf } from "@/lib/csrf";
 
 export const runtime = "nodejs";
-
-const BodySchema = z.object({
-  userName: z.string().min(2).max(80),
-  userEmail: z.string().email(),
-  userPhone: z.string().min(7).max(20),
-  coachId: z.coerce.number().int().positive().optional().nullable(),
-  preferredAt: z.string().datetime().optional().nullable(),
-  message: z.string().max(1000).optional().nullable(),
-});
 
 export async function POST(req: NextRequest) {
   try {
     const session = await getSession();
     if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+    // CSRF validation for state-changing request
+    const csrfError = await requireCsrf(req, session.userId);
+    if (csrfError) return csrfError;
 
     await initializeDatabase();
     const premium = await getPremiumStatus(session.userId);
@@ -96,8 +92,18 @@ export async function POST(req: NextRequest) {
       }
     }
 
+    // Validate input with Zod
     const raw = await req.json().catch(() => ({}));
-    const body = BodySchema.parse(raw);
+    const parsed = safeParseWithError(CoachBookingSchema, raw);
+    
+    if (!parsed.success) {
+      return NextResponse.json(
+        { error: parsed.error },
+        { status: 400 }
+      );
+    }
+
+    const body = parsed.data;
 
     // Resolve coach: either selected approved coach, or fallback to the hard-coded coach.
     const selectedCoach =

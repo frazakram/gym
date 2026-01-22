@@ -1,29 +1,29 @@
 import { NextRequest, NextResponse } from "next/server";
-import { z } from "zod";
 import { getSession } from "@/lib/auth";
 import { createCoachApplication, initializeDatabase } from "@/lib/db";
+import { CoachApplySchema, safeParseWithError } from "@/lib/validations";
+import { requireCsrf } from "@/lib/csrf";
 
 export const runtime = "nodejs";
-
-const BodySchema = z.object({
-  display_name: z.string().min(2).max(80),
-  bio: z.string().max(1200).optional().nullable(),
-  experience_years: z.coerce.number().int().min(0).max(80).optional().nullable(),
-  certifications: z.string().max(1200).optional().nullable(),
-  specialties: z.array(z.string().min(1).max(50)).max(20).optional().nullable(),
-  languages: z.array(z.string().min(1).max(30)).max(20).optional().nullable(),
-  timezone: z.string().max(64).optional().nullable(),
-  phone: z.string().min(7).max(20).optional().nullable(),
-  email: z.string().email().optional().nullable(),
-});
 
 export async function POST(req: NextRequest) {
   try {
     const session = await getSession();
     if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
+    // CSRF validation for state-changing request
+    const csrfError = await requireCsrf(req, session.userId);
+    if (csrfError) return csrfError;
+
+    // Validate input with Zod
     const raw = await req.json().catch(() => ({}));
-    const body = BodySchema.parse(raw);
+    const parsed = safeParseWithError(CoachApplySchema, raw);
+    
+    if (!parsed.success) {
+      return NextResponse.json({ error: parsed.error }, { status: 400 });
+    }
+
+    const body = parsed.data;
 
     await initializeDatabase();
     const out = await createCoachApplication({

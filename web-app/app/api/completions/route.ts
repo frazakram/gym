@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getCompletionStats, initializeDatabase, toggleExerciseCompletion } from '@/lib/db';
 import { getSession } from '@/lib/auth';
 import { redisIncr } from '@/lib/redis';
+import { ExerciseCompletionSchema, safeParseWithError } from '@/lib/validations';
+import { requireCsrf } from '@/lib/csrf';
 
 export async function POST(req: NextRequest) {
   try {
@@ -10,23 +12,31 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
+    // CSRF validation for state-changing request
+    const csrfError = await requireCsrf(req, session.userId);
+    if (csrfError) return csrfError;
+
     await initializeDatabase();
 
-    const { routineId, dayIndex, exerciseIndex, completed } = await req.json();
-
-    if (routineId === undefined || dayIndex === undefined || exerciseIndex === undefined || completed === undefined) {
+    // Validate input with Zod
+    const rawBody = await req.json().catch(() => ({}));
+    const parsed = safeParseWithError(ExerciseCompletionSchema, rawBody);
+    
+    if (!parsed.success) {
       return NextResponse.json(
-        { error: 'Missing required fields' },
+        { error: parsed.error },
         { status: 400 }
       );
     }
 
+    const { routineId, dayIndex, exerciseIndex, completed } = parsed.data;
+
     const success = await toggleExerciseCompletion(
       session.userId,
-      Number(routineId),
-      Number(dayIndex),
-      Number(exerciseIndex),
-      Boolean(completed)
+      routineId,
+      dayIndex,
+      exerciseIndex,
+      completed
     );
 
     if (!success) {
