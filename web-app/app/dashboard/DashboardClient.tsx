@@ -18,6 +18,7 @@ import { UpgradeModal } from '@/components/ui/UpgradeModal'
 import { compressImage } from '@/lib/image-utils'
 import { OfflineIndicator } from '@/components/OfflineIndicator'
 import { useSessionPersistence, clearSessionIndicator } from '@/lib/useSessionPersistence'
+import { csrfFetch } from '@/lib/useCsrf'
 
 export default function DashboardPage() {
   const router = useRouter()
@@ -61,7 +62,7 @@ export default function DashboardPage() {
 
   const fetchPremiumStatus = useCallback(async (): Promise<PremiumStatus | null> => {
     try {
-      const res = await fetch('/api/billing/status', { cache: 'no-store' })
+      const res = await csrfFetch('/api/billing/status', { cache: 'no-store' })
       if (!res.ok) return null
       const data = (await res.json()) as PremiumStatus
       setPremiumStatus(data)
@@ -167,7 +168,7 @@ export default function DashboardPage() {
 
   const fetchProfile = useCallback(async () => {
     try {
-      const response = await fetch('/api/profile')
+      const response = await csrfFetch('/api/profile')
       if (response.status === 401) {
         router.push('/login')
         return
@@ -207,14 +208,14 @@ export default function DashboardPage() {
 
   const fetchLatestRoutine = useCallback(async () => {
     try {
-      const res = await fetch(`/api/routines`)
+      const res = await csrfFetch(`/api/routines`)
       const { routine } = await res.json()
       if (routine) {
         setRoutine(routine.routine_json)
         setCurrentRoutineId(routine.id)
         setCurrentWeekNumber(routine.week_number)
 
-        const compRes = await fetch(`/api/completions?routineId=${routine.id}`)
+        const compRes = await csrfFetch(`/api/completions?routineId=${routine.id}`)
         const { completions } = await compRes.json()
 
         const map = new Map<string, boolean>()
@@ -224,7 +225,7 @@ export default function DashboardPage() {
         setExerciseCompletions(map)
 
         try {
-          const dayRes = await fetch(`/api/day-completions?routineId=${routine.id}`)
+          const dayRes = await csrfFetch(`/api/day-completions?routineId=${routine.id}`)
           const dayData = await dayRes.json().catch(() => ({}))
           const dmap = new Map<number, boolean>()
             ; (dayData?.days || []).forEach((d: any) => {
@@ -246,7 +247,7 @@ export default function DashboardPage() {
 
   const fetchLatestDiet = useCallback(async () => {
     try {
-      const res = await fetch('/api/diet');
+      const res = await csrfFetch('/api/diet');
       const data = await res.json();
       if (data.diet) {
         setDietPlan(data.diet.diet_json);
@@ -259,7 +260,7 @@ export default function DashboardPage() {
   const fetchHeatmapData = useCallback(async () => {
     setHeatmapLoading(true)
     try {
-      const res = await fetch('/api/heatmap?days=56') // 8 weeks
+      const res = await csrfFetch('/api/heatmap?days=56') // 8 weeks
       const data = await res.json()
       if (data.heatmap) {
         setHeatmapData(data.heatmap)
@@ -392,7 +393,7 @@ export default function DashboardPage() {
   const fetchHistory = async () => {
     setLoadingHistory(true)
     try {
-      const res = await fetch('/api/routines?all=true&includeArchived=true')
+      const res = await csrfFetch('/api/routines?all=true&includeArchived=true')
       const data = await res.json()
       if (data.routines) {
         setHistoryRoutines(data.routines)
@@ -406,7 +407,7 @@ export default function DashboardPage() {
 
   const handleArchiveRoutine = async (routineId: number, archived: boolean) => {
     try {
-      const res = await fetch(`/api/routines/${routineId}`, {
+      const res = await csrfFetch(`/api/routines/${routineId}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ archived }),
@@ -423,7 +424,7 @@ export default function DashboardPage() {
     if (!ok) return
 
     try {
-      const res = await fetch(`/api/routines/${routineId}`, { method: 'DELETE' })
+      const res = await csrfFetch(`/api/routines/${routineId}`, { method: 'DELETE' })
       if (!res.ok) throw new Error('Failed to delete routine')
 
       if (currentRoutineId === routineId) {
@@ -446,7 +447,7 @@ export default function DashboardPage() {
 
     // Attempt to load associated diet for this week
     try {
-      const dietRes = await fetch(`/api/diet?week=${historyItem.week_number}`);
+      const dietRes = await csrfFetch(`/api/diet?week=${historyItem.week_number}`);
       const dietData = await dietRes.json();
       if (dietData.diet) {
         setDietPlan(dietData.diet.diet_json);
@@ -464,7 +465,7 @@ export default function DashboardPage() {
 
     // Fetch completions for this routine
     try {
-      const compRes = await fetch(`/api/completions?routineId=${historyItem.id}`)
+      const compRes = await csrfFetch(`/api/completions?routineId=${historyItem.id}`)
       const { completions } = await compRes.json()
       const map = new Map<string, boolean>()
       completions.forEach((c: any) => {
@@ -473,7 +474,7 @@ export default function DashboardPage() {
       setExerciseCompletions(map)
 
       try {
-        const dayRes = await fetch(`/api/day-completions?routineId=${historyItem.id}`)
+        const dayRes = await csrfFetch(`/api/day-completions?routineId=${historyItem.id}`)
         const dayData = await dayRes.json().catch(() => ({}))
         const dmap = new Map<number, boolean>()
           ; (dayData?.days || []).forEach((d: any) => {
@@ -527,7 +528,7 @@ export default function DashboardPage() {
     try {
       let currentUserId = userId
       if (!currentUserId) {
-        const profileRes = await fetch('/api/profile')
+        const profileRes = await csrfFetch('/api/profile')
         const profileData = await profileRes.json()
         if (profileData.profile?.user_id) {
           currentUserId = profileData.profile.user_id
@@ -538,7 +539,7 @@ export default function DashboardPage() {
         }
       }
 
-      const res = await fetch('/api/routines', {
+      const res = await csrfFetch('/api/routines', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -606,7 +607,7 @@ export default function DashboardPage() {
       const targetWeekStart = new Date(baseMonday)
       targetWeekStart.setDate(baseMonday.getDate() + (isNextWeek ? 7 : 0))
 
-      const response = await fetch('/api/routine/generate', {
+      const response = await csrfFetch('/api/routine/generate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -651,7 +652,7 @@ export default function DashboardPage() {
         setSuccess('Loaded existing routine for this week.')
         if (data.routine_id) {
           setCurrentRoutineId(data.routine_id)
-          const compRes = await fetch(`/api/completions?routineId=${data.routine_id}`)
+          const compRes = await csrfFetch(`/api/completions?routineId=${data.routine_id}`)
           const { completions } = await compRes.json()
           const map = new Map<string, boolean>()
           completions.forEach((c: any) => {
@@ -660,7 +661,7 @@ export default function DashboardPage() {
           setExerciseCompletions(map)
 
           try {
-            const dayRes = await fetch(`/api/day-completions?routineId=${data.routine_id}`)
+            const dayRes = await csrfFetch(`/api/day-completions?routineId=${data.routine_id}`)
             const dayData = await dayRes.json().catch(() => ({}))
             const dmap = new Map<number, boolean>()
               ; (dayData?.days || []).forEach((d: any) => {
@@ -696,7 +697,7 @@ export default function DashboardPage() {
     setSuccess('');
 
     try {
-      const dietRes = await fetch('/api/diet/generate', {
+      const dietRes = await csrfFetch('/api/diet/generate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -714,7 +715,7 @@ export default function DashboardPage() {
         setSuccess('Diet plan generated successfully!');
 
         // Save diet
-        await fetch('/api/diet/save', {
+        await csrfFetch('/api/diet/save', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -744,7 +745,7 @@ export default function DashboardPage() {
         setError('')
         setSuccess('')
         try {
-          const res = await fetch('/api/routines/reset', { method: 'DELETE' })
+          const res = await csrfFetch('/api/routines/reset', { method: 'DELETE' })
           const data = await res.json()
 
           if (!res.ok) {
@@ -779,7 +780,7 @@ export default function DashboardPage() {
         throw new Error('Please fill Age, Weight, Height, and Training Duration.')
       }
 
-      const response = await fetch('/api/profile', {
+      const response = await csrfFetch('/api/profile', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -826,7 +827,7 @@ export default function DashboardPage() {
   const handleLogout = async () => {
     // Clear localStorage session indicator
     clearSessionIndicator()
-    await fetch('/api/auth/logout', { method: 'POST' })
+    await csrfFetch('/api/auth/logout', { method: 'POST' })
     router.push('/login')
   }
 
@@ -917,7 +918,7 @@ export default function DashboardPage() {
       const updatedPhotos = [...gymPhotos, ...newPhotos]
       setGymPhotos(updatedPhotos)
 
-      const response = await fetch('/api/gym/analyze', {
+      const response = await csrfFetch('/api/gym/analyze', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ images: updatedPhotos.map(p => p.base64) })
@@ -945,7 +946,7 @@ export default function DashboardPage() {
     } else {
       try {
         setAnalyzingEquipment(true)
-        const response = await fetch('/api/gym/analyze', {
+        const response = await csrfFetch('/api/gym/analyze', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ images: updatedPhotos.map(p => p.base64) })
@@ -984,7 +985,7 @@ export default function DashboardPage() {
       const updatedPhotos = [...bodyPhotos, ...newPhotos].slice(0, 2)
       setBodyPhotos(updatedPhotos)
 
-      const response = await fetch('/api/body/analyze', {
+      const response = await csrfFetch('/api/body/analyze', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ images: updatedPhotos.map(p => p.base64) })
@@ -1000,7 +1001,7 @@ export default function DashboardPage() {
       // Or rely on the user clicking "Save Profile"? 
       // The user prompt said photos are not stored, but analysis should be used.
       // Saving the analysis to profile seems correct.
-      await fetch('/api/profile', {
+      await csrfFetch('/api/profile', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -1025,7 +1026,7 @@ export default function DashboardPage() {
       setBodyAnalysis(null)
       // Clear analysis in backend too if needed, or just keep it until replaced?
       // Let's clear it for consistency.
-      await fetch('/api/profile', {
+      await csrfFetch('/api/profile', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -1037,14 +1038,14 @@ export default function DashboardPage() {
     } else {
       try {
         setAnalyzingBody(true)
-        const response = await fetch('/api/body/analyze', {
+        const response = await csrfFetch('/api/body/analyze', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ images: updatedPhotos.map(p => p.base64) })
         })
         const { analysis } = await response.json()
         setBodyAnalysis(analysis)
-        await fetch('/api/profile', {
+        await csrfFetch('/api/profile', {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ body_composition_analysis: analysis }),
@@ -1082,23 +1083,52 @@ export default function DashboardPage() {
     })
 
     try {
-      const res = await fetch('/api/day-completions', {
+      const res = await csrfFetch('/api/day-completions', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ routineId: rid, dayIndex, completed }),
       })
-      if (!res.ok) {
-        // Revert
-        setDayCompletions(prev => {
-          const next = new Map(prev)
-          next.set(dayIndex, !completed)
-          return next
-        })
-      } else {
-        // Refresh heatmap data after completion is recorded
-        fetchHeatmapData()
-      }
-    } catch {
+      if (!res.ok) throw new Error('Failed to update')
+
+      setDayCompletions((prev) => {
+        const next = new Map(prev)
+        next.set(dayIndex, completed)
+        return next
+      })
+
+      // Update completion %
+      // actually, just let next render handle it or we need to recalculate?
+      // simple approach: do nothing or re-evaluate.
+      // DashboardClient does not compute percentage centrally, it's passed to RoutineView?
+      // No, completionPercentage is computed ?
+      // Wait, completionPercentage prop in RoutineView.
+      // Let's check how completionPercentage is passed.
+    } catch (e) {
+      console.error(e)
+    }
+  }
+
+  const handleToggleDayComplete = async (dayIndex: number, completed: boolean) => {
+    if (!currentRoutineId) return
+    const rid = currentRoutineId
+    
+    // Optimistic
+    setDayCompletions(prev => {
+      const next = new Map(prev)
+      next.set(dayIndex, completed)
+      return next
+    })
+
+    try {
+      const res = await csrfFetch('/api/day-completions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ routineId: rid, dayIndex, completed }),
+      })
+      if (!res.ok) throw new Error('Failed to update day completion')
+    } catch (e) {
+      console.error(e)
+      // Revert
       setDayCompletions(prev => {
         const next = new Map(prev)
         next.set(dayIndex, !completed)
@@ -1173,6 +1203,8 @@ export default function DashboardPage() {
             currentWeekNumber={currentWeekNumber}
             generating={generating}
             viewingHistory={viewingHistory}
+            dayCompletions={dayCompletions}
+            onToggleDayComplete={handleToggleDayComplete}
           />
         )}
 

@@ -13,7 +13,7 @@ import { ExerciseListSkeleton } from '../ui/SkeletonLoader'
 
 interface RoutineViewProps {
   routine: WeeklyRoutine | null
-  diet: WeeklyDiet | null // Added diet prop
+  diet: WeeklyDiet | null
   onNavigateToWorkout: (dayIndex: number) => void
   onGenerateRoutine: () => void
   onGenerateNextWeek: () => void
@@ -21,6 +21,8 @@ interface RoutineViewProps {
   currentWeekNumber: number
   generating: boolean
   viewingHistory?: boolean
+  dayCompletions?: Map<number, boolean>
+  onToggleDayComplete?: (dayIndex: number, completed: boolean) => void
 }
 
 export function RoutineView({
@@ -33,6 +35,8 @@ export function RoutineView({
   currentWeekNumber,
   generating,
   viewingHistory = false,
+  dayCompletions,
+  onToggleDayComplete,
 }: RoutineViewProps) {
   const todayIndex = (new Date().getDay() + 6) % 7 // Mon=0
   const [selectedDay, setSelectedDay] = useState(todayIndex)
@@ -58,9 +62,11 @@ export function RoutineView({
   }
 
   const currentDay = routine.days[Math.min(selectedDay, routine.days.length - 1)]
+  const isRestDay = !currentDay?.exercises?.length || currentDay.day.toLowerCase().includes('rest')
+  const isCompleted = dayCompletions?.get(selectedDay) || false
   
   // Estimate time based on exercise count (rough estimate)
-  const estimatedMinutes = currentDay?.exercises?.length ? currentDay.exercises.length * 9 + 12 : 25
+  const estimatedMinutes = currentDay?.exercises?.length ? currentDay.exercises.length * 9 + 12 : 0
 
   return (
     <div className="pb-24">
@@ -69,7 +75,9 @@ export function RoutineView({
         <h1 className="text-[18px] font-semibold tracking-tight text-white mb-0.5">
           {currentDay?.day || 'Select a Day'}
         </h1>
-        <p className="text-xs text-slate-300/70">{currentDay?.exercises?.length || 0} exercises</p>
+        <p className="text-xs text-slate-300/70">
+          {isRestDay ? 'Rest & Recovery' : `${currentDay?.exercises?.length || 0} exercises`}
+        </p>
       </div>
 
       {/* Day Selector */}
@@ -83,18 +91,29 @@ export function RoutineView({
       <div className="px-4 pt-4">
         <GlassCard className="p-4">
           <SectionHeader
-            title="Workout"
-            subtitle="Everything you need in one flow"
+            title={isRestDay ? "Rest Day" : "Workout"}
+            subtitle={isRestDay ? "Take time to recover" : "Everything you need in one flow"}
             right={
-              <div className="text-[11px] text-slate-200/80 glass-soft px-2.5 py-1 rounded-full border border-white/10">
-                ⏱️ {estimatedMinutes} min
-              </div>
+              !isRestDay ? (
+                <div className="text-[11px] text-slate-200/80 glass-soft px-2.5 py-1 rounded-full border border-white/10">
+                  ⏱️ {estimatedMinutes} min
+                </div>
+              ) : null
             }
           />
 
           <div className="mt-3 space-y-2">
             {generating ? (
               <ExerciseListSkeleton count={5} />
+            ) : isRestDay ? (
+              <div className="py-6 text-center">
+                <div className="w-16 h-16 rounded-full bg-emerald-500/10 flex items-center justify-center mx-auto mb-3">
+                  <span className="text-2xl">🌱</span>
+                </div>
+                <p className="text-slate-300 text-sm max-w-[240px] mx-auto">
+                  Active recovery, stretching, or light walking is recommended today.
+                </p>
+              </div>
             ) : (
               currentDay?.exercises?.map((exercise, index) => {
                 const meta = parseSetsReps(exercise.sets_reps)
@@ -134,18 +153,39 @@ export function RoutineView({
           </div>
 
           <div className="mt-4">
-            <AnimatedButton
-              onClick={() => onNavigateToWorkout(selectedDay)}
-              variant="primary"
-              fullWidth
-              icon={
-                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
-                </svg>
-              }
-            >
-              Start workout
-            </AnimatedButton>
+            {isRestDay ? (
+              !viewingHistory && onToggleDayComplete ? (
+                <AnimatedButton
+                  onClick={() => onToggleDayComplete(selectedDay, !isCompleted)}
+                  variant={isCompleted ? "ghost" : "primary"}
+                  fullWidth
+                  icon={isCompleted ? (
+                    <svg className="w-4 h-4 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                    </svg>
+                  ) : (
+                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                  )}
+                >
+                  {isCompleted ? 'Completed' : 'Mark as Complete'}
+                </AnimatedButton>
+              ) : null
+            ) : (
+              <AnimatedButton
+                onClick={() => onNavigateToWorkout(selectedDay)}
+                variant="primary"
+                fullWidth
+                icon={
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                  </svg>
+                }
+              >
+                Start workout
+              </AnimatedButton>
+            )}
           </div>
         </GlassCard>
       </div>
