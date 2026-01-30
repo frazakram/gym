@@ -1758,6 +1758,23 @@ export type PremiumStatus = {
 };
 
 export async function getPremiumStatus(userId: number): Promise<PremiumStatus> {
+  // Check if PREMIUM environment variable is set to "true" - grants premium to everyone
+  const premiumEnvEnabled = process.env.PREMIUM === "true";
+  if (premiumEnvEnabled) {
+    // Grant premium access to everyone when PREMIUM=true
+    // Set current_end far in the future (10 years) so premium lasts as long as env var is set
+    const farFuture = new Date(Date.now() + 10 * 365 * 24 * 60 * 60 * 1000);
+    return {
+      premium: true,
+      access: true,
+      trial_active: false, // Not a trial, it's full premium
+      trial_end: null,
+      status: "active",
+      subscription_id: "env_premium",
+      current_end: farFuture,
+    };
+  }
+
   try {
     const res = await pool.query(
       `SELECT subscription_id, status, current_end
