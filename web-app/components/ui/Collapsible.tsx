@@ -32,7 +32,7 @@ export function Collapsible({
             initial={{ height: 0, opacity: 0 }}
             animate={{ height: 'auto', opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
-            transition={{ duration: 0.22, ease: 'easeOut' }}
+            transition={{ duration: 0.22, ease: 'easeOut' as const }}
             className="overflow-hidden"
           >
             <div className="pt-3">{children}</div>

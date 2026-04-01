@@ -1,8 +1,20 @@
 'use client'
 
+import { motion, AnimatePresence } from 'framer-motion'
 import { WeeklyRoutine } from '@/types'
 import { ExerciseCard } from '../ExerciseCard'
 import { SwipeableExerciseWrapper } from '../ui/SwipeableExercise'
+import { ChevronLeft, Moon, PartyPopper } from 'lucide-react'
+
+const stagger = {
+  hidden: {},
+  visible: { transition: { staggerChildren: 0.06, delayChildren: 0.1 } },
+}
+
+const fadeUp = {
+  hidden: { opacity: 0, y: 20 },
+  visible: { opacity: 1, y: 0, transition: { duration: 0.35, ease: 'easeOut' as const } },
+}
 
 interface WorkoutViewProps {
   routine: WeeklyRoutine | null
@@ -30,9 +42,9 @@ export function WorkoutView({
   if (!routine) {
     return (
       <div className="pb-24 px-4 py-6">
-        <div className="glass rounded-2xl p-8 text-center">
-          <h2 className="text-2xl font-bold text-white mb-3">No Workout Selected</h2>
-          <p className="text-slate-300/70">Go to Routine to select a workout</p>
+        <div className="glass rounded-2xl p-8 text-center border-[#8B5CF6]/10">
+          <h2 className="text-2xl font-bold text-white mb-3 font-[family-name:var(--font-display)]">No Workout Selected</h2>
+          <p className="text-[#8B8DA3]">Go to Routine to select a workout</p>
         </div>
       </div>
     )
@@ -43,15 +55,14 @@ export function WorkoutView({
   if (!day) {
     return (
       <div className="pb-24 px-4 py-6">
-        <div className="glass rounded-2xl p-8 text-center">
-          <h2 className="text-2xl font-bold text-white mb-3">Day Not Found</h2>
-          <p className="text-slate-300/70">Please select a valid day from the routine</p>
+        <div className="glass rounded-2xl p-8 text-center border-[#8B5CF6]/10">
+          <h2 className="text-2xl font-bold text-white mb-3 font-[family-name:var(--font-display)]">Day Not Found</h2>
+          <p className="text-[#8B8DA3]">Please select a valid day from the routine</p>
         </div>
       </div>
     )
   }
 
-  // Calculate progress for this day
   const completedCount = day.exercises.filter((_, eIdx) =>
     exerciseCompletions.get(`${selectedDayIndex}-${eIdx}`)
   ).length
@@ -59,58 +70,66 @@ export function WorkoutView({
   const progressPercentage = totalCount > 0 ? Math.round((completedCount / totalCount) * 100) : 0
   const isRestDay = totalCount === 0
   const restDone = Boolean(dayCompletions.get(selectedDayIndex))
+  const allComplete = completedCount === totalCount && totalCount > 0
 
   return (
     <div className="pb-24">
       {/* Header */}
-      <div className="sticky top-0 z-10 glass-menu backdrop-blur-xl px-4 py-3 border-b border-white/10">
+      <div className="sticky top-0 z-10 glass-menu backdrop-blur-xl px-4 py-3 border-b border-[#8B5CF6]/10">
         <div className="flex items-center gap-2">
-          <button
+          <motion.button
+            whileTap={{ scale: 0.9 }}
             onClick={onBack}
-            className="p-1.5 rounded-lg glass-soft hover:bg-white/10 transition"
+            className="p-1.5 rounded-lg glass-soft hover:bg-[#8B5CF6]/10 transition"
             aria-label="Go back"
           >
-            <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-            </svg>
-          </button>
+            <ChevronLeft className="w-4 h-4 text-white" />
+          </motion.button>
           <div className="flex-1 min-w-0">
-            <h1 className="text-base font-bold text-white truncate">{day.day}</h1>
-            <p className="text-xs text-slate-300/70">
-              {isRestDay ? (restDone ? 'Rest day completed' : 'Rest day') : `${completedCount}/${totalCount} completed • ${progressPercentage}%`}
+            <h1 className="text-base font-bold text-white truncate font-[family-name:var(--font-display)]">{day.day}</h1>
+            <p className="text-xs text-[#8B8DA3]">
+              {isRestDay ? (restDone ? 'Rest day completed' : 'Rest day') : `${completedCount}/${totalCount} completed \u2022 ${progressPercentage}%`}
             </p>
           </div>
         </div>
 
         {/* Progress Bar */}
-        <div className="mt-2 w-full bg-slate-700 rounded-full h-1.5">
-          <div
-            className="bg-gradient-to-r from-teal-400 to-emerald-400 h-1.5 rounded-full transition-all duration-300"
-            style={{ width: `${isRestDay ? (restDone ? 100 : 0) : progressPercentage}%` }}
+        <div className="mt-2 w-full bg-[#8B5CF6]/10 rounded-full h-1.5 overflow-hidden">
+          <motion.div
+            className="bg-gradient-to-r from-[#8B5CF6] to-[#22D3EE] h-1.5 rounded-full"
+            initial={{ width: 0 }}
+            animate={{ width: `${isRestDay ? (restDone ? 100 : 0) : progressPercentage}%` }}
+            transition={{ duration: 0.5, ease: 'easeOut' as const }}
           />
         </div>
       </div>
 
       {/* Exercise Cards */}
-      <div className="px-4 pt-4 space-y-4">
+      <motion.div
+        className="px-4 pt-4 space-y-4"
+        variants={stagger}
+        initial="hidden"
+        animate="visible"
+      >
         {isRestDay ? (
-          <div className="glass rounded-2xl p-5 border border-white/10">
+          <motion.div variants={fadeUp} className="glass rounded-2xl p-5 border border-[#8B5CF6]/10">
             <div className="flex items-start justify-between gap-4">
               <div>
                 <div className="text-base font-semibold text-white">Rest day</div>
-                <div className="text-xs text-slate-300/70 mt-1">
+                <div className="text-xs text-[#8B8DA3] mt-1">
                   Take recovery seriously. You can still mark today as complete.
                 </div>
               </div>
-              <span className="px-2.5 py-1 rounded-full text-xs font-semibold bg-slate-200/10 text-slate-200 border border-white/10">
+              <span className="px-2.5 py-1 rounded-full text-xs font-semibold bg-[#8B5CF6]/10 text-[#A78BFA] border border-[#8B5CF6]/20">
+                <Moon className="w-3 h-3 inline mr-1" />
                 Recovery
               </span>
             </div>
 
             <div className="mt-4">
-              <button
+              <motion.button
+                whileTap={{ scale: 0.97 }}
                 onClick={async () => {
-                  // Ensure routine is saved before we can persist rest-day completion
                   if (!currentRoutineId) {
                     const rid = await onEnsureRoutineSaved()
                     if (!rid) return
@@ -119,59 +138,91 @@ export function WorkoutView({
                 }}
                 className={`w-full px-5 py-3 rounded-2xl font-semibold text-sm transition border ${restDone
                     ? 'bg-emerald-400/10 border-emerald-400/25 text-emerald-100 hover:bg-emerald-400/15'
-                    : 'bg-white/5 border-white/10 text-white/90 hover:bg-white/10'
+                    : 'bg-[#8B5CF6]/10 border-[#8B5CF6]/25 text-[#A78BFA] hover:bg-[#8B5CF6]/15'
                   }`}
               >
-                {restDone ? '✓ Marked complete' : 'Mark rest day complete'}
-              </button>
+                {restDone ? '\u2713 Marked complete' : 'Mark rest day complete'}
+              </motion.button>
             </div>
-          </div>
+          </motion.div>
         ) : (
           <>
             {day.exercises.map((exercise, exerciseIndex) => {
               const isCompleted = exerciseCompletions.get(`${selectedDayIndex}-${exerciseIndex}`) || false
               return (
-                <SwipeableExerciseWrapper
-                  key={exerciseIndex}
-                  isCompleted={isCompleted}
-                  onComplete={async () => {
-                    if (!currentRoutineId) {
-                      const rid = await onEnsureRoutineSaved()
-                      if (!rid) return
-                    }
-                    onToggleExercise(selectedDayIndex, exerciseIndex, true)
-                  }}
-                  onSkip={() => {
-                    // Skip just marks as not completed (or could be a separate state)
-                    onToggleExercise(selectedDayIndex, exerciseIndex, false)
-                  }}
-                >
-                  <ExerciseCard
-                    exercise={exercise}
-                    dayIndex={selectedDayIndex}
-                    exerciseIndex={exerciseIndex}
-                    routineId={currentRoutineId}
+                <motion.div key={exerciseIndex} variants={fadeUp}>
+                  <SwipeableExerciseWrapper
                     isCompleted={isCompleted}
-                    onToggle={(completed) => onToggleExercise(selectedDayIndex, exerciseIndex, completed)}
-                    onEnsureRoutineSaved={onEnsureRoutineSaved}
-                  />
-                </SwipeableExerciseWrapper>
+                    onComplete={async () => {
+                      if (!currentRoutineId) {
+                        const rid = await onEnsureRoutineSaved()
+                        if (!rid) return
+                      }
+                      onToggleExercise(selectedDayIndex, exerciseIndex, true)
+                    }}
+                    onSkip={() => {
+                      onToggleExercise(selectedDayIndex, exerciseIndex, false)
+                    }}
+                  >
+                    <ExerciseCard
+                      exercise={exercise}
+                      dayIndex={selectedDayIndex}
+                      exerciseIndex={exerciseIndex}
+                      routineId={currentRoutineId}
+                      isCompleted={isCompleted}
+                      onToggle={(completed) => onToggleExercise(selectedDayIndex, exerciseIndex, completed)}
+                      onEnsureRoutineSaved={onEnsureRoutineSaved}
+                    />
+                  </SwipeableExerciseWrapper>
+                </motion.div>
               )
             })}
           </>
         )}
-      </div>
+      </motion.div>
 
-      {/* Completion Message */}
-      {completedCount === totalCount && totalCount > 0 && (
-        <div className="px-4 pt-4">
-          <div className="glass rounded-xl p-4 text-center bg-gradient-to-r from-emerald-500/10 to-cyan-500/10 border border-emerald-500/20">
-            <div className="text-4xl mb-2">🎉</div>
-            <h3 className="text-base font-bold text-white mb-1">Workout Complete!</h3>
-            <p className="text-xs text-slate-300/70">Great job finishing today&apos;s workout</p>
-          </div>
-        </div>
-      )}
+      {/* Celebration */}
+      <AnimatePresence>
+        {allComplete && (
+          <motion.div
+            initial={{ opacity: 0, scale: 0.8, y: 20 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.8, y: 20 }}
+            transition={{ type: 'spring', stiffness: 200, damping: 15 }}
+            className="px-4 pt-4"
+          >
+            <div className="glass rounded-xl p-5 text-center bg-gradient-to-r from-[#8B5CF6]/15 to-[#22D3EE]/10 border border-[#8B5CF6]/25 relative overflow-hidden">
+              {/* Celebration glow */}
+              <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(139,92,246,0.15),transparent_70%)]" />
+
+              <motion.div
+                className="relative z-10"
+                initial={{ scale: 0 }}
+                animate={{ scale: 1 }}
+                transition={{ type: 'spring', stiffness: 300, damping: 15, delay: 0.2 }}
+              >
+                <PartyPopper className="w-10 h-10 text-[#A78BFA] mx-auto mb-3" />
+              </motion.div>
+              <motion.h3
+                className="relative z-10 text-base font-bold text-white mb-1 font-[family-name:var(--font-display)]"
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.3 }}
+              >
+                Workout Complete!
+              </motion.h3>
+              <motion.p
+                className="relative z-10 text-xs text-[#8B8DA3]"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.4 }}
+              >
+                Great job finishing today&apos;s workout
+              </motion.p>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   )
 }

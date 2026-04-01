@@ -10,10 +10,10 @@ export function EquipmentSummary({ analysis }: EquipmentSummaryProps) {
   const { equipment_detected, gym_type, space_assessment, unique_features, limitations, confidence_score } = analysis
 
   return (
-    <div className="mt-4 glass-soft rounded-2xl border border-white/10 p-4 space-y-3">
+    <div className="mt-4 glass-soft rounded-2xl border border-[#8B5CF6]/10 p-4 space-y-3">
       <div className="flex items-center justify-between">
         <h4 className="text-sm font-semibold text-white">Detected Equipment</h4>
-        <span className="text-xs text-slate-300/70">
+        <span className="text-xs text-[#8B8DA3]">
           {Math.round(confidence_score * 100)}% confidence
         </span>
       </div>
@@ -76,7 +76,7 @@ export function EquipmentSummary({ analysis }: EquipmentSummaryProps) {
         </div>
       )}
 
-      <p className="text-xs text-slate-400/80 pt-2 border-t border-white/5">
+      <p className="text-xs text-slate-400/80 pt-2 border-t border-[#8B5CF6]/5">
         Your workout routine will be personalized based on this equipment.
       </p>
     </div>

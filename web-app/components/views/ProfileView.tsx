@@ -1,6 +1,8 @@
 'use client'
 
 import { useMemo, useState } from 'react'
+import { motion } from 'framer-motion'
+import { LogOut, ChevronRight } from 'lucide-react'
 import { Profile, GymPhoto, GymEquipmentAnalysis, BodyPhoto, BodyCompositionAnalysis } from '@/types'
 import { GlassCard } from '../ui/GlassCard'
 import { SectionHeader } from '../ui/SectionHeader'
@@ -10,6 +12,17 @@ import { Collapsible } from '../ui/Collapsible'
 import { ImageUploadCard } from '../ui/ImageUploadCard'
 import { EquipmentSummary } from '../ui/EquipmentSummary'
 import { BodyCompositionSummary } from '../ui/BodyCompositionSummary'
+import { UserAvatar } from '../ui/UserAvatar'
+
+const stagger = {
+  hidden: {},
+  visible: { transition: { staggerChildren: 0.06, delayChildren: 0.1 } },
+}
+
+const fadeUp = {
+  hidden: { opacity: 0, y: 20 },
+  visible: { opacity: 1, y: 0, transition: { duration: 0.35, ease: 'easeOut' as const } },
+}
 
 interface ProfileViewProps {
   profile: (Profile & { username?: string }) | null
@@ -147,62 +160,46 @@ export function ProfileView({
 
   const allergyOptions = useMemo(() => ['Dairy', 'Gluten', 'Nuts', 'Shellfish', 'Eggs', 'Soy'], [])
 
-  // Get avatar emoji based on gender
-  const getAvatarEmoji = () => {
-    switch (gender) {
-      case 'Male': return '👨'
-      case 'Female': return '👩'
-      case 'Non-binary': return '🧑'
-      default: return '👤'
-    }
-  }
-
   return (
-    <form onSubmit={onSaveProfile} className="pb-24 px-4 pt-5 space-y-4 view-transition">
+    <motion.form onSubmit={onSaveProfile} className="pb-24 px-4 pt-5 space-y-4 view-transition" variants={stagger} initial="hidden" animate="visible">
       {/* Header */}
+      <motion.div variants={fadeUp}>
       <GlassCard className="p-4">
         <div className="flex items-center gap-3">
-          <div className="w-14 h-14 rounded-2xl bg-emerald-400/12 border border-emerald-400/20 flex items-center justify-center text-3xl">
-            {getAvatarEmoji()}
-          </div>
+          <UserAvatar name={name || undefined} username={profile?.username} size={56} />
           <div className="flex-1 min-w-0">
-            <p className="text-[15px] font-semibold tracking-tight text-white truncate">
+            <p className="text-[15px] font-semibold tracking-tight text-white truncate font-[family-name:var(--font-display)]">
               {name || profile?.username || 'Profile'}
             </p>
-            <p className="mt-0.5 text-xs text-slate-300/70">
+            <p className="mt-0.5 text-xs text-[#8B8DA3]">
               {age || '—'} yrs • {gender}
             </p>
           </div>
           <IconButton onClick={onLogout} ariaLabel="Logout" className="hover:bg-red-500/10 hover:text-red-200">
-            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"
-              />
-            </svg>
+            <LogOut className="w-4 h-4" />
           </IconButton>
         </div>
 
         <div className="mt-4 grid grid-cols-3 gap-2">
-          <div className="glass-soft rounded-2xl border border-white/10 p-2 text-center">
+          <div className="glass-soft rounded-2xl border border-[#8B5CF6]/10 p-2 text-center">
             <p className="text-[16px] font-semibold text-white">{weight || '—'}</p>
-            <p className="text-[10px] text-slate-300/60 mt-0.5">kg</p>
+            <p className="text-[10px] text-[#8B8DA3] mt-0.5">kg</p>
           </div>
-          <div className="glass-soft rounded-2xl border border-white/10 p-2 text-center">
+          <div className="glass-soft rounded-2xl border border-[#8B5CF6]/10 p-2 text-center">
             <p className="text-[16px] font-semibold text-white">{resolvedHeightCm || '—'}</p>
-            <p className="text-[10px] text-slate-300/60 mt-0.5">cm</p>
+            <p className="text-[10px] text-[#8B8DA3] mt-0.5">cm</p>
           </div>
-          <div className="glass-soft rounded-2xl border border-white/10 p-2 text-center">
+          <div className="glass-soft rounded-2xl border border-[#8B5CF6]/10 p-2 text-center">
             <p className="text-[14px] font-semibold text-white">{level}</p>
-            <p className="text-[10px] text-slate-300/60 mt-0.5">level</p>
+            <p className="text-[10px] text-[#8B8DA3] mt-0.5">level</p>
           </div>
         </div>
       </GlassCard>
+      </motion.div>
 
       {/* Admin tools */}
       {isAdmin ? (
+        <motion.div variants={fadeUp}>
         <GlassCard className="p-4">
           <SectionHeader title="Admin tools" subtitle="Manage coach booking requests" />
           <div className="mt-3">
@@ -224,14 +221,16 @@ export function ProfileView({
                 Coach Approvals (Admin)
               </AnimatedButton>
             </div>
-            <p className="mt-2 text-xs text-slate-300/70">
+            <p className="mt-2 text-xs text-[#8B8DA3]">
               You can update booking status: pending → confirmed/cancelled/completed.
             </p>
           </div>
         </GlassCard>
+        </motion.div>
       ) : null}
 
       {/* Coach tools */}
+      <motion.div variants={fadeUp}>
       <GlassCard className="p-4">
         <SectionHeader title="Coach" subtitle="Apply to be listed as a coach" />
         <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-2">
@@ -242,18 +241,20 @@ export function ProfileView({
             Coach portal
           </AnimatedButton>
         </div>
-        <p className="mt-2 text-xs text-slate-300/70">
+        <p className="mt-2 text-xs text-[#8B8DA3]">
           Open signup is enabled, but you must be approved by admin before users can see your profile.
         </p>
       </GlassCard>
+      </motion.div>
 
       {/* Fitness */}
+      <motion.div variants={fadeUp}>
       <GlassCard className="p-4">
         <SectionHeader title="Fitness" subtitle="Set the basics that drive your plan" />
 
         <div className="mt-4 space-y-4">
           <div>
-            <p className="text-xs text-slate-300/70 mb-2">Goal</p>
+            <p className="text-xs text-[#8B8DA3] mb-2">Goal</p>
             <div className="flex flex-wrap gap-2">
               {goalOptions.map((g) => (
                 <Chip key={g} selected={goal === g} onClick={() => onUpdateField('goal', g)}>
@@ -264,7 +265,7 @@ export function ProfileView({
           </div>
 
           <div>
-            <p className="text-xs text-slate-300/70 mb-2">Level</p>
+            <p className="text-xs text-[#8B8DA3] mb-2">Level</p>
             <div className="flex flex-wrap gap-2">
               {levelOptions.map((l) => (
                 <Chip key={l} selected={level === l} onClick={() => onUpdateField('level', l)}>
@@ -275,7 +276,7 @@ export function ProfileView({
           </div>
 
           <div>
-            <p className="text-xs text-slate-300/70 mb-2">Gender</p>
+            <p className="text-xs text-[#8B8DA3] mb-2">Gender</p>
             <div className="flex flex-wrap gap-2">
               {genderOptions.map((g) => (
                 <Chip key={g} selected={gender === g} onClick={() => onUpdateField('gender', g)}>
@@ -286,25 +287,27 @@ export function ProfileView({
           </div>
         </div>
       </GlassCard>
+      </motion.div>
 
       {/* Body metrics */}
+      <motion.div variants={fadeUp}>
       <GlassCard className="p-4">
         <SectionHeader title="Body" subtitle="Used for calorie and training estimates" />
 
         <div className="mt-4 space-y-3">
           <div>
-            <label className="block text-xs text-slate-300/70 mb-2">Display Name (optional)</label>
+            <label className="block text-xs text-[#8B8DA3] mb-2">Display Name (optional)</label>
             <input
               type="text"
               value={name}
               onChange={(e) => onUpdateField('name', e.target.value)}
               placeholder={profile?.username?.split('@')[0] || 'Your Name'}
-              className="w-full px-4 py-3 glass-soft rounded-2xl text-white placeholder:text-slate-400/70 ui-focus-ring border border-white/10"
+              className="w-full px-4 py-3 glass-soft rounded-2xl text-white placeholder:text-[#8B8DA3]/50 ui-focus-ring border border-[#8B5CF6]/10"
             />
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-xs text-slate-300/70 mb-2">Age</label>
+              <label className="block text-xs text-[#8B8DA3] mb-2">Age</label>
               <input
                 inputMode="numeric"
                 type="number"
@@ -312,11 +315,11 @@ export function ProfileView({
                 onChange={(e) => onUpdateField('age', e.target.value === '' ? '' : Number(e.target.value))}
                 min="16"
                 max="100"
-                className="w-full px-4 py-3 glass-soft rounded-2xl text-white ui-focus-ring border border-white/10"
+                className="w-full px-4 py-3 glass-soft rounded-2xl text-white ui-focus-ring border border-[#8B5CF6]/10"
               />
             </div>
             <div>
-              <label className="block text-xs text-slate-300/70 mb-2">Weight (kg)</label>
+              <label className="block text-xs text-[#8B8DA3] mb-2">Weight (kg)</label>
               <input
                 inputMode="decimal"
                 type="number"
@@ -325,14 +328,14 @@ export function ProfileView({
                 min="30"
                 max="300"
                 step="0.1"
-                className="w-full px-4 py-3 glass-soft rounded-2xl text-white ui-focus-ring border border-white/10"
+                className="w-full px-4 py-3 glass-soft rounded-2xl text-white ui-focus-ring border border-[#8B5CF6]/10"
               />
             </div>
           </div>
         </div>
 
         <div className="mt-4">
-          <p className="text-xs text-slate-300/70 mb-2">Height unit</p>
+          <p className="text-xs text-[#8B8DA3] mb-2">Height unit</p>
           <div className="flex gap-2">
             <Chip selected={heightUnit === 'cm'} onClick={() => onUpdateField('heightUnit', 'cm')}>
               cm
@@ -346,7 +349,7 @@ export function ProfileView({
         <div className="mt-3">
           {heightUnit === 'cm' ? (
             <div>
-              <label className="block text-xs text-slate-300/70 mb-2">Height (cm)</label>
+              <label className="block text-xs text-[#8B8DA3] mb-2">Height (cm)</label>
               <input
                 inputMode="decimal"
                 type="number"
@@ -355,13 +358,13 @@ export function ProfileView({
                 min="100"
                 max="250"
                 step="0.1"
-                className="w-full px-4 py-3 glass-soft rounded-2xl text-white ui-focus-ring border border-white/10"
+                className="w-full px-4 py-3 glass-soft rounded-2xl text-white ui-focus-ring border border-[#8B5CF6]/10"
               />
             </div>
           ) : (
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="block text-xs text-slate-300/70 mb-2">Feet</label>
+                <label className="block text-xs text-[#8B8DA3] mb-2">Feet</label>
                 <input
                   inputMode="numeric"
                   type="number"
@@ -369,11 +372,11 @@ export function ProfileView({
                   onChange={(e) => onUpdateField('heightFeet', e.target.value === '' ? '' : Number(e.target.value))}
                   min="3"
                   max="8"
-                  className="w-full px-4 py-3 glass-soft rounded-2xl text-white ui-focus-ring border border-white/10"
+                  className="w-full px-4 py-3 glass-soft rounded-2xl text-white ui-focus-ring border border-[#8B5CF6]/10"
                 />
               </div>
               <div>
-                <label className="block text-xs text-slate-300/70 mb-2">Inches</label>
+                <label className="block text-xs text-[#8B8DA3] mb-2">Inches</label>
                 <input
                   inputMode="decimal"
                   type="number"
@@ -383,31 +386,33 @@ export function ProfileView({
                   min="0"
                   max="11.9"
                   step="0.1"
-                  className="w-full px-4 py-3 glass-soft rounded-2xl text-white ui-focus-ring border border-white/10"
+                  className="w-full px-4 py-3 glass-soft rounded-2xl text-white ui-focus-ring border border-[#8B5CF6]/10"
                 />
               </div>
             </div>
           )}
         </div>
       </GlassCard>
+      </motion.div>
 
       {/* Training */}
+      <motion.div variants={fadeUp}>
       <GlassCard className="p-4">
         <SectionHeader title="Training" subtitle="Helps the AI match volume and recovery" />
         <div className="mt-4 space-y-3">
           <div>
-            <label className="block text-xs text-slate-300/70 mb-2">Training duration</label>
+            <label className="block text-xs text-[#8B8DA3] mb-2">Training duration</label>
             <input
               type="text"
               value={tenure}
               onChange={(e) => onUpdateField('tenure', e.target.value)}
               placeholder="e.g., Just started, 6 months, 2 years"
-              className="w-full px-4 py-3 glass-soft rounded-2xl text-white placeholder:text-slate-400/70 ui-focus-ring border border-white/10"
+              className="w-full px-4 py-3 glass-soft rounded-2xl text-white placeholder:text-[#8B8DA3]/50 ui-focus-ring border border-[#8B5CF6]/10"
             />
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-xs text-slate-300/70 mb-2">Goal weight (kg)</label>
+              <label className="block text-xs text-[#8B8DA3] mb-2">Goal weight (kg)</label>
               <input
                 inputMode="decimal"
                 type="number"
@@ -417,25 +422,25 @@ export function ProfileView({
                 max="300"
                 step="0.1"
                 placeholder="Optional"
-                className="w-full px-4 py-3 glass-soft rounded-2xl text-white placeholder:text-slate-400/70 ui-focus-ring border border-white/10"
+                className="w-full px-4 py-3 glass-soft rounded-2xl text-white placeholder:text-[#8B8DA3]/50 ui-focus-ring border border-[#8B5CF6]/10"
               />
             </div>
             <div>
-              <label className="block text-xs text-slate-300/70 mb-2">Goal timeline</label>
+              <label className="block text-xs text-[#8B8DA3] mb-2">Goal timeline</label>
               <input
                 type="text"
                 value={goalDuration}
                 onChange={(e) => onUpdateField('goalDuration', e.target.value)}
                 placeholder="Optional"
-                className="w-full px-4 py-3 glass-soft rounded-2xl text-white placeholder:text-slate-400/70 ui-focus-ring border border-white/10"
+                className="w-full px-4 py-3 glass-soft rounded-2xl text-white placeholder:text-[#8B8DA3]/50 ui-focus-ring border border-[#8B5CF6]/10"
               />
             </div>
           </div>
 
           {/* Session Duration */}
           <div>
-            <label className="block text-xs text-slate-300/70 mb-2">Session duration (minutes)</label>
-            <p className="text-[10px] text-slate-400/60 mb-2">How long is each workout session? This determines exercise count.</p>
+            <label className="block text-xs text-[#8B8DA3] mb-2">Session duration (minutes)</label>
+            <p className="text-[10px] text-[#8B8DA3] mb-2">How long is each workout session? This determines exercise count.</p>
             <div className="flex flex-wrap gap-2">
               {[30, 45, 60, 90, 120].map((mins) => (
                 <Chip
@@ -455,13 +460,11 @@ export function ProfileView({
               <div className="flex items-center justify-between px-1">
                 <div>
                   <p className="text-sm font-semibold text-white">Notes</p>
-                  <p className="text-xs text-slate-300/70 truncate">
+                  <p className="text-xs text-[#8B8DA3] truncate">
                     {notes ? 'Used to avoid injuries and match preferences' : 'Add injuries, constraints, or preferences'}
                   </p>
                 </div>
-                <svg className="w-5 h-5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                </svg>
+                <ChevronRight className="w-5 h-5 text-[#8B5CF6]" />
               </div>
             }
             className="mt-2"
@@ -471,13 +474,15 @@ export function ProfileView({
               onChange={(e) => onUpdateField('notes', e.target.value)}
               rows={4}
               placeholder="Example: knee pain (avoid heavy squats), prefer dumbbells, 45 min sessions."
-              className="w-full px-4 py-3 glass-soft rounded-2xl text-white placeholder:text-slate-400/70 ui-focus-ring border border-white/10 resize-none"
+              className="w-full px-4 py-3 glass-soft rounded-2xl text-white placeholder:text-[#8B8DA3]/50 ui-focus-ring border border-[#8B5CF6]/10 resize-none"
             />
           </Collapsible>
         </div>
       </GlassCard>
+      </motion.div>
 
       {/* Gym Photos */}
+      <motion.div variants={fadeUp}>
       <GlassCard className="p-4">
         <SectionHeader
           title="Gym Photos"
@@ -500,8 +505,10 @@ export function ProfileView({
           )}
         </div>
       </GlassCard>
+      </motion.div>
 
       {/* Body Analysis */}
+      <motion.div variants={fadeUp}>
       <GlassCard className="p-4">
         <SectionHeader
           title="Body Analysis"
@@ -531,14 +538,16 @@ export function ProfileView({
           )}
         </div>
       </GlassCard>
+      </motion.div>
 
       {/* Nutrition preferences */}
+      <motion.div variants={fadeUp}>
       <GlassCard className="p-4">
         <SectionHeader title="Nutrition" subtitle="Diet rules and meal structure" />
 
         <div className="mt-4 space-y-4">
           <div>
-            <p className="text-xs text-slate-300/70 mb-2">Diet type</p>
+            <p className="text-xs text-[#8B8DA3] mb-2">Diet type</p>
             <div className="flex flex-wrap gap-2">
               {dietTypeOptions.map((t) => {
                 const selected = (dietType || []).includes(t)
@@ -567,7 +576,7 @@ export function ProfileView({
           </div>
 
           <div>
-            <p className="text-xs text-slate-300/70 mb-2">Allergies (optional)</p>
+            <p className="text-xs text-[#8B8DA3] mb-2">Allergies (optional)</p>
             <div className="flex flex-wrap gap-2">
               {allergyOptions.map((a) => {
                 const selected = (allergies || []).includes(a)
@@ -592,7 +601,7 @@ export function ProfileView({
           </div>
 
           <div>
-            <p className="text-xs text-slate-300/70 mb-2">Meals per day</p>
+            <p className="text-xs text-[#8B8DA3] mb-2">Meals per day</p>
             <div className="flex flex-wrap gap-2">
               {[2, 3, 4, 5, 6].map((m) => (
                 <Chip key={m} selected={mealsPerDay === m} onClick={() => onUpdateField('mealsPerDay', m)}>
@@ -609,21 +618,19 @@ export function ProfileView({
               <div className="flex items-center justify-between px-1">
                 <div>
                   <p className="text-sm font-semibold text-white">Advanced nutrition</p>
-                  <p className="text-xs text-slate-300/70">Cuisine, protein powder, strict inclusions</p>
+                  <p className="text-xs text-[#8B8DA3]">Cuisine, protein powder, strict inclusions</p>
                 </div>
-                <svg className="w-5 h-5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                </svg>
+                <ChevronRight className="w-5 h-5 text-[#8B5CF6]" />
               </div>
             }
           >
             <div className="space-y-3">
               <div>
-                <label className="block text-xs text-slate-300/70 mb-2">Cuisine</label>
+                <label className="block text-xs text-[#8B8DA3] mb-2">Cuisine</label>
                 <select
                   value={cuisine || 'No Preference'}
                   onChange={(e) => onUpdateField('cuisine', e.target.value)}
-                  className="w-full px-4 py-3 glass-soft rounded-2xl text-white ui-focus-ring border border-white/10 bg-transparent"
+                  className="w-full px-4 py-3 glass-soft rounded-2xl text-white ui-focus-ring border border-[#8B5CF6]/10 bg-transparent"
                 >
                   {[
                     'No Preference',
@@ -643,7 +650,7 @@ export function ProfileView({
               </div>
 
               <div>
-                <p className="text-xs text-slate-300/70 mb-2">Protein powder</p>
+                <p className="text-xs text-[#8B8DA3] mb-2">Protein powder</p>
                 <div className="flex gap-2">
                   <Chip selected={proteinPowder === 'Yes'} onClick={() => onUpdateField('proteinPowder', 'Yes')}>
                     Yes
@@ -656,7 +663,7 @@ export function ProfileView({
 
               {proteinPowder === 'Yes' ? (
                 <div>
-                  <label className="block text-xs text-slate-300/70 mb-2">Protein from powder (g/day)</label>
+                  <label className="block text-xs text-[#8B8DA3] mb-2">Protein from powder (g/day)</label>
                   <input
                     inputMode="numeric"
                     type="number"
@@ -664,29 +671,29 @@ export function ProfileView({
                     onChange={(e) => onUpdateField('proteinPowderAmount', e.target.value === '' ? 0 : Number(e.target.value))}
                     onWheel={(e) => e.currentTarget.blur()}
                     placeholder="e.g. 25"
-                    className="w-full px-4 py-3 glass-soft rounded-2xl text-white ui-focus-ring border border-white/10"
+                    className="w-full px-4 py-3 glass-soft rounded-2xl text-white ui-focus-ring border border-[#8B5CF6]/10"
                   />
                 </div>
               ) : null}
 
               <div>
-                <label className="block text-xs text-slate-300/70 mb-2">Specific inclusions / exclusions</label>
+                <label className="block text-xs text-[#8B8DA3] mb-2">Specific inclusions / exclusions</label>
                 <textarea
                   value={specificFoodPreferences || ''}
                   onChange={(e) => onUpdateField('specificFoodPreferences', e.target.value)}
                   rows={3}
                   placeholder="Example: include oats daily, exclude mushrooms; no bell peppers."
-                  className="w-full px-4 py-3 glass-soft rounded-2xl text-white ui-focus-ring border border-white/10 placeholder:text-slate-400/70 resize-none"
+                  className="w-full px-4 py-3 glass-soft rounded-2xl text-white ui-focus-ring border border-[#8B5CF6]/10 placeholder:text-[#8B8DA3]/50 resize-none"
                 />
               </div>
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs text-slate-300/70 mb-2">Cooking</label>
+                  <label className="block text-xs text-[#8B8DA3] mb-2">Cooking</label>
                   <select
                     value={cookingLevel || 'Moderate'}
                     onChange={(e) => onUpdateField('cookingLevel', e.target.value)}
-                    className="w-full px-4 py-3 glass-soft rounded-2xl text-white ui-focus-ring border border-white/10 bg-transparent"
+                    className="w-full px-4 py-3 glass-soft rounded-2xl text-white ui-focus-ring border border-[#8B5CF6]/10 bg-transparent"
                   >
                     {['Full Prep', 'Moderate', 'Minimal', 'No Cooking'].map((v) => (
                       <option key={v} value={v} className="bg-slate-900">
@@ -696,11 +703,11 @@ export function ProfileView({
                   </select>
                 </div>
                 <div>
-                  <label className="block text-xs text-slate-300/70 mb-2">Budget</label>
+                  <label className="block text-xs text-[#8B8DA3] mb-2">Budget</label>
                   <select
                     value={budget || 'Standard'}
                     onChange={(e) => onUpdateField('budget', e.target.value)}
-                    className="w-full px-4 py-3 glass-soft rounded-2xl text-white ui-focus-ring border border-white/10 bg-transparent"
+                    className="w-full px-4 py-3 glass-soft rounded-2xl text-white ui-focus-ring border border-[#8B5CF6]/10 bg-transparent"
                   >
                     {['Budget-Friendly', 'Standard', 'Premium'].map((v) => (
                       <option key={v} value={v} className="bg-slate-900">
@@ -714,6 +721,7 @@ export function ProfileView({
           </Collapsible>
         </div>
       </GlassCard>
+      </motion.div>
 
       {/* Save / danger */}
       <AnimatedButton
@@ -733,6 +741,6 @@ export function ProfileView({
       >
         Reset routine data
       </button>
-    </form>
+    </motion.form>
   )
 }

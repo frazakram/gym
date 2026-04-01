@@ -1,5 +1,7 @@
 'use client'
 
+import { motion } from 'framer-motion'
+
 interface EmptyStateProps {
   icon?: string
   title: string
@@ -7,6 +9,31 @@ interface EmptyStateProps {
   actionLabel?: string
   onAction?: () => void
   className?: string
+}
+
+const containerVariants = {
+  hidden: {},
+  visible: {
+    transition: {
+      staggerChildren: 0.12,
+    },
+  },
+}
+
+const itemVariants = {
+  hidden: { opacity: 0, y: 14 },
+  visible: { opacity: 1, y: 0, transition: { duration: 0.4, ease: 'easeOut' as const } },
+}
+
+const floatVariants = {
+  animate: {
+    y: [0, -10, 0],
+    transition: {
+      duration: 3,
+      repeat: Infinity,
+      ease: 'easeInOut' as const,
+    },
+  },
 }
 
 export function EmptyState({
@@ -18,25 +45,43 @@ export function EmptyState({
   className = ''
 }: EmptyStateProps) {
   return (
-    <div className={`glass rounded-xl p-8 text-center ${className}`}>
-      <div className="mb-4 text-6xl animate-float">
+    <motion.div
+      className={`glass rounded-xl p-8 text-center ${className}`}
+      variants={containerVariants}
+      initial="hidden"
+      animate="visible"
+    >
+      <motion.div
+        className="mb-4 text-6xl"
+        variants={floatVariants}
+        animate="animate"
+      >
         {icon}
-      </div>
-      <h3 className="text-lg font-semibold text-white mb-2">
+      </motion.div>
+      <motion.h3
+        className="text-lg font-semibold text-white mb-2"
+        variants={itemVariants}
+      >
         {title}
-      </h3>
-      <p className="text-sm text-slate-300/70 mb-6 max-w-sm mx-auto leading-relaxed">
+      </motion.h3>
+      <motion.p
+        className="text-sm text-slate-300/70 mb-6 max-w-sm mx-auto leading-relaxed"
+        variants={itemVariants}
+      >
         {description}
-      </p>
+      </motion.p>
       {actionLabel && onAction && (
-        <button
+        <motion.button
           onClick={onAction}
           className="px-6 py-3 rounded-xl btn-primary text-white font-semibold text-sm transition-all active:scale-95 ui-focus-ring"
+          variants={itemVariants}
+          whileHover={{ scale: 1.04 }}
+          whileTap={{ scale: 0.96 }}
         >
           {actionLabel}
-        </button>
+        </motion.button>
       )}
-    </div>
+    </motion.div>
   )
 }
 

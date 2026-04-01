@@ -1,6 +1,7 @@
 'use client'
 
 import type { ReactNode } from 'react'
+import { motion } from 'framer-motion'
 
 export function Chip({
   selected,
@@ -18,17 +19,20 @@ export function Chip({
   ariaLabel?: string
 }) {
   return (
-    <button
+    <motion.button
       type="button"
       onClick={onClick}
       aria-label={ariaLabel}
       aria-pressed={selected}
+      animate={selected ? { scale: 1 } : { scale: 1 }}
+      whileTap={{ scale: 0.96 }}
+      transition={{ type: 'spring', stiffness: 400, damping: 25 }}
       className={[
         'ui-chip inline-flex items-center gap-2 px-3 py-2 text-xs font-medium rounded-xl',
-        'transition-all active:scale-[0.98]',
+        'transition-all',
         'border',
         selected
-          ? 'border-[#FF6F61]/40 bg-[#FF6F61]/15 text-[#FFCCC7] shadow-[0_0_15px_rgba(255,111,97,0.15)]'
+          ? 'border-[#8B5CF6]/40 bg-[#8B5CF6]/15 text-[#C4B5FD] shadow-[0_0_15px_rgba(139,92,246,0.15)]'
           : 'border-white/10 bg-white/5 text-slate-300 hover:bg-white/8 hover:text-slate-100',
         'ui-focus-ring',
         className,
@@ -36,7 +40,6 @@ export function Chip({
     >
       {icon ? <span className="text-[13px]">{icon}</span> : null}
       <span className="truncate">{children}</span>
-    </button>
+    </motion.button>
   )
 }
-

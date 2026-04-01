@@ -1,5 +1,5 @@
 import type { Metadata } from 'next'
-import { Inter } from 'next/font/google'
+import { Inter, Plus_Jakarta_Sans } from 'next/font/google'
 import './globals.css'
 import { ServiceWorkerRegistration } from '@/components/ServiceWorkerRegistration'
 
@@ -9,11 +9,17 @@ const inter = Inter({
   variable: '--font-inter',
 })
 
+const jakarta = Plus_Jakarta_Sans({
+  subsets: ['latin'],
+  display: 'swap',
+  variable: '--font-display',
+})
+
 export const metadata: Metadata = {
   title: 'Gym Bro - AI - Powered Gym Routine Generator',
   description: 'Generate personalized weekly workout plans with AI',
   manifest: '/manifest.json',
-  themeColor: '#0891b2',
+  themeColor: '#8B5CF6',
   viewport: {
     width: 'device-width',
     initialScale: 1,
@@ -34,7 +40,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body className={`min-h-screen text-slate-100 ${inter.variable}`}>
+      <body className={`min-h-screen text-slate-100 ${inter.variable} ${jakarta.variable}`}>
         <ServiceWorkerRegistration />
         <div className="app-shell">
           <div className="app-bg" />

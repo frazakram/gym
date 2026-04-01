@@ -1,5 +1,7 @@
 'use client'
 
+import { motion } from 'framer-motion'
+
 interface DaySelectorProps {
   selectedDay: number // 0-6 for Mon-Sun
   onDayChange: (day: number) => void
@@ -16,26 +18,27 @@ export function DaySelector({ selectedDay, onDayChange, daysInRoutine = 7 }: Day
         {days.slice(0, daysInRoutine).map((day, index) => {
           const isSelected = selectedDay === index
           const isToday = today === index
-          
+
           return (
-            <button
+            <motion.button
               key={day}
+              whileTap={{ scale: 0.95 }}
               onClick={() => onDayChange(index)}
               className={`
                 relative px-4 py-2.5 rounded-xl min-w-[60px] font-semibold text-sm
                 transition-all duration-200
-                ${isSelected 
-                  ? 'bg-emerald-400/14 border border-emerald-400/25 text-emerald-50 shadow-[0_12px_34px_rgba(16,185,129,0.14)]' 
-                  : 'glass-soft border border-white/10 text-slate-300 hover:text-white hover:bg-white/8'
+                ${isSelected
+                  ? 'bg-[#8B5CF6]/14 border border-[#8B5CF6]/25 text-[#C4B5FD] shadow-[0_12px_34px_rgba(139,92,246,0.14)]'
+                  : 'glass-soft border border-[#8B5CF6]/10 text-slate-300 hover:text-white hover:bg-[#8B5CF6]/8'
                 }
                 ui-focus-ring
               `}
             >
               <span>{day}</span>
               {isToday && !isSelected && (
-                <div className="absolute -top-1 -right-1 w-2 h-2 bg-emerald-300 rounded-full" />
+                <div className="absolute -top-1 -right-1 w-2 h-2 bg-[#A78BFA] rounded-full" />
               )}
-            </button>
+            </motion.button>
           )
         })}
       </div>

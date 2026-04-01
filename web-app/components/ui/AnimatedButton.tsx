@@ -1,12 +1,14 @@
 'use client'
 
 import { useState, ReactNode } from 'react'
+import { motion } from 'framer-motion'
+import { Loader2 } from 'lucide-react'
 
 interface AnimatedButtonProps {
   children: ReactNode
   onClick?: () => void
   type?: 'button' | 'submit' | 'reset'
-  variant?: 'primary' | 'secondary' | 'ghost' | 'premium'
+  variant?: 'primary' | 'secondary' | 'ghost' | 'premium' | 'coral'
   size?: 'sm' | 'md' | 'lg'
   disabled?: boolean
   loading?: boolean
@@ -46,10 +48,19 @@ export function AnimatedButton({
   }
 
   const variantClasses = {
-    primary: 'bg-gradient-to-r from-[#FF6F61] to-[#FF8A65] text-white shadow-lg hover:shadow-[0_0_30px_rgba(255,111,97,0.4)] hover:brightness-110',
-    secondary: 'bg-slate-700/60 border border-white/10 text-slate-100 hover:bg-slate-700/80 hover:shadow-[0_0_20px_rgba(100,116,139,0.25)]',
-    ghost: 'glass-soft text-slate-100 hover:text-white hover:bg-white/10',
-    premium: 'bg-gradient-to-r from-[#F59E0B] to-[#FBBF24] text-slate-900 font-bold shadow-lg hover:shadow-[0_0_30px_rgba(245,158,11,0.5)] hover:brightness-110'
+    primary: 'bg-gradient-to-r from-[#8B5CF6] to-[#A78BFA] text-white shadow-lg hover:shadow-[0_0_30px_rgba(139,92,246,0.4)] hover:brightness-110',
+    secondary: 'bg-white/5 border border-[#8B5CF6]/20 text-slate-100 hover:bg-[#8B5CF6]/10 hover:border-[#8B5CF6]/30 hover:shadow-[0_0_20px_rgba(139,92,246,0.15)]',
+    ghost: 'glass-soft text-slate-100 hover:text-white hover:bg-[#8B5CF6]/10',
+    premium: 'bg-gradient-to-r from-[#F59E0B] to-[#FBBF24] text-slate-900 font-bold shadow-lg hover:shadow-[0_0_30px_rgba(245,158,11,0.5)] hover:brightness-110',
+    coral: 'bg-gradient-to-r from-[#FF6F61] to-[#FF8A65] text-white shadow-lg hover:shadow-[0_0_30px_rgba(255,111,97,0.4)] hover:brightness-110',
+  }
+
+  const rippleColors: Record<string, string> = {
+    primary: 'bg-white/20',
+    secondary: 'bg-[#8B5CF6]/20',
+    ghost: 'bg-white/15',
+    premium: 'bg-white/30',
+    coral: 'bg-white/25',
   }
 
   const sizeClasses = {
@@ -59,13 +70,14 @@ export function AnimatedButton({
   }
 
   return (
-    <button
+    <motion.button
       type={type}
       onClick={handleClick}
       disabled={disabled || loading}
+      whileTap={disabled || loading ? undefined : { scale: 0.97 }}
       className={`
         relative overflow-hidden rounded-xl font-semibold
-        transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed
+        transition-all disabled:opacity-50 disabled:cursor-not-allowed
         ${variantClasses[variant]}
         ${sizeClasses[size]}
         ${fullWidth ? 'w-full' : ''}
@@ -76,7 +88,7 @@ export function AnimatedButton({
       {ripples.map(ripple => (
         <span
           key={ripple.id}
-          className="absolute bg-white/30 rounded-full animate-ripple pointer-events-none"
+          className={`absolute ${rippleColors[variant] || 'bg-white/20'} rounded-full animate-ripple pointer-events-none`}
           style={{
             left: ripple.x,
             top: ripple.y,
@@ -89,10 +101,7 @@ export function AnimatedButton({
       {/* Content */}
       <span className="relative flex items-center justify-center gap-2">
         {loading ? (
-          <svg className="animate-spin w-5 h-5" fill="none" viewBox="0 0 24 24">
-            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-          </svg>
+          <Loader2 className="w-5 h-5 animate-spin" />
         ) : icon ? (
           <>
             {icon}
@@ -102,7 +111,7 @@ export function AnimatedButton({
           children
         )}
       </span>
-    </button>
+    </motion.button>
   )
 }
 
@@ -119,15 +128,16 @@ export function IconButton({
   ariaLabel: string
 }) {
   return (
-    <button
+    <motion.button
       onClick={onClick}
       aria-label={ariaLabel}
+      whileTap={{ scale: 0.9 }}
       className={`
-        p-2 rounded-full glass-soft text-slate-300 hover:text-white hover:bg-white/10
-        transition-all active:scale-90 ui-focus-ring ${className}
+        p-2 rounded-full glass-soft text-slate-300 hover:text-white hover:bg-[#8B5CF6]/10
+        transition-all ui-focus-ring ${className}
       `}
     >
       {children}
-    </button>
+    </motion.button>
   )
 }

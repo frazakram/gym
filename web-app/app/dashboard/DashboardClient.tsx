@@ -19,6 +19,9 @@ import { compressImage } from '@/lib/image-utils'
 import { OfflineIndicator } from '@/components/OfflineIndicator'
 import { useSessionPersistence, clearSessionIndicator } from '@/lib/useSessionPersistence'
 import { csrfFetch } from '@/lib/useCsrf'
+import { Menu } from 'lucide-react'
+import { toast } from 'sonner'
+import { AnimatePresence, motion } from 'framer-motion'
 
 export default function DashboardPage() {
   const router = useRouter()
@@ -38,26 +41,20 @@ export default function DashboardPage() {
   const [upgradeOpen, setUpgradeOpen] = useState(false)
 
   // Toast notifications
-  interface ToastItem {
-    id: string
-    message: string
-    type: ToastType
-  }
-  const [toasts, setToasts] = useState<ToastItem[]>([])
-
   const showToast = (message: string, type: ToastType) => {
-    setToasts(prev => {
-      // Prevent duplicates: if the same message exists, don't add another one
-      if (prev.some(t => t.message === message)) {
-        return prev
-      }
-      const id = `toast-${Date.now()}`
-      return [...prev, { id, message, type }]
-    })
-  }
-
-  const removeToast = (id: string) => {
-    setToasts(prev => prev.filter(t => t.id !== id))
+    switch (type) {
+      case 'success':
+        toast.success(message)
+        break
+      case 'error':
+        toast.error(message)
+        break
+      case 'info':
+        toast.info(message)
+        break
+      default:
+        toast(message)
+    }
   }
 
   const fetchPremiumStatus = useCallback(async (): Promise<PremiumStatus | null> => {
@@ -1162,141 +1159,149 @@ export default function DashboardPage() {
               setIsSidebarOpen(true)
               fetchHistory()
             }}
-            className="p-2 bg-slate-800/80 backdrop-blur rounded-full text-white shadow-lg border border-white/10 hover:bg-slate-700/80 transition-colors"
+            className="p-2 glass backdrop-blur rounded-full text-white shadow-lg border border-[#8B5CF6]/15 hover:bg-[#8B5CF6]/10 transition-colors"
           >
-            <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h7" />
-            </svg>
+            <Menu className="w-6 h-6" />
           </button>
         </div>
 
         {/* View Rendering */}
-        {activeView === 'home' && (
-          <HomeView
-            profile={profile}
-            routine={routine}
-            diet={dietPlan}
-            exerciseCompletions={exerciseCompletions}
-            dayCompletions={dayCompletions}
-            heatmapData={heatmapData}
-            currentWeekNumber={currentWeekNumber}
-            onNavigateToWorkout={() => setActiveView('workout')}
-            onNavigateToCoach={() => handleViewChange('coach')}
-            onGenerateRoutine={() => handleGenerateRoutine(false)}
-            onGenerateNextWeek={handleGenerateNextWeek}
-            generating={generating}
-            viewingHistory={viewingHistory}
-          />
-        )}
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={activeView}
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -8 }}
+            transition={{ duration: 0.2, ease: 'easeInOut' as const }}
+          >
+            {activeView === 'home' && (
+              <HomeView
+                profile={profile}
+                routine={routine}
+                diet={dietPlan}
+                exerciseCompletions={exerciseCompletions}
+                dayCompletions={dayCompletions}
+                heatmapData={heatmapData}
+                currentWeekNumber={currentWeekNumber}
+                onNavigateToWorkout={() => setActiveView('workout')}
+                onNavigateToCoach={() => handleViewChange('coach')}
+                onGenerateRoutine={() => handleGenerateRoutine(false)}
+                onGenerateNextWeek={handleGenerateNextWeek}
+                generating={generating}
+                viewingHistory={viewingHistory}
+              />
+            )}
 
-        {activeView === 'routine' && (
-          <RoutineView
-            routine={routine}
-            diet={dietPlan}
-            onNavigateToWorkout={(dayIndex) => {
-              setSelectedDayIndex(dayIndex)
-              setActiveView('workout')
-            }}
-            onGenerateRoutine={() => handleGenerateRoutine(false)}
-            onGenerateNextWeek={handleGenerateNextWeek}
-            completionPercentage={calculateCompletionPercentage()}
-            currentWeekNumber={currentWeekNumber}
-            generating={generating}
-            viewingHistory={viewingHistory}
-            dayCompletions={dayCompletions}
-            onToggleDayComplete={handleToggleDayComplete}
-          />
-        )}
+            {activeView === 'routine' && (
+              <RoutineView
+                routine={routine}
+                diet={dietPlan}
+                onNavigateToWorkout={(dayIndex) => {
+                  setSelectedDayIndex(dayIndex)
+                  setActiveView('workout')
+                }}
+                onGenerateRoutine={() => handleGenerateRoutine(false)}
+                onGenerateNextWeek={handleGenerateNextWeek}
+                completionPercentage={calculateCompletionPercentage()}
+                currentWeekNumber={currentWeekNumber}
+                generating={generating}
+                viewingHistory={viewingHistory}
+                dayCompletions={dayCompletions}
+                onToggleDayComplete={handleToggleDayComplete}
+              />
+            )}
 
-        {activeView === 'workout' && (
-          <WorkoutView
-            routine={routine}
-            selectedDayIndex={selectedDayIndex}
-            currentRoutineId={currentRoutineId}
-            exerciseCompletions={exerciseCompletions}
-            dayCompletions={dayCompletions}
-            onToggleExercise={handleToggleExercise}
-            onToggleRestDay={handleToggleRestDay}
-            onEnsureRoutineSaved={() => routine ? saveRoutineToDatabase(routine) : Promise.resolve(null)}
-            onBack={() => setActiveView('routine')}
-          />
-        )}
+            {activeView === 'workout' && (
+              <WorkoutView
+                routine={routine}
+                selectedDayIndex={selectedDayIndex}
+                currentRoutineId={currentRoutineId}
+                exerciseCompletions={exerciseCompletions}
+                dayCompletions={dayCompletions}
+                onToggleExercise={handleToggleExercise}
+                onToggleRestDay={handleToggleRestDay}
+                onEnsureRoutineSaved={() => routine ? saveRoutineToDatabase(routine) : Promise.resolve(null)}
+                onBack={() => setActiveView('routine')}
+              />
+            )}
 
-        {activeView === 'diet' && (
-          <DietView
-            diet={dietPlan}
-            onGenerateDiet={handleGenerateDiet}
-            generating={generatingDiet}
-          />
-        )}
+            {activeView === 'diet' && (
+              <DietView
+                diet={dietPlan}
+                onGenerateDiet={handleGenerateDiet}
+                generating={generatingDiet}
+              />
+            )}
 
-        {activeView === 'analytics' && (
-          <AnalyticsView premiumStatus={effectivePremium} onUpgrade={() => setUpgradeOpen(true)} />
-        )}
+            {activeView === 'analytics' && (
+              <AnalyticsView premiumStatus={effectivePremium} onUpgrade={() => setUpgradeOpen(true)} />
+            )}
 
-        {activeView === 'coach' && (
-          <CoachView
-            onUpgrade={() => setUpgradeOpen(true)}
-            showToast={showToast}
-          />
-        )}
+            {activeView === 'coach' && (
+              <CoachView
+                onUpgrade={() => setUpgradeOpen(true)}
+                showToast={showToast}
+              />
+            )}
 
-        {activeView === 'profile' && (
-          <ProfileView
-            profile={profile}
-            onOpenCoachApply={() => router.push('/coach/apply')}
-            onOpenCoachPortal={() => router.push('/coach/portal')}
-            name={name}
-            age={age}
-            weight={weight}
-            height={height}
-            heightUnit={heightUnit}
-            heightFeet={heightFeet}
-            heightInches={heightInches}
-            gender={gender}
-            goal={goal}
-            level={level}
-            tenure={tenure}
-            goalWeight={goalWeight}
-            goalDuration={goalDuration}
-            sessionDuration={sessionDuration}
-            notes={notes}
-            resolvedHeightCm={resolvedHeightCm}
-            dietType={dietType}
-            cuisine={cuisine}
-            proteinPowder={proteinPowder}
-            proteinPowderAmount={proteinPowderAmount}
-            specificFoodPreferences={specificFoodPreferences}
-            mealsPerDay={mealsPerDay}
-            allergies={allergies}
-            cookingLevel={cookingLevel}
-            budget={budget}
-            gymPhotos={gymPhotos}
-            equipmentAnalysis={equipmentAnalysis}
-            onGymPhotoUpload={handleGymPhotoUpload}
-            onGymPhotoDelete={handleGymPhotoDelete}
-            analyzingEquipment={analyzingEquipment}
-            equipmentError={equipmentError}
-            bodyPhotos={bodyPhotos}
-            bodyAnalysis={bodyAnalysis}
-            onBodyPhotoUpload={handleBodyPhotoUpload}
-            onBodyPhotoDelete={handleBodyPhotoDelete}
-            analyzingBody={analyzingBody}
-            bodyError={bodyError}
-            onUpdateField={handleFieldUpdate}
-            onSaveProfile={handleSaveProfile}
-            onResetRoutines={handleResetRoutines}
-            onLogout={handleLogout}
-            loading={loading}
-          />
-        )}
+            {activeView === 'profile' && (
+              <ProfileView
+                profile={profile}
+                onOpenCoachApply={() => router.push('/coach/apply')}
+                onOpenCoachPortal={() => router.push('/coach/portal')}
+                name={name}
+                age={age}
+                weight={weight}
+                height={height}
+                heightUnit={heightUnit}
+                heightFeet={heightFeet}
+                heightInches={heightInches}
+                gender={gender}
+                goal={goal}
+                level={level}
+                tenure={tenure}
+                goalWeight={goalWeight}
+                goalDuration={goalDuration}
+                sessionDuration={sessionDuration}
+                notes={notes}
+                resolvedHeightCm={resolvedHeightCm}
+                dietType={dietType}
+                cuisine={cuisine}
+                proteinPowder={proteinPowder}
+                proteinPowderAmount={proteinPowderAmount}
+                specificFoodPreferences={specificFoodPreferences}
+                mealsPerDay={mealsPerDay}
+                allergies={allergies}
+                cookingLevel={cookingLevel}
+                budget={budget}
+                gymPhotos={gymPhotos}
+                equipmentAnalysis={equipmentAnalysis}
+                onGymPhotoUpload={handleGymPhotoUpload}
+                onGymPhotoDelete={handleGymPhotoDelete}
+                analyzingEquipment={analyzingEquipment}
+                equipmentError={equipmentError}
+                bodyPhotos={bodyPhotos}
+                bodyAnalysis={bodyAnalysis}
+                onBodyPhotoUpload={handleBodyPhotoUpload}
+                onBodyPhotoDelete={handleBodyPhotoDelete}
+                analyzingBody={analyzingBody}
+                bodyError={bodyError}
+                onUpdateField={handleFieldUpdate}
+                onSaveProfile={handleSaveProfile}
+                onResetRoutines={handleResetRoutines}
+                onLogout={handleLogout}
+                loading={loading}
+              />
+            )}
+          </motion.div>
+        </AnimatePresence>
       </div>
 
       {/* Bottom Navigation */}
       <BottomNav activeView={activeView} onViewChange={handleViewChange} />
 
       {/* Toast Notifications - Top Center */}
-      <ToastContainer toasts={toasts} onRemove={removeToast} />
+      <ToastContainer />
 
       {/* Confirm Modal */}
       <ConfirmModal

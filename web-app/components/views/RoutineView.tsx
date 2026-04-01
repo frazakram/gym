@@ -1,6 +1,8 @@
 'use client'
 
 import { useState } from 'react'
+import { motion } from 'framer-motion'
+import { ArrowRight, Check, ChevronRight, Sprout, Timer } from 'lucide-react'
 import { WeeklyRoutine, WeeklyDiet } from '@/types'
 import { DaySelector } from '../DaySelector'
 import { DietDisplay } from '@/components/DietDisplay'
@@ -10,6 +12,16 @@ import { AnimatedButton } from '../ui/AnimatedButton'
 import { Collapsible } from '../ui/Collapsible'
 import { parseSetsReps } from '@/lib/setsReps'
 import { ExerciseListSkeleton } from '../ui/SkeletonLoader'
+
+const stagger = {
+  hidden: {},
+  visible: { transition: { staggerChildren: 0.06, delayChildren: 0.1 } },
+}
+
+const fadeUp = {
+  hidden: { opacity: 0, y: 20 },
+  visible: { opacity: 1, y: 0, transition: { duration: 0.35, ease: 'easeOut' as const } },
+}
 
 interface RoutineViewProps {
   routine: WeeklyRoutine | null
@@ -48,7 +60,7 @@ export function RoutineView({
       <div className="pb-24 px-4 py-6">
         <div className="glass rounded-2xl p-8 text-center">
           <h2 className="text-2xl font-bold text-white mb-3">No Routine Yet</h2>
-          <p className="text-slate-300/70 mb-6">Generate your personalized workout routine to get started</p>
+          <p className="text-[#8B8DA3] mb-6">Generate your personalized workout routine to get started</p>
           <button
             onClick={onGenerateRoutine}
             disabled={generating}
@@ -70,33 +82,36 @@ export function RoutineView({
 
   return (
     <div className="pb-24">
+      <motion.div variants={stagger} initial="hidden" animate="visible">
       {/* Header */}
-      <div className="px-4 pt-4 pb-3">
-        <h1 className="text-[18px] font-semibold tracking-tight text-white mb-0.5">
+      <motion.div variants={fadeUp} className="px-4 pt-4 pb-3">
+        <h1 className="text-[18px] font-semibold tracking-tight text-white mb-0.5 font-[family-name:var(--font-display)]">
           {currentDay?.day || 'Select a Day'}
         </h1>
-        <p className="text-xs text-slate-300/70">
+        <p className="text-xs text-[#8B8DA3]">
           {isRestDay ? 'Rest & Recovery' : `${currentDay?.exercises?.length || 0} exercises`}
         </p>
-      </div>
+      </motion.div>
 
       {/* Day Selector */}
-      <DaySelector
-        selectedDay={selectedDay}
-        onDayChange={setSelectedDay}
-        daysInRoutine={routine.days.length}
-      />
+      <motion.div variants={fadeUp}>
+        <DaySelector
+          selectedDay={selectedDay}
+          onDayChange={setSelectedDay}
+          daysInRoutine={routine.days.length}
+        />
+      </motion.div>
 
       {/* Workout card */}
-      <div className="px-4 pt-4">
+      <motion.div variants={fadeUp} className="px-4 pt-4">
         <GlassCard className="p-4">
           <SectionHeader
             title={isRestDay ? "Rest Day" : "Workout"}
             subtitle={isRestDay ? "Take time to recover" : "Everything you need in one flow"}
             right={
               !isRestDay ? (
-                <div className="text-[11px] text-slate-200/80 glass-soft px-2.5 py-1 rounded-full border border-white/10">
-                  ⏱️ {estimatedMinutes} min
+                <div className="text-[11px] text-slate-200/80 glass-soft px-2.5 py-1 rounded-full border border-[#8B5CF6]/10 flex items-center gap-1">
+                  <Timer className="w-3 h-3" /> {estimatedMinutes} min
                 </div>
               ) : null
             }
@@ -108,7 +123,7 @@ export function RoutineView({
             ) : isRestDay ? (
               <div className="py-6 text-center">
                 <div className="w-16 h-16 rounded-full bg-emerald-500/10 flex items-center justify-center mx-auto mb-3">
-                  <span className="text-2xl">🌱</span>
+                  <Sprout className="w-8 h-8 text-emerald-400" />
                 </div>
                 <p className="text-slate-300 text-sm max-w-[240px] mx-auto">
                   Active recovery, stretching, or light walking is recommended today.
@@ -120,22 +135,22 @@ export function RoutineView({
                 return (
                   <div
                     key={index}
-                    className="flex items-start justify-between gap-3 bg-white/5 border border-white/10 rounded-2xl px-3.5 py-3"
+                    className="flex items-start justify-between gap-3 bg-white/5 border border-[#8B5CF6]/10 rounded-2xl px-3.5 py-3"
                   >
                     <div className="min-w-0">
                       <p className="text-sm font-medium text-white/90 truncate">{exercise.name}</p>
-                      <p className="mt-0.5 text-xs text-slate-300/70 truncate">{exercise.sets_reps}</p>
+                      <p className="mt-0.5 text-xs text-[#8B8DA3] truncate">{exercise.sets_reps}</p>
                     </div>
 
                     <div className="shrink-0 flex flex-col items-end gap-1 text-[11px] text-slate-200/80">
                       <div className="flex items-center gap-1.5">
                         {typeof meta.sets === 'number' ? (
-                          <span className="inline-flex items-center rounded-full bg-white/5 border border-white/10 px-2 py-0.5">
+                          <span className="inline-flex items-center rounded-full bg-white/5 border border-[#8B5CF6]/10 px-2 py-0.5">
                             {meta.sets} sets
                           </span>
                         ) : null}
                         {typeof meta.reps === 'number' ? (
-                          <span className="inline-flex items-center rounded-full bg-white/5 border border-white/10 px-2 py-0.5">
+                          <span className="inline-flex items-center rounded-full bg-white/5 border border-[#8B5CF6]/10 px-2 py-0.5">
                             {meta.reps} reps
                           </span>
                         ) : null}
@@ -160,13 +175,9 @@ export function RoutineView({
                   variant={isCompleted ? "ghost" : "primary"}
                   fullWidth
                   icon={isCompleted ? (
-                    <svg className="w-4 h-4 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                    </svg>
+                    <Check className="w-4 h-4 text-emerald-400" />
                   ) : (
-                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
+                    <Check className="w-4 h-4" />
                   )}
                 >
                   {isCompleted ? 'Completed' : 'Mark as Complete'}
@@ -178,9 +189,7 @@ export function RoutineView({
                 variant="primary"
                 fullWidth
                 icon={
-                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
-                  </svg>
+                  <ArrowRight className="w-4 h-4" />
                 }
               >
                 Start workout
@@ -188,11 +197,11 @@ export function RoutineView({
             )}
           </div>
         </GlassCard>
-      </div>
+      </motion.div>
 
       {/* Action Buttons */}
       {!viewingHistory && (
-        <div className="px-4 pt-3">
+        <motion.div variants={fadeUp} className="px-4 pt-3">
           <GlassCard className="p-4">
             <Collapsible
               open={manageOpen}
@@ -201,13 +210,11 @@ export function RoutineView({
                 <div className="flex items-center justify-between px-1">
                   <div>
                     <p className="text-sm font-semibold text-white">Manage plan</p>
-                    <p className="text-xs text-slate-300/70">
+                    <p className="text-xs text-[#8B8DA3]">
                       You&apos;ve completed {completionPercentage}% this week
                     </p>
                   </div>
-                  <svg className="w-5 h-5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                  </svg>
+                  <ChevronRight className="w-5 h-5 text-[#8B5CF6]" />
                 </div>
               }
             >
@@ -236,12 +243,12 @@ export function RoutineView({
               </div>
             </Collapsible>
           </GlassCard>
-        </div>
+        </motion.div>
       )}
 
       {/* Nutrition (secondary) */}
       {diet ? (
-        <div className="px-4 pt-3 pb-8">
+        <motion.div variants={fadeUp} className="px-4 pt-3 pb-8">
           <GlassCard className="p-4">
             <Collapsible
               open={nutritionOpen}
@@ -250,22 +257,21 @@ export function RoutineView({
                 <div className="flex items-center justify-between px-1">
                   <div>
                     <p className="text-sm font-semibold text-white">Nutrition plan</p>
-                    <p className="text-xs text-slate-300/70">Weekly meal plan synced to your routine</p>
+                    <p className="text-xs text-[#8B8DA3]">Weekly meal plan synced to your routine</p>
                   </div>
-                  <svg className="w-5 h-5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                  </svg>
+                  <ChevronRight className="w-5 h-5 text-[#8B5CF6]" />
                 </div>
               }
             >
               <DietDisplay diet={diet} />
             </Collapsible>
           </GlassCard>
-        </div>
+        </motion.div>
       ) : (
         <div className="px-4 pb-8" />
       )}
 
+      </motion.div>
     </div>
   )
 }

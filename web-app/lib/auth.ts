@@ -1,17 +1,19 @@
 import { SignJWT, jwtVerify } from 'jose';
 import { cookies } from 'next/headers';
 
-if (!process.env.JWT_SECRET) {
-  throw new Error('JWT_SECRET environment variable is not defined');
+function getSecretKey(): Uint8Array {
+  const secret = process.env.JWT_SECRET;
+  if (!secret) {
+    throw new Error('JWT_SECRET environment variable is not defined');
+  }
+  return new TextEncoder().encode(secret);
 }
-
-const SECRET_KEY = new TextEncoder().encode(process.env.JWT_SECRET);
 
 export async function createSession(userId: number): Promise<string> {
   const token = await new SignJWT({ userId })
     .setProtectedHeader({ alg: 'HS256' })
     .setExpirationTime('7d')
-    .sign(SECRET_KEY);
+    .sign(getSecretKey());
 
   return token;
 }
@@ -25,7 +27,7 @@ export async function getSession(): Promise<{ userId: number } | null> {
   }
 
   try {
-    const { payload } = await jwtVerify(token, SECRET_KEY);
+    const { payload } = await jwtVerify(token, getSecretKey());
     return { userId: payload.userId as number };
   } catch (error) {
     return null;

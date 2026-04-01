@@ -105,7 +105,7 @@ export function ImageUploadCard({
 
       {/* Existing Images Control */}
       {images.length > 0 && (
-        <div className="flex items-center justify-between bg-white/5 p-3 rounded-xl border border-white/10">
+        <div className="flex items-center justify-between bg-white/5 p-3 rounded-xl border border-[#8B5CF6]/10">
           <div className="flex items-center gap-2">
             <div className="w-2 h-2 rounded-full bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.6)]"></div>
             <span className="text-sm text-white/90 font-medium">
@@ -180,7 +180,7 @@ export function ImageUploadCard({
           <p className="text-xs text-slate-400 font-medium ml-1">Ready to upload:</p>
           <div className="grid grid-cols-2 gap-2">
             {pendingFiles.map((file, i) => (
-              <div key={i} className="flex items-center gap-2 bg-white/5 border border-white/10 p-2 rounded-lg">
+              <div key={i} className="flex items-center gap-2 bg-white/5 border border-[#8B5CF6]/10 p-2 rounded-lg">
                 <div className="w-10 h-10 rounded bg-slate-800 flex items-center justify-center flex-shrink-0">
                   <svg className="w-5 h-5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
@@ -253,7 +253,7 @@ export function ImageUploadCard({
           {images.map((photo) => (
             <div
               key={photo.id}
-              className="relative group rounded-xl overflow-hidden border border-white/10 bg-white/5 aspect-square"
+              className="relative group rounded-xl overflow-hidden border border-[#8B5CF6]/10 bg-white/5 aspect-square"
             >
               <img
                 src={photo.base64}

@@ -20,10 +20,10 @@ export function BodyCompositionSummary({ analysis }: BodyCompositionSummaryProps
   } = analysis
 
   return (
-    <div className="mt-4 glass-soft rounded-2xl border border-white/10 p-4 space-y-4">
+    <div className="mt-4 glass-soft rounded-2xl border border-[#8B5CF6]/10 p-4 space-y-4">
       <div className="flex items-center justify-between">
         <h4 className="text-sm font-semibold text-white">AI Body Analysis</h4>
-        <span className="text-xs text-slate-300/70">
+        <span className="text-xs text-[#8B8DA3]">
           {Math.round(confidence_score * 100)}% confidence
         </span>
       </div>
@@ -83,7 +83,7 @@ export function BodyCompositionSummary({ analysis }: BodyCompositionSummaryProps
         </div>
       )}
 
-      <div className="pt-2 border-t border-white/5 text-[10px] text-slate-500 leading-tight">
+      <div className="pt-2 border-t border-[#8B5CF6]/5 text-[10px] text-slate-500 leading-tight">
         <p>Private analysis. Photos are not permanently stored. Results used to personalize your routine.</p>
       </div>
     </div>

@@ -154,7 +154,7 @@ export function UpgradeModal({ open, status, onClose, onUnlocked, showToast }: U
 
   return (
     <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm animate-in fade-in duration-200">
-      <div className="w-full max-w-md bg-slate-900 border border-white/10 rounded-3xl shadow-2xl overflow-hidden ring-1 ring-white/10">
+      <div className="w-full max-w-md bg-slate-900 border border-[#8B5CF6]/10 rounded-3xl shadow-2xl overflow-hidden ring-1 ring-[#8B5CF6]/10">
         <div className="p-6 sm:p-7">
           <div className="flex items-start justify-between gap-4">
             <div>
@@ -162,7 +162,7 @@ export function UpgradeModal({ open, status, onClose, onUnlocked, showToast }: U
                 ✨ Premium
               </div>
               <h3 className="text-xl font-bold text-white mt-3">{headline}</h3>
-              <p className="text-sm text-slate-300/70 mt-2">
+              <p className="text-sm text-[#8B8DA3] mt-2">
                 Subscribe for <span className="text-white font-semibold">₹1/month</span> to unlock Analytics Pro.
               </p>
             </div>
@@ -186,7 +186,7 @@ export function UpgradeModal({ open, status, onClose, onUnlocked, showToast }: U
               'Streaks + consistency insights',
               'Skipped exercise insights',
             ].map((t) => (
-              <div key={t} className="glass-soft rounded-xl p-3 text-sm text-slate-200/85 border border-white/10">
+              <div key={t} className="glass-soft rounded-xl p-3 text-sm text-slate-200/85 border border-[#8B5CF6]/10">
                 {t}
               </div>
             ))}

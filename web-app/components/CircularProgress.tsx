@@ -1,5 +1,8 @@
 'use client'
 
+import { useId } from 'react'
+import { motion } from 'framer-motion'
+
 interface CircularProgressProps {
   percentage: number
   size?: number
@@ -7,12 +10,14 @@ interface CircularProgressProps {
   label?: string
 }
 
-export function CircularProgress({ 
-  percentage, 
-  size = 100, 
+export function CircularProgress({
+  percentage,
+  size = 100,
   strokeWidth = 6,
-  label 
+  label
 }: CircularProgressProps) {
+  const gradientId = useId()
+  const glowId = useId()
   const radius = (size - strokeWidth) / 2
   const circumference = radius * 2 * Math.PI
   const offset = circumference - (percentage / 100) * circumference
@@ -25,34 +30,43 @@ export function CircularProgress({
           height={size}
           className="transform -rotate-90"
         >
-          {/* Background circle */}
+          <defs>
+            <linearGradient id={gradientId} x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stopColor="#8B5CF6" />
+              <stop offset="100%" stopColor="#22D3EE" />
+            </linearGradient>
+            <filter id={glowId}>
+              <feGaussianBlur stdDeviation="3" result="blur" />
+              <feMerge>
+                <feMergeNode in="blur" />
+                <feMergeNode in="SourceGraphic" />
+              </feMerge>
+            </filter>
+          </defs>
+          {/* Background circle - dark purple tint */}
           <circle
             cx={size / 2}
             cy={size / 2}
             r={radius}
             fill="none"
-            stroke="rgba(148, 163, 184, 0.2)"
+            stroke="rgba(139, 92, 246, 0.15)"
             strokeWidth={strokeWidth}
           />
-          {/* Progress circle */}
-          <circle
+          {/* Progress circle with glow */}
+          <motion.circle
             cx={size / 2}
             cy={size / 2}
             r={radius}
             fill="none"
-            stroke="url(#progressGradient)"
+            stroke={`url(#${gradientId})`}
             strokeWidth={strokeWidth}
             strokeDasharray={circumference}
-            strokeDashoffset={offset}
             strokeLinecap="round"
-            className="transition-all duration-500 ease-out"
+            filter={`url(#${glowId})`}
+            initial={{ strokeDashoffset: circumference }}
+            animate={{ strokeDashoffset: offset }}
+            transition={{ duration: 0.8, ease: 'easeOut' as const }}
           />
-          <defs>
-            <linearGradient id="progressGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-              <stop offset="0%" stopColor="#14b8a6" />
-              <stop offset="100%" stopColor="#10b981" />
-            </linearGradient>
-          </defs>
         </svg>
         <div className="absolute inset-0 flex flex-col items-center justify-center">
           <span className="text-2xl font-bold text-white">{Math.round(percentage)}%</span>

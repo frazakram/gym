@@ -42,24 +42,24 @@ export const DietDisplay: React.FC<DietDisplayProps> = ({ diet }) => {
 
       {/* Summary */}
       <div className="mt-4 grid grid-cols-2 gap-3">
-        <div className="glass-soft rounded-2xl border border-white/10 p-3">
+        <div className="glass-soft rounded-2xl border border-[#8B5CF6]/10 p-3">
           <div className="flex items-center justify-between">
-            <p className="text-[11px] text-slate-300/70">Avg calories/day</p>
+            <p className="text-[11px] text-[#8B8DA3]">Avg calories/day</p>
             <Flame className="w-4 h-4 text-orange-300/90" />
           </div>
           <p className="mt-1 text-[20px] font-semibold tracking-tight text-white">
             {summary.avgCalories}
-            <span className="ml-1 text-xs text-slate-300/70">kcal</span>
+            <span className="ml-1 text-xs text-[#8B8DA3]">kcal</span>
           </p>
         </div>
         <div className="glass-soft rounded-2xl border border-emerald-400/20 p-3 bg-emerald-400/6">
           <div className="flex items-center justify-between">
-            <p className="text-[11px] text-slate-300/70">Avg protein/day</p>
+            <p className="text-[11px] text-[#8B8DA3]">Avg protein/day</p>
             <Utensils className="w-4 h-4 text-emerald-200/90" />
           </div>
           <p className="mt-1 text-[20px] font-semibold tracking-tight text-white">
             {summary.avgProtein}
-            <span className="ml-1 text-xs text-slate-300/70">g</span>
+            <span className="ml-1 text-xs text-[#8B8DA3]">g</span>
           </p>
         </div>
       </div>
@@ -100,8 +100,8 @@ export const DietDisplay: React.FC<DietDisplayProps> = ({ diet }) => {
                           </span>
                         )}
                       </div>
-                      <div className="mt-1 flex items-center gap-2 text-[11px] text-slate-300/70">
-                        <span className="inline-flex items-center gap-1 rounded-full bg-white/5 border border-white/10 px-2 py-0.5">
+                      <div className="mt-1 flex items-center gap-2 text-[11px] text-[#8B8DA3]">
+                        <span className="inline-flex items-center gap-1 rounded-full bg-white/5 border border-[#8B5CF6]/10 px-2 py-0.5">
                           🔥 {day.total_calories} kcal
                         </span>
                         <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 ${
@@ -121,12 +121,12 @@ export const DietDisplay: React.FC<DietDisplayProps> = ({ diet }) => {
                   {day.meals.map((meal, j) => (
                     <div
                       key={j}
-                      className="rounded-2xl border border-white/10 bg-white/5 px-3.5 py-3"
+                      className="rounded-2xl border border-[#8B5CF6]/10 bg-white/5 px-3.5 py-3"
                     >
                       <div className="flex items-start justify-between gap-3">
                         <div className="min-w-0">
                           <p className="text-sm font-medium text-white/90 truncate">{meal.name}</p>
-                          <p className="mt-0.5 text-[11px] text-slate-300/70">
+                          <p className="mt-0.5 text-[11px] text-[#8B8DA3]">
                             {meal.calories} kcal
                           </p>
                         </div>

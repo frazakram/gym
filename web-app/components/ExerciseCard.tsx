@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { ExerciseCheckbox } from './ExerciseCheckbox'
 import YouTubeHoverPreview from './YouTubeHoverPreview'
 import { getYouTubeId } from '@/lib/youtube'
+import { Play, ExternalLink, ChevronDown } from 'lucide-react'
 
 interface Exercise {
   name: string
@@ -78,7 +79,7 @@ export function ExerciseCard({
   const points = getTutorialPoints()
 
   return (
-    <div className="glass-soft rounded-2xl overflow-hidden hover:ring-1 hover:ring-cyan-400/40 transition-all">
+    <div className="glass-soft rounded-2xl overflow-hidden hover:ring-1 hover:ring-[#8B5CF6]/40 transition-all">
       {/* Exercise Image */}
       {imageUrl && (
         <div className="relative h-44 bg-slate-800/50 overflow-hidden">
@@ -100,7 +101,7 @@ export function ExerciseCard({
       <div className="p-4">
         {/* Exercise Name */}
         <h5 className={`text-lg font-semibold mb-2 transition ${
-          isCompleted ? 'text-emerald-300 line-through opacity-70' : 'text-cyan-300'
+          isCompleted ? 'text-emerald-300 line-through opacity-70' : 'text-[#A78BFA]'
         }`}>
           {exercise.name}
         </h5>
@@ -128,9 +129,7 @@ export function ExerciseCard({
               className="text-xs px-3 py-1.5 rounded-full bg-red-600/80 hover:bg-red-600 text-white transition flex items-center gap-1"
             >
               <span>Watch</span>
-              <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 24 24">
-                <path d="M10 15l5.19-3L10 9v6m11.56-7.83c.13.47.22 1.1.28 1.9.07.8.1 1.49.1 2.09L22 12c0 .61-.03 1.3-.1 2.1-.06.8-.15 1.43-.28 1.9-.13.47-.38.85-.73 1.14-.35.29-.85.46-1.5.53-.65.07-1.46.12-2.43.15-1 .03-1.92.05-2.75.05L12 18c-.83 0-1.75-.02-2.75-.05-.97-.03-1.78-.08-2.43-.15-.65-.07-1.15-.24-1.5-.53-.35-.29-.6-.67-.73-1.14-.13-.47-.22-1.1-.28-1.9-.06-.8-.09-1.49-.09-2.09L4 12c0-.61.03-1.3.09-2.1.06-.8.15-1.43.28-1.9.13-.47.38-.85.73-1.14.35-.29.85-.46 1.5-.53.65-.07 1.46-.12 2.43-.15 1-.03 1.92-.05 2.75-.05L12 6c.83 0 1.75.02 2.75.05.97.03 1.78.08 2.43.15.65.07 1.15.24 1.5.53.35.29.6.67.73 1.14z" />
-              </svg>
+              <Play className="w-3 h-3" />
             </a>
           )}
 
@@ -142,9 +141,7 @@ export function ExerciseCard({
               className="text-xs px-3 py-1.5 rounded-full bg-blue-600/80 hover:bg-blue-600 text-white transition flex items-center gap-1"
             >
               <span>WikiHow</span>
-              <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-              </svg>
+              <ExternalLink className="w-3 h-3" />
             </a>
           )}
         </div>
@@ -154,17 +151,10 @@ export function ExerciseCard({
           <div>
             <button
               onClick={() => setIsExpanded(!isExpanded)}
-              className="w-full flex items-center justify-between text-sm font-semibold text-slate-100 mb-2 hover:text-cyan-300 transition"
+              className="w-full flex items-center justify-between text-sm font-semibold text-slate-100 mb-2 hover:text-[#A78BFA] transition"
             >
               <span>Tutorial Points</span>
-              <svg 
-                className={`w-4 h-4 transition-transform ${isExpanded ? 'rotate-180' : ''}`}
-                fill="none" 
-                viewBox="0 0 24 24" 
-                stroke="currentColor"
-              >
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-              </svg>
+              <ChevronDown className={`w-4 h-4 transition-transform ${isExpanded ? 'rotate-180' : ''}`} />
             </button>
             
             {isExpanded && (

@@ -311,7 +311,7 @@ function StreakCalendar({ days }: { days: AnalyticsPayload['calendar'] }) {
   const weeks = Math.ceil(cells.length / 7)
 
   const color = (v: number | null, workouts: number) => {
-    if (!workouts || v == null) return 'bg-white/5 border-white/10'
+    if (!workouts || v == null) return 'bg-white/5 border-[#8B5CF6]/10'
     if (v >= 85) return 'bg-emerald-400/70 border-emerald-300/30'
     if (v >= 60) return 'bg-emerald-400/45 border-emerald-300/25'
     if (v >= 35) return 'bg-amber-400/35 border-amber-300/25'
@@ -355,7 +355,7 @@ function MonthlyStreakCalendar({
   }
 
   const color = (v: number | null, workouts: number) => {
-    if (!workouts || v == null) return 'bg-white/5 border-white/10'
+    if (!workouts || v == null) return 'bg-white/5 border-[#8B5CF6]/10'
     if (v >= 85) return 'bg-emerald-400/70 border-emerald-300/30'
     if (v >= 60) return 'bg-emerald-400/45 border-emerald-300/25'
     if (v >= 35) return 'bg-amber-400/35 border-amber-300/25'
@@ -441,7 +441,7 @@ export function AnalyticsView({ premiumStatus, onUpgrade }: AnalyticsViewProps) 
       premiumStatus.trial_end ? new Date(premiumStatus.trial_end).toLocaleString() : null
     return (
       <div className="pb-24 px-4 py-6">
-        <div className="glass rounded-2xl p-8 border border-white/10">
+        <div className="glass rounded-2xl p-8 border border-[#8B5CF6]/10">
           <div className="flex items-start justify-between gap-4">
             <div>
               <h2 className="text-2xl font-bold text-white mb-2">Analytics (Pro)</h2>
@@ -463,7 +463,7 @@ export function AnalyticsView({ premiumStatus, onUpgrade }: AnalyticsViewProps) 
               'Streaks and consistency calendar',
               'Most skipped exercises',
             ].map((t) => (
-              <div key={t} className="glass-soft rounded-xl p-3 text-sm text-slate-200/85 border border-white/10">
+              <div key={t} className="glass-soft rounded-xl p-3 text-sm text-slate-200/85 border border-[#8B5CF6]/10">
                 {t}
               </div>
             ))}
@@ -616,7 +616,7 @@ export function AnalyticsView({ premiumStatus, onUpgrade }: AnalyticsViewProps) 
 
   return (
     <div className="pb-24 px-4 py-6">
-      <div className="glass rounded-2xl p-8 border border-white/10">
+      <div className="glass rounded-2xl p-8 border border-[#8B5CF6]/10">
         <div className="flex items-start justify-between gap-4">
           <div>
             <h2 className="text-2xl font-bold text-white mb-2">Analytics</h2>
@@ -648,7 +648,7 @@ export function AnalyticsView({ premiumStatus, onUpgrade }: AnalyticsViewProps) 
         </div>
 
         <div className="mt-6 grid gap-3">
-          <div className="glass-soft rounded-xl p-4 border border-white/10">
+          <div className="glass-soft rounded-xl p-4 border border-[#8B5CF6]/10">
             <div className="text-sm font-semibold text-white">{isTrial ? 'Trial' : 'Subscription'}</div>
             <div className="text-xs text-slate-300/70 mt-1">
               Status: {premiumStatus.status ?? 'unknown'}
@@ -665,7 +665,7 @@ export function AnalyticsView({ premiumStatus, onUpgrade }: AnalyticsViewProps) 
             )}
           </div>
 
-          <div className="glass-soft rounded-xl p-4 border border-white/10">
+          <div className="glass-soft rounded-xl p-4 border border-[#8B5CF6]/10">
             <div className="flex items-center justify-between gap-4">
               <div>
                 <div className="text-sm font-semibold text-white">Streaks</div>
@@ -685,7 +685,7 @@ export function AnalyticsView({ premiumStatus, onUpgrade }: AnalyticsViewProps) 
         </div>
 
         <div className="mt-6 grid gap-3">
-          <div className="glass-soft rounded-xl p-4 border border-white/10">
+          <div className="glass-soft rounded-xl p-4 border border-[#8B5CF6]/10">
             <div className="flex items-start justify-between gap-4">
               <div>
                 <div className="text-sm font-semibold text-white">Completion trends</div>
@@ -713,7 +713,7 @@ export function AnalyticsView({ premiumStatus, onUpgrade }: AnalyticsViewProps) 
                   className={`px-3 py-1.5 rounded-full text-xs font-semibold border transition ${
                     trendMode === m
                       ? 'bg-emerald-400/12 border-emerald-400/25 text-emerald-100'
-                      : 'bg-white/5 border-white/10 text-slate-200/80 hover:bg-white/10'
+                      : 'bg-white/5 border-[#8B5CF6]/10 text-slate-200/80 hover:bg-white/10'
                   }`}
                 >
                   {m === 'daily' ? 'Daily' : m === 'weekly' ? 'Weekly' : 'Monthly'}
@@ -723,7 +723,7 @@ export function AnalyticsView({ premiumStatus, onUpgrade }: AnalyticsViewProps) 
 
             <div className="mt-3">
               {loading ? (
-                <div className="h-[160px] animate-pulse rounded-xl bg-white/5 border border-white/10" />
+                <div className="h-[160px] animate-pulse rounded-xl bg-white/5 border border-[#8B5CF6]/10" />
               ) : error ? (
                 <div className="text-sm text-rose-200 bg-rose-500/10 border border-rose-500/20 rounded-xl p-3">
                   {error}
@@ -734,7 +734,7 @@ export function AnalyticsView({ premiumStatus, onUpgrade }: AnalyticsViewProps) 
             </div>
           </div>
 
-          <div className="glass-soft rounded-xl p-4 border border-white/10">
+          <div className="glass-soft rounded-xl p-4 border border-[#8B5CF6]/10">
             <div className="flex items-start justify-between gap-4">
               <div>
                 <div className="text-sm font-semibold text-white">Streak calendar</div>
@@ -749,7 +749,7 @@ export function AnalyticsView({ premiumStatus, onUpgrade }: AnalyticsViewProps) 
                   className={`px-3 py-1.5 rounded-full text-xs font-semibold border transition ${
                     calendarMode === 'weeks'
                       ? 'bg-emerald-400/12 border-emerald-400/25 text-emerald-100'
-                      : 'bg-white/5 border-white/10 text-slate-200/80 hover:bg-white/10'
+                      : 'bg-white/5 border-[#8B5CF6]/10 text-slate-200/80 hover:bg-white/10'
                   }`}
                 >
                   12 weeks
@@ -759,7 +759,7 @@ export function AnalyticsView({ premiumStatus, onUpgrade }: AnalyticsViewProps) 
                   className={`px-3 py-1.5 rounded-full text-xs font-semibold border transition ${
                     calendarMode === 'month'
                       ? 'bg-emerald-400/12 border-emerald-400/25 text-emerald-100'
-                      : 'bg-white/5 border-white/10 text-slate-200/80 hover:bg-white/10'
+                      : 'bg-white/5 border-[#8B5CF6]/10 text-slate-200/80 hover:bg-white/10'
                   }`}
                 >
                   Month
@@ -768,7 +768,7 @@ export function AnalyticsView({ premiumStatus, onUpgrade }: AnalyticsViewProps) 
             </div>
             <div className="mt-3">
               {loading ? (
-                <div className="h-[70px] animate-pulse rounded-xl bg-white/5 border border-white/10" />
+                <div className="h-[70px] animate-pulse rounded-xl bg-white/5 border border-[#8B5CF6]/10" />
               ) : error ? (
                 <div className="text-sm text-rose-200 bg-rose-500/10 border border-rose-500/20 rounded-xl p-3">
                   {error}
@@ -784,7 +784,7 @@ export function AnalyticsView({ premiumStatus, onUpgrade }: AnalyticsViewProps) 
                           className={`px-3 py-1.5 rounded-full text-xs font-semibold border transition ${
                             activeMonth === m
                               ? 'bg-white/10 border-white/15 text-white'
-                              : 'bg-white/5 border-white/10 text-slate-200/80 hover:bg-white/10'
+                              : 'bg-white/5 border-[#8B5CF6]/10 text-slate-200/80 hover:bg-white/10'
                           }`}
                         >
                           {m}
@@ -803,7 +803,7 @@ export function AnalyticsView({ premiumStatus, onUpgrade }: AnalyticsViewProps) 
             </div>
           </div>
 
-          <div className="glass-soft rounded-xl p-4 border border-white/10">
+          <div className="glass-soft rounded-xl p-4 border border-[#8B5CF6]/10">
             <div className="flex items-start justify-between gap-4">
               <div>
                 <div className="text-sm font-semibold text-white">Workout history</div>
@@ -817,7 +817,7 @@ export function AnalyticsView({ premiumStatus, onUpgrade }: AnalyticsViewProps) 
                 {historyThumbs.map((w) => (
                   <div
                     key={w.key}
-                    className="rounded-2xl border border-white/10 bg-white/5 hover:bg-white/7 transition p-3 flex items-center gap-3"
+                    className="rounded-2xl border border-[#8B5CF6]/10 bg-white/5 hover:bg-white/7 transition p-3 flex items-center gap-3"
                     title={`${w.date} · ${w.dayName} · ${pctText(w.completion)}`}
                   >
                     <div className="relative shrink-0" data-muscle-popover="root">
@@ -831,7 +831,7 @@ export function AnalyticsView({ premiumStatus, onUpgrade }: AnalyticsViewProps) 
                         <MuscleIcon group={w.group} />
                       </button>
                       {openIconKey === w.key && (
-                        <div className="absolute left-0 top-11 z-20 w-44 rounded-xl bg-slate-950/90 border border-white/10 text-[11px] text-slate-100 px-3 py-2 shadow-xl">
+                        <div className="absolute left-0 top-11 z-20 w-44 rounded-xl bg-slate-950/90 border border-[#8B5CF6]/10 text-[11px] text-slate-100 px-3 py-2 shadow-xl">
                           <div className="font-semibold">{muscleLabel(w.group)}</div>
                           <div className="text-slate-200/75 mt-0.5">{muscleHelp(w.group)}</div>
                         </div>
