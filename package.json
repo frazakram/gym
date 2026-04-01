@@ -1,4 +1,8 @@
 {
   "name": "gym-monorepo",
-  "private": true
+  "private": true,
+  "dependencies": {
+    "recharts": "^3.8.1",
+    "sonner": "^2.0.7"
+  }
 }
