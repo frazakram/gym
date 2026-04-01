@@ -24,7 +24,10 @@ npx vercel --prod
 ```
 
 ---
-
+**To run throgh npm
+```bash
+npm run dev
+```
 ### 🐍 **Streamlit App** (For Local Development)
 **Python-based application for rapid prototyping**
 
