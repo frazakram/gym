@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   Home,
@@ -11,9 +11,7 @@ import {
   BarChart3,
   Utensils,
   MessageCircle,
-  Check,
   Ruler,
-  X,
 } from 'lucide-react'
 
 interface BottomNavProps {
@@ -21,79 +19,66 @@ interface BottomNavProps {
   onViewChange: (view: 'home' | 'routine' | 'workout' | 'profile' | 'diet' | 'analytics' | 'coach' | 'measurements') => void
 }
 
+// Arc config
+const ARC_RADIUS = 105
+const ICON_SIZE = 56 // w-14 h-14
+
+const MENU_ITEMS = [
+  {
+    id: 'analytics' as const,
+    label: 'Analytics',
+    icon: BarChart3,
+    color: '#A78BFA',
+    bg: 'rgba(139,92,246,0.18)',
+    border: 'rgba(139,92,246,0.35)',
+    angle: 155,
+  },
+  {
+    id: 'diet' as const,
+    label: 'Diet',
+    icon: Utensils,
+    color: '#6EE7B7',
+    bg: 'rgba(16,185,129,0.18)',
+    border: 'rgba(16,185,129,0.35)',
+    angle: 115,
+  },
+  {
+    id: 'coach' as const,
+    label: 'Coach',
+    icon: MessageCircle,
+    color: '#FCD34D',
+    bg: 'rgba(245,158,11,0.18)',
+    border: 'rgba(245,158,11,0.35)',
+    angle: 65,
+  },
+  {
+    id: 'measurements' as const,
+    label: 'Body',
+    icon: Ruler,
+    color: '#67E8F9',
+    bg: 'rgba(34,211,238,0.18)',
+    border: 'rgba(34,211,238,0.35)',
+    angle: 25,
+  },
+]
+
+function getArcXY(angleDeg: number) {
+  const rad = (angleDeg * Math.PI) / 180
+  return {
+    x: Math.cos(rad) * ARC_RADIUS - ICON_SIZE / 2,
+    y: -Math.sin(rad) * ARC_RADIUS - ICON_SIZE / 2,
+  }
+}
+
 export function BottomNav({ activeView, onViewChange }: BottomNavProps) {
-  const [isPlusMenuOpen, setIsPlusMenuOpen] = useState(false)
-  const [fabPulse, setFabPulse] = useState(false)
-
-  // Subtle pulse every 8s to draw attention when menu is closed
-  useEffect(() => {
-    if (isPlusMenuOpen) return
-    const interval = setInterval(() => {
-      setFabPulse(true)
-      setTimeout(() => setFabPulse(false), 600)
-    }, 8000)
-    return () => clearInterval(interval)
-  }, [isPlusMenuOpen])
-
-  const leftNavItems = [
-    { id: 'home' as const, label: 'Home', icon: Home },
-    { id: 'routine' as const, label: 'Routine', icon: Calendar },
-  ]
-
-  const rightNavItems = [
-    { id: 'workout' as const, label: 'Workout', icon: ClipboardCheck },
-    { id: 'profile' as const, label: 'Profile', icon: User },
-  ]
-
-  const plusMenuItems = [
-    {
-      id: 'analytics' as const,
-      label: 'Analytics',
-      icon: BarChart3,
-      gradient: 'from-[#8B5CF6]/25 to-[#8B5CF6]/10',
-      iconColor: 'text-[#A78BFA]',
-      borderColor: 'border-[#8B5CF6]/25',
-      glowColor: 'shadow-[#8B5CF6]/10',
-    },
-    {
-      id: 'diet' as const,
-      label: 'Diet',
-      icon: Utensils,
-      gradient: 'from-[#10B981]/25 to-[#10B981]/10',
-      iconColor: 'text-[#6EE7B7]',
-      borderColor: 'border-[#10B981]/25',
-      glowColor: 'shadow-[#10B981]/10',
-    },
-    {
-      id: 'coach' as const,
-      label: 'Coach',
-      icon: MessageCircle,
-      gradient: 'from-[#F59E0B]/25 to-[#F59E0B]/10',
-      iconColor: 'text-[#FCD34D]',
-      borderColor: 'border-[#F59E0B]/25',
-      glowColor: 'shadow-[#F59E0B]/10',
-    },
-    {
-      id: 'measurements' as const,
-      label: 'Body Tracker',
-      icon: Ruler,
-      gradient: 'from-[#22D3EE]/25 to-[#22D3EE]/10',
-      iconColor: 'text-[#67E8F9]',
-      borderColor: 'border-[#22D3EE]/25',
-      glowColor: 'shadow-[#22D3EE]/10',
-    },
-  ]
+  const [open, setOpen] = useState(false)
 
   const handleItemClick = (id: typeof activeView) => {
     onViewChange(id)
-    setIsPlusMenuOpen(false)
+    setOpen(false)
   }
 
-  type NavItem = {
-    id: 'home' | 'routine' | 'workout' | 'profile'
-    label: string
-    icon: React.ComponentType<{ className?: string }>
-  }
+  type NavItem = { id: 'home' | 'routine' | 'workout' | 'profile'; label: string; icon: React.ComponentType<{ className?: string }> }
 
   const NavButton = ({ item, isActive }: { item: NavItem; isActive: boolean }) => {
     const Icon = item.icon
@@ -102,7 +87,6 @@ export function BottomNav({ activeView, onViewChange }: BottomNavProps) {
         onClick={() => handleItemClick(item.id)}
         className="relative flex flex-col items-center justify-center gap-0.5 px-3 py-2 rounded-xl transition-all duration-200 min-w-[56px]"
       >
-        {/* Active pill indicator above icon */}
         {isActive && (
           <motion.div
             layoutId="nav-pill"
@@ -110,12 +94,9 @@ export function BottomNav({ activeView, onViewChange }: BottomNavProps) {
             transition={{ type: 'spring', stiffness: 400, damping: 30 }}
           />
         )}
-
         <div className={isActive ? 'text-[#8B5CF6] drop-shadow-[0_0_8px_rgba(139,92,246,0.6)]' : 'text-slate-400'}>
           <Icon className="w-5 h-5" />
         </div>
-
-        {/* Label only shown for active */}
         <AnimatePresence>
           {isActive && (
             <motion.span
@@ -134,156 +115,198 @@ export function BottomNav({ activeView, onViewChange }: BottomNavProps) {
 
   return (
     <>
-      {/* Backdrop when plus menu is open */}
+      {/* ── Backdrop ── */}
       <AnimatePresence>
-        {isPlusMenuOpen && (
+        {open && (
           <motion.div
+            key="backdrop"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            transition={{ duration: 0.2 }}
-            className="fixed inset-0 z-40 bg-black/60 backdrop-blur-md"
-            onClick={() => setIsPlusMenuOpen(false)}
+            transition={{ duration: 0.25 }}
+            className="fixed inset-0 bg-black/70 backdrop-blur-lg"
+            style={{ zIndex: 40 }}
+            onClick={() => setOpen(false)}
           />
         )}
       </AnimatePresence>
 
-      {/* Plus Menu Popup — fan-out from FAB */}
+      {/* ── Radial arc menu ── */}
       <AnimatePresence>
-        {isPlusMenuOpen && (
-          <motion.div
-            initial={{ opacity: 0, scale: 0.8, y: 30 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.85, y: 20 }}
-            transition={{ type: 'spring', stiffness: 400, damping: 28 }}
-            className="fixed bottom-[88px] left-1/2 -translate-x-1/2 z-50 w-[220px]"
+        {open && (
+          <div
+            className="fixed pointer-events-none"
+            style={{
+              zIndex: 50,
+              bottom: 36,          // vertically centered on FAB
+              left: '50%',
+              width: 0,
+              height: 0,
+            }}
           >
-            <div className="flex flex-col gap-1.5 p-2 bg-[#0D0D1A]/98 backdrop-blur-2xl rounded-2xl border border-white/[0.08] shadow-[0_16px_64px_rgba(0,0,0,0.5),0_0_32px_rgba(139,92,246,0.12)]">
-              {plusMenuItems.map((item, index) => {
-                const isActive = activeView === item.id
-                const Icon = item.icon
-                return (
-                  <motion.button
-                    key={item.id}
-                    initial={{ opacity: 0, y: 16, scale: 0.9 }}
-                    animate={{ opacity: 1, y: 0, scale: 1 }}
-                    exit={{ opacity: 0, y: 8, scale: 0.95 }}
-                    transition={{
-                      delay: index * 0.05,
-                      type: 'spring',
-                      stiffness: 500,
-                      damping: 30,
-                    }}
-                    onClick={() => handleItemClick(item.id)}
-                    whileTap={{ scale: 0.96 }}
-                    className={`
-                      flex items-center gap-3 px-3.5 py-2.5 rounded-xl transition-all duration-150
-                      bg-gradient-to-r ${item.gradient}
-                      border ${item.borderColor}
-                      shadow-md ${item.glowColor}
-                      ${isActive ? 'ring-1 ring-white/20' : 'hover:brightness-125 active:brightness-90'}
-                    `}
-                  >
-                    <div className={`w-8 h-8 rounded-lg bg-black/20 flex items-center justify-center ${item.iconColor}`}>
-                      <Icon className="w-4.5 h-4.5" />
-                    </div>
-                    <span className="text-[13px] font-semibold text-white/90">{item.label}</span>
-                    {isActive && <Check className={`w-4 h-4 ml-auto ${item.iconColor}`} />}
-                  </motion.button>
-                )
-              })}
-            </div>
+            {/* Dashed arc guide line */}
+            <motion.svg
+              width="280"
+              height="170"
+              viewBox="-140 -170 280 170"
+              fill="none"
+              className="absolute left-1/2 bottom-0 -translate-x-1/2 pointer-events-none"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.3 }}
+            >
+              <motion.path
+                d={`M ${Math.cos((160 * Math.PI) / 180) * ARC_RADIUS} ${-Math.sin((160 * Math.PI) / 180) * ARC_RADIUS} A ${ARC_RADIUS} ${ARC_RADIUS} 0 0 1 ${Math.cos((20 * Math.PI) / 180) * ARC_RADIUS} ${-Math.sin((20 * Math.PI) / 180) * ARC_RADIUS}`}
+                stroke="rgba(139,92,246,0.12)"
+                strokeWidth="1"
+                strokeDasharray="3 5"
+                initial={{ pathLength: 0 }}
+                animate={{ pathLength: 1 }}
+                transition={{ duration: 0.6, ease: 'easeOut' }}
+              />
+            </motion.svg>
 
-            {/* Little arrow/notch pointing down toward FAB */}
-            <div className="flex justify-center -mt-[1px]">
-              <div className="w-3 h-3 rotate-45 bg-[#0D0D1A]/98 border-r border-b border-white/[0.08]" />
-            </div>
-          </motion.div>
+            {/* Arc items — each orbits out from center */}
+            {MENU_ITEMS.map((item, i) => {
+              const { x, y } = getArcXY(item.angle)
+              const Icon = item.icon
+              const isActive = activeView === item.id
+              return (
+                <motion.div
+                  key={item.id}
+                  className="absolute pointer-events-auto"
+                  style={{ bottom: 0, left: 0 }}
+                  initial={{ x: -ICON_SIZE / 2, y: -ICON_SIZE / 2, scale: 0, opacity: 0 }}
+                  animate={{ x, y, scale: 1, opacity: 1 }}
+                  exit={{
+                    x: -ICON_SIZE / 2,
+                    y: -ICON_SIZE / 2,
+                    scale: 0,
+                    opacity: 0,
+                    transition: { delay: (MENU_ITEMS.length - 1 - i) * 0.04, duration: 0.2 },
+                  }}
+                  transition={{
+                    delay: i * 0.07,
+                    type: 'spring',
+                    stiffness: 380,
+                    damping: 20,
+                  }}
+                >
+                  {/* Floating label */}
+                  <motion.span
+                    initial={{ opacity: 0, y: 6 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: i * 0.07 + 0.25, duration: 0.2 }}
+                    className="absolute -top-8 left-1/2 -translate-x-1/2 whitespace-nowrap text-[11px] font-bold tracking-wide px-2.5 py-1 rounded-lg backdrop-blur-md"
+                    style={{
+                      color: item.color,
+                      background: item.bg,
+                      border: `1px solid ${item.border}`,
+                      boxShadow: `0 2px 12px ${item.bg}`,
+                    }}
+                  >
+                    {item.label}
+                  </motion.span>
+
+                  {/* Circular icon button */}
+                  <motion.button
+                    onClick={() => handleItemClick(item.id)}
+                    whileHover={{ scale: 1.18 }}
+                    whileTap={{ scale: 0.88 }}
+                    className="relative flex items-center justify-center rounded-full backdrop-blur-xl"
+                    style={{
+                      width: ICON_SIZE,
+                      height: ICON_SIZE,
+                      background: item.bg,
+                      border: `1.5px solid ${item.border}`,
+                      boxShadow: `0 0 28px ${item.bg}, 0 0 12px ${item.border}, 0 6px 20px rgba(0,0,0,0.35)`,
+                    }}
+                  >
+                    {/* Active ring */}
+                    {isActive && (
+                      <motion.div
+                        className="absolute inset-[-3px] rounded-full"
+                        style={{ border: `2px solid ${item.color}`, boxShadow: `0 0 14px ${item.border}` }}
+                        initial={{ scale: 0.8, opacity: 0 }}
+                        animate={{ scale: 1, opacity: 1 }}
+                      />
+                    )}
+                    <Icon style={{ color: item.color, width: 22, height: 22 }} />
+                  </motion.button>
+                </motion.div>
+              )
+            })}
+          </div>
         )}
       </AnimatePresence>
 
-      {/* Bottom Navigation Bar */}
-      <nav className="fixed bottom-0 left-0 right-0 z-50 safe-area-bottom">
+      {/* ── Bottom Nav Bar ── */}
+      <nav className="fixed bottom-0 left-0 right-0 safe-area-bottom" style={{ zIndex: 50 }}>
         <div className="max-w-md mx-auto px-4 pb-2">
           <div className="flex items-center justify-between bg-[#0A0A14]/95 backdrop-blur-xl rounded-2xl border border-[#8B5CF6]/15 shadow-[0_8px_32px_rgba(0,0,0,0.4)] px-2 py-1">
-            {/* Left nav items */}
+            {/* Left */}
             <div className="flex items-center">
-              {leftNavItems.map((item) => (
+              {([
+                { id: 'home' as const, label: 'Home', icon: Home },
+                { id: 'routine' as const, label: 'Routine', icon: Calendar },
+              ] as NavItem[]).map((item) => (
                 <NavButton key={item.id} item={item} isActive={activeView === item.id} />
               ))}
             </div>
 
-            {/* Center FAB Button */}
-            <div className="relative">
-              {/* Outer glow ring animation */}
+            {/* FAB */}
+            <div className="relative -mt-6">
+              {/* Ripple rings when open */}
               <AnimatePresence>
-                {isPlusMenuOpen && (
-                  <motion.div
-                    initial={{ scale: 0.8, opacity: 0 }}
-                    animate={{ scale: 1.5, opacity: 0 }}
-                    exit={{ scale: 0.8, opacity: 0 }}
-                    transition={{ duration: 0.8, ease: 'easeOut' }}
-                    className="absolute inset-0 rounded-full bg-gradient-to-br from-[#8B5CF6] to-[#22D3EE]"
-                  />
+                {open && (
+                  <>
+                    <motion.div
+                      key="ring1"
+                      initial={{ scale: 1, opacity: 0.5 }}
+                      animate={{ scale: 2.6, opacity: 0 }}
+                      exit={{ opacity: 0 }}
+                      transition={{ duration: 1, ease: 'easeOut', repeat: Infinity, repeatDelay: 0.4 }}
+                      className="absolute inset-0 rounded-full"
+                      style={{ background: 'radial-gradient(circle, rgba(139,92,246,0.3), transparent 70%)' }}
+                    />
+                    <motion.div
+                      key="ring2"
+                      initial={{ scale: 1, opacity: 0.3 }}
+                      animate={{ scale: 2, opacity: 0 }}
+                      exit={{ opacity: 0 }}
+                      transition={{ duration: 0.8, ease: 'easeOut', repeat: Infinity, repeatDelay: 0.6, delay: 0.3 }}
+                      className="absolute inset-0 rounded-full bg-[#22D3EE]/20"
+                    />
+                  </>
                 )}
               </AnimatePresence>
 
-              {/* Subtle pulse ring */}
-              {fabPulse && (
-                <motion.div
-                  initial={{ scale: 1, opacity: 0.5 }}
-                  animate={{ scale: 1.8, opacity: 0 }}
-                  transition={{ duration: 0.6, ease: 'easeOut' }}
-                  className="absolute inset-0 rounded-full bg-[#8B5CF6]/30"
-                />
-              )}
-
               <motion.button
-                onClick={() => setIsPlusMenuOpen(!isPlusMenuOpen)}
-                whileTap={{ scale: 0.85 }}
+                onClick={() => setOpen(v => !v)}
+                whileTap={{ scale: 0.82 }}
                 animate={{
-                  rotate: isPlusMenuOpen ? 135 : 0,
-                  scale: isPlusMenuOpen ? 1.08 : 1,
+                  scale: open ? 1.18 : 1,
+                  rotate: open ? 45 : 0,
                 }}
-                transition={{ type: 'spring', stiffness: 400, damping: 22 }}
-                className={`
-                  relative flex items-center justify-center w-12 h-12 rounded-full
-                  bg-gradient-to-br from-[#8B5CF6] to-[#22D3EE]
-                  shadow-[0_4px_20px_rgba(139,92,246,0.4),0_0_40px_rgba(34,211,238,0.15)]
-                  hover:shadow-[0_4px_30px_rgba(139,92,246,0.6),0_0_50px_rgba(34,211,238,0.25)]
-                  transition-shadow duration-300
-                  ${isPlusMenuOpen ? 'shadow-[0_0_40px_rgba(139,92,246,0.5),0_0_60px_rgba(34,211,238,0.3)]' : ''}
-                `}
+                transition={{ type: 'spring', stiffness: 500, damping: 24 }}
+                className="relative flex items-center justify-center w-14 h-14 rounded-full bg-gradient-to-br from-[#8B5CF6] via-[#7C3AED] to-[#22D3EE] transition-shadow duration-300"
+                style={{
+                  boxShadow: open
+                    ? '0 0 32px rgba(139,92,246,0.6), 0 0 64px rgba(34,211,238,0.25), 0 0 96px rgba(139,92,246,0.12)'
+                    : '0 4px 24px rgba(139,92,246,0.4), 0 0 40px rgba(34,211,238,0.1)',
+                }}
               >
-                <AnimatePresence mode="wait">
-                  {isPlusMenuOpen ? (
-                    <motion.div
-                      key="x"
-                      initial={{ opacity: 0, scale: 0.5, rotate: -90 }}
-                      animate={{ opacity: 1, scale: 1, rotate: 0 }}
-                      exit={{ opacity: 0, scale: 0.5 }}
-                      transition={{ duration: 0.15 }}
-                    >
-                      <X className="w-6 h-6 text-white" strokeWidth={2.5} />
-                    </motion.div>
-                  ) : (
-                    <motion.div
-                      key="plus"
-                      initial={{ opacity: 0, scale: 0.5, rotate: 90 }}
-                      animate={{ opacity: 1, scale: 1, rotate: 0 }}
-                      exit={{ opacity: 0, scale: 0.5 }}
-                      transition={{ duration: 0.15 }}
-                    >
-                      <Plus className="w-6 h-6 text-white" strokeWidth={2.5} />
-                    </motion.div>
-                  )}
-                </AnimatePresence>
+                <Plus className="w-7 h-7 text-white" strokeWidth={2.5} />
               </motion.button>
             </div>
 
-            {/* Right nav items */}
+            {/* Right */}
             <div className="flex items-center">
-              {rightNavItems.map((item) => (
+              {([
+                { id: 'workout' as const, label: 'Workout', icon: ClipboardCheck },
+                { id: 'profile' as const, label: 'Profile', icon: User },
+              ] as NavItem[]).map((item) => (
                 <NavButton key={item.id} item={item} isActive={activeView === item.id} />
               ))}
             </div>
