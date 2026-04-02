@@ -11,6 +11,7 @@ import { ProfileView } from '@/components/views/ProfileView'
 import { DietView } from '@/components/views/DietView'
 import { AnalyticsView } from '@/components/views/AnalyticsView'
 import { CoachView } from '@/components/views/CoachView'
+import { MeasurementsView } from '@/components/views/MeasurementsView'
 import { Sidebar } from '@/components/Sidebar'
 import { ToastContainer, ToastType } from '@/components/ui/Toast'
 import { ConfirmModal } from '@/components/ui/ConfirmModal'
@@ -25,7 +26,7 @@ import { AnimatePresence, motion } from 'framer-motion'
 
 export default function DashboardPage() {
   const router = useRouter()
-  const [activeView, setActiveView] = useState<'home' | 'routine' | 'workout' | 'profile' | 'diet' | 'analytics' | 'coach'>('home')
+  const [activeView, setActiveView] = useState<'home' | 'routine' | 'workout' | 'profile' | 'diet' | 'analytics' | 'coach' | 'measurements'>('home')
   const [isSidebarOpen, setIsSidebarOpen] = useState(false)
   const [historyRoutines, setHistoryRoutines] = useState<any[]>([])
   const [loadingHistory, setLoadingHistory] = useState(false)
@@ -158,6 +159,9 @@ export default function DashboardPage() {
   // Heatmap data for activity tracking
   const [heatmapData, setHeatmapData] = useState<Array<{ date: string; value: number }>>([])
   const [heatmapLoading, setHeatmapLoading] = useState(false)
+
+  // Streak data
+  const [streakData, setStreakData] = useState<{ current: number; longest: number; last_workout_date: string | null } | null>(null)
 
   const resolvedHeightCm = useMemo(() => {
     if (heightUnit === 'cm') return typeof height === 'number' ? height : null
@@ -304,11 +308,23 @@ export default function DashboardPage() {
     }
   }, [])
 
+  const fetchStreak = useCallback(async () => {
+    try {
+      const res = await csrfFetch('/api/streak')
+      if (res.ok) {
+        const data = await res.json()
+        setStreakData(data)
+      }
+    } catch (err) {
+      console.error('Error fetching streak:', err)
+    }
+  }, [])
+
   // Session persistence hook for Android
   const { markSessionActive, refreshSession } = useSessionPersistence()
 
   // Navigation history stack for back button handling
-  const viewHistoryRef = useRef<Array<'home' | 'routine' | 'workout' | 'profile' | 'diet' | 'analytics' | 'coach'>>(['home'])
+  const viewHistoryRef = useRef<Array<'home' | 'routine' | 'workout' | 'profile' | 'diet' | 'analytics' | 'coach' | 'measurements'>>(['home'])
 
   useEffect(() => {
     fetchProfile()
@@ -316,6 +332,7 @@ export default function DashboardPage() {
     fetchLatestDiet()
     fetchPremiumStatus()
     fetchHeatmapData()
+    fetchStreak()
 
     // Mark session as active in localStorage for Android persistence
     markSessionActive()
@@ -329,7 +346,7 @@ export default function DashboardPage() {
       // Push initial dashboard state
       window.history.pushState({ view: 'home' }, '', '/dashboard')
     }
-  }, [fetchProfile, fetchLatestRoutine, fetchLatestDiet, fetchPremiumStatus, fetchHeatmapData, markSessionActive])
+  }, [fetchProfile, fetchLatestRoutine, fetchLatestDiet, fetchPremiumStatus, fetchHeatmapData, fetchStreak, markSessionActive])
 
   // Handle browser back button / Android back gesture
   useEffect(() => {
@@ -383,7 +400,7 @@ export default function DashboardPage() {
     current_end: null,
   }
 
-  const handleViewChange = (view: 'home' | 'routine' | 'workout' | 'profile' | 'diet' | 'analytics' | 'coach') => {
+  const handleViewChange = (view: 'home' | 'routine' | 'workout' | 'profile' | 'diet' | 'analytics' | 'coach' | 'measurements') => {
     // Track view history for back button handling
     const trackViewChange = (newView: typeof view) => {
       viewHistoryRef.current.push(newView)
@@ -1109,8 +1126,9 @@ export default function DashboardPage() {
       next.set(`${dayIndex}-${exerciseIndex}`, completed)
       return next
     })
-    // Refresh heatmap data after completion is recorded
+    // Refresh heatmap + streak data after completion is recorded
     fetchHeatmapData()
+    fetchStreak()
   }
 
   const handleToggleRestDay = async (dayIndex: number, completed: boolean) => {
@@ -1230,6 +1248,7 @@ export default function DashboardPage() {
                 exerciseCompletions={exerciseCompletions}
                 dayCompletions={dayCompletions}
                 heatmapData={heatmapData}
+                streakData={streakData}
                 currentWeekNumber={currentWeekNumber}
                 onNavigateToWorkout={() => setActiveView('workout')}
                 onNavigateToCoach={() => handleViewChange('coach')}
@@ -1296,6 +1315,10 @@ export default function DashboardPage() {
                 onUpgrade={() => setUpgradeOpen(true)}
                 showToast={showToast}
               />
+            )}
+
+            {activeView === 'measurements' && (
+              <MeasurementsView />
             )}
 
             {activeView === 'profile' && (

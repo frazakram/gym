@@ -12,6 +12,7 @@ import { AnimatedButton } from '../ui/AnimatedButton'
 import { Collapsible } from '../ui/Collapsible'
 import { parseSetsReps } from '@/lib/setsReps'
 import { ExerciseListSkeleton } from '../ui/SkeletonLoader'
+import { RestDayCard } from '../ui/RestDayCard'
 
 const stagger = {
   hidden: {},
@@ -204,6 +205,13 @@ export function RoutineView({
           </div>
         </GlassCard>
       </motion.div>
+
+      {/* Rest Day Recovery Content */}
+      {routine && isRestDay && (
+        <motion.div variants={fadeUp} className="px-4 pt-3">
+          <RestDayCard routine={routine} todayIndex={selectedDay} />
+        </motion.div>
+      )}
 
       {/* Action Buttons */}
       {!viewingHistory && (

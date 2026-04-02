@@ -12,6 +12,8 @@ import { Collapsible } from '../ui/Collapsible'
 import { ProgressSkeleton, WorkoutCardSkeleton } from '../ui/SkeletonLoader'
 import { HeatMap } from '../ui/HeatMap'
 import { UserAvatar } from '../ui/UserAvatar'
+import { StreakBanner } from '../ui/StreakBanner'
+import { RestDayCard } from '../ui/RestDayCard'
 import { ArrowRight, Timer, Percent, MessageCircle, ChevronRight, Flame, Drumstick, CalendarPlus } from 'lucide-react'
 
 const stagger = {
@@ -31,6 +33,7 @@ interface HomeViewProps {
   exerciseCompletions: Map<string, boolean>
   dayCompletions: Map<number, boolean>
   heatmapData?: Array<{ date: string; value: number }>
+  streakData?: { current: number; longest: number; last_workout_date: string | null } | null
   currentWeekNumber: number
   onNavigateToWorkout: () => void
   onNavigateToCoach: () => void
@@ -50,6 +53,7 @@ export function HomeView({
   exerciseCompletions,
   dayCompletions,
   heatmapData = [],
+  streakData,
   currentWeekNumber,
   onNavigateToWorkout,
   onNavigateToCoach,
@@ -131,6 +135,17 @@ export function HomeView({
           Week {currentWeekNumber}
         </div>
       </motion.div>
+
+      {/* Streak flame banner */}
+      {streakData && (streakData.current > 0 || streakData.longest > 0) && (
+        <motion.div variants={fadeUp}>
+          <StreakBanner
+            current={streakData.current}
+            longest={streakData.longest}
+            lastWorkoutDate={streakData.last_workout_date}
+          />
+        </motion.div>
+      )}
 
       {/* Stale routine banner */}
       {routineIsStale && routine && !viewingHistory && (
@@ -234,6 +249,13 @@ export function HomeView({
       ) : (
         <motion.div variants={fadeUp}>
           <NoRoutineEmptyState onGenerate={onGenerateRoutine} />
+        </motion.div>
+      )}
+
+      {/* Rest Day Recovery Content */}
+      {routine && todaysPlan && !(todaysPlan.exercises?.length) && (
+        <motion.div variants={fadeUp}>
+          <RestDayCard routine={routine} todayIndex={todayIndex} />
         </motion.div>
       )}
 

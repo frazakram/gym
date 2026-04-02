@@ -403,6 +403,25 @@ export async function initializeDatabase() {
         `CREATE INDEX IF NOT EXISTS idx_routines_user_created_at ON routines (user_id, created_at DESC);`
       );
 
+      // Body measurements table for weight/measurement tracking
+      await client.query(`
+        CREATE TABLE IF NOT EXISTS body_measurements (
+          id SERIAL PRIMARY KEY,
+          user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+          measured_at DATE NOT NULL DEFAULT CURRENT_DATE,
+          weight DECIMAL(5,2),
+          waist DECIMAL(5,1),
+          chest DECIMAL(5,1),
+          arms DECIMAL(5,1),
+          hips DECIMAL(5,1),
+          notes TEXT,
+          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        );
+      `);
+      await client.query(
+        `CREATE INDEX IF NOT EXISTS idx_body_measurements_user_date ON body_measurements (user_id, measured_at DESC);`
+      );
+
       console.log('Database initialized successfully');
       isInitialized = true;
     } finally {
@@ -1519,6 +1538,107 @@ export async function getUserAnalytics(
       calendar,
       workout_history: [],
     };
+  }
+}
+
+// ============= STREAK DATA (FREE — lightweight query) =============
+
+// ============= BODY MEASUREMENTS (FREE) =============
+
+export interface BodyMeasurement {
+  id: number;
+  user_id: number;
+  measured_at: string;
+  weight: number | null;
+  waist: number | null;
+  chest: number | null;
+  arms: number | null;
+  hips: number | null;
+  notes: string | null;
+  created_at: string;
+}
+
+export async function getBodyMeasurements(userId: number, limit = 90): Promise<BodyMeasurement[]> {
+  try {
+    // use module-level pool
+    const res = await pool.query<BodyMeasurement>(
+      `SELECT id, user_id, measured_at::text, weight, waist, chest, arms, hips, notes, created_at
+       FROM body_measurements
+       WHERE user_id = $1
+       ORDER BY measured_at DESC
+       LIMIT $2`,
+      [userId, limit]
+    );
+    return res.rows.map((r) => ({
+      ...r,
+      weight: r.weight != null ? Number(r.weight) : null,
+      waist: r.waist != null ? Number(r.waist) : null,
+      chest: r.chest != null ? Number(r.chest) : null,
+      arms: r.arms != null ? Number(r.arms) : null,
+      hips: r.hips != null ? Number(r.hips) : null,
+    }));
+  } catch (error) {
+    console.error("getBodyMeasurements failed:", error);
+    return [];
+  }
+}
+
+export async function addBodyMeasurement(
+  userId: number,
+  data: { measured_at: string; weight?: number; waist?: number; chest?: number; arms?: number; hips?: number; notes?: string }
+): Promise<BodyMeasurement | null> {
+  try {
+    // use module-level pool
+    const res = await pool.query<BodyMeasurement>(
+      `INSERT INTO body_measurements (user_id, measured_at, weight, waist, chest, arms, hips, notes)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+       RETURNING id, user_id, measured_at::text, weight, waist, chest, arms, hips, notes, created_at`,
+      [userId, data.measured_at, data.weight ?? null, data.waist ?? null, data.chest ?? null, data.arms ?? null, data.hips ?? null, data.notes ?? null]
+    );
+    return res.rows[0] ?? null;
+  } catch (error) {
+    console.error("addBodyMeasurement failed:", error);
+    return null;
+  }
+}
+
+export async function deleteBodyMeasurement(userId: number, id: number): Promise<boolean> {
+  try {
+    // use module-level pool
+    const res = await pool.query(
+      `DELETE FROM body_measurements WHERE id = $1 AND user_id = $2`,
+      [id, userId]
+    );
+    return (res.rowCount ?? 0) > 0;
+  } catch (error) {
+    console.error("deleteBodyMeasurement failed:", error);
+    return false;
+  }
+}
+
+export type StreakData = { current: number; longest: number; last_workout_date: string | null };
+
+export async function getStreak(userId: number): Promise<StreakData> {
+  if (allowMockAuth() && userId === MOCK_USER_ID) {
+    return { current: 0, longest: 0, last_workout_date: null };
+  }
+  try {
+    // use module-level pool
+    // Fetch unique workout dates (last 366 days is enough for streak calc)
+    const since = new Date(Date.now() - 366 * 86400000);
+    const res = await pool.query<{ d: string }>(
+      `SELECT DISTINCT DATE(completed_at AT TIME ZONE 'UTC') AS d
+       FROM exercise_completions ec
+       JOIN routines r ON r.id = ec.routine_id
+       WHERE r.user_id = $1 AND ec.completed = TRUE AND ec.completed_at >= $2
+       ORDER BY d DESC`,
+      [userId, since]
+    );
+    const dates = res.rows.map((r) => String(r.d).slice(0, 10));
+    return computeStreak(dates);
+  } catch (error) {
+    console.error("getStreak DB failed:", error);
+    return { current: 0, longest: 0, last_workout_date: null };
   }
 }
 

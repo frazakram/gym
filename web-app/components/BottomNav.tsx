@@ -12,11 +12,12 @@ import {
   Utensils,
   MessageCircle,
   Check,
+  Ruler,
 } from 'lucide-react'
 
 interface BottomNavProps {
-  activeView: 'home' | 'routine' | 'workout' | 'profile' | 'diet' | 'analytics' | 'coach'
-  onViewChange: (view: 'home' | 'routine' | 'workout' | 'profile' | 'diet' | 'analytics' | 'coach') => void
+  activeView: 'home' | 'routine' | 'workout' | 'profile' | 'diet' | 'analytics' | 'coach' | 'measurements'
+  onViewChange: (view: 'home' | 'routine' | 'workout' | 'profile' | 'diet' | 'analytics' | 'coach' | 'measurements') => void
 }
 
 export function BottomNav({ activeView, onViewChange }: BottomNavProps) {
@@ -50,6 +51,12 @@ export function BottomNav({ activeView, onViewChange }: BottomNavProps) {
       label: 'Coach',
       icon: MessageCircle,
       color: 'bg-[#F59E0B]/20 text-[#FCD34D] border-[#F59E0B]/30',
+    },
+    {
+      id: 'measurements' as const,
+      label: 'Body Tracker',
+      icon: Ruler,
+      color: 'bg-[#22D3EE]/20 text-[#67E8F9] border-[#22D3EE]/30',
     },
   ]
 
