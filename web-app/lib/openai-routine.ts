@@ -222,7 +222,13 @@ function assertValidOpenAIApiKey(apiKey: string) {
     );
   }
 
-  // Basic format check (not too strict, but catches obvious mistakes)
+  // Skip format check when using a custom base URL (e.g. NVIDIA, Azure, local)
+  const customBaseURL = process.env.OPENAI_BASE_URL;
+  if (customBaseURL && !customBaseURL.includes("api.openai.com")) {
+    return;
+  }
+
+  // Basic format check for standard OpenAI keys
   if (!/^sk-[A-Za-z0-9_-]{10,}$/.test(apiKey)) {
     throw new Error("OpenAI API key format looks invalid. It should start with 'sk-'.");
   }

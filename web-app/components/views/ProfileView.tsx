@@ -9,9 +9,6 @@ import { SectionHeader } from '../ui/SectionHeader'
 import { Chip } from '../ui/Chip'
 import { AnimatedButton, IconButton } from '../ui/AnimatedButton'
 import { Collapsible } from '../ui/Collapsible'
-import { ImageUploadCard } from '../ui/ImageUploadCard'
-import { EquipmentSummary } from '../ui/EquipmentSummary'
-import { BodyCompositionSummary } from '../ui/BodyCompositionSummary'
 import { UserAvatar } from '../ui/UserAvatar'
 
 const stagger = {
@@ -481,64 +478,8 @@ export function ProfileView({
       </GlassCard>
       </motion.div>
 
-      {/* Gym Photos */}
-      <motion.div variants={fadeUp}>
-      <GlassCard className="p-4">
-        <SectionHeader
-          title="Gym Photos"
-          subtitle="Upload photos to detect available equipment"
-        />
-        <div className="mt-4">
-          {onGymPhotoUpload && onGymPhotoDelete && (
-            <ImageUploadCard
-              images={gymPhotos}
-              maxImages={5}
-              maxSizeMB={5}
-              onUpload={onGymPhotoUpload}
-              onDelete={onGymPhotoDelete}
-              loading={analyzingEquipment}
-              error={equipmentError}
-            />
-          )}
-          {equipmentAnalysis && (
-            <EquipmentSummary analysis={equipmentAnalysis} />
-          )}
-        </div>
-      </GlassCard>
-      </motion.div>
-
-      {/* Body Analysis */}
-      <motion.div variants={fadeUp}>
-      <GlassCard className="p-4">
-        <SectionHeader
-          title="Body Analysis"
-          subtitle="Optional: Upload photos for personalized physique analysis"
-        />
-        <div className="mt-4">
-          <div className="bg-blue-500/10 border border-blue-500/20 rounded-xl p-3 mb-4">
-            <p className="text-xs text-blue-200">
-              <span className="font-bold">Privacy Note:</span> Your photos are processed securely by AI to analyze posture and body composition, then immediately discarded. They are <span className="underline">never saved</span> to our servers.
-            </p>
-          </div>
-
-          {onBodyPhotoUpload && onBodyPhotoDelete && (
-            <ImageUploadCard
-              images={bodyPhotos}
-              maxImages={2}
-              maxSizeMB={5}
-              onUpload={onBodyPhotoUpload}
-              onDelete={onBodyPhotoDelete}
-              loading={analyzingBody}
-              error={bodyError}
-            />
-          )}
-
-          {bodyAnalysis && (
-            <BodyCompositionSummary analysis={bodyAnalysis} />
-          )}
-        </div>
-      </GlassCard>
-      </motion.div>
+      {/* Gym Photos — hidden while vision API is unavailable */}
+      {/* Body Analysis — hidden while vision API is unavailable */}
 
       {/* Nutrition preferences */}
       <motion.div variants={fadeUp}>
