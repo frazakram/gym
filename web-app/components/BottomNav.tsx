@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   Home,
@@ -13,6 +13,7 @@ import {
   MessageCircle,
   Check,
   Ruler,
+  X,
 } from 'lucide-react'
 
 interface BottomNavProps {
@@ -22,6 +23,17 @@ interface BottomNavProps {
 
 export function BottomNav({ activeView, onViewChange }: BottomNavProps) {
   const [isPlusMenuOpen, setIsPlusMenuOpen] = useState(false)
+  const [fabPulse, setFabPulse] = useState(false)
+
+  // Subtle pulse every 8s to draw attention when menu is closed
+  useEffect(() => {
+    if (isPlusMenuOpen) return
+    const interval = setInterval(() => {
+      setFabPulse(true)
+      setTimeout(() => setFabPulse(false), 600)
+    }, 8000)
+    return () => clearInterval(interval)
+  }, [isPlusMenuOpen])
 
   const leftNavItems = [
     { id: 'home' as const, label: 'Home', icon: Home },
@@ -38,25 +50,37 @@ export function BottomNav({ activeView, onViewChange }: BottomNavProps) {
       id: 'analytics' as const,
       label: 'Analytics',
       icon: BarChart3,
-      color: 'bg-[#8B5CF6]/20 text-[#A78BFA] border-[#8B5CF6]/30',
+      gradient: 'from-[#8B5CF6]/25 to-[#8B5CF6]/10',
+      iconColor: 'text-[#A78BFA]',
+      borderColor: 'border-[#8B5CF6]/25',
+      glowColor: 'shadow-[#8B5CF6]/10',
     },
     {
       id: 'diet' as const,
       label: 'Diet',
       icon: Utensils,
-      color: 'bg-[#10B981]/20 text-[#6EE7B7] border-[#10B981]/30',
+      gradient: 'from-[#10B981]/25 to-[#10B981]/10',
+      iconColor: 'text-[#6EE7B7]',
+      borderColor: 'border-[#10B981]/25',
+      glowColor: 'shadow-[#10B981]/10',
     },
     {
       id: 'coach' as const,
       label: 'Coach',
       icon: MessageCircle,
-      color: 'bg-[#F59E0B]/20 text-[#FCD34D] border-[#F59E0B]/30',
+      gradient: 'from-[#F59E0B]/25 to-[#F59E0B]/10',
+      iconColor: 'text-[#FCD34D]',
+      borderColor: 'border-[#F59E0B]/25',
+      glowColor: 'shadow-[#F59E0B]/10',
     },
     {
       id: 'measurements' as const,
       label: 'Body Tracker',
       icon: Ruler,
-      color: 'bg-[#22D3EE]/20 text-[#67E8F9] border-[#22D3EE]/30',
+      gradient: 'from-[#22D3EE]/25 to-[#22D3EE]/10',
+      iconColor: 'text-[#67E8F9]',
+      borderColor: 'border-[#22D3EE]/25',
+      glowColor: 'shadow-[#22D3EE]/10',
     },
   ]
 
@@ -117,45 +141,62 @@ export function BottomNav({ activeView, onViewChange }: BottomNavProps) {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-40 bg-black/50 backdrop-blur-sm"
+            transition={{ duration: 0.2 }}
+            className="fixed inset-0 z-40 bg-black/60 backdrop-blur-md"
             onClick={() => setIsPlusMenuOpen(false)}
           />
         )}
       </AnimatePresence>
 
-      {/* Plus Menu Popup */}
+      {/* Plus Menu Popup — fan-out from FAB */}
       <AnimatePresence>
         {isPlusMenuOpen && (
           <motion.div
-            initial={{ opacity: 0, y: 20, scale: 0.95 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: 20, scale: 0.95 }}
-            transition={{ type: 'spring', stiffness: 300, damping: 25 }}
-            className="fixed bottom-24 left-1/2 -translate-x-1/2 z-50"
+            initial={{ opacity: 0, scale: 0.8, y: 30 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.85, y: 20 }}
+            transition={{ type: 'spring', stiffness: 400, damping: 28 }}
+            className="fixed bottom-[88px] left-1/2 -translate-x-1/2 z-50 w-[220px]"
           >
-            <div className="flex flex-col gap-2 p-2 bg-[#0A0A14]/95 backdrop-blur-xl rounded-2xl border border-[#8B5CF6]/20 shadow-[0_8px_32px_rgba(139,92,246,0.15)]">
+            <div className="flex flex-col gap-1.5 p-2 bg-[#0D0D1A]/98 backdrop-blur-2xl rounded-2xl border border-white/[0.08] shadow-[0_16px_64px_rgba(0,0,0,0.5),0_0_32px_rgba(139,92,246,0.12)]">
               {plusMenuItems.map((item, index) => {
                 const isActive = activeView === item.id
                 const Icon = item.icon
                 return (
                   <motion.button
                     key={item.id}
-                    initial={{ opacity: 0, x: -20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: index * 0.07, type: 'spring', stiffness: 300, damping: 25 }}
+                    initial={{ opacity: 0, y: 16, scale: 0.9 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    exit={{ opacity: 0, y: 8, scale: 0.95 }}
+                    transition={{
+                      delay: index * 0.05,
+                      type: 'spring',
+                      stiffness: 500,
+                      damping: 30,
+                    }}
                     onClick={() => handleItemClick(item.id)}
+                    whileTap={{ scale: 0.96 }}
                     className={`
-                      flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 min-w-[160px]
-                      border ${item.color}
-                      ${isActive ? 'ring-2 ring-[#8B5CF6]/30' : 'hover:brightness-125'}
+                      flex items-center gap-3 px-3.5 py-2.5 rounded-xl transition-all duration-150
+                      bg-gradient-to-r ${item.gradient}
+                      border ${item.borderColor}
+                      shadow-md ${item.glowColor}
+                      ${isActive ? 'ring-1 ring-white/20' : 'hover:brightness-125 active:brightness-90'}
                     `}
                   >
-                    <Icon className="w-5 h-5" />
-                    <span className="text-sm font-medium">{item.label}</span>
-                    {isActive && <Check className="w-4 h-4 ml-auto" />}
+                    <div className={`w-8 h-8 rounded-lg bg-black/20 flex items-center justify-center ${item.iconColor}`}>
+                      <Icon className="w-4.5 h-4.5" />
+                    </div>
+                    <span className="text-[13px] font-semibold text-white/90">{item.label}</span>
+                    {isActive && <Check className={`w-4 h-4 ml-auto ${item.iconColor}`} />}
                   </motion.button>
                 )
               })}
+            </div>
+
+            {/* Little arrow/notch pointing down toward FAB */}
+            <div className="flex justify-center -mt-[1px]">
+              <div className="w-3 h-3 rotate-45 bg-[#0D0D1A]/98 border-r border-b border-white/[0.08]" />
             </div>
           </motion.div>
         )}
@@ -173,15 +214,72 @@ export function BottomNav({ activeView, onViewChange }: BottomNavProps) {
             </div>
 
             {/* Center FAB Button */}
-            <motion.button
-              onClick={() => setIsPlusMenuOpen(!isPlusMenuOpen)}
-              animate={{ rotate: isPlusMenuOpen ? 45 : 0 }}
-              whileTap={{ scale: 0.9 }}
-              transition={{ type: 'spring', stiffness: 300, damping: 20 }}
-              className="relative flex items-center justify-center w-12 h-12 rounded-full bg-gradient-to-br from-[#8B5CF6] to-[#22D3EE] shadow-[0_4px_20px_rgba(139,92,246,0.4),0_0_40px_rgba(34,211,238,0.15)] hover:shadow-[0_4px_30px_rgba(139,92,246,0.6),0_0_50px_rgba(34,211,238,0.25)]"
-            >
-              <Plus className="w-6 h-6 text-white" strokeWidth={2.5} />
-            </motion.button>
+            <div className="relative">
+              {/* Outer glow ring animation */}
+              <AnimatePresence>
+                {isPlusMenuOpen && (
+                  <motion.div
+                    initial={{ scale: 0.8, opacity: 0 }}
+                    animate={{ scale: 1.5, opacity: 0 }}
+                    exit={{ scale: 0.8, opacity: 0 }}
+                    transition={{ duration: 0.8, ease: 'easeOut' }}
+                    className="absolute inset-0 rounded-full bg-gradient-to-br from-[#8B5CF6] to-[#22D3EE]"
+                  />
+                )}
+              </AnimatePresence>
+
+              {/* Subtle pulse ring */}
+              {fabPulse && (
+                <motion.div
+                  initial={{ scale: 1, opacity: 0.5 }}
+                  animate={{ scale: 1.8, opacity: 0 }}
+                  transition={{ duration: 0.6, ease: 'easeOut' }}
+                  className="absolute inset-0 rounded-full bg-[#8B5CF6]/30"
+                />
+              )}
+
+              <motion.button
+                onClick={() => setIsPlusMenuOpen(!isPlusMenuOpen)}
+                whileTap={{ scale: 0.85 }}
+                animate={{
+                  rotate: isPlusMenuOpen ? 135 : 0,
+                  scale: isPlusMenuOpen ? 1.08 : 1,
+                }}
+                transition={{ type: 'spring', stiffness: 400, damping: 22 }}
+                className={`
+                  relative flex items-center justify-center w-12 h-12 rounded-full
+                  bg-gradient-to-br from-[#8B5CF6] to-[#22D3EE]
+                  shadow-[0_4px_20px_rgba(139,92,246,0.4),0_0_40px_rgba(34,211,238,0.15)]
+                  hover:shadow-[0_4px_30px_rgba(139,92,246,0.6),0_0_50px_rgba(34,211,238,0.25)]
+                  transition-shadow duration-300
+                  ${isPlusMenuOpen ? 'shadow-[0_0_40px_rgba(139,92,246,0.5),0_0_60px_rgba(34,211,238,0.3)]' : ''}
+                `}
+              >
+                <AnimatePresence mode="wait">
+                  {isPlusMenuOpen ? (
+                    <motion.div
+                      key="x"
+                      initial={{ opacity: 0, scale: 0.5, rotate: -90 }}
+                      animate={{ opacity: 1, scale: 1, rotate: 0 }}
+                      exit={{ opacity: 0, scale: 0.5 }}
+                      transition={{ duration: 0.15 }}
+                    >
+                      <X className="w-6 h-6 text-white" strokeWidth={2.5} />
+                    </motion.div>
+                  ) : (
+                    <motion.div
+                      key="plus"
+                      initial={{ opacity: 0, scale: 0.5, rotate: 90 }}
+                      animate={{ opacity: 1, scale: 1, rotate: 0 }}
+                      exit={{ opacity: 0, scale: 0.5 }}
+                      transition={{ duration: 0.15 }}
+                    >
+                      <Plus className="w-6 h-6 text-white" strokeWidth={2.5} />
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </motion.button>
+            </div>
 
             {/* Right nav items */}
             <div className="flex items-center">
