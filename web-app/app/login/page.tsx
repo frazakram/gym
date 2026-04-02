@@ -78,7 +78,8 @@ export default function LoginPage() {
       if (isLogin) {
         router.replace('/dashboard')
       } else {
-        router.replace('/dashboard')
+        // New user — go straight to onboarding wizard
+        router.replace('/onboarding')
       }
     } catch (err) {
       setError('Network error. Please try again.')

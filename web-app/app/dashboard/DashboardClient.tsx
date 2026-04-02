@@ -175,6 +175,11 @@ export default function DashboardPage() {
         return
       }
       const data = await response.json()
+      if (!data.profile) {
+        // New user — send to onboarding wizard for quick setup
+        router.replace('/onboarding')
+        return
+      }
       if (data.profile) {
         const extendedProfile = { ...data.profile, username: data.username }
         setProfile(extendedProfile)
