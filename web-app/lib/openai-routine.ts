@@ -67,28 +67,98 @@ BODY COMPOSITION USAGE RULES:
 - Use realistic timeline to set appropriate progression pace
 ` : '';
 
-  // Calculate expected exercise count based on explicit session duration
+  // Calculate expected exercise count and structure based on explicit session duration
   const sessionDuration = input.session_duration;
   let sessionDurationSection = '';
   if (typeof sessionDuration === 'number' && sessionDuration > 0) {
     let minExercises = 4, maxExercises = 6;
+    let restBetweenSets = '60-90s';
+    let warmupTime = '5 min';
+    let cooldownTime = '3 min';
+    let sessionStructure = '';
+    let trainingDays = '3-4';
+    let splitType = 'full-body or upper/lower';
+
     if (sessionDuration >= 120) {
       minExercises = 10; maxExercises = 15;
+      restBetweenSets = '90-180s for compounds, 60-90s for isolation';
+      warmupTime = '10-15 min (dynamic stretching + warm-up sets)';
+      cooldownTime = '5-10 min (static stretching + foam rolling)';
+      sessionStructure = `    Structure each session:
+    1. Dynamic warm-up & mobility (10-15 min)
+    2. Main compound lifts (3-4 exercises, 4-5 sets each)
+    3. Secondary compounds (2-3 exercises, 3-4 sets)
+    4. Isolation/accessory work (3-4 exercises, 3 sets each)
+    5. Core/abs circuit (2-3 exercises)
+    6. Cardio/conditioning finisher (10-15 min)
+    7. Cool-down stretching (5-10 min)`;
+      trainingDays = '5-6';
+      splitType = 'PPL (Push/Pull/Legs) or bro-split with dedicated muscle groups';
     } else if (sessionDuration >= 90) {
       minExercises = 8; maxExercises = 12;
+      restBetweenSets = '90-120s for compounds, 60-90s for isolation';
+      warmupTime = '8-10 min';
+      cooldownTime = '5 min';
+      sessionStructure = `    Structure each session:
+    1. Warm-up & activation (8-10 min)
+    2. Main compound lifts (2-3 exercises, 4 sets each)
+    3. Secondary compounds (2-3 exercises, 3-4 sets)
+    4. Isolation/accessory work (2-3 exercises, 3 sets)
+    5. Core work (1-2 exercises)
+    6. Optional cardio finisher (5-10 min)`;
+      trainingDays = '4-5';
+      splitType = 'upper/lower or PPL';
     } else if (sessionDuration >= 60) {
       minExercises = 6; maxExercises = 8;
+      restBetweenSets = '60-90s';
+      warmupTime = '5-8 min';
+      cooldownTime = '3-5 min';
+      sessionStructure = `    Structure each session:
+    1. Quick warm-up (5-8 min)
+    2. Main compound lifts (2-3 exercises, 3-4 sets)
+    3. Accessory work (2-3 exercises, 3 sets)
+    4. Core/finisher (1-2 exercises)`;
+      trainingDays = '4-5';
+      splitType = 'upper/lower or push/pull/legs';
     } else if (sessionDuration >= 45) {
       minExercises = 5; maxExercises = 7;
+      restBetweenSets = '45-75s (use supersets to save time)';
+      warmupTime = '5 min';
+      cooldownTime = '3 min';
+      sessionStructure = `    Structure each session:
+    1. Brief warm-up (5 min)
+    2. Compound supersets (2-3 pairs, 3 sets each)
+    3. Quick finisher/core (1 exercise)
+    USE SUPERSETS AND CIRCUITS to fit more volume in less time.`;
+      trainingDays = '3-4';
+      splitType = 'full-body or upper/lower (supersets encouraged)';
+    } else {
+      // < 45 min — very short sessions
+      minExercises = 4; maxExercises = 5;
+      restBetweenSets = '30-60s (circuit style or supersets)';
+      warmupTime = '3 min';
+      cooldownTime = '2 min';
+      sessionStructure = `    Structure each session:
+    1. Quick dynamic warm-up (3 min)
+    2. Circuit of 4-5 compound exercises (3 rounds, minimal rest)
+    3. Brief cool-down (2 min)
+    USE CIRCUITS or GIANT SETS — every second counts.`;
+      trainingDays = '3-5 (shorter but more frequent)';
+      splitType = 'full-body circuits';
     }
+
     sessionDurationSection = `
 
 ⚠️ WORKOUT SESSION DURATION (STRICTLY ENFORCE - THIS IS CRITICAL):
 - User's specified session duration: ${sessionDuration} MINUTES
 - You MUST provide ${minExercises}-${maxExercises} exercises per training day
 - DO NOT provide fewer exercises than the minimum (${minExercises})
-- Include warm-up/mobility, compound movements, isolation work, and core/conditioning as appropriate
-- Longer sessions = more volume, more accessory work, more conditioning
+- Rest between sets: ${restBetweenSets}
+- Warm-up: ${warmupTime}
+- Cool-down: ${cooldownTime}
+- Recommended training days/week: ${trainingDays}
+- Recommended split: ${splitType}
+${sessionStructure}
 - This overrides the "parse from notes" guidance below - USE THIS EXPLICIT VALUE
 `;
   }
@@ -115,29 +185,41 @@ ${input.notes && input.notes.trim()
       : ""}${historicalContext ? historicalContext : ""}
 
 Requirements (very important):
-- Choose a split appropriate for the client's goal + level (e.g., 3–6 training days/week + rest days as needed).
+- Choose a split appropriate for the client's goal + level + session duration:
+  - Beginner: 3-4 days/week full-body or upper/lower, focus on form and compound movements
+  - Regular (Intermediate): 4-5 days/week upper/lower or PPL, progressive overload
+  - Expert (Advanced): 5-6 days/week PPL or specialized split, advanced techniques
 - Adjust volume and intensity to match goal:
-  - Fat loss: include appropriate cardio/conditioning and keep strength work to preserve muscle.
-  - Muscle gain: prioritize progressive overload, sufficient weekly volume, and recovery.
-  - Strength: emphasize heavy compound lifts with appropriate accessory work and longer rest.
-  - Recomposition: balanced hypertrophy + strength, moderate volume, sustainable intensity.
-  - Endurance: strength maintenance + higher conditioning; manage fatigue.
-  - General fitness: balanced full-body or upper/lower, moderate volume and conditioning.
+  - Fat loss: higher rep ranges (12-15), shorter rest (45-60s), include HIIT/circuits, superset pairs, cardio finishers. Preserve muscle with compound lifts.
+  - Muscle gain: hypertrophy rep ranges (8-12), moderate rest (60-90s), high weekly volume per muscle group (15-20 sets/week), progressive overload. Include both compounds and isolation.
+  - Strength: low reps (3-6), long rest (2-3 min), heavy compound focus (squat, bench, deadlift, OHP), accessory work for weak points.
+  - Recomposition: mixed rep ranges, moderate volume, balanced approach. Compound-heavy with strategic isolation.
+  - Endurance: higher reps (15-20), minimal rest, circuit-style training, significant cardio component.
+  - General fitness: balanced full-body approach, moderate everything, variety of movement patterns.
+- CRITICAL: Scale the total weekly volume proportional to session duration. Someone with 120 min sessions should get significantly more exercises, sets, and variety than someone with 30 min sessions.
+- For shorter sessions (< 45 min): Use supersets, circuits, and compound-only exercises. No fluff.
+- For longer sessions (> 90 min): Add warm-up sets, accessory work, isolation, abs, mobility, and cardio finishers.
 - If comments mention injuries/pain/equipment limits, avoid aggravating movements and propose safe substitutions.
-- Use realistic set/rep prescriptions and rest times (include rest in sets_reps text if helpful).
+- Use realistic set/rep prescriptions and rest times (include rest in sets_reps text always, e.g., "4 sets x 10 reps (rest 90s)").
 - Make the plan coherent across the week (no repeating heavy stress on same joints without recovery).
+- Include the day's muscle focus in the day name (e.g., "Monday - Push (Chest, Shoulders, Triceps)").
 - Provide at least 1 rest/recovery day unless the client is advanced AND notes explicitly ask otherwise.
 
 WORKOUT DURATION & VOLUME (CRITICAL):
-- Parse the client's additional comments for workout duration mentions (e.g., "2 hours", "90 minutes", "30 min sessions").
+- If session_duration is specified above, STRICTLY follow those exercise count requirements.
+- Otherwise, parse the client's additional comments for workout duration mentions (e.g., "2 hours", "90 minutes", "30 min sessions").
 - Scale exercise count per training day based on duration:
-  - 30-45 minute sessions: 4-6 exercises per day
-  - 60-75 minute sessions: 6-8 exercises per day
-  - 90-120 minute sessions: 8-12 exercises per day
-  - 120+ minute sessions: 10-15 exercises per day
+  - 20-30 minute sessions: 3-4 exercises (circuits/supersets only, compound-focused)
+  - 30-45 minute sessions: 4-6 exercises (supersets encouraged)
+  - 45-60 minute sessions: 5-7 exercises (standard training)
+  - 60-75 minute sessions: 6-8 exercises (compounds + accessory)
+  - 75-90 minute sessions: 7-10 exercises (full session with warm-up/cool-down)
+  - 90-120 minute sessions: 8-12 exercises (extensive with cardio finisher)
+  - 120+ minute sessions: 10-15 exercises (comprehensive: warm-up, compounds, isolation, core, cardio, stretching)
 - If no duration is specified, default to 6-8 exercises for intermediate/advanced, 4-6 for beginners.
-- Include compound movements, isolation work, and conditioning/cardio as appropriate.
-- Longer sessions should have more accessory/isolation exercises and potentially cardio/core work.
+- ALWAYS include rest times in sets_reps (e.g., "3 sets x 12 reps (rest 60s)").
+- For short sessions: prioritize compound movements that hit multiple muscles. Use time-saving techniques.
+- For long sessions: include dedicated warm-up exercises, mobility work, and cool-down stretching as exercises in the plan.
 
 CARDIO/CONDITIONING INSTRUCTIONS (CRITICAL):
 - When prescribing cardio exercises (treadmill, bike, rowing, elliptical), be VERY DESCRIPTIVE:

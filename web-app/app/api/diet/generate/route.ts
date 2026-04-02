@@ -85,6 +85,32 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Profile not found' }, { status: 404 });
     }
 
+    // Fetch latest body measurements for weight trend context
+    let bodyMeasurements: { latest_weight?: number; waist?: number; trend?: 'gaining' | 'losing' | 'stable' } | undefined;
+    try {
+      const { getBodyMeasurements } = await import('@/lib/db');
+      const measurements = await getBodyMeasurements(session.userId, 10);
+      if (measurements.length > 0) {
+        const latest = measurements[0];
+        bodyMeasurements = {
+          latest_weight: latest.weight ?? undefined,
+          waist: latest.waist ?? undefined,
+        };
+        // Calculate weight trend from last 2+ measurements
+        if (measurements.length >= 2) {
+          const weights = measurements.filter(m => m.weight != null).slice(0, 5);
+          if (weights.length >= 2) {
+            const recent = weights[0].weight!;
+            const older = weights[weights.length - 1].weight!;
+            const diff = recent - older;
+            bodyMeasurements.trend = diff > 0.5 ? 'gaining' : diff < -0.5 ? 'losing' : 'stable';
+          }
+        }
+      }
+    } catch {
+      // Continue without measurements — non-critical
+    }
+
     // ========== REDIS CACHE CHECK (before expensive AI call) ==========
     const cacheInputs = {
       userId: session.userId,
@@ -102,9 +128,13 @@ export async function POST(request: NextRequest) {
       cooking_level: profile.cooking_level,
       budget: profile.budget,
       specific_food_preferences: profile.specific_food_preferences,
+      session_duration: profile.session_duration,
       provider: model_provider || 'Anthropic',
       // Include routine summary in cache key (if provided)
       routineHash: routine ? JSON.stringify(routine).slice(0, 200) : null,
+      // Include body measurements for cache invalidation when weight changes
+      bodyWeight: bodyMeasurements?.latest_weight || null,
+      bodyTrend: bodyMeasurements?.trend || null,
     };
     
     const cacheKey = hashCacheKey('diet', cacheInputs);
@@ -119,6 +149,7 @@ export async function POST(request: NextRequest) {
     const dietPlan = await generateDiet({
       profile,
       routine, // context
+      bodyMeasurements,
       model_provider: model_provider || 'Anthropic',
       apiKey
     });
