@@ -82,7 +82,7 @@ const fadeUp = {
 /*  COMPONENT                                                          */
 /* ================================================================== */
 
-export default function OnboardingWizard() {
+export default function OnboardingWizard({ isReset = false }: { isReset?: boolean }) {
   const router = useRouter()
 
   /* ---------- state ---------- */
@@ -195,10 +195,10 @@ export default function OnboardingWizard() {
       >
         <BrandLogo size={56} className="mb-3" />
         <h1 className="text-2xl font-bold tracking-tight text-white font-[family-name:var(--font-display)]">
-          Let&apos;s set you up
+          {isReset ? 'Re-setup your profile' : "Let's set you up"}
         </h1>
         <p className="text-sm text-[#8B8DA3] mt-1">
-          ~40 seconds to your first routine
+          {isReset ? 'Update your basics in 3 quick steps' : '~40 seconds to your first routine'}
         </p>
       </motion.div>
 

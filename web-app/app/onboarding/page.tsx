@@ -5,15 +5,22 @@ import OnboardingWizard from './OnboardingWizard'
 
 export const runtime = 'nodejs'
 
-export default async function OnboardingPage() {
+export default async function OnboardingPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>
+}) {
   const session = await getSession()
   if (!session) redirect('/login')
 
   await initializeDatabase()
   const profile = await getProfile(session.userId)
 
-  // If the user already has a profile, skip onboarding
-  if (profile) redirect('/dashboard')
+  const params = await searchParams
+  const isReset = params?.reset === 'true'
 
-  return <OnboardingWizard />
+  // If the user already has a profile and didn't ask to re-setup, skip onboarding
+  if (profile && !isReset) redirect('/dashboard')
+
+  return <OnboardingWizard isReset={isReset} />
 }

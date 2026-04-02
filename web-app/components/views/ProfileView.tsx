@@ -1,8 +1,9 @@
 'use client'
 
 import { useMemo, useState } from 'react'
+import Link from 'next/link'
 import { motion } from 'framer-motion'
-import { LogOut, ChevronRight } from 'lucide-react'
+import { LogOut, ChevronRight, Settings } from 'lucide-react'
 import { Profile, GymPhoto, GymEquipmentAnalysis, BodyPhoto, BodyCompositionAnalysis } from '@/types'
 import { GlassCard } from '../ui/GlassCard'
 import { SectionHeader } from '../ui/SectionHeader'
@@ -674,6 +675,14 @@ export function ProfileView({
       >
         {loading ? 'Saving...' : 'Save changes'}
       </AnimatedButton>
+
+      <Link
+        href="/onboarding?reset=true"
+        className="w-full py-3 px-4 rounded-2xl bg-[#8B5CF6]/12 hover:bg-[#8B5CF6]/20 text-[#C4B5FD] flex items-center justify-center gap-2 text-sm font-medium transition border border-[#8B5CF6]/20 ui-focus-ring mb-3"
+      >
+        <Settings className="w-4 h-4" />
+        Quick Re-setup (Wizard)
+      </Link>
 
       <button
         type="button"
