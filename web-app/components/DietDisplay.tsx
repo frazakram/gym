@@ -34,7 +34,7 @@ export const DietDisplay: React.FC<DietDisplayProps> = ({ diet }) => {
         title="Weekly meal plan"
         subtitle="Tap a day to expand meals and macros"
         right={
-          <div className="w-9 h-9 rounded-2xl bg-emerald-400/12 border border-emerald-400/20 flex items-center justify-center text-emerald-200">
+          <div className="w-9 h-9 rounded-2xl bg-[#8B5CF6]/12 border border-[#8B5CF6]/20 flex items-center justify-center text-[#A78BFA]">
             <Salad className="w-5 h-5" />
           </div>
         }
@@ -79,8 +79,8 @@ export const DietDisplay: React.FC<DietDisplayProps> = ({ diet }) => {
               key={i} 
               variant="soft" 
               className={`p-3 transition-colors ${
-                isToday 
-                  ? 'bg-emerald-400/14 border-emerald-400/25 shadow-[0_8px_30px_rgb(16,185,129,0.1)]' 
+                isToday
+                  ? 'bg-[#8B5CF6]/14 border-[#8B5CF6]/25 shadow-[0_8px_30px_rgba(139,92,246,0.1)]'
                   : ''
               }`}
             >
@@ -91,11 +91,11 @@ export const DietDisplay: React.FC<DietDisplayProps> = ({ diet }) => {
                   <div className="flex items-center justify-between gap-3">
                     <div className="min-w-0">
                       <div className="flex items-center gap-2">
-                        <p className={`text-sm font-semibold truncate ${isToday ? 'text-emerald-50' : 'text-white'}`}>
+                        <p className={`text-sm font-semibold truncate ${isToday ? 'text-[#C4B5FD]' : 'text-white'}`}>
                           {displayDay}
                         </p>
                         {isToday && (
-                          <span className="px-1.5 py-0.5 rounded-md bg-emerald-400/20 border border-emerald-400/30 text-[9px] font-bold text-emerald-200 tracking-wider uppercase">
+                          <span className="px-1.5 py-0.5 rounded-md bg-[#8B5CF6]/20 border border-[#8B5CF6]/30 text-[9px] font-bold text-[#C4B5FD] tracking-wider uppercase">
                             Today
                           </span>
                         )}
@@ -112,7 +112,7 @@ export const DietDisplay: React.FC<DietDisplayProps> = ({ diet }) => {
                       </div>
                     </div>
                     <ChevronDown
-                      className={`w-5 h-5 text-slate-400 transition-transform ${open ? 'rotate-180' : ''}`}
+                      className={`w-5 h-5 text-[#8B5CF6] transition-transform ${open ? 'rotate-180' : ''}`}
                     />
                   </div>
                 }

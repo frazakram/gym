@@ -33,7 +33,7 @@ export function Chip({
         'border',
         selected
           ? 'border-[#8B5CF6]/40 bg-[#8B5CF6]/15 text-[#C4B5FD] shadow-[0_0_15px_rgba(139,92,246,0.15)]'
-          : 'border-white/10 bg-white/5 text-slate-300 hover:bg-white/8 hover:text-slate-100',
+          : 'border-[#8B5CF6]/10 bg-white/5 text-slate-300 hover:bg-[#8B5CF6]/8 hover:text-slate-100',
         'ui-focus-ring',
         className,
       ].join(' ')}

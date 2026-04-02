@@ -53,11 +53,11 @@ export function HeatMap({ data, weeks = 12, onCellClick }: HeatMapProps) {
     const getColorClass = (value: number) => {
         if (value < 0) return 'bg-slate-800/30' // Future dates
         if (value === 0) return 'bg-slate-700/40'
-        if (value < 0.25) return 'bg-[#FF6F61]/20'
-        if (value < 0.5) return 'bg-[#FF6F61]/40'
-        if (value < 0.75) return 'bg-[#FF6F61]/60'
-        if (value < 1) return 'bg-[#FF6F61]/80'
-        return 'bg-[#FF6F61] shadow-[0_0_8px_rgba(255,111,97,0.4)]'
+        if (value < 0.25) return 'bg-[#8B5CF6]/20'
+        if (value < 0.5) return 'bg-[#8B5CF6]/40'
+        if (value < 0.75) return 'bg-[#8B5CF6]/60'
+        if (value < 1) return 'bg-[#8B5CF6]/80'
+        return 'bg-[#8B5CF6] shadow-[0_0_8px_rgba(255,111,97,0.4)]'
     }
 
     const getTooltip = (date: string, value: number) => {
@@ -109,13 +109,13 @@ export function HeatMap({ data, weeks = 12, onCellClick }: HeatMapProps) {
             </div>
 
             {/* Legend */}
-            <div className="flex items-center justify-end gap-1 mt-3 text-[10px] text-slate-400">
+            <div className="flex items-center justify-end gap-1 mt-3 text-[10px] text-[#8B8DA3]">
                 <span>Less</span>
                 <div className="w-2.5 h-2.5 rounded-sm bg-slate-700/40" />
-                <div className="w-2.5 h-2.5 rounded-sm bg-[#FF6F61]/25" />
-                <div className="w-2.5 h-2.5 rounded-sm bg-[#FF6F61]/50" />
-                <div className="w-2.5 h-2.5 rounded-sm bg-[#FF6F61]/75" />
-                <div className="w-2.5 h-2.5 rounded-sm bg-[#FF6F61]" />
+                <div className="w-2.5 h-2.5 rounded-sm bg-[#8B5CF6]/25" />
+                <div className="w-2.5 h-2.5 rounded-sm bg-[#8B5CF6]/50" />
+                <div className="w-2.5 h-2.5 rounded-sm bg-[#8B5CF6]/75" />
+                <div className="w-2.5 h-2.5 rounded-sm bg-[#8B5CF6]" />
                 <span>More</span>
             </div>
         </div>

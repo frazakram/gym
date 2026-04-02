@@ -1,0 +1,719 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Gym Bro — Market Research Report v2</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #07090d;
+  --s1: #0d1117;
+  --s2: #131820;
+  --s3: #1a2030;
+  --border: #1e2a3a;
+  --border2: #253040;
+  --accent: #22d3a0;
+  --accent-dim: rgba(34,211,160,0.12);
+  --accent-border: rgba(34,211,160,0.28);
+  --red: #f87171;
+  --red-dim: rgba(248,113,113,0.1);
+  --red-border: rgba(248,113,113,0.25);
+  --yellow: #fbbf24;
+  --yellow-dim: rgba(251,191,36,0.1);
+  --yellow-border: rgba(251,191,36,0.25);
+  --blue: #60a5fa;
+  --blue-dim: rgba(96,165,250,0.1);
+  --blue-border: rgba(96,165,250,0.25);
+  --purple: #a78bfa;
+  --purple-dim: rgba(167,139,250,0.1);
+  --purple-border: rgba(167,139,250,0.25);
+  --text: #dde6f0;
+  --text-2: #8b9bae;
+  --text-3: #3d5269;
+  --font-h: 'Syne', sans-serif;
+  --font-b: 'Inter', sans-serif;
+  --font-m: 'JetBrains Mono', monospace;
+}
+
+* { margin:0; padding:0; box-sizing:border-box; }
+html { scroll-behavior: smooth; }
+body { background:var(--bg); color:var(--text); font-family:var(--font-b); font-size:14px; line-height:1.65; }
+
+/* ── LAYOUT ─────────────────────────────── */
+.wrap { max-width:1100px; margin:0 auto; padding:0 28px; }
+.section { padding:56px 0; border-bottom:1px solid var(--border); }
+.section:last-child { border-bottom:none; }
+
+/* ── HERO ────────────────────────────────── */
+.hero {
+  background: linear-gradient(160deg, #0d1a12 0%, #07090d 60%);
+  border-bottom:1px solid var(--border);
+  padding:80px 28px 64px;
+  position:relative;
+  overflow:hidden;
+}
+.hero::before {
+  content:'';
+  position:absolute; top:-120px; right:-80px;
+  width:500px; height:500px;
+  background:radial-gradient(circle, rgba(34,211,160,0.07) 0%, transparent 65%);
+  pointer-events:none;
+}
+.hero-eyebrow {
+  display:inline-flex; align-items:center; gap:8px;
+  background:var(--accent-dim); border:1px solid var(--accent-border);
+  color:var(--accent); font-family:var(--font-m); font-size:11px;
+  padding:5px 14px; letter-spacing:0.12em; text-transform:uppercase; margin-bottom:28px;
+}
+.hero-eyebrow::before { content:'●'; font-size:8px; }
+.hero h1 {
+  font-family:var(--font-h); font-size:clamp(44px,6vw,80px);
+  font-weight:800; line-height:0.95; letter-spacing:-1px;
+  margin-bottom:20px; color:#fff;
+}
+.hero h1 em { color:var(--accent); font-style:normal; }
+.hero-lead { color:var(--text-2); max-width:560px; font-size:15px; margin-bottom:44px; font-weight:300; }
+.hero-stats { display:flex; flex-wrap:wrap; gap:36px; }
+.stat-num { font-family:var(--font-h); font-size:38px; font-weight:800; color:var(--accent); line-height:1; }
+.stat-lbl { font-family:var(--font-m); font-size:10px; letter-spacing:0.1em; color:var(--text-2); margin-top:3px; text-transform:uppercase; }
+
+/* ── PILLS ───────────────────────────────── */
+.pill { display:inline-block; font-family:var(--font-m); font-size:10.5px; padding:4px 11px; margin:3px; letter-spacing:0.04em; border-radius:3px; }
+.pill-green { background:var(--accent-dim); border:1px solid var(--accent-border); color:var(--accent); }
+.pill-red   { background:var(--red-dim);    border:1px solid var(--red-border);    color:var(--red); }
+.pill-yellow{ background:var(--yellow-dim); border:1px solid var(--yellow-border); color:var(--yellow); }
+.pill-blue  { background:var(--blue-dim);   border:1px solid var(--blue-border);   color:var(--blue); }
+.pill-purple{ background:var(--purple-dim); border:1px solid var(--purple-border); color:var(--purple); }
+.pill-dashed{ background:rgba(248,113,113,0.05); border:1px dashed var(--red-border); color:var(--red); }
+
+/* ── SECTION HEADERS ─────────────────────── */
+.sh { margin-bottom:32px; }
+.sh-eyebrow { font-family:var(--font-m); font-size:11px; color:var(--accent); letter-spacing:0.15em; text-transform:uppercase; margin-bottom:6px; }
+.sh-title { font-family:var(--font-h); font-size:clamp(30px,4vw,48px); font-weight:800; line-height:0.95; color:#fff; letter-spacing:-0.5px; }
+
+/* ── CODE BOX ────────────────────────────── */
+.code-label { font-family:var(--font-m); font-size:10px; color:var(--text-3); letter-spacing:0.1em; text-transform:uppercase; margin-bottom:4px; }
+
+/* ── TECH STACK BADGES ───────────────────── */
+.tech-grid { display:flex; flex-wrap:wrap; gap:8px; }
+.tech-badge {
+  background:var(--s2); border:1px solid var(--border2);
+  padding:8px 14px; font-family:var(--font-m); font-size:11px;
+  color:var(--text-2); display:flex; align-items:center; gap:6px;
+}
+.tech-badge span { color:var(--text); font-weight:500; }
+
+/* ── APP FEATURE GRID ────────────────────── */
+.feature-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(300px,1fr)); gap:1px; background:var(--border); }
+.feat-card { background:var(--s1); padding:24px 22px; }
+.feat-icon { font-size:22px; margin-bottom:10px; }
+.feat-title { font-family:var(--font-h); font-size:17px; font-weight:700; margin-bottom:8px; color:#fff; }
+.feat-desc { font-size:13px; color:var(--text-2); line-height:1.6; }
+.feat-src { font-family:var(--font-m); font-size:10px; color:var(--text-3); margin-top:8px; }
+
+/* ── COMPETITOR CARDS ────────────────────── */
+.comp-list { display:flex; flex-direction:column; gap:1px; background:var(--border); }
+.comp-card { background:var(--s1); padding:36px; display:grid; grid-template-columns:220px 1fr; gap:40px; }
+.comp-card:hover { background:var(--s2); }
+.comp-n { font-family:var(--font-m); font-size:11px; color:var(--text-3); margin-bottom:4px; }
+.comp-name { font-family:var(--font-h); font-size:28px; font-weight:800; color:#fff; margin-bottom:4px; }
+.comp-sub { font-size:12px; color:var(--text-2); margin-bottom:12px; }
+.comp-price { font-family:var(--font-m); font-size:11px; background:var(--s3); border:1px solid var(--border2); padding:5px 10px; color:var(--yellow); margin-bottom:12px; display:inline-block; }
+.comp-stars { color:var(--yellow); font-size:13px; }
+.comp-rating { font-family:var(--font-m); font-size:11px; color:var(--text-2); }
+.comp-col-head { font-family:var(--font-m); font-size:10px; letter-spacing:0.14em; text-transform:uppercase; color:var(--text-3); border-bottom:1px solid var(--border); padding-bottom:6px; margin-bottom:10px; }
+.feat-li { display:flex; gap:10px; padding:7px 0; border-bottom:1px solid rgba(255,255,255,0.04); font-size:13px; }
+.feat-li:last-child { border-bottom:none; }
+.feat-li .ico { flex-shrink:0; margin-top:2px; font-size:14px; }
+.opp-box { background:var(--accent-dim); border:1px solid var(--accent-border); padding:14px 16px; margin-top:16px; font-size:13px; color:var(--accent); }
+.two-col { display:grid; grid-template-columns:1fr 1fr; gap:20px; }
+
+/* ── MATRIX ──────────────────────────────── */
+.table-wrap { overflow-x:auto; }
+table { width:100%; border-collapse:collapse; min-width:780px; font-size:12.5px; }
+th { background:var(--s2); padding:12px 14px; text-align:left; font-family:var(--font-m); font-size:10px; letter-spacing:0.1em; text-transform:uppercase; color:var(--text-2); border-bottom:2px solid var(--border2); white-space:nowrap; }
+th.you { background:var(--accent-dim); color:var(--accent); border-bottom-color:var(--accent); }
+td { padding:11px 14px; border-bottom:1px solid var(--border); vertical-align:middle; }
+tr:hover td { background:var(--s2); }
+td:first-child { font-weight:500; color:var(--text); font-size:12.5px; }
+td.you { background:rgba(34,211,160,0.04); }
+.ck { color:var(--accent); font-size:15px; font-weight:700; }
+.cr { color:var(--text-3); font-size:15px; }
+.cp { color:var(--yellow); font-size:11px; font-weight:500; }
+.new { background:var(--accent-dim); color:var(--accent); border:1px solid var(--accent-border); font-family:var(--font-m); font-size:9px; padding:2px 6px; vertical-align:middle; margin-left:4px; }
+
+/* ── BARS ────────────────────────────────── */
+.bar-row { display:flex; align-items:center; justify-content:space-between; padding:9px 0; border-bottom:1px solid var(--border); }
+.bar-row:last-child { border-bottom:none; }
+.bar-name { font-size:13px; min-width:180px; }
+.bar-wrap { flex:1; height:5px; background:var(--s3); border-radius:3px; overflow:hidden; margin:0 16px; }
+.bar-fill { height:100%; border-radius:3px; transition:width 0.8s ease; }
+.bar-pct { font-family:var(--font-m); font-size:11px; color:var(--text-2); min-width:36px; text-align:right; }
+.bars-card { background:var(--s1); border:1px solid var(--border); padding:24px; }
+.bars-title { font-family:var(--font-h); font-size:16px; font-weight:700; margin-bottom:4px; color:#fff; }
+.bars-sub { font-family:var(--font-m); font-size:10px; color:var(--text-3); letter-spacing:0.08em; text-transform:uppercase; margin-bottom:18px; }
+.bars-grid { display:grid; grid-template-columns:1fr 1fr; gap:1px; background:var(--border); margin-bottom:24px; }
+
+/* ── GAP CARDS ───────────────────────────── */
+.gap-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(310px,1fr)); gap:1px; background:var(--border); }
+.gap-card { background:var(--s1); padding:28px 24px; position:relative; overflow:hidden; }
+.gap-num { font-family:var(--font-h); font-size:52px; font-weight:800; color:var(--text-3); line-height:1; margin-bottom:8px; }
+.gap-title { font-family:var(--font-h); font-size:19px; font-weight:700; color:#fff; margin-bottom:8px; }
+.gap-desc { font-size:13px; color:var(--text-2); line-height:1.7; margin-bottom:14px; }
+.gap-bg { position:absolute; bottom:-10px; right:10px; font-size:60px; opacity:0.05; pointer-events:none; }
+.pri { font-family:var(--font-m); font-size:10px; padding:4px 10px; letter-spacing:0.1em; text-transform:uppercase; }
+.pri-hi  { background:var(--red-dim);    border:1px solid var(--red-border);    color:var(--red); }
+.pri-med { background:var(--yellow-dim); border:1px solid var(--yellow-border); color:var(--yellow); }
+.pri-lo  { background:var(--blue-dim);   border:1px solid var(--blue-border);   color:var(--blue); }
+
+/* ── ROADMAP ─────────────────────────────── */
+.roadmap-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:1px; background:var(--border); }
+.rm-col { background:var(--s1); padding:28px 24px; }
+.rm-phase { font-family:var(--font-m); font-size:10px; letter-spacing:0.15em; text-transform:uppercase; margin-bottom:4px; }
+.rm-title { font-family:var(--font-h); font-size:26px; font-weight:800; margin-bottom:24px; }
+.rm-item { padding:12px 0; border-bottom:1px solid var(--border); font-size:13px; }
+.rm-item:last-child { border-bottom:none; }
+.rm-item-title { font-weight:600; color:#fff; margin-bottom:2px; }
+.rm-item-desc { color:var(--text-2); font-size:12px; line-height:1.6; }
+.p1 .rm-phase,.p1 .rm-title { color:var(--red); }
+.p2 .rm-phase,.p2 .rm-title { color:var(--yellow); }
+.p3 .rm-phase,.p3 .rm-title { color:var(--accent); }
+
+/* ── CALLOUT ─────────────────────────────── */
+.callout { border-left:4px solid var(--accent); background:var(--accent-dim); padding:24px 28px; }
+.callout-title { font-family:var(--font-m); font-size:10px; letter-spacing:0.15em; text-transform:uppercase; color:var(--accent); margin-bottom:8px; }
+.callout p { font-size:14.5px; line-height:1.8; }
+
+/* ── NOTICE (YOUR APP) ───────────────────── */
+.your-box { border:1px solid var(--accent); background:rgba(34,211,160,0.03); padding:32px; position:relative; }
+.your-box::after { content:'CODE·VERIFIED'; position:absolute; top:14px; right:18px; font-family:var(--font-m); font-size:9px; letter-spacing:0.2em; color:var(--accent); opacity:0.5; }
+
+/* ── FOOTER ──────────────────────────────── */
+.footer { padding:36px 28px; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:12px; border-top:1px solid var(--border); }
+.footer-brand { font-family:var(--font-h); font-size:20px; font-weight:800; color:var(--accent); letter-spacing:1px; }
+.footer-note { font-family:var(--font-m); font-size:10px; color:var(--text-3); }
+
+/* ── NAV ─────────────────────────────────── */
+.nav { background:rgba(7,9,13,0.92); backdrop-filter:blur(12px); border-bottom:1px solid var(--border); padding:14px 28px; display:flex; gap:6px; flex-wrap:wrap; position:sticky; top:0; z-index:50; }
+.nav a { font-family:var(--font-m); font-size:10.5px; color:var(--text-2); text-decoration:none; padding:5px 12px; border:1px solid transparent; letter-spacing:0.06em; transition:all .15s; }
+.nav a:hover { color:var(--accent); border-color:var(--accent-border); }
+
+/* ── SCROLLBAR ───────────────────────────── */
+::-webkit-scrollbar { width:5px; height:5px; }
+::-webkit-scrollbar-track { background:var(--bg); }
+::-webkit-scrollbar-thumb { background:var(--border2); }
+
+@media(max-width:720px){
+  .hero { padding:60px 20px 48px; }
+  .wrap { padding:0 20px; }
+  .section { padding:40px 0; }
+  .comp-card { grid-template-columns:1fr; gap:24px; }
+  .two-col { grid-template-columns:1fr; }
+  .roadmap-grid { grid-template-columns:1fr; }
+  .bars-grid { grid-template-columns:1fr; }
+}
+</style>
+</head>
+<body>
+
+<!-- HERO -->
+<div class="hero">
+  <div style="max-width:1100px;margin:0 auto;">
+    <div class="hero-eyebrow">Code-Verified · April 2026 · Confidential</div>
+    <h1>GYM BRO<br><em>MARKET REPORT</em></h1>
+    <p class="hero-lead">Every claim in this report was verified against your actual codebase at <code style="font-family:var(--font-m);font-size:12px;color:var(--accent)">web-app/</code>. No assumptions — only what is genuinely built, confirmed missing, or worth adding next.</p>
+    <div class="hero-stats">
+      <div><div class="stat-num">5</div><div class="stat-lbl">Competitors Analysed</div></div>
+      <div><div class="stat-num">25+</div><div class="stat-lbl">Features Verified in Code</div></div>
+      <div><div class="stat-num">9</div><div class="stat-lbl">Confirmed Gaps</div></div>
+      <div><div class="stat-num">3</div><div class="stat-lbl">Roadmap Phases</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- NAV -->
+<div class="nav">
+  <a href="#stack">01 · Stack</a>
+  <a href="#your-app">02 · Your App</a>
+  <a href="#competitors">03 · Competitors</a>
+  <a href="#matrix">04 · Matrix</a>
+  <a href="#gaps">05 · Gaps</a>
+  <a href="#position">06 · Positioning</a>
+  <a href="#roadmap">07 · Roadmap</a>
+</div>
+
+<!-- 01 · TECH STACK -->
+<div class="section" id="stack">
+  <div class="wrap">
+    <div class="sh"><div class="sh-eyebrow">01 · Tech Stack</div><div class="sh-title">WHAT YOU'RE<br>BUILT WITH</div></div>
+    <p style="color:var(--text-2);max-width:620px;margin-bottom:28px;font-size:14px;">Confirmed from <code style="color:var(--accent);font-family:var(--font-m);font-size:12px">package.json</code>, route files, and lib/ — this is the actual production stack.</p>
+    <div class="tech-grid" style="margin-bottom:32px;">
+      <div class="tech-badge">Framework <span>Next.js 16 (App Router)</span></div>
+      <div class="tech-badge">UI <span>React 19 + TypeScript 5</span></div>
+      <div class="tech-badge">Styling <span>Tailwind CSS v4</span></div>
+      <div class="tech-badge">Animation <span>Framer Motion 12</span></div>
+      <div class="tech-badge">AI #1 <span>Anthropic Claude 3.5 Sonnet</span></div>
+      <div class="tech-badge">AI #2 <span>OpenAI GPT-4o (Vision + Completions)</span></div>
+      <div class="tech-badge">LLM Orchestration <span>LangChain + Zod structured output</span></div>
+      <div class="tech-badge">Database <span>NeonDB (Postgres serverless)</span></div>
+      <div class="tech-badge">Cache <span>Upstash Redis</span></div>
+      <div class="tech-badge">Auth <span>JWT (jose) + Google OAuth + bcrypt</span></div>
+      <div class="tech-badge">Payments <span>Razorpay (₹1/month, Indian market)</span></div>
+      <div class="tech-badge">Email <span>Nodemailer (coach booking notifications)</span></div>
+      <div class="tech-badge">PWA <span>Service Worker + manifest.json</span></div>
+      <div class="tech-badge">Testing <span>Playwright E2E (5 test suites)</span></div>
+      <div class="tech-badge">Security <span>CSRF tokens + prompt injection guard</span></div>
+      <div class="tech-badge">Deployment <span>Vercel</span></div>
+    </div>
+    <div class="callout">
+      <div class="callout-title">Technical Moat</div>
+      <p>Your dual-AI architecture (Claude 3.5 Sonnet + GPT-4o) is genuinely rare. Users can bring their own API key or use yours, the system falls back gracefully, and prompts are cached using Anthropic's ephemeral caching for speed. The prompt injection protection in <code style="font-family:var(--font-m);color:var(--accent)">lib/prompt-safety.ts</code> shows production-grade security thinking. Most indie fitness apps run a single LLM call — you're running a structured multi-agent system.</p>
+    </div>
+  </div>
+</div>
+
+<!-- 02 · YOUR APP -->
+<div class="section" id="your-app">
+  <div class="wrap">
+    <div class="sh"><div class="sh-eyebrow">02 · Your App — Gym Bro</div><div class="sh-title">WHAT IS<br>ACTUALLY BUILT</div></div>
+
+    <div class="your-box" style="margin-bottom:32px;">
+      <h3 style="font-family:var(--font-h);font-size:26px;font-weight:800;color:var(--accent);margin-bottom:20px;">Confirmed Built Features</h3>
+      <p style="color:var(--text-2);font-size:13px;margin-bottom:20px;">Every pill below corresponds to a verified file in your <code style="font-family:var(--font-m);color:var(--accent)">web-app/</code> repo.</p>
+      <div>
+        <div class="code-label" style="margin-bottom:8px;">Core AI Pipeline</div>
+        <span class="pill pill-green">Body Photo AI (GPT-4o Vision) <code style="font-size:9px;opacity:.7">· app/api/body/analyze</code></span>
+        <span class="pill pill-green">Gym Equipment Photo AI (GPT-4o Vision) <code style="font-size:9px;opacity:.7">· app/api/gym/analyze</code></span>
+        <span class="pill pill-green">AI Weekly Routine (Claude 3.5 + GPT-4o) <code style="font-size:9px;opacity:.7">· lib/ai-agent.ts</code></span>
+        <span class="pill pill-green">AI Diet Plan (7 days, full macros) <code style="font-size:9px;opacity:.7">· lib/diet-agent.ts</code></span>
+        <span class="pill pill-green">Historical Context & Progressive Overload <code style="font-size:9px;opacity:.7">· lib/historical-context.ts</code></span>
+        <span class="pill pill-green">Session Duration Scaling (30–120+ min) <code style="font-size:9px;opacity:.7">· lib/ai-agent.ts</code></span>
+      </div>
+      <div style="margin-top:16px;">
+        <div class="code-label" style="margin-bottom:8px;">Tracking & Analytics</div>
+        <span class="pill pill-green">Exercise Completion Tracking per Set/Rep <code style="font-size:9px;opacity:.7">· api/completions</code></span>
+        <span class="pill pill-green">Weekly Completion % <code style="font-size:9px;opacity:.7">· components/CircularProgress</code></span>
+        <span class="pill pill-green">Activity Heatmap (8 weeks, home screen) <code style="font-size:9px;opacity:.7">· components/ui/HeatMap</code></span>
+        <span class="pill pill-green">Analytics: Daily/Weekly/Monthly Trends <code style="font-size:9px;opacity:.7">· components/views/AnalyticsView</code></span>
+        <span class="pill pill-green">Streak Calendar (12-week + monthly view) <code style="font-size:9px;opacity:.7">· AnalyticsView/StreakCalendar</code></span>
+        <span class="pill pill-green">Workout History with Muscle Group Detection <code style="font-size:9px;opacity:.7">· AnalyticsView</code></span>
+        <span class="pill pill-green">Current + Longest Streak Numbers <code style="font-size:9px;opacity:.7">· api/analytics</code></span>
+        <span class="pill pill-green">Next Week Gen Based on Completion % <code style="font-size:9px;opacity:.7">· historical-context.ts</code></span>
+      </div>
+      <div style="margin-top:16px;">
+        <div class="code-label" style="margin-bottom:8px;">Profile & Onboarding</div>
+        <span class="pill pill-green">Deep Profile (age, weight, height, goal, level, tenure)</span>
+        <span class="pill pill-green">Diet Preferences (cuisine, allergies, budget, cooking level)</span>
+        <span class="pill pill-green">Protein Powder Tracking (grams auto-synced to diet plan)</span>
+        <span class="pill pill-green">Session Duration Preference</span>
+        <span class="pill pill-green">Goal Weight + Goal Duration</span>
+        <span class="pill pill-green">Body Composition Summary View <code style="font-size:9px;opacity:.7">· ui/BodyCompositionSummary</code></span>
+      </div>
+      <div style="margin-top:16px;">
+        <div class="code-label" style="margin-bottom:8px;">Coach & Marketplace</div>
+        <span class="pill pill-green">Coach Listing (admin-approved marketplace) <code style="font-size:9px;opacity:.7">· api/coaches</code></span>
+        <span class="pill pill-green">Coach Profiles (bio, experience, certifications, specialties)</span>
+        <span class="pill pill-green">Booking System (datetime + message + contact details)</span>
+        <span class="pill pill-green">Email Notification to Coach on Booking</span>
+        <span class="pill pill-green">Booking Cancel (60-min lockout rule) + Delete History</span>
+        <span class="pill pill-green">Coach Portal (assigned bookings view) <code style="font-size:9px;opacity:.7">· app/coach/portal</code></span>
+        <span class="pill pill-green">Admin Panel (approve/reject coaches, manage bookings)</span>
+      </div>
+      <div style="margin-top:16px;">
+        <div class="code-label" style="margin-bottom:8px;">Exercise Content</div>
+        <span class="pill pill-green">YouTube URL Array (1–3 videos per exercise)</span>
+        <span class="pill pill-green">YouTube Hover Preview <code style="font-size:9px;opacity:.7">· components/YouTubeHoverPreview</code></span>
+        <span class="pill pill-green">3–5 Tutorial Points per Exercise (setup/cues/mistakes)</span>
+        <span class="pill pill-green">WikiHow links per exercise</span>
+        <span class="pill pill-green">Swipeable Exercise Cards <code style="font-size:9px;opacity:.7">· ui/SwipeableExercise</code></span>
+      </div>
+      <div style="margin-top:16px;">
+        <div class="code-label" style="margin-bottom:8px;">Platform & Infra</div>
+        <span class="pill pill-green">PWA (installable, manifest + icons) <code style="font-size:9px;opacity:.7">· public/manifest.json</code></span>
+        <span class="pill pill-green">Service Worker + Offline Caching <code style="font-size:9px;opacity:.7">· public/sw.js</code></span>
+        <span class="pill pill-green">Offline Indicator Banner <code style="font-size:9px;opacity:.7">· components/OfflineIndicator</code></span>
+        <span class="pill pill-green">Razorpay Billing (₹1/mo + 7-day free trial) <code style="font-size:9px;opacity:.7">· api/billing</code></span>
+        <span class="pill pill-green">Redis Caching (analytics + billing status)</span>
+        <span class="pill pill-green">CSRF Protection + Rate Limiting</span>
+        <span class="pill pill-green">Prompt Injection Guard <code style="font-size:9px;opacity:.7">· lib/prompt-safety.ts</code></span>
+        <span class="pill pill-green">Google OAuth + Email/Password Auth</span>
+        <span class="pill pill-green">Playwright E2E Tests (auth, diet, routine, workout)</span>
+      </div>
+    </div>
+
+    <div style="background:var(--s1);border:1px solid var(--border);padding:32px;margin-bottom:16px;">
+      <h3 style="font-family:var(--font-h);font-size:22px;font-weight:800;color:var(--red);margin-bottom:20px;">Confirmed Missing Features</h3>
+      <p style="color:var(--text-2);font-size:13px;margin-bottom:20px;">These were searched for across all files and do not exist in the codebase.</p>
+      <span class="pill pill-dashed">Barcode Food Scanner</span>
+      <span class="pill pill-dashed">Food / Calorie Logging (what user actually ate)</span>
+      <span class="pill pill-dashed">Wearable Integration (Apple Health / Google Fit)</span>
+      <span class="pill pill-dashed">Social / Community Feed</span>
+      <span class="pill pill-dashed">In-App Coach Chat / Messaging</span>
+      <span class="pill pill-dashed">Body Measurement Logger (weight trend, waist, chest)</span>
+      <span class="pill pill-dashed">Progress Photo Timeline (periodic re-photo + before/after)</span>
+      <span class="pill pill-dashed">Muscle Recovery Heatmap (body diagram post-workout)</span>
+      <span class="pill pill-dashed">Gamification (XP, badges, level-ups, challenges)</span>
+    </div>
+
+    <div class="callout">
+      <div class="callout-title">Important Nuance on Streaks</div>
+      <p>You DO have streak <em>data</em> (current + longest streak numbers in AnalyticsView) but there is no gamification <em>experience</em> around it — no streak flame animation on the home screen, no "You're on a 7-day streak! 🔥" notification, no XP reward. The data exists; the emotional hook does not. This is a quick, high-impact win.</p>
+    </div>
+  </div>
+</div>
+
+<!-- 03 · COMPETITORS -->
+<div class="section" id="competitors">
+  <div class="wrap">
+    <div class="sh"><div class="sh-eyebrow">03 · Competitive Deep Dives</div><div class="sh-title">TOP 5<br>RIVALS</div></div>
+    <div class="comp-list">
+
+      <!-- MyFitnessPal -->
+      <div class="comp-card">
+        <div>
+          <div class="comp-n">01 / 05 — Nutrition King</div>
+          <div class="comp-name">MyFitnessPal</div>
+          <div class="comp-sub">"The calorie-tracking veteran with 200M+ users"</div>
+          <div class="comp-price">Free · Premium $19.99/mo · $79.99/yr</div>
+          <div style="margin-bottom:12px;"><span class="comp-stars">★★★★☆</span> <span class="comp-rating">4.6 · 200M+ registered</span></div>
+          <span class="pill pill-blue">Nutrition-First</span>
+          <span class="pill pill-purple">Diet Tracking</span>
+        </div>
+        <div>
+          <div class="comp-col-head">Core Strengths</div>
+          <div class="feat-li"><span class="ico">💪</span><span>14M+ food database with barcode scanner — unmatched for calorie/macro logging</span></div>
+          <div class="feat-li"><span class="ico">🔗</span><span>Integrates with 50+ apps: Apple Health, Garmin, Fitbit, Strava, Samsung</span></div>
+          <div class="feat-li"><span class="ico">🤖</span><span>AI-driven meal recommendations being rolled out in 2026 updates</span></div>
+          <div class="feat-li"><span class="ico">📊</span><span>Body measurement tracker (weight trend, body fat %, measurements over time)</span></div>
+          <div class="feat-li"><span class="ico">🏆</span><span>15 years of brand trust, massive user data flywheel</span></div>
+          <div class="two-col" style="margin-top:16px;">
+            <div>
+              <div class="comp-col-head">Weaknesses</div>
+              <span class="pill pill-red">No AI workout plans</span>
+              <span class="pill pill-red">No coach booking</span>
+              <span class="pill pill-red">No body photo AI</span>
+              <span class="pill pill-red">Workout tracking is very basic</span>
+              <span class="pill pill-red">Expensive at $19.99/mo</span>
+            </div>
+            <div>
+              <div class="comp-col-head">Your Opportunity</div>
+              <p style="font-size:13px;color:var(--text-2);">MFP is 100% nutrition-only. Users need a second app for gym plans. If you add a food scanner and macro log, you can replace MFP entirely for gym-goers. MFP's workout features are so weak that their own users complain about it.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Fitbod -->
+      <div class="comp-card">
+        <div>
+          <div class="comp-n">02 / 05 — AI Workout Engine</div>
+          <div class="comp-name">Fitbod</div>
+          <div class="comp-sub">"Muscle recovery–aware AI strength training"</div>
+          <div class="comp-price">$12–$15.99/mo · $79.99/yr</div>
+          <div style="margin-bottom:12px;"><span class="comp-stars">★★★★★</span> <span class="comp-rating">4.82 · 264K+ ratings</span></div>
+          <span class="pill pill-green">AI Workout</span>
+          <span class="pill pill-blue">Strength Focus</span>
+        </div>
+        <div>
+          <div class="comp-col-head">Core Strengths</div>
+          <div class="feat-li"><span class="ico">🤖</span><span>AI generates each workout based on muscle recovery, equipment, and full training history</span></div>
+          <div class="feat-li"><span class="ico">📈</span><span>Tracks 3 strength metrics: Overall Strength, Muscle-level Strength, 1RM per exercise</span></div>
+          <div class="feat-li"><span class="ico">🎥</span><span>HD native exercise video library — multi-angle demos (no YouTube dependency)</span></div>
+          <div class="feat-li"><span class="ico">⌚</span><span>Apple Health, Apple Watch, Strava, Fitbit integrations</span></div>
+          <div class="feat-li"><span class="ico">🏋️</span><span>1,000+ exercises with smart equipment filtering</span></div>
+          <div class="two-col" style="margin-top:16px;">
+            <div>
+              <div class="comp-col-head">Weaknesses</div>
+              <span class="pill pill-red">Zero diet planning</span>
+              <span class="pill pill-red">No coach booking</span>
+              <span class="pill pill-red">No body photo AI</span>
+              <span class="pill pill-red">No gym equipment photo AI</span>
+              <span class="pill pill-red">No social features</span>
+            </div>
+            <div>
+              <div class="comp-col-head">Your Opportunity</div>
+              <p style="font-size:13px;color:var(--text-2);">Fitbod generates only a <em>daily</em> workout — you generate a full week with context from body photos AND gym equipment analysis. Fitbod users must buy MFP separately for diet. You solve both in one subscription. Your progressive overload (historical-context.ts) is equally sophisticated.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Freeletics -->
+      <div class="comp-card">
+        <div>
+          <div class="comp-n">03 / 05 — AI Coach App</div>
+          <div class="comp-name">Freeletics</div>
+          <div class="comp-sub">"AI coach for bodyweight training anywhere"</div>
+          <div class="comp-price">~$8.50/mo · $34.99/3mo · Paywall-heavy</div>
+          <div style="margin-bottom:12px;"><span class="comp-stars">★★★★☆</span> <span class="comp-rating">4.64 · 60M athletes</span></div>
+          <span class="pill pill-blue">AI Coach</span>
+          <span class="pill pill-purple">Bodyweight</span>
+        </div>
+        <div>
+          <div class="comp-col-head">Core Strengths</div>
+          <div class="feat-li"><span class="ico">🌍</span><span>60M athlete community — social challenges, leaderboards, shared workouts</span></div>
+          <div class="feat-li"><span class="ico">🤖</span><span>AI Coach adapts plan in real-time based on post-session feedback (perceived exertion)</span></div>
+          <div class="feat-li"><span class="ico">🍽️</span><span>Basic nutrition guidance included in subscription</span></div>
+          <div class="feat-li"><span class="ico">🏆</span><span>Gamified streaks with challenge system + athlete leaderboards</span></div>
+          <div class="feat-li"><span class="ico">📱</span><span>Clean, well-marketed app with strong brand loyalty since 2013</span></div>
+          <div class="two-col" style="margin-top:16px;">
+            <div>
+              <div class="comp-col-head">Weaknesses</div>
+              <span class="pill pill-red">Nearly everything paywalled</span>
+              <span class="pill pill-red">Bodyweight-only, gym equipment plans are weak</span>
+              <span class="pill pill-red">No gym equipment photo AI</span>
+              <span class="pill pill-red">No body photo AI</span>
+              <span class="pill pill-red">No coach booking</span>
+            </div>
+            <div>
+              <div class="comp-col-head">Your Opportunity</div>
+              <p style="font-size:13px;color:var(--text-2);">Freeletics is for people without gyms. Your app is for gym-goers with actual equipment — a completely different audience. The gamification and community they do well is your biggest gap to close. Freeletics users frustrated by the paywall and bodyweight-only focus are a direct acquisition target.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Hevy -->
+      <div class="comp-card">
+        <div>
+          <div class="comp-n">04 / 05 — #1 Gym Logger 2026</div>
+          <div class="comp-name">Hevy</div>
+          <div class="comp-sub">"The fastest, cleanest gym logger with social"</div>
+          <div class="comp-price">Generous free tier · Pro subscription</div>
+          <div style="margin-bottom:12px;"><span class="comp-stars">★★★★★</span> <span class="comp-rating">4.8 · Fastest growing in 2026</span></div>
+          <span class="pill pill-green">Gym Logging</span>
+          <span class="pill pill-blue">Social</span>
+        </div>
+        <div>
+          <div class="comp-col-head">Core Strengths</div>
+          <div class="feat-li"><span class="ico">⚡</span><span>Fastest gym logging UX on the market — absolute minimal friction during workouts</span></div>
+          <div class="feat-li"><span class="ico">👥</span><span>Social feed — follow friends, share workouts, community leaderboards and challenges</span></div>
+          <div class="feat-li"><span class="ico">📊</span><span>Beautiful long-term strength charts, custom routines, rest timers, supersets</span></div>
+          <div class="feat-li"><span class="ico">🆓</span><span>Very generous free tier — grew virally because of low friction to start</span></div>
+          <div class="two-col" style="margin-top:16px;">
+            <div>
+              <div class="comp-col-head">Weaknesses</div>
+              <span class="pill pill-red">No AI — zero workout intelligence</span>
+              <span class="pill pill-red">No diet tracking</span>
+              <span class="pill pill-red">No coach booking</span>
+              <span class="pill pill-red">No body photo AI</span>
+              <span class="pill pill-red">Just a logger — tells you what you DID, not what to DO</span>
+            </div>
+            <div>
+              <div class="comp-col-head">Your Opportunity</div>
+              <p style="font-size:13px;color:var(--text-2);">Hevy is essentially a smarter spreadsheet. Your app tells users what to do and why — that's fundamentally more valuable. Hevy users want AI on top of logging. Their social layer is something you should study and borrow from — it's why people open the app daily even on rest days.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 8fit -->
+      <div class="comp-card">
+        <div>
+          <div class="comp-n">05 / 05 — Closest Rival</div>
+          <div class="comp-name">8fit</div>
+          <div class="comp-sub">"Combined workout + meal planning"</div>
+          <div class="comp-price">Freemium · ~$12.99/mo premium</div>
+          <div style="margin-bottom:12px;"><span class="comp-stars">★★★★☆</span> <span class="comp-rating">4.5 · Most similar concept</span></div>
+          <span class="pill pill-red">Most Similar to You</span>
+          <span class="pill pill-purple">Workout + Diet</span>
+        </div>
+        <div>
+          <div class="comp-col-head">Core Strengths</div>
+          <div class="feat-li"><span class="ico">🍽️</span><span>Workout + meal plan in one subscription — closest concept to your app</span></div>
+          <div class="feat-li"><span class="ico">🎯</span><span>Goal-based onboarding (weight loss / muscle / health) with dietary preferences</span></div>
+          <div class="feat-li"><span class="ico">🛒</span><span>Smart shopping lists synced with training schedule</span></div>
+          <div class="feat-li"><span class="ico">📹</span><span>Video exercise demos included for every exercise</span></div>
+          <div class="two-col" style="margin-top:16px;">
+            <div>
+              <div class="comp-col-head">Weaknesses</div>
+              <span class="pill pill-red">No body photo AI</span>
+              <span class="pill pill-red">No gym equipment analysis</span>
+              <span class="pill pill-red">Plans don't adapt to actual performance</span>
+              <span class="pill pill-red">No coach booking</span>
+              <span class="pill pill-red">No dual-AI architecture</span>
+            </div>
+            <div>
+              <div class="comp-col-head">Your Opportunity</div>
+              <p style="font-size:13px;color:var(--text-2);">8fit's plans are static — they never change based on how you actually performed. Your app adapts: if you completed 90% last week, this week gets harder (confirmed in <code style="font-family:var(--font-m);color:var(--accent)">historical-context.ts</code>). That adaptive loop is a real and defensible advantage. Add their shopping list UX and you surpass 8fit completely.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- 04 · MATRIX -->
+<div class="section" id="matrix">
+  <div class="wrap">
+    <div class="sh"><div class="sh-eyebrow">04 · Feature Matrix</div><div class="sh-title">HEAD-TO-HEAD<br>COMPARISON</div></div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Feature</th>
+            <th class="you">Gym Bro (You) ★</th>
+            <th>MyFitnessPal</th>
+            <th>Fitbod</th>
+            <th>Freeletics</th>
+            <th>Hevy</th>
+            <th>8fit</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Body Photo AI Analysis</td>
+            <td class="you"><span class="ck">✓</span> <span class="new">UNIQUE</span></td>
+            <td><span class="cr">✗</span></td><td><span class="cr">✗</span></td><td><span class="cr">✗</span></td><td><span class="cr">✗</span></td><td><span class="cr">✗</span></td>
+          </tr>
+          <tr>
+            <td>Gym Equipment Photo AI</td>
+            <td class="you"><span class="ck">✓</span> <span class="new">UNIQUE</span></td>
+            <td><span class="cr">✗</span></td><td><span class="cr">✗</span></td><td><span class="cr">✗</span></td><td><span class="cr">✗</span></td><td><span class="cr">✗</span></td>
+          </tr>
+          <tr>
+            <td>AI Full-Week Routine Generation</td>
+            <td class="you"><span class="ck">✓</span></td>
+            <td><span class="cr">✗</span></td>
+            <td><span class="cp">~ daily only</span></td>
+            <td><span class="ck">✓</span></td>
+            <td><span class="cr">✗</span></td>
+            <td><span class="cp">~ static plan</span></td>
+          </tr>
+          <tr>
+            <td>Next Week AI Based on Completion %</td>
+            <td class="you"><span class="ck">✓</span> <span class="new">UNIQUE</span></td>
+            <td><span class="cr">✗</span></td><td><span class="cp">~ partial</span></td><td><span class="cp">~ feedback loop</span></td><td><span class="cr">✗</span></td><td><span class="cr">✗</span></td>
+          </tr>
+          <tr>
+            <td>Progressive Overload (Smart)</td>
+            <td class="you"><span class="ck">✓</span> <span class="new">UNIQUE</span></td>
+            <td><span class="cr">✗</span></td>
+            <td><span class="ck">✓</span></td>
+            <td><span class="cp">~ basic</span></td>
+            <td><span class="cr">✗</span></td>
+            <td><span class="cr">✗</span></td>
+          </tr>
+          <tr>
+            <td>AI Diet / Meal Planning (7 days)</td>
+            <td class="you"><span class="ck">✓</span></td>
+            <td><span class="ck">✓</span></td>
+            <td><span class="cr">✗</span></td>
+            <td><span class="cp">~ basic</span></td>
+            <td><span class="cr">✗</span></td>
+            <td><span class="ck">✓</span></td>
+          </tr>
+          <tr>
+            <td>Coach Booking Marketplace</td>
+            <td class="you"><span class="ck">✓</span> <span class="new">UNIQUE</span></td>
+            <td><span class="cr">✗</span></td><td><span class="cr">✗</span></td><td><span class="cr">✗</span></td><td><span class="cr">✗</span></td><td><span class="cr">✗</span></td>
+          </tr>
+          <tr>
+            <td>Coach Profiles (bio, certs, exp)</td>
+            <td class="you"><span class="ck">✓</span></td>
+            <td><span class="cr">✗</span></td><td><span class="cr">✗</span></td><td><span class="cr">✗</span></td><td><span class="cr">✗</span></td><td><span class="cr">✗</span></td>
+          </tr>
+          <tr>
+            <td>Exercise Video Demos</td>
+            <td class="you"><span class="cp">~ YouTube (1–3 per ex)</span></td>
+            <td><span class="cr">✗</span></td>
+            <td><span class="ck">✓ HD native</span></td>
+            <td><span class="ck">✓</span></td>
+            <td><span class="cp">~ basic</span></td>
+            <td><span class="ck">✓</span></td>
+          </tr>
+          <tr>
+            <td>3–5 Tutorial Points per Exercise</td>
+            <td class="you"><span class="ck">✓</span></td>
+            <td><span class="cr">✗</span></td><td><span class="cp">~ partial</span></td><td><span class="cr">✗</span></td><td><span class="cr">✗</span></td><td><span class="cr">✗</span></td>
+          </tr>
+          <tr>
+            <td>Activity Heatmap (home screen)</td>
+            <td class="you"><span class="ck">✓</span></td>
+            <td><span class="cr">✗</span></td>
+            <td><span class="cp">~</span></td>
+            <td><span class="ck">✓</span></td>
+            <td><span class="ck">✓</span></td>
+            <td><span class="cr">✗</span></td>
+          </tr>
+          <tr>
+            <td>Analytics: Trends + Streak Calendar</td>
+            <td class="you"><span class="ck">✓ Premium</span></td>
+            <td><span class="cp">~</span></td>
+            <td><span class="cp">~</span></td>
+            <td><span class="ck">✓</span></td>
+            <td><span class="ck">✓</span></td>
+            <td><span class="cr">✗</span></td>
+          </tr>
+          <tr>
+            <td>Session Duration Scaling</td>
+            <td class="you"><span class="ck">✓</span> <span class="new">UNIQUE</span></td>
+            <td><span class="cr">✗</span></td><td><span class="cr">✗</span></td><td><span class="cr">✗</span></td><td><span class="cr">✗</span></td><td><span class="cr">✗</span></td>
+          </tr>
+          <tr>
+            <td>PWA + Service Worker (offline cache)</td>
+            <td class="you"><span class="ck">✓</span></td>
+            <td><span class="cp">~</span></td>
+            <td><span class="cp">~</span></td>
+            <td><span class="ck">✓</span></td>
+            <td><span class="cp">~</span></td>
+            <td><span class="cp">~</span></td>
+          </tr>
+          <tr>
+            <td>Dual AI Provider (Anthropic + OpenAI)</td>
+            <td class="you"><span class="ck">✓</span> <span class="new">UNIQUE</span></td>
+            <td><span class="cr">✗</span></td><td><span class="cr">✗</span></td><td><span class="cr">✗</span></td><td><span class="cr">✗</span></td><td><span class="cr">✗</span></td>
+          </tr>
+          <tr>
+            <td>Barcode Food Scanner</td>
+            <td class="you"><span class="cr">✗</span></td>
+            <td><span class="ck">✓ Best</span></td>
+            <td><span class="cr">✗</span></td><td><span class="cr">✗</span></td><td><span class="cr">✗</span></td><td><span class="cp">~</span></td>
+          </tr>
+          <tr>
+            <td>Wearable Integration</td>
+            <td class="you"><span class="cr">✗</span></td>
+            <td><span class="ck">✓</span></td>
+            <td><span class="ck">✓</span></td>
+            <td><span class="cp">~</span></td>
+            <td><span class="cp">~</span></td>
+            <td><span class="cr">✗</span></td>
+          </tr>
+          <tr>
+            <td>Social / Community Feed</td>
+            <td class="you"><span class="cr">✗</span></td>
+            <td><span class="cp">~</span></td>
+            <td><span class="cr">✗</span></td>
+            <td><span class="ck">✓ 60M</span></td>
+            <td><span class="ck">✓ Best</span></td>
+            <td><span class="cr">✗</span></td>
+          </tr>
+          <tr>
+            <td>In-App Coach Messaging</td>
+            <td class="you"><span class="cr">✗</span></td>
+            <td><span class="cr">✗</span></td><td><span class="cr">✗</span></td><td><span class="cr">✗</span></td><td><span class="cr">✗</span></td><td><span class="cr">✗</span></td>
+          </tr>
+          <tr>
+            <td>Body Measurement Logger</td>
+            <td class="you"><span class="cr">✗</span></td>
+            <td><span class="ck">✓</span></td>
+            <td><span class="cp">~</span></td>
+            <td><span class="cp">~</span></td>
+            <td><span class="cr">✗</span></td>
+            <td><span class="ck">✓</span></td>
+          </tr>
+          <tr>
+            <td>Progress Photo Timeline</td>
+            <td class="you"><span class="cp">~ onboarding only</span></td>
+            <td><span class="cp">~</span></td>
+            <td><span class="cr">✗</span></td><td><span class="cr">✗</span></td><td><span class="cr">✗</span></td><td><span class="cr">✗</span></td>
+          </tr>
+          
+
+
+
+

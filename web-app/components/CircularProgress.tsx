@@ -73,7 +73,7 @@ export function CircularProgress({
         </div>
       </div>
       {label && (
-        <p className="mt-2 text-xs text-slate-300/70 text-center">{label}</p>
+        <p className="mt-2 text-xs text-[#8B8DA3] text-center">{label}</p>
       )}
     </div>
   )

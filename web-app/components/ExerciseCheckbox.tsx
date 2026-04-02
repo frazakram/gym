@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Check } from 'lucide-react';
 
 interface ExerciseCheckboxProps {
   routineId: number | null;
@@ -84,8 +85,8 @@ export function ExerciseCheckbox({
         transition-all duration-200 border
         flex items-center gap-2
         ${completed 
-          ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-200 hover:bg-emerald-500/20' 
-          : 'bg-slate-800/60 border-slate-600/50 text-slate-300 hover:bg-slate-800 hover:border-slate-500 hover:text-white'
+          ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-200 hover:bg-emerald-500/20'
+          : 'bg-[#8B5CF6]/5 border-[#8B5CF6]/20 text-slate-300 hover:bg-[#8B5CF6]/10 hover:border-[#8B5CF6]/30 hover:text-white'
         }
         ${loading ? 'opacity-70 cursor-wait' : 'cursor-pointer'}
         ${(!routineId && !onEnsureRoutineSaved) ? 'cursor-not-allowed opacity-50' : ''}
@@ -96,9 +97,7 @@ export function ExerciseCheckbox({
       {loading ? (
         <span className="w-3 h-3 border-2 border-current border-t-transparent rounded-full animate-spin" />
       ) : completed ? (
-        <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-          <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-        </svg>
+        <Check className="w-3.5 h-3.5" />
       ) : (
         <span className="w-3.5 h-3.5 rounded-sm border border-current opacity-60" />
       )}

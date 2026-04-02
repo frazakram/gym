@@ -30,16 +30,16 @@ export function BodyCompositionSummary({ analysis }: BodyCompositionSummaryProps
 
       <div className="grid grid-cols-2 gap-3 pt-2">
         <div>
-          <p className="text-xs text-slate-400 mb-1">Body Type</p>
+          <p className="text-xs text-[#8B8DA3] mb-1">Body Type</p>
           <p className="text-sm font-medium text-white capitalize">{body_type}</p>
         </div>
         <div>
-          <p className="text-xs text-slate-400 mb-1">Muscle Dev.</p>
+          <p className="text-xs text-[#8B8DA3] mb-1">Muscle Dev.</p>
           <p className="text-sm font-medium text-white capitalize">{muscle_development.replace('_', ' ')}</p>
         </div>
         {estimated_body_fat_range && (
           <div className="col-span-2">
-            <p className="text-xs text-slate-400 mb-1">Modern Est. Body Fat</p>
+            <p className="text-xs text-[#8B8DA3] mb-1">Modern Est. Body Fat</p>
             <p className="text-sm font-medium text-emerald-400">{estimated_body_fat_range}</p>
           </div>
         )}
@@ -51,7 +51,7 @@ export function BodyCompositionSummary({ analysis }: BodyCompositionSummaryProps
 
       {focus_areas && focus_areas.length > 0 && (
         <div>
-          <p className="text-xs text-slate-400 mb-2">Recommended Focus Areas</p>
+          <p className="text-xs text-[#8B8DA3] mb-2">Recommended Focus Areas</p>
           <div className="flex flex-wrap gap-2">
             {focus_areas.map((area) => (
               <span
@@ -67,7 +67,7 @@ export function BodyCompositionSummary({ analysis }: BodyCompositionSummaryProps
 
       {posture_notes && posture_notes.length > 0 && (
         <div>
-          <p className="text-xs text-slate-400 mb-2">Posture & Form Notes</p>
+          <p className="text-xs text-[#8B8DA3] mb-2">Posture & Form Notes</p>
           <ul className="list-disc list-inside space-y-1">
             {posture_notes.map((note) => (
               <li key={note} className="text-xs text-slate-300">{note}</li>

@@ -35,6 +35,9 @@ interface RoutineViewProps {
   viewingHistory?: boolean
   dayCompletions?: Map<number, boolean>
   onToggleDayComplete?: (dayIndex: number, completed: boolean) => void
+  routineIsStale?: boolean
+  weeksElapsed?: number
+  onStartNewWeek?: () => void
 }
 
 export function RoutineView({
@@ -49,6 +52,9 @@ export function RoutineView({
   viewingHistory = false,
   dayCompletions,
   onToggleDayComplete,
+  routineIsStale = false,
+  weeksElapsed = 0,
+  onStartNewWeek,
 }: RoutineViewProps) {
   const todayIndex = (new Date().getDay() + 6) % 7 // Mon=0
   const [selectedDay, setSelectedDay] = useState(todayIndex)
@@ -219,7 +225,17 @@ export function RoutineView({
               }
             >
               <div className="space-y-2">
-                {completionPercentage >= 80 ? (
+                {routineIsStale && onStartNewWeek ? (
+                  <AnimatedButton
+                    onClick={onStartNewWeek}
+                    disabled={generating}
+                    loading={generating}
+                    variant="primary"
+                    fullWidth
+                  >
+                    {generating ? 'Generating...' : `Start Week ${currentWeekNumber + weeksElapsed}`}
+                  </AnimatedButton>
+                ) : completionPercentage >= 80 ? (
                   <AnimatedButton
                     onClick={onGenerateNextWeek}
                     disabled={generating}

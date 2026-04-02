@@ -33,11 +33,11 @@ export function EquipmentSummary({ analysis }: EquipmentSummaryProps) {
       {/* Gym Details */}
       <div className="grid grid-cols-2 gap-3 pt-2">
         <div>
-          <p className="text-xs text-slate-400 mb-1">Gym Type</p>
+          <p className="text-xs text-[#8B8DA3] mb-1">Gym Type</p>
           <p className="text-sm font-medium text-white capitalize">{gym_type}</p>
         </div>
         <div>
-          <p className="text-xs text-slate-400 mb-1">Space</p>
+          <p className="text-xs text-[#8B8DA3] mb-1">Space</p>
           <p className="text-sm font-medium text-white capitalize">{space_assessment}</p>
         </div>
       </div>
@@ -45,7 +45,7 @@ export function EquipmentSummary({ analysis }: EquipmentSummaryProps) {
       {/* Unique Features */}
       {unique_features && unique_features.length > 0 && (
         <div>
-          <p className="text-xs text-slate-400 mb-2">Special Equipment</p>
+          <p className="text-xs text-[#8B8DA3] mb-2">Special Equipment</p>
           <div className="flex flex-wrap gap-2">
             {unique_features.map((feature) => (
               <span
@@ -62,7 +62,7 @@ export function EquipmentSummary({ analysis }: EquipmentSummaryProps) {
       {/* Limitations */}
       {limitations && limitations.length > 0 && (
         <div>
-          <p className="text-xs text-slate-400 mb-2">Limitations</p>
+          <p className="text-xs text-[#8B8DA3] mb-2">Limitations</p>
           <div className="space-y-1">
             {limitations.map((limitation) => (
               <div key={limitation} className="flex items-start gap-2">
@@ -76,7 +76,7 @@ export function EquipmentSummary({ analysis }: EquipmentSummaryProps) {
         </div>
       )}
 
-      <p className="text-xs text-slate-400/80 pt-2 border-t border-[#8B5CF6]/5">
+      <p className="text-xs text-[#8B8DA3]/80 pt-2 border-t border-[#8B5CF6]/5">
         Your workout routine will be personalized based on this equipment.
       </p>
     </div>

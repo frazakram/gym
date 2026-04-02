@@ -65,7 +65,7 @@ export function EmptyState({
         {title}
       </motion.h3>
       <motion.p
-        className="text-sm text-slate-300/70 mb-6 max-w-sm mx-auto leading-relaxed"
+        className="text-sm text-[#8B8DA3] mb-6 max-w-sm mx-auto leading-relaxed"
         variants={itemVariants}
       >
         {description}

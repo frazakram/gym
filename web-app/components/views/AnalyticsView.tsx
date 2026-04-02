@@ -32,7 +32,7 @@ function TrendLineChart({ points }: { points: TrendPoint[] }) {
   const hasAny = points.some((p) => p.value != null && Number.isFinite(p.value))
   if (!hasAny) {
     return (
-      <div className="h-[190px] flex items-center justify-center text-sm text-slate-300/70">
+      <div className="h-[190px] flex items-center justify-center text-sm text-[#8B8DA3]">
         No trend data yet — complete a workout to start tracking.
       </div>
     )
@@ -76,8 +76,8 @@ function TrendLineChart({ points }: { points: TrendPoint[] }) {
     <svg viewBox={`0 0 ${w} ${h}`} className="w-full h-[190px]">
       <defs>
         <linearGradient id="trendFill" x1="0" x2="0" y1="0" y2="1">
-          <stop offset="0%" stopColor="rgba(16,185,129,0.22)" />
-          <stop offset="100%" stopColor="rgba(16,185,129,0.02)" />
+          <stop offset="0%" stopColor="rgba(139,92,246,0.22)" />
+          <stop offset="100%" stopColor="rgba(139,92,246,0.02)" />
         </linearGradient>
       </defs>
 
@@ -121,7 +121,7 @@ function TrendLineChart({ points }: { points: TrendPoint[] }) {
         const firstX = seg[0].x
         return (
           <g key={si}>
-            <path d={d} fill="none" stroke="rgba(16,185,129,0.92)" strokeWidth="2.5" strokeLinejoin="round" />
+            <path d={d} fill="none" stroke="rgba(139,92,246,0.92)" strokeWidth="2.5" strokeLinejoin="round" />
             <path
               d={`${d} L ${lastX.toFixed(2)} ${(h - padB).toFixed(2)} L ${firstX.toFixed(2)} ${(h - padB).toFixed(2)} Z`}
               fill="url(#trendFill)"
@@ -137,7 +137,7 @@ function TrendLineChart({ points }: { points: TrendPoint[] }) {
             cx={p.x}
             cy={p.y}
             r={p.isMissing ? 3 : 3.2}
-            fill={p.isMissing ? 'rgba(148,163,184,0.10)' : 'rgba(16,185,129,0.95)'}
+            fill={p.isMissing ? 'rgba(148,163,184,0.10)' : 'rgba(139,92,246,0.95)'}
             stroke={p.isMissing ? 'rgba(148,163,184,0.35)' : 'rgba(16,185,129,0.0)'}
             strokeWidth={p.isMissing ? 1.2 : 0}
           />
@@ -291,7 +291,7 @@ function StreakCalendar({ days }: { days: AnalyticsPayload['calendar'] }) {
   const slice = days.slice(-84)
   if (!slice.length) {
     return (
-      <div className="text-sm text-slate-300/70">
+      <div className="text-sm text-[#8B8DA3]">
         No streak data yet — complete exercises to start your calendar.
       </div>
     )
@@ -351,7 +351,7 @@ function MonthlyStreakCalendar({
   days: AnalyticsPayload['calendar']
 }) {
   if (!month) {
-    return <div className="text-sm text-slate-300/70">Select a month to view.</div>
+    return <div className="text-sm text-[#8B8DA3]">Select a month to view.</div>
   }
 
   const color = (v: number | null, workouts: number) => {
@@ -397,7 +397,7 @@ function MonthlyStreakCalendar({
 
   return (
     <div>
-      <div className="grid grid-cols-7 gap-1 text-[10px] text-slate-300/60 mb-2">
+      <div className="grid grid-cols-7 gap-1 text-[10px] text-[#8B8DA3] mb-2">
         {weekDayLabels.map((d) => (
           <div key={d} className="text-center">
             {d}
@@ -444,8 +444,8 @@ export function AnalyticsView({ premiumStatus, onUpgrade }: AnalyticsViewProps) 
         <div className="glass rounded-2xl p-8 border border-[#8B5CF6]/10">
           <div className="flex items-start justify-between gap-4">
             <div>
-              <h2 className="text-2xl font-bold text-white mb-2">Analytics (Pro)</h2>
-              <p className="text-slate-300/70 text-sm leading-relaxed">
+              <h2 className="text-2xl font-bold text-white mb-2 font-[family-name:var(--font-display)]">Analytics (Pro)</h2>
+              <p className="text-[#8B8DA3] text-sm leading-relaxed">
                 {trialEndedText
                   ? `Your free trial ended on ${trialEndedText}. Upgrade to unlock your progress dashboard: workout history, completion trends, and consistency insights.`
                   : 'Upgrade to unlock your progress dashboard: workout history, completion trends, and consistency insights.'}
@@ -476,7 +476,7 @@ export function AnalyticsView({ premiumStatus, onUpgrade }: AnalyticsViewProps) 
             >
               Upgrade for ₹1/month
             </button>
-            <div className="text-xs text-slate-300/60 self-center">
+            <div className="text-xs text-[#8B8DA3] self-center">
               Status: {premiumStatus.status ?? 'not subscribed'}
             </div>
           </div>
@@ -619,8 +619,8 @@ export function AnalyticsView({ premiumStatus, onUpgrade }: AnalyticsViewProps) 
       <div className="glass rounded-2xl p-8 border border-[#8B5CF6]/10">
         <div className="flex items-start justify-between gap-4">
           <div>
-            <h2 className="text-2xl font-bold text-white mb-2">Analytics</h2>
-            <p className="text-slate-300/70 text-sm leading-relaxed">
+            <h2 className="text-2xl font-bold text-white mb-2 font-[family-name:var(--font-display)]">Analytics</h2>
+            <p className="text-[#8B8DA3] text-sm leading-relaxed">
               {isTrial
                 ? 'Your free trial is active. Your analytics will appear here. (Next: charts + history panels.)'
                 : 'Your Pro analytics will appear here. (Next: charts + history panels.)'}
@@ -650,16 +650,16 @@ export function AnalyticsView({ premiumStatus, onUpgrade }: AnalyticsViewProps) 
         <div className="mt-6 grid gap-3">
           <div className="glass-soft rounded-xl p-4 border border-[#8B5CF6]/10">
             <div className="text-sm font-semibold text-white">{isTrial ? 'Trial' : 'Subscription'}</div>
-            <div className="text-xs text-slate-300/70 mt-1">
+            <div className="text-xs text-[#8B8DA3] mt-1">
               Status: {premiumStatus.status ?? 'unknown'}
             </div>
             {isTrial && trialEndsText && (
-              <div className="text-xs text-slate-300/70 mt-1">
+              <div className="text-xs text-[#8B8DA3] mt-1">
                 Trial ends: {trialEndsText}
               </div>
             )}
             {premiumStatus.current_end && (
-              <div className="text-xs text-slate-300/70 mt-1">
+              <div className="text-xs text-[#8B8DA3] mt-1">
                 Current period ends: {new Date(premiumStatus.current_end).toLocaleString()}
               </div>
             )}
@@ -669,15 +669,15 @@ export function AnalyticsView({ premiumStatus, onUpgrade }: AnalyticsViewProps) 
             <div className="flex items-center justify-between gap-4">
               <div>
                 <div className="text-sm font-semibold text-white">Streaks</div>
-                <div className="text-xs text-slate-300/70 mt-1">Stay consistent — even small sessions count.</div>
+                <div className="text-xs text-[#8B8DA3] mt-1">Stay consistent — even small sessions count.</div>
               </div>
               <div className="text-right">
                 <div className="text-sm font-bold text-white">{data ? `${data.streak.current} day` : '—'}</div>
-                <div className="text-[11px] text-slate-300/70">Longest: {data ? `${data.streak.longest} day` : '—'}</div>
+                <div className="text-[11px] text-[#8B8DA3]">Longest: {data ? `${data.streak.longest} day` : '—'}</div>
               </div>
             </div>
             {data?.streak?.last_workout_date && (
-              <div className="text-[11px] text-slate-300/70 mt-2">
+              <div className="text-[11px] text-[#8B8DA3] mt-2">
                 Last workout: {formatDateShort(data.streak.last_workout_date)}
               </div>
             )}
@@ -689,7 +689,7 @@ export function AnalyticsView({ premiumStatus, onUpgrade }: AnalyticsViewProps) 
             <div className="flex items-start justify-between gap-4">
               <div>
                 <div className="text-sm font-semibold text-white">Completion trends</div>
-                <div className="text-xs text-slate-300/70 mt-1">
+                <div className="text-xs text-[#8B8DA3] mt-1">
                   {trendMode === 'daily'
                     ? 'Daily (last 30 days)'
                     : trendMode === 'weekly'
@@ -698,7 +698,7 @@ export function AnalyticsView({ premiumStatus, onUpgrade }: AnalyticsViewProps) 
                 </div>
               </div>
               <div className="text-right">
-                <div className="text-[11px] text-slate-300/70">Workouts</div>
+                <div className="text-[11px] text-[#8B8DA3]">Workouts</div>
                 <div className="text-sm font-bold text-white">
                   {data ? (data.calendar?.reduce((a, d) => a + (d.workouts || 0), 0) ?? 0) : '—'}
                 </div>
@@ -712,7 +712,7 @@ export function AnalyticsView({ premiumStatus, onUpgrade }: AnalyticsViewProps) 
                   onClick={() => setTrendMode(m)}
                   className={`px-3 py-1.5 rounded-full text-xs font-semibold border transition ${
                     trendMode === m
-                      ? 'bg-emerald-400/12 border-emerald-400/25 text-emerald-100'
+                      ? 'bg-[#8B5CF6]/12 border-[#8B5CF6]/25 text-[#C4B5FD]'
                       : 'bg-white/5 border-[#8B5CF6]/10 text-slate-200/80 hover:bg-white/10'
                   }`}
                 >
@@ -738,17 +738,17 @@ export function AnalyticsView({ premiumStatus, onUpgrade }: AnalyticsViewProps) 
             <div className="flex items-start justify-between gap-4">
               <div>
                 <div className="text-sm font-semibold text-white">Streak calendar</div>
-                <div className="text-xs text-slate-300/70 mt-1">
+                <div className="text-xs text-[#8B8DA3] mt-1">
                   {calendarMode === 'weeks' ? 'Last 12 weeks' : activeMonth ? `Month: ${activeMonth}` : 'Month view'}
                 </div>
               </div>
               <div className="flex items-center gap-2">
-                <div className="text-xs text-slate-300/70 hidden sm:block">Darker = higher completion</div>
+                <div className="text-xs text-[#8B8DA3] hidden sm:block">Darker = higher completion</div>
                 <button
                   onClick={() => setCalendarMode('weeks')}
                   className={`px-3 py-1.5 rounded-full text-xs font-semibold border transition ${
                     calendarMode === 'weeks'
-                      ? 'bg-emerald-400/12 border-emerald-400/25 text-emerald-100'
+                      ? 'bg-[#8B5CF6]/12 border-[#8B5CF6]/25 text-[#C4B5FD]'
                       : 'bg-white/5 border-[#8B5CF6]/10 text-slate-200/80 hover:bg-white/10'
                   }`}
                 >
@@ -758,7 +758,7 @@ export function AnalyticsView({ premiumStatus, onUpgrade }: AnalyticsViewProps) 
                   onClick={() => setCalendarMode('month')}
                   className={`px-3 py-1.5 rounded-full text-xs font-semibold border transition ${
                     calendarMode === 'month'
-                      ? 'bg-emerald-400/12 border-emerald-400/25 text-emerald-100'
+                      ? 'bg-[#8B5CF6]/12 border-[#8B5CF6]/25 text-[#C4B5FD]'
                       : 'bg-white/5 border-[#8B5CF6]/10 text-slate-200/80 hover:bg-white/10'
                   }`}
                 >
@@ -807,9 +807,9 @@ export function AnalyticsView({ premiumStatus, onUpgrade }: AnalyticsViewProps) 
             <div className="flex items-start justify-between gap-4">
               <div>
                 <div className="text-sm font-semibold text-white">Workout history</div>
-                <div className="text-xs text-slate-300/70 mt-1">Last 10 workouts</div>
+                <div className="text-xs text-[#8B8DA3] mt-1">Last 10 workouts</div>
               </div>
-              <div className="text-xs text-slate-300/70">Completion %</div>
+              <div className="text-xs text-[#8B8DA3]">Completion %</div>
             </div>
 
             {!loading && !error && (data?.workout_history?.length ?? 0) > 0 && (
@@ -839,7 +839,7 @@ export function AnalyticsView({ premiumStatus, onUpgrade }: AnalyticsViewProps) 
                     </div>
                     <div className="min-w-0">
                       <div className="text-sm text-white font-semibold truncate">{formatDateShort(w.date)}</div>
-                      <div className="text-[11px] text-slate-300/70 truncate">{w.dayName}</div>
+                      <div className="text-[11px] text-[#8B8DA3] truncate">{w.dayName}</div>
                     </div>
                     <div className="ml-auto text-sm font-semibold text-emerald-200 shrink-0">{pctText(w.completion)}</div>
                   </div>
@@ -855,7 +855,7 @@ export function AnalyticsView({ premiumStatus, onUpgrade }: AnalyticsViewProps) 
                       <div className="text-sm text-white truncate">
                         {formatDateShort(w.date)} · {w.day_name}
                       </div>
-                      <div className="text-[11px] text-slate-300/70">
+                      <div className="text-[11px] text-[#8B8DA3]">
                         {w.day_name.toLowerCase().includes('rest')
                           ? 'Rest day completed'
                           : `${w.completed_exercises}/${w.total_exercises} exercises`}
@@ -869,7 +869,7 @@ export function AnalyticsView({ premiumStatus, onUpgrade }: AnalyticsViewProps) 
             )}
 
             {!loading && !error && (data?.workout_history?.length ?? 0) === 0 && (
-              <div className="text-sm text-slate-300/70 mt-3">
+              <div className="text-sm text-[#8B8DA3] mt-3">
                 No workouts detected yet. Mark exercises as completed in the Workout tab to start building analytics.
               </div>
             )}

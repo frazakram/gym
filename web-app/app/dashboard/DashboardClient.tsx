@@ -151,6 +151,10 @@ export default function DashboardPage() {
   const [dayCompletions, setDayCompletions] = useState<Map<number, boolean>>(new Map())
   const [userId, setUserId] = useState<number | null>(null)
   
+  // Stale routine detection: true when the loaded routine is from a past week
+  const [routineIsStale, setRoutineIsStale] = useState(false)
+  const [weeksElapsed, setWeeksElapsed] = useState(0)
+
   // Heatmap data for activity tracking
   const [heatmapData, setHeatmapData] = useState<Array<{ date: string; value: number }>>([])
   const [heatmapLoading, setHeatmapLoading] = useState(false)
@@ -211,6 +215,32 @@ export default function DashboardPage() {
         setRoutine(routine.routine_json)
         setCurrentRoutineId(routine.id)
         setCurrentWeekNumber(routine.week_number)
+
+        // Detect stale routine: check if week_start_date is from a past week
+        const routineWeekStart = routine.week_start_date
+          ? new Date(routine.week_start_date)
+          : new Date(routine.created_at)
+        const now = new Date()
+        const currentMonday = new Date(now)
+        const dayOfWeek = (now.getDay() + 6) % 7
+        currentMonday.setHours(0, 0, 0, 0)
+        currentMonday.setDate(now.getDate() - dayOfWeek)
+
+        const routineMonday = new Date(routineWeekStart)
+        const rDow = (routineWeekStart.getDay() + 6) % 7
+        routineMonday.setHours(0, 0, 0, 0)
+        routineMonday.setDate(routineWeekStart.getDate() - rDow)
+
+        const diffMs = currentMonday.getTime() - routineMonday.getTime()
+        const diffWeeks = Math.round(diffMs / (7 * 24 * 60 * 60 * 1000))
+
+        if (diffWeeks >= 1) {
+          setRoutineIsStale(true)
+          setWeeksElapsed(diffWeeks)
+        } else {
+          setRoutineIsStale(false)
+          setWeeksElapsed(0)
+        }
 
         const compRes = await csrfFetch(`/api/completions?routineId=${routine.id}`)
         const { completions } = await compRes.json()
@@ -599,7 +629,11 @@ export default function DashboardPage() {
     setSuccess('')
 
     try {
-      const targetWeekNumber = isNextWeek ? currentWeekNumber + 1 : currentWeekNumber
+      // When routine is stale and user regenerates, advance to current calendar week
+      const effectiveWeekNumber = routineIsStale && !isNextWeek
+        ? currentWeekNumber + weeksElapsed
+        : currentWeekNumber
+      const targetWeekNumber = isNextWeek ? effectiveWeekNumber + 1 : effectiveWeekNumber
       const baseMonday = mondayOfThisWeekLocal(new Date())
       const targetWeekStart = new Date(baseMonday)
       targetWeekStart.setDate(baseMonday.getDate() + (isNextWeek ? 7 : 0))
@@ -673,6 +707,9 @@ export default function DashboardPage() {
         setSuccess('Routine generated successfully.')
         setExerciseCompletions(new Map())
         setDayCompletions(new Map())
+        // Clear stale state since we just generated a fresh routine
+        setRoutineIsStale(false)
+        setWeeksElapsed(0)
         await saveRoutineToDatabase(data.routine, targetWeekNumber, targetWeekStart)
 
         // Auto-trigger diet generation if routine is new
@@ -830,6 +867,12 @@ export default function DashboardPage() {
 
   const handleGenerateNextWeek = async () => {
     await handleGenerateRoutine(true)
+  }
+
+  // Start a fresh routine for the current calendar week when returning after a gap
+  const handleStartNewWeek = async () => {
+    // This regenerates with the stale-aware week number calculation
+    await performGeneration(false)
   }
 
   const calculateCompletionPercentage = () => {
@@ -1189,6 +1232,9 @@ export default function DashboardPage() {
                 onGenerateNextWeek={handleGenerateNextWeek}
                 generating={generating}
                 viewingHistory={viewingHistory}
+                routineIsStale={routineIsStale}
+                weeksElapsed={weeksElapsed}
+                onStartNewWeek={handleStartNewWeek}
               />
             )}
 
@@ -1208,6 +1254,9 @@ export default function DashboardPage() {
                 viewingHistory={viewingHistory}
                 dayCompletions={dayCompletions}
                 onToggleDayComplete={handleToggleDayComplete}
+                routineIsStale={routineIsStale}
+                weeksElapsed={weeksElapsed}
+                onStartNewWeek={handleStartNewWeek}
               />
             )}
 

@@ -12,7 +12,7 @@ import { Collapsible } from '../ui/Collapsible'
 import { ProgressSkeleton, WorkoutCardSkeleton } from '../ui/SkeletonLoader'
 import { HeatMap } from '../ui/HeatMap'
 import { UserAvatar } from '../ui/UserAvatar'
-import { ArrowRight, Timer, Percent, MessageCircle, ChevronRight, Flame, Drumstick } from 'lucide-react'
+import { ArrowRight, Timer, Percent, MessageCircle, ChevronRight, Flame, Drumstick, CalendarPlus } from 'lucide-react'
 
 const stagger = {
   hidden: {},
@@ -38,6 +38,9 @@ interface HomeViewProps {
   onGenerateNextWeek: () => void
   generating: boolean
   viewingHistory?: boolean
+  routineIsStale?: boolean
+  weeksElapsed?: number
+  onStartNewWeek?: () => void
 }
 
 export function HomeView({
@@ -54,6 +57,9 @@ export function HomeView({
   onGenerateNextWeek,
   generating,
   viewingHistory = false,
+  routineIsStale = false,
+  weeksElapsed = 0,
+  onStartNewWeek,
 }: HomeViewProps) {
   const [manageOpen, setManageOpen] = useState(false)
 
@@ -125,6 +131,39 @@ export function HomeView({
           Week {currentWeekNumber}
         </div>
       </motion.div>
+
+      {/* Stale routine banner */}
+      {routineIsStale && routine && !viewingHistory && (
+        <motion.div variants={fadeUp}>
+          <GlassCard className="p-4 bg-gradient-to-r from-[#8B5CF6]/10 to-[#22D3EE]/5 border-[#8B5CF6]/25">
+            <div className="flex items-start gap-3">
+              <div className="w-10 h-10 rounded-xl bg-[#8B5CF6]/15 flex items-center justify-center shrink-0">
+                <CalendarPlus className="w-5 h-5 text-[#A78BFA]" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-semibold text-white">
+                  Welcome back! You&apos;ve been away {weeksElapsed} week{weeksElapsed !== 1 ? 's' : ''}
+                </p>
+                <p className="text-xs text-[#8B8DA3] mt-1">
+                  Your last routine is from Week {currentWeekNumber}. Generate a fresh plan for this week.
+                </p>
+                <div className="mt-3">
+                  <AnimatedButton
+                    onClick={onStartNewWeek}
+                    disabled={generating}
+                    loading={generating}
+                    variant="primary"
+                    fullWidth
+                    icon={<ArrowRight className="w-4 h-4" />}
+                  >
+                    {generating ? 'Generating...' : `Start Week ${currentWeekNumber + weeksElapsed}`}
+                  </AnimatedButton>
+                </div>
+              </div>
+            </div>
+          </GlassCard>
+        </motion.div>
+      )}
 
       {/* Today */}
       {generating && !routine ? (
@@ -268,7 +307,17 @@ export function HomeView({
               }
             >
               <div className="space-y-2">
-                {progress.percentage >= 80 ? (
+                {routineIsStale && onStartNewWeek ? (
+                  <AnimatedButton
+                    onClick={onStartNewWeek}
+                    disabled={generating}
+                    loading={generating}
+                    variant="primary"
+                    fullWidth
+                  >
+                    {generating ? 'Generating...' : `Start Week ${currentWeekNumber + weeksElapsed}`}
+                  </AnimatedButton>
+                ) : progress.percentage >= 80 ? (
                   <AnimatedButton
                     onClick={onGenerateNextWeek}
                     disabled={generating}
