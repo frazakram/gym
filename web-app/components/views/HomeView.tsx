@@ -9,11 +9,11 @@ import { AnimatedButton } from '../ui/AnimatedButton'
 import { GlassCard } from '../ui/GlassCard'
 import { SectionHeader } from '../ui/SectionHeader'
 import { Collapsible } from '../ui/Collapsible'
-import { ProgressSkeleton, WorkoutCardSkeleton } from '../ui/SkeletonLoader'
 import { HeatMap } from '../ui/HeatMap'
 import { UserAvatar } from '../ui/UserAvatar'
 import { StreakBanner } from '../ui/StreakBanner'
 import { RestDayCard } from '../ui/RestDayCard'
+import { QuoteLoader } from '../ui/QuoteLoader'
 import { ArrowRight, Timer, Percent, MessageCircle, ChevronRight, Flame, Drumstick, CalendarPlus } from 'lucide-react'
 
 const stagger = {
@@ -182,7 +182,7 @@ export function HomeView({
 
       {/* Today */}
       {generating && !routine ? (
-        <motion.div variants={fadeUp}><WorkoutCardSkeleton /></motion.div>
+        <motion.div variants={fadeUp}><QuoteLoader mode="full" category="generation" /></motion.div>
       ) : routine && todaysPlan ? (
         <motion.div variants={fadeUp}>
           <GlassCard className="p-4 overflow-hidden">
@@ -261,7 +261,7 @@ export function HomeView({
 
       {/* Weekly progress */}
       {generating && routine ? (
-        <motion.div variants={fadeUp}><ProgressSkeleton /></motion.div>
+        <motion.div variants={fadeUp}><QuoteLoader mode="compact" category="workout" /></motion.div>
       ) : routine ? (
         <motion.div variants={fadeUp}>
           <GlassCard className="p-4">

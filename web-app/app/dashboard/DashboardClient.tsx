@@ -20,9 +20,22 @@ import { compressImage } from '@/lib/image-utils'
 import { OfflineIndicator } from '@/components/OfflineIndicator'
 import { useSessionPersistence, clearSessionIndicator } from '@/lib/useSessionPersistence'
 import { csrfFetch } from '@/lib/useCsrf'
+import { TabQuote } from '@/components/ui/TabQuote'
+import { type QuoteCategory } from '@/lib/quotes'
 import { Menu } from 'lucide-react'
 import { toast } from 'sonner'
 import { AnimatePresence, motion } from 'framer-motion'
+
+const VIEW_QUOTE_CATEGORY: Record<string, QuoteCategory> = {
+  home: 'general',
+  routine: 'workout',
+  workout: 'workout',
+  diet: 'diet',
+  analytics: 'analytics',
+  coach: 'coach',
+  profile: 'general',
+  measurements: 'analytics',
+}
 
 export default function DashboardPage() {
   const router = useRouter()
@@ -1240,6 +1253,12 @@ export default function DashboardPage() {
             exit={{ opacity: 0, y: -8 }}
             transition={{ duration: 0.2, ease: 'easeInOut' as const }}
           >
+            <TabQuote
+              key={`quote-${activeView}`}
+              category={VIEW_QUOTE_CATEGORY[activeView] || 'general'}
+              triggerKey={activeView}
+            />
+
             {activeView === 'home' && (
               <HomeView
                 profile={profile}

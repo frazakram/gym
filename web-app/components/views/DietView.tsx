@@ -9,6 +9,7 @@ import { Utensils, RefreshCw } from 'lucide-react'
 import { GlassCard } from '../ui/GlassCard'
 import { SectionHeader } from '../ui/SectionHeader'
 import { AnimatedButton } from '../ui/AnimatedButton'
+import { QuoteLoader } from '../ui/QuoteLoader'
 
 const stagger = {
   hidden: {},
@@ -30,18 +31,22 @@ export const DietView: React.FC<DietViewProps> = ({ diet, onGenerateDiet, genera
   if (!diet) {
     return (
       <div className="pb-24 px-4 py-6 text-center">
-        <GlassCard className="p-8 flex flex-col items-center">
-          <div className="w-16 h-16 rounded-2xl bg-[#8B5CF6]/12 border border-[#8B5CF6]/20 flex items-center justify-center mb-4">
-            <Utensils className="w-8 h-8 text-[#A78BFA]" />
-          </div>
-          <h2 className="text-2xl font-bold text-white mb-3 font-[family-name:var(--font-display)]">Nutrition Plan</h2>
-          <p className="text-[#8B8DA3] mb-6">
-            Generate a personalized meal plan tailored to your goal, diet type (e.g., Keto, Vegan), and calorie needs.
-          </p>
-          <AnimatedButton onClick={onGenerateDiet} disabled={generating} loading={generating} variant="primary">
-            {generating ? 'Generating plan...' : 'Generate diet plan'}
-          </AnimatedButton>
-        </GlassCard>
+        {generating ? (
+          <QuoteLoader mode="full" category="diet" />
+        ) : (
+          <GlassCard className="p-8 flex flex-col items-center">
+            <div className="w-16 h-16 rounded-2xl bg-[#8B5CF6]/12 border border-[#8B5CF6]/20 flex items-center justify-center mb-4">
+              <Utensils className="w-8 h-8 text-[#A78BFA]" />
+            </div>
+            <h2 className="text-2xl font-bold text-white mb-3 font-[family-name:var(--font-display)]">Nutrition Plan</h2>
+            <p className="text-[#8B8DA3] mb-6">
+              Generate a personalized meal plan tailored to your goal, diet type (e.g., Keto, Vegan), and calorie needs.
+            </p>
+            <AnimatedButton onClick={onGenerateDiet} disabled={generating} loading={generating} variant="primary">
+              Generate diet plan
+            </AnimatedButton>
+          </GlassCard>
+        )}
       </div>
     )
   }
