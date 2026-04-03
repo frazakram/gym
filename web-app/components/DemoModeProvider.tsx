@@ -1,10 +1,10 @@
 'use client'
 
-import { createContext, useContext, useEffect, useState, useCallback, useRef } from 'react'
+import { createContext, useContext, useEffect, useLayoutEffect, useState, useCallback, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { getDemoResponse, isMutationAuthRequired } from '@/lib/demo-data'
 import { AnimatePresence, motion } from 'framer-motion'
-import { Lock, LogIn, UserPlus, X } from 'lucide-react'
+import { Lock, LogIn, UserPlus, X, Dumbbell } from 'lucide-react'
 
 interface DemoModeContextValue {
   isDemo: boolean
@@ -18,6 +18,7 @@ export const useDemoMode = () => useContext(DemoModeContext)
 export function DemoModeProvider({ children }: { children: React.ReactNode }) {
   const [showLoginPrompt, setShowLoginPrompt] = useState(false)
   const [promptMessage, setPromptMessage] = useState('')
+  const [interceptorReady, setInterceptorReady] = useState(false)
   const originalFetchRef = useRef<typeof window.fetch | null>(null)
   const router = useRouter()
 
@@ -26,7 +27,9 @@ export function DemoModeProvider({ children }: { children: React.ReactNode }) {
     setShowLoginPrompt(true)
   }, [])
 
-  useEffect(() => {
+  // Use useLayoutEffect so the interceptor is installed BEFORE children render/mount
+  // This prevents DashboardClient's useEffect from calling real fetch
+  useLayoutEffect(() => {
     // Set demo CSRF cookie
     document.cookie = 'csrf_token=demo-csrf-token; path=/'
 
@@ -93,6 +96,9 @@ export function DemoModeProvider({ children }: { children: React.ReactNode }) {
       return originalFetchRef.current!(input, init)
     }
 
+    // Mark interceptor as ready — children can now render
+    setInterceptorReady(true)
+
     // Cleanup
     return () => {
       if (originalFetchRef.current) {
@@ -102,6 +108,25 @@ export function DemoModeProvider({ children }: { children: React.ReactNode }) {
       document.cookie = 'csrf_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT'
     }
   }, [promptLogin, router])
+
+  // Don't render children until the fetch interceptor is installed
+  // This prevents DashboardClient from making real API calls
+  if (!interceptorReady) {
+    return (
+      <div className="min-h-screen bg-[#0A0A14] flex items-center justify-center">
+        <motion.div
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className="flex flex-col items-center gap-3"
+        >
+          <div className="h-12 w-12 rounded-2xl bg-gradient-to-br from-[#8B5CF6] to-[#6D28D9] flex items-center justify-center shadow-lg shadow-[#8B5CF6]/30">
+            <Dumbbell size={22} className="text-white" />
+          </div>
+          <p className="text-sm text-white/40">Loading GymBro...</p>
+        </motion.div>
+      </div>
+    )
+  }
 
   return (
     <DemoModeContext.Provider value={{ isDemo: true, promptLogin }}>

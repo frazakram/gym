@@ -126,19 +126,87 @@ export const DEMO_ROUTINE: WeeklyRoutine = {
   ],
 }
 
-// ── Weekly Diet ──
+// ── Weekly Diet (varied meals each day, North Indian cuisine) ──
 export const DEMO_DIET: WeeklyDiet = {
-  days: Array.from({ length: 7 }, (_, i) => ({
-    day: `Day ${i + 1}`,
-    meals: [
-      { name: 'Breakfast — Paneer Paratha', calories: 520, protein: 28, carbs: 45, fats: 24, ingredients: '2 whole wheat parathas stuffed with 100g paneer, 1 tbsp ghee, 100ml curd, green chutney' },
-      { name: 'Lunch — Chicken Curry & Rice', calories: 680, protein: 45, carbs: 65, fats: 22, ingredients: '200g chicken breast curry with tomato-onion gravy, 150g basmati rice, 1 roti, salad' },
-      { name: 'Protein Shake (Post-Workout)', calories: 250, protein: 35, carbs: 20, fats: 5, ingredients: '1 scoop whey protein (30g), 1 banana, 200ml milk, 1 tbsp peanut butter' },
-      { name: 'Dinner — Dal Tadka & Roti', calories: 580, protein: 32, carbs: 62, fats: 18, ingredients: '1 bowl masoor dal with ghee tadka, 2 rotis, 100g mixed vegetables, raita' },
-    ],
-    total_calories: i % 2 === 0 ? 2530 : 2480,
-    total_protein: i % 2 === 0 ? 152 : 148,
-  })),
+  days: [
+    {
+      day: 'Day 1',
+      meals: [
+        { name: 'Breakfast — Paneer Paratha', calories: 520, protein: 28, carbs: 45, fats: 24, ingredients: '2 whole wheat parathas stuffed with 100g paneer, 1 tbsp ghee, 100ml curd, green chutney' },
+        { name: 'Lunch — Chicken Curry & Rice', calories: 680, protein: 45, carbs: 65, fats: 22, ingredients: '200g chicken breast curry with tomato-onion gravy, 150g basmati rice, 1 roti, salad' },
+        { name: 'Protein Shake (Post-Workout)', calories: 250, protein: 35, carbs: 20, fats: 5, ingredients: '1 scoop whey protein (30g), 1 banana, 200ml milk, 1 tbsp peanut butter' },
+        { name: 'Dinner — Dal Tadka & Roti', calories: 580, protein: 32, carbs: 62, fats: 18, ingredients: '1 bowl masoor dal with ghee tadka, 2 rotis, 100g mixed vegetables, raita' },
+      ],
+      total_calories: 2530,
+      total_protein: 152,
+    },
+    {
+      day: 'Day 2',
+      meals: [
+        { name: 'Breakfast — Egg Bhurji & Toast', calories: 480, protein: 32, carbs: 35, fats: 22, ingredients: '4 whole eggs scrambled with onion, tomato, green chili, 2 multigrain toast, 1 glass milk' },
+        { name: 'Lunch — Rajma Chawal', calories: 620, protein: 28, carbs: 82, fats: 16, ingredients: '1.5 bowls rajma curry, 150g steamed rice, 1 roti, cucumber raita, pickle' },
+        { name: 'Protein Shake (Post-Workout)', calories: 250, protein: 35, carbs: 20, fats: 5, ingredients: '1 scoop whey protein (30g), 1 banana, 200ml milk, 1 tbsp peanut butter' },
+        { name: 'Dinner — Grilled Chicken Tikka', calories: 640, protein: 52, carbs: 40, fats: 24, ingredients: '250g chicken tikka (grilled), 2 roomali roti, mint chutney, onion salad, 100g paneer salad' },
+      ],
+      total_calories: 2490,
+      total_protein: 147,
+    },
+    {
+      day: 'Day 3',
+      meals: [
+        { name: 'Breakfast — Moong Dal Chilla', calories: 440, protein: 26, carbs: 48, fats: 16, ingredients: '3 moong dal chillas with paneer stuffing, green chutney, 1 glass buttermilk, 5 almonds' },
+        { name: 'Lunch — Mutton Keema & Roti', calories: 720, protein: 48, carbs: 52, fats: 32, ingredients: '200g mutton keema with peas, 2 tandoori rotis, 1 bowl mixed veg, raita' },
+        { name: 'Protein Shake (Post-Workout)', calories: 250, protein: 35, carbs: 20, fats: 5, ingredients: '1 scoop whey protein (30g), 1 banana, 200ml milk, 1 tbsp peanut butter' },
+        { name: 'Dinner — Palak Paneer & Rice', calories: 600, protein: 30, carbs: 58, fats: 26, ingredients: '150g palak paneer, 120g basmati rice, 1 roti, 1 bowl dal, salad' },
+      ],
+      total_calories: 2510,
+      total_protein: 149,
+    },
+    {
+      day: 'Day 4',
+      meals: [
+        { name: 'Breakfast — Oats Upma & Eggs', calories: 490, protein: 30, carbs: 50, fats: 18, ingredients: '1 bowl masala oats upma with vegetables, 3 boiled eggs, 1 glass orange juice' },
+        { name: 'Lunch — Fish Curry & Rice', calories: 650, protein: 44, carbs: 62, fats: 20, ingredients: '200g rohu fish curry, 150g steamed rice, 1 roti, spinach sabzi, lemon wedge' },
+        { name: 'Protein Shake (Post-Workout)', calories: 250, protein: 35, carbs: 20, fats: 5, ingredients: '1 scoop whey protein (30g), 1 banana, 200ml milk, 1 tbsp peanut butter' },
+        { name: 'Dinner — Chole & Bhature (Baked)', calories: 610, protein: 26, carbs: 72, fats: 22, ingredients: '1.5 bowls chole curry, 2 baked bhature, onion-tomato salad, green chutney' },
+      ],
+      total_calories: 2500,
+      total_protein: 145,
+    },
+    {
+      day: 'Day 5',
+      meals: [
+        { name: 'Breakfast — Aloo Paratha & Curd', calories: 540, protein: 18, carbs: 58, fats: 26, ingredients: '2 aloo parathas with 1 tbsp butter, 150ml dahi, pickle, 1 glass lassi' },
+        { name: 'Lunch — Tandoori Chicken & Naan', calories: 700, protein: 50, carbs: 55, fats: 28, ingredients: '250g tandoori chicken leg, 1 butter naan, dal makhani, green salad, mint raita' },
+        { name: 'Protein Shake (Post-Workout)', calories: 250, protein: 35, carbs: 20, fats: 5, ingredients: '1 scoop whey protein (30g), 1 banana, 200ml milk, 1 tbsp peanut butter' },
+        { name: 'Dinner — Egg Curry & Jeera Rice', calories: 560, protein: 34, carbs: 55, fats: 20, ingredients: '4 egg curry (boiled eggs in onion-tomato gravy), 120g jeera rice, 1 roti, salad' },
+      ],
+      total_calories: 2550,
+      total_protein: 147,
+    },
+    {
+      day: 'Day 6',
+      meals: [
+        { name: 'Breakfast — Poha & Sprouts', calories: 420, protein: 20, carbs: 55, fats: 14, ingredients: '1.5 bowls kanda poha with peanuts, 1 bowl moong sprouts chaat, 1 glass milk' },
+        { name: 'Lunch — Butter Chicken & Rice', calories: 720, protein: 48, carbs: 60, fats: 30, ingredients: '200g butter chicken (less cream), 150g basmati rice, 1 roti, onion rings, raita' },
+        { name: 'Protein Shake (Post-Workout)', calories: 250, protein: 35, carbs: 20, fats: 5, ingredients: '1 scoop whey protein (30g), 1 banana, 200ml milk, 1 tbsp peanut butter' },
+        { name: 'Dinner — Mixed Dal & Roti', calories: 560, protein: 30, carbs: 65, fats: 18, ingredients: 'Panchmel dal (5 dals), 2 rotis, baingan bharta, cucumber-tomato salad' },
+      ],
+      total_calories: 2450,
+      total_protein: 143,
+    },
+    {
+      day: 'Day 7',
+      meals: [
+        { name: 'Breakfast — Stuffed Besan Chilla', calories: 460, protein: 24, carbs: 40, fats: 22, ingredients: '3 besan chillas stuffed with paneer-veg mix, green chutney, 1 glass milk, 4 walnuts' },
+        { name: 'Lunch — Chicken Biryani', calories: 700, protein: 42, carbs: 75, fats: 24, ingredients: '1 plate chicken dum biryani (200g chicken, 180g rice), raita, boiled egg, salad' },
+        { name: 'Snack — Peanut Butter Toast', calories: 320, protein: 14, carbs: 30, fats: 16, ingredients: '2 multigrain toast, 2 tbsp peanut butter, 1 banana, 1 cup green tea' },
+        { name: 'Dinner — Paneer Tikka & Roti', calories: 560, protein: 34, carbs: 42, fats: 26, ingredients: '200g paneer tikka (grilled), 2 rotis, mixed veg raita, mint chutney, salad' },
+      ],
+      total_calories: 2440,
+      total_protein: 124,
+    },
+  ],
 }
 
 // ── Heatmap (56 days) ──
