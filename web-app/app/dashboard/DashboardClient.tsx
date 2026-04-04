@@ -1064,7 +1064,7 @@ export default function DashboardPage() {
       const response = await csrfFetch('/api/gym/analyze', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ images: updatedPhotos.map(p => p.base64) })
+        body: JSON.stringify({ images: updatedPhotos.map(p => p.base64), api_key: userApiKey || undefined })
       })
 
       if (!response.ok) throw new Error('Failed to analyze equipment')
@@ -1092,7 +1092,7 @@ export default function DashboardPage() {
         const response = await csrfFetch('/api/gym/analyze', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ images: updatedPhotos.map(p => p.base64) })
+          body: JSON.stringify({ images: updatedPhotos.map(p => p.base64), api_key: userApiKey || undefined })
         })
         const { analysis } = await response.json()
         setEquipmentAnalysis(analysis)
@@ -1131,7 +1131,7 @@ export default function DashboardPage() {
       const response = await csrfFetch('/api/body/analyze', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ images: updatedPhotos.map(p => p.base64) })
+        body: JSON.stringify({ images: updatedPhotos.map(p => p.base64), api_key: userApiKey || undefined })
       })
 
       if (!response.ok) throw new Error('Failed to analyze body composition')
@@ -1184,7 +1184,7 @@ export default function DashboardPage() {
         const response = await csrfFetch('/api/body/analyze', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ images: updatedPhotos.map(p => p.base64) })
+          body: JSON.stringify({ images: updatedPhotos.map(p => p.base64), api_key: userApiKey || undefined })
         })
         const { analysis } = await response.json()
         setBodyAnalysis(analysis)

@@ -2,18 +2,16 @@ import { NextRequest, NextResponse } from 'next/server'
 import OpenAI from 'openai'
 import type { BodyCompositionAnalysis } from '@/types'
 
-let _openai: OpenAI | null = null
-function getOpenAI() {
-  if (!_openai) {
-    _openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
-  }
-  return _openai
+function getOpenAI(clientKey?: string) {
+  const apiKey = clientKey || process.env.OPENAI_API_KEY
+  if (!apiKey) throw new Error('OpenAI API key is required. Add it in AI Settings (sidebar).')
+  return new OpenAI({ apiKey, baseURL: 'https://api.openai.com/v1' })
 }
 
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json()
-    const { images } = body
+    const { images, api_key } = body
 
     if (!images || !Array.isArray(images) || images.length === 0) {
       return NextResponse.json(
@@ -79,7 +77,8 @@ Return your analysis as a JSON object with these fields:
   "confidence_score": 0.85
 }`
 
-    const response = await getOpenAI().chat.completions.create({
+    const clientKey = typeof api_key === 'string' ? api_key.trim() : undefined
+    const response = await getOpenAI(clientKey).chat.completions.create({
       model: 'gpt-4o',
       messages: [
         {

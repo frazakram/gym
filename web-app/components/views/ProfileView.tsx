@@ -3,7 +3,7 @@
 import { useMemo, useState } from 'react'
 import Link from 'next/link'
 import { motion } from 'framer-motion'
-import { LogOut, ChevronRight, Settings } from 'lucide-react'
+import { LogOut, ChevronRight, Settings, Camera, Dumbbell, CheckCircle, AlertCircle } from 'lucide-react'
 import { Profile, GymPhoto, GymEquipmentAnalysis, BodyPhoto, BodyCompositionAnalysis } from '@/types'
 import { GlassCard } from '../ui/GlassCard'
 import { SectionHeader } from '../ui/SectionHeader'
@@ -11,6 +11,7 @@ import { Chip } from '../ui/Chip'
 import { AnimatedButton, IconButton } from '../ui/AnimatedButton'
 import { Collapsible } from '../ui/Collapsible'
 import { UserAvatar } from '../ui/UserAvatar'
+import { ImageUploadCard } from '../ui/ImageUploadCard'
 
 const stagger = {
   hidden: {},
@@ -126,6 +127,8 @@ export function ProfileView({
 }: ProfileViewProps) {
   const [advancedNutritionOpen, setAdvancedNutritionOpen] = useState(false)
   const [notesOpen, setNotesOpen] = useState(false)
+  const [gymPhotosOpen, setGymPhotosOpen] = useState(false)
+  const [bodyPhotosOpen, setBodyPhotosOpen] = useState(false)
 
   const goalOptions: Profile['goal'][] = useMemo(
     () => ['General fitness', 'Fat loss', 'Muscle gain', 'Strength', 'Recomposition', 'Endurance'],
@@ -479,8 +482,141 @@ export function ProfileView({
       </GlassCard>
       </motion.div>
 
-      {/* Gym Photos — hidden while vision API is unavailable */}
-      {/* Body Analysis — hidden while vision API is unavailable */}
+      {/* Gym Equipment Photos (optional) */}
+      <motion.div variants={fadeUp}>
+      <GlassCard className="p-4">
+        <Collapsible
+          open={gymPhotosOpen}
+          onToggle={() => setGymPhotosOpen(v => !v)}
+          header={
+            <div className="flex items-center justify-between w-full">
+              <div className="flex items-center gap-2">
+                <Dumbbell className="w-4 h-4 text-[#8B5CF6]" />
+                <div>
+                  <p className="text-sm font-semibold text-white">Gym Equipment</p>
+                  <p className="text-[10px] text-[#8B8DA3]">Upload gym photos for equipment-aware routines</p>
+                </div>
+                {equipmentAnalysis && <CheckCircle className="w-3.5 h-3.5 text-green-400" />}
+              </div>
+              <ChevronRight className={`w-4 h-4 text-[#8B8DA3] transition-transform ${gymPhotosOpen ? 'rotate-90' : ''}`} />
+            </div>
+          }
+        >
+          <div className="mt-3 space-y-3">
+            <p className="text-xs text-[#8B8DA3]">
+              Upload 1–6 photos of your gym. AI will detect equipment and tailor exercises to what you have available.
+            </p>
+            {onGymPhotoUpload && onGymPhotoDelete && (
+              <ImageUploadCard
+                images={gymPhotos}
+                maxImages={6}
+                maxSizeMB={5}
+                onUpload={onGymPhotoUpload}
+                onDelete={onGymPhotoDelete}
+                loading={analyzingEquipment}
+                error={equipmentError}
+              />
+            )}
+
+            {/* Equipment analysis results */}
+            {equipmentAnalysis && (
+              <div className="mt-3 p-3 glass-soft rounded-xl border border-[#8B5CF6]/10 space-y-2">
+                <p className="text-xs font-medium text-[#8B5CF6]">Detected Equipment</p>
+                <div className="flex flex-wrap gap-1.5">
+                  {equipmentAnalysis.equipment_detected?.map((item, i) => (
+                    <span key={i} className="text-[10px] px-2 py-0.5 rounded-full bg-[#8B5CF6]/15 text-[#C4B5FD]">
+                      {item}
+                    </span>
+                  ))}
+                </div>
+                <div className="grid grid-cols-2 gap-2 text-[10px] text-[#8B8DA3]">
+                  <div>Type: <span className="text-white capitalize">{equipmentAnalysis.gym_type}</span></div>
+                  <div>Space: <span className="text-white capitalize">{equipmentAnalysis.space_assessment}</span></div>
+                </div>
+                {equipmentAnalysis.limitations && equipmentAnalysis.limitations.length > 0 && (
+                  <div className="flex items-start gap-1.5 mt-1">
+                    <AlertCircle className="w-3 h-3 text-amber-400 mt-0.5 shrink-0" />
+                    <p className="text-[10px] text-amber-300/80">{equipmentAnalysis.limitations.join('; ')}</p>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        </Collapsible>
+      </GlassCard>
+      </motion.div>
+
+      {/* Body Composition Photos (optional) */}
+      <motion.div variants={fadeUp}>
+      <GlassCard className="p-4">
+        <Collapsible
+          open={bodyPhotosOpen}
+          onToggle={() => setBodyPhotosOpen(v => !v)}
+          header={
+            <div className="flex items-center justify-between w-full">
+              <div className="flex items-center gap-2">
+                <Camera className="w-4 h-4 text-[#8B5CF6]" />
+                <div>
+                  <p className="text-sm font-semibold text-white">Body Analysis</p>
+                  <p className="text-[10px] text-[#8B8DA3]">Upload body photos for personalized training</p>
+                </div>
+                {bodyAnalysis && <CheckCircle className="w-3.5 h-3.5 text-green-400" />}
+              </div>
+              <ChevronRight className={`w-4 h-4 text-[#8B8DA3] transition-transform ${bodyPhotosOpen ? 'rotate-90' : ''}`} />
+            </div>
+          }
+        >
+          <div className="mt-3 space-y-3">
+            <p className="text-xs text-[#8B8DA3]">
+              Upload 1–2 body photos. AI will assess body composition and personalize your routine for faster results.
+            </p>
+            {onBodyPhotoUpload && onBodyPhotoDelete && (
+              <ImageUploadCard
+                images={bodyPhotos}
+                maxImages={2}
+                maxSizeMB={5}
+                onUpload={onBodyPhotoUpload}
+                onDelete={onBodyPhotoDelete}
+                loading={analyzingBody}
+                error={bodyError}
+              />
+            )}
+
+            {/* Body analysis results */}
+            {bodyAnalysis && (
+              <div className="mt-3 p-3 glass-soft rounded-xl border border-[#8B5CF6]/10 space-y-2">
+                <p className="text-xs font-medium text-[#8B5CF6]">Analysis Results</p>
+                <div className="grid grid-cols-2 gap-2 text-[10px] text-[#8B8DA3]">
+                  <div>Body Type: <span className="text-white capitalize">{bodyAnalysis.body_type}</span></div>
+                  <div>Muscle Dev: <span className="text-white capitalize">{bodyAnalysis.muscle_development}</span></div>
+                  {bodyAnalysis.estimated_body_fat_range && (
+                    <div className="col-span-2">Est. Body Fat: <span className="text-white">{bodyAnalysis.estimated_body_fat_range}</span></div>
+                  )}
+                </div>
+                {bodyAnalysis.focus_areas && bodyAnalysis.focus_areas.length > 0 && (
+                  <div>
+                    <p className="text-[10px] text-[#8B8DA3] mb-1">Focus Areas:</p>
+                    <div className="flex flex-wrap gap-1.5">
+                      {bodyAnalysis.focus_areas.map((area, i) => (
+                        <span key={i} className="text-[10px] px-2 py-0.5 rounded-full bg-[#8B5CF6]/15 text-[#C4B5FD]">
+                          {area}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                {bodyAnalysis.realistic_timeline && (
+                  <p className="text-[10px] text-green-300/80">🎯 {bodyAnalysis.realistic_timeline}</p>
+                )}
+                {bodyAnalysis.overall_assessment && (
+                  <p className="text-[10px] text-[#8B8DA3] mt-1 leading-relaxed">{bodyAnalysis.overall_assessment}</p>
+                )}
+              </div>
+            )}
+          </div>
+        </Collapsible>
+      </GlassCard>
+      </motion.div>
 
       {/* Nutrition preferences */}
       <motion.div variants={fadeUp}>

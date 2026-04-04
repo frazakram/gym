@@ -43,7 +43,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { images } = await request.json();
+    const { images, api_key } = await request.json();
 
     if (!images || !Array.isArray(images) || images.length === 0) {
       return NextResponse.json(
@@ -59,11 +59,11 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Get OpenAI API key
-    const apiKey = process.env.OPENAI_API_KEY;
+    // Get OpenAI API key (prefer client key from AI Settings)
+    const apiKey = (typeof api_key === 'string' ? api_key.trim() : '') || process.env.OPENAI_API_KEY;
     if (!apiKey) {
       return NextResponse.json(
-        { error: 'OpenAI API key not configured' },
+        { error: 'OpenAI API key not configured. Add it in AI Settings (sidebar menu).' },
         { status: 500 }
       );
     }
