@@ -2,18 +2,18 @@ import { NextRequest, NextResponse } from 'next/server';
 import { generateDiet } from '@/lib/diet-agent';
 import { getSession } from '@/lib/auth';
 import { getProfile, initializeDatabase } from '@/lib/db';
-
-// Vercel Hobby plan: max 60s for serverless functions
-export const maxDuration = 60;
 import { rateLimit, RATE_LIMITS } from '@/lib/rate-limit';
 import { DietGenerateSchema, safeParseWithError } from '@/lib/validations';
 import { requireCsrf } from '@/lib/csrf';
-import { 
-  hashCacheKey, 
-  getCachedAIResponse, 
-  setCachedAIResponse, 
-  AI_CACHE_TTL 
+import {
+  hashCacheKey,
+  getCachedAIResponse,
+  setCachedAIResponse,
+  AI_CACHE_TTL
 } from '@/lib/redis';
+
+// Vercel Hobby plan: max 60s for serverless functions
+export const maxDuration = 60;
 
 export async function POST(request: NextRequest) {
   try {

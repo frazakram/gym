@@ -33,6 +33,7 @@ interface RoutineViewProps {
   completionPercentage: number
   currentWeekNumber: number
   generating: boolean
+  generationStage?: string
   viewingHistory?: boolean
   dayCompletions?: Map<number, boolean>
   onToggleDayComplete?: (dayIndex: number, completed: boolean) => void
@@ -50,6 +51,7 @@ export function RoutineView({
   completionPercentage,
   currentWeekNumber,
   generating,
+  generationStage = '',
   viewingHistory = false,
   dayCompletions,
   onToggleDayComplete,
@@ -73,7 +75,7 @@ export function RoutineView({
             disabled={generating}
             className="py-3 px-8 rounded-xl btn-primary text-white font-semibold disabled:opacity-50 ui-focus-ring"
           >
-            {generating ? 'Generating...' : 'Generate Routine'}
+            {generating ? (generationStage || 'Generating...') : 'Generate Routine'}
           </button>
         </div>
       </div>

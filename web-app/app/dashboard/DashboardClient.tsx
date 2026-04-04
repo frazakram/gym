@@ -54,10 +54,19 @@ export default function DashboardPage() {
   const [premiumStatus, setPremiumStatus] = useState<PremiumStatus | null>(null)
   const [upgradeOpen, setUpgradeOpen] = useState(false)
 
-  // AI Settings (client-side key + model selection)
-  const [userApiKey, setUserApiKey] = useState('')
-  const [userModelProvider, setUserModelProvider] = useState<'OpenAI' | 'Anthropic'>('OpenAI')
-  const [userModel, setUserModel] = useState('')
+  // AI Settings (client-side key + model selection) — load from localStorage immediately
+  const [userApiKey, setUserApiKey] = useState(() => {
+    if (typeof window === 'undefined') return ''
+    try { const s = localStorage.getItem('gymbro_ai_settings'); return s ? JSON.parse(s).apiKey || '' : '' } catch { return '' }
+  })
+  const [userModelProvider, setUserModelProvider] = useState<'OpenAI' | 'Anthropic'>(() => {
+    if (typeof window === 'undefined') return 'OpenAI'
+    try { const s = localStorage.getItem('gymbro_ai_settings'); return s ? JSON.parse(s).modelProvider || 'OpenAI' : 'OpenAI' } catch { return 'OpenAI' }
+  })
+  const [userModel, setUserModel] = useState(() => {
+    if (typeof window === 'undefined') return ''
+    try { const s = localStorage.getItem('gymbro_ai_settings'); return s ? JSON.parse(s).model || '' : '' } catch { return '' }
+  })
 
   // Toast notifications
   const showToast = (message: string, type: ToastType) => {
@@ -161,6 +170,7 @@ export default function DashboardPage() {
   const [routine, setRoutine] = useState<WeeklyRoutine | null>(null)
   const [dietPlan, setDietPlan] = useState<WeeklyDiet | null>(null)
   const [generating, setGenerating] = useState(false)
+  const [generationStage, setGenerationStage] = useState('') // SSE progress stage text
   const [generatingDiet, setGeneratingDiet] = useState(false) // Independent loading state
 
   // Progress tracking state
@@ -678,6 +688,8 @@ export default function DashboardPage() {
       const targetWeekStart = new Date(baseMonday)
       targetWeekStart.setDate(baseMonday.getDate() + (isNextWeek ? 7 : 0))
 
+      setGenerationStage('Contacting AI provider…')
+
       const response = await csrfFetch('/api/routine/generate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -698,20 +710,66 @@ export default function DashboardPage() {
           model: userModel || undefined,
           is_next_week: isNextWeek,
           week_number: targetWeekNumber,
+          stream: true, // SSE streaming to avoid Vercel timeout
         }),
       })
 
-      if (response.ok) {
-        lastGenProfileRef.current = JSON.stringify({
-          age, weight, height: resolvedHeightCm, gender, goal, level, tenure, goalWeight, goalDuration, notes,
-          dietType, cuisine, proteinPowder, mealsPerDay, allergies
-        })
+      if (!response.ok) {
+        const errBody = await response.text()
+        let errMsg = `Server error (${response.status})`
+        try { errMsg = JSON.parse(errBody).error || errMsg } catch {}
+        throw new Error(errMsg)
       }
 
-      const data = await response.json()
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to generate routine')
+      // Parse SSE stream
+      let data: any = null
+      const reader = response.body?.getReader()
+      if (!reader) throw new Error('No response stream')
+      const decoder = new TextDecoder()
+      let buffer = ''
+      let currentEvent = ''
+
+      while (true) {
+        const { done, value } = await reader.read()
+        if (done) break
+        buffer += decoder.decode(value, { stream: true })
+
+        // Process complete lines
+        let newlineIdx: number
+        while ((newlineIdx = buffer.indexOf('\n')) >= 0) {
+          const line = buffer.slice(0, newlineIdx)
+          buffer = buffer.slice(newlineIdx + 1)
+
+          if (line.startsWith('event: ')) {
+            currentEvent = line.slice(7).trim()
+          } else if (line.startsWith('data: ')) {
+            try {
+              const parsed = JSON.parse(line.slice(6))
+              if (currentEvent === 'progress') {
+                setGenerationStage(parsed.stage || `${parsed.pct}%`)
+              } else if (currentEvent === 'routine') {
+                data = { routine: parsed.routine, source: 'ai', week_number: targetWeekNumber }
+              } else if (currentEvent === 'error') {
+                throw new Error(parsed.message || 'AI generation failed')
+              }
+            } catch (e) {
+              if (e instanceof Error && (e.message.includes('AI generation failed') || e.message.includes('generation failed'))) throw e
+              // JSON parse error on incomplete data — ignore, next chunk will complete it
+            }
+            currentEvent = ''
+          }
+        }
       }
+
+      if (!data?.routine) {
+        throw new Error('No routine received from AI. Check your API key and try again.')
+      }
+
+      setGenerationStage('')
+      lastGenProfileRef.current = JSON.stringify({
+        age, weight, height: resolvedHeightCm, gender, goal, level, tenure, goalWeight, goalDuration, notes,
+        dietType, cuisine, proteinPowder, mealsPerDay, allergies
+      })
 
       setRoutine(data.routine)
 
@@ -721,7 +779,7 @@ export default function DashboardPage() {
         setCurrentWeekNumber(prev => prev + 1)
       }
 
-      if (data.source === 'db') {
+      if (data.source === 'db' || data.source === 'cache') {
         setSuccess('Loaded existing routine for this week.')
         if (data.routine_id) {
           setCurrentRoutineId(data.routine_id)
@@ -761,6 +819,7 @@ export default function DashboardPage() {
       setError(err instanceof Error ? err.message : String(err))
     } finally {
       setGenerating(false)
+      setGenerationStage('')
     }
   }
 
@@ -1311,6 +1370,7 @@ export default function DashboardPage() {
                 completionPercentage={calculateCompletionPercentage()}
                 currentWeekNumber={currentWeekNumber}
                 generating={generating}
+                generationStage={generationStage}
                 viewingHistory={viewingHistory}
                 dayCompletions={dayCompletions}
                 onToggleDayComplete={handleToggleDayComplete}
