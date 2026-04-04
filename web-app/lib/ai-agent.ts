@@ -135,12 +135,10 @@ ${sessionStructure}
       throw new Error('OpenAI API key is required');
     }
     const openaiModel = input.model || process.env.OPENAI_MODEL || "gpt-4o";
-    const customBaseURL = process.env.OPENAI_BASE_URL;
     model = new ChatOpenAI({
       model: openaiModel,
       temperature: 0.7,
       apiKey: apiKey,
-      ...(customBaseURL ? { configuration: { baseURL: customBaseURL.replace(/\/+$/, "") + "/v1" } } : {}),
     });
   }
 

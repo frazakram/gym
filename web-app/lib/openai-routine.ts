@@ -1,5 +1,4 @@
 import { z } from "zod";
-import { ProxyAgent } from "undici";
 import type { RoutineGenerationInput, WeeklyRoutine } from "@/types";
 import { postProcessRoutine } from "@/lib/routine-postprocess";
 import { wrapUntrustedBlock } from "@/lib/prompt-safety";
@@ -304,30 +303,13 @@ function assertValidOpenAIApiKey(apiKey: string) {
     );
   }
 
-  // Skip format check when using a custom base URL (e.g. NVIDIA, Azure, local)
-  const customBaseURL = process.env.OPENAI_BASE_URL;
-  if (customBaseURL && !customBaseURL.includes("api.openai.com")) {
-    return;
-  }
-
   // Basic format check for standard OpenAI keys
-  if (!/^sk-[A-Za-z0-9_-]{10,}$/.test(apiKey)) {
+  if (!/^sk-[A-Za-z0-9_.-]{10,}$/.test(apiKey)) {
     throw new Error("OpenAI API key format looks invalid. It should start with 'sk-'.");
   }
 }
 
-function getProxyDispatcher(): ProxyAgent | undefined {
-  // Prefer OPENAI_PROXY, fall back to standard envs
-  const proxyUrl =
-    process.env.OPENAI_PROXY ||
-    process.env.HTTPS_PROXY ||
-    process.env.HTTP_PROXY ||
-    process.env.https_proxy ||
-    process.env.http_proxy;
-
-  if (!proxyUrl) return undefined;
-  return new ProxyAgent(proxyUrl);
-}
+// Proxy support removed — not needed for standard OpenAI on Vercel
 
 function isRetryableNetworkError(err: unknown): boolean {
   const anyErr = err as { cause?: unknown; code?: string; name?: string; message?: string } | null;
@@ -364,10 +346,9 @@ export async function generateRoutineOpenAI(
   if (!apiKey) throw new Error("OpenAI API key is required");
   assertValidOpenAIApiKey(apiKey);
 
-  const baseURL = (process.env.OPENAI_BASE_URL || "https://api.openai.com").replace(/\/+$/, "");
+  const baseURL = "https://api.openai.com";
   const model = input.model || process.env.OPENAI_MODEL || "gpt-4o";
-  const timeoutMs = Number(process.env.OPENAI_TIMEOUT_MS || 120_000);
-  const dispatcher = getProxyDispatcher();
+  const timeoutMs = 55_000; // Stay under Vercel's 60s limit
 
   const maxAttempts = Number(process.env.OPENAI_RETRY_ATTEMPTS || 2);
   let lastErr: unknown;
@@ -393,9 +374,7 @@ export async function generateRoutineOpenAI(
           messages: [{ role: "user", content: buildPrompt(input, historicalContext, equipmentAnalysis, bodyAnalysis) }],
         }),
         signal: controller.signal,
-        // undici fetch supports dispatcher (Node/Next runtime); TS doesn't include it in RequestInit.
-        ...(dispatcher ? ({ dispatcher } as any) : null),
-      } as any);
+      });
 
       if (!res.ok) {
         const text = await res.text().catch(() => "");

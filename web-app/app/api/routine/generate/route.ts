@@ -206,7 +206,9 @@ export async function POST(request: NextRequest) {
           } catch (err: unknown) {
             clearInterval(tick);
             const message = err instanceof Error ? err.message : String(err);
-            controller.enqueue(sse('error', { message }));
+            const cause = err instanceof Error && err.cause ? String(err.cause) : '';
+            console.error('SSE routine generation error:', message, cause ? `Cause: ${cause}` : '');
+            controller.enqueue(sse('error', { message: cause ? `${message} (${cause})` : message }));
           } finally {
             controller.close();
           }
