@@ -272,6 +272,118 @@ export const DEMO_MEASUREMENTS = [
   { id: 1, user_id: 1, measured_at: fmt(daysAgo(14)), weight: 73.8, waist: 83.5, chest: 97.5, arms: 34.5, hips: 97.0, notes: 'Starting point', created_at: daysAgo(14).toISOString() },
 ]
 
+// ── Analytics (full AnalyticsPayload for /api/analytics) ──
+const ROUTINE_DAY_NAMES = [
+  'Monday - Push (Chest, Shoulders, Triceps)',
+  'Tuesday - Pull (Back, Biceps)',
+  'Wednesday - Legs & Core',
+  'Thursday - Push (Variation)',
+  'Friday - Pull (Variation)',
+  'Saturday - Legs (Variation) & Abs',
+  'Sunday - Rest / Active Recovery',
+]
+
+export const DEMO_ANALYTICS = (() => {
+  // Generate 90 days of calendar data
+  const calendar: Array<{ date: string; workouts: number; completion_percentage: number | null }> = []
+  for (let i = 89; i >= 0; i--) {
+    const d = daysAgo(i)
+    const dow = d.getDay() // 0=Sun
+    const isTrainingDay = dow >= 1 && dow <= 6 // Mon-Sat
+    const isSunday = dow === 0
+    const isRecent = i < 30
+
+    let workouts = 0
+    let pct: number | null = null
+
+    if (isSunday) {
+      // Rest day — no workout
+      workouts = 0
+      pct = null
+    } else if (isTrainingDay) {
+      // More consistent recently, some misses earlier
+      const didWorkout = isRecent ? (Math.random() > 0.15) : (Math.random() > 0.35)
+      if (didWorkout) {
+        workouts = 1
+        pct = isRecent
+          ? Math.round(75 + Math.random() * 25) // 75-100% recent
+          : Math.round(50 + Math.random() * 45) // 50-95% older
+      }
+    }
+
+    calendar.push({ date: fmt(d), workouts, completion_percentage: pct })
+  }
+
+  // Weekly trends (last 12 weeks)
+  const weekly: Array<{ week: string; completion_percentage: number; workouts: number }> = []
+  for (let w = 11; w >= 0; w--) {
+    const weekStart = daysAgo(w * 7 + ((today.getDay() + 6) % 7))
+    const yr = weekStart.getFullYear()
+    const weekNum = Math.ceil(((weekStart.getTime() - new Date(yr, 0, 1).getTime()) / 86400000 + 1) / 7)
+    const wk = w < 4 ? Math.round(4 + Math.random() * 2) : Math.round(2 + Math.random() * 3)
+    const pct = w < 4 ? Math.round(78 + Math.random() * 20) : Math.round(55 + Math.random() * 30)
+    weekly.push({ week: `${yr}-W${String(weekNum).padStart(2, '0')}`, completion_percentage: pct, workouts: wk })
+  }
+
+  // Monthly trends (last 6 months)
+  const monthly: Array<{ month: string; completion_percentage: number; workouts: number }> = []
+  for (let m = 5; m >= 0; m--) {
+    const dt = new Date(today.getFullYear(), today.getMonth() - m, 1)
+    const key = `${dt.getFullYear()}-${String(dt.getMonth() + 1).padStart(2, '0')}`
+    const wk = m < 2 ? Math.round(18 + Math.random() * 6) : Math.round(10 + Math.random() * 10)
+    const pct = m < 2 ? Math.round(80 + Math.random() * 15) : Math.round(55 + Math.random() * 30)
+    monthly.push({ month: key, completion_percentage: pct, workouts: wk })
+  }
+
+  // Daily trends (same as calendar last 30 days)
+  const daily = calendar.slice(-30).map(d => ({
+    date: d.date,
+    completion_percentage: d.completion_percentage ?? 0,
+    workouts: d.workouts,
+  }))
+
+  // Workout history (last 10 workouts)
+  const workoutHistory: Array<{
+    workout_at: string; date: string; routine_id: number; week_number: number | null;
+    day_index: number; day_name: string; completed_exercises: number; total_exercises: number;
+    completion_percentage: number;
+  }> = []
+  let histCount = 0
+  for (let i = 0; i < 90 && histCount < 10; i++) {
+    const d = daysAgo(i)
+    const dow = d.getDay()
+    if (dow === 0) continue // Sunday rest
+    const dayIdx = (dow + 6) % 7 // Mon=0, Tue=1, ...
+    if (dayIdx > 5) continue
+    const didWorkout = i < 14 ? (Math.random() > 0.1) : (Math.random() > 0.3)
+    if (!didWorkout) continue
+
+    const total = 6
+    const completed = Math.round(4 + Math.random() * 2) // 4-6
+    workoutHistory.push({
+      workout_at: d.toISOString(),
+      date: fmt(d),
+      routine_id: 999,
+      week_number: 3 - Math.floor(i / 7),
+      day_index: dayIdx,
+      day_name: ROUTINE_DAY_NAMES[dayIdx],
+      completed_exercises: Math.min(completed, total),
+      total_exercises: total,
+      completion_percentage: Math.round((Math.min(completed, total) / total) * 100),
+    })
+    histCount++
+  }
+
+  return {
+    range_days: 90,
+    generated_at: today.toISOString(),
+    trends: { daily, weekly, monthly },
+    streak: { current: 5, longest: 12, last_workout_date: fmt(today) },
+    calendar,
+    workout_history: workoutHistory,
+  }
+})()
+
 // ── URL Router ──
 export function getDemoResponse(url: string, method: string): { status: number; body: any } | null {
   const path = url.split('?')[0]  // strip query params
@@ -288,6 +400,7 @@ export function getDemoResponse(url: string, method: string): { status: number; 
     if (path.endsWith('/api/streak'))            return { status: 200, body: DEMO_STREAK }
     if (path.includes('/api/billing/status'))    return { status: 200, body: DEMO_PREMIUM }
     if (path.endsWith('/api/csrf'))              return { status: 200, body: { token: 'demo-csrf-token' } }
+    if (path.includes('/api/analytics'))          return { status: 200, body: DEMO_ANALYTICS }
     if (path.includes('/api/measurements'))      return { status: 200, body: { measurements: DEMO_MEASUREMENTS } }
     if (path.includes('/api/coaches'))           return { status: 200, body: { coaches: [] } }
     if (path.includes('/api/coach/bookings'))    return { status: 200, body: { bookings: [] } }

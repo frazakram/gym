@@ -9,7 +9,6 @@ import { AnimatedButton } from '../ui/AnimatedButton'
 import { GlassCard } from '../ui/GlassCard'
 import { SectionHeader } from '../ui/SectionHeader'
 import { Collapsible } from '../ui/Collapsible'
-import { HeatMap } from '../ui/HeatMap'
 import { UserAvatar } from '../ui/UserAvatar'
 import { StreakBanner } from '../ui/StreakBanner'
 import { RestDayCard } from '../ui/RestDayCard'
@@ -259,25 +258,35 @@ export function HomeView({
         </motion.div>
       )}
 
-      {/* Weekly progress */}
+      {/* Weekly progress — compact bar */}
       {generating && routine ? (
         <motion.div variants={fadeUp}><QuoteLoader mode="compact" category="workout" /></motion.div>
       ) : routine ? (
         <motion.div variants={fadeUp}>
           <GlassCard className="p-4">
-            <SectionHeader
-              title="Activity Heatmap"
-              subtitle={`${progress.completed}/${progress.total} this week \u2022 ${progress.percentage}%`}
-            />
-            <div className="mt-4">
-              <HeatMap data={heatmapData} weeks={8} />
-            </div>
-            <div className="mt-4 pt-4 border-t border-[#8B5CF6]/10 flex items-center justify-between">
+            <div className="flex items-center justify-between mb-3">
               <div>
-                <p className="text-sm font-medium text-white">This Week</p>
-                <p className="text-xs text-[#8B8DA3]">{progress.completed} of {progress.total} workouts</p>
+                <p className="text-sm font-semibold text-white">Weekly Progress</p>
+                <p className="text-xs text-[#8B8DA3] mt-0.5">{progress.completed} of {progress.total} workouts this week</p>
               </div>
-              <CircularProgress percentage={progress.percentage} size={64} strokeWidth={5} />
+              <CircularProgress percentage={progress.percentage} size={48} strokeWidth={4} />
+            </div>
+            <div className="flex gap-1">
+              {heatmapData.slice(-7).map((d, i) => {
+                const dayLabels = ['M', 'T', 'W', 'T', 'F', 'S', 'S']
+                return (
+                  <div key={d.date} className="flex-1 flex flex-col items-center gap-1">
+                    <div
+                      className="w-full h-2 rounded-full"
+                      style={{
+                        backgroundColor: d.value >= 1 ? '#8b5cf6' : d.value > 0 ? '#6d3fc4' : '#252540',
+                        boxShadow: d.value >= 1 ? '0 0 6px rgba(139,92,246,0.4)' : 'none',
+                      }}
+                    />
+                    <span className="text-[9px] text-white/30">{dayLabels[i]}</span>
+                  </div>
+                )
+              })}
             </div>
           </GlassCard>
         </motion.div>

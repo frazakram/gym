@@ -3,30 +3,21 @@
 import { useMemo } from 'react'
 
 interface HeatMapProps {
-    /** Array of completion data: { date: string, value: number (0-1) } */
     data: Array<{ date: string; value: number }>
-    /** Number of weeks to display */
     weeks?: number
-    /** Callback when a cell is clicked */
     onCellClick?: (date: string, value: number) => void
 }
 
-const DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
+const DAY_LABELS = ['M', '', 'W', '', 'F', '', 'S']
 
-export function HeatMap({ data, weeks = 12, onCellClick }: HeatMapProps) {
+export function HeatMap({ data, weeks = 8, onCellClick }: HeatMapProps) {
     const grid = useMemo(() => {
-        // Create a map of date -> value for quick lookup
         const dataMap = new Map(data.map(d => [d.date, d.value]))
-
-        // Generate grid: weeks x 7 days
         const today = new Date()
         const cells: Array<{ date: string; value: number; dayOfWeek: number; weekIndex: number }> = []
 
-        // Go back 'weeks' worth of weeks
         const startDate = new Date(today)
         startDate.setDate(startDate.getDate() - (weeks * 7) + 1)
-
-        // Adjust to start from Monday
         const dayOfWeek = startDate.getDay()
         const diff = dayOfWeek === 0 ? 6 : dayOfWeek - 1
         startDate.setDate(startDate.getDate() - diff)
@@ -37,7 +28,6 @@ export function HeatMap({ data, weeks = 12, onCellClick }: HeatMapProps) {
                 cellDate.setDate(startDate.getDate() + week * 7 + day)
                 const dateStr = cellDate.toISOString().split('T')[0]
                 const isFuture = cellDate > today
-
                 cells.push({
                     date: dateStr,
                     value: isFuture ? -1 : (dataMap.get(dateStr) ?? 0),
@@ -46,27 +36,9 @@ export function HeatMap({ data, weeks = 12, onCellClick }: HeatMapProps) {
                 })
             }
         }
-
         return cells
     }, [data, weeks])
 
-    const getColorClass = (value: number) => {
-        if (value < 0) return 'bg-slate-800/30' // Future dates
-        if (value === 0) return 'bg-slate-700/40'
-        if (value < 0.25) return 'bg-[#8B5CF6]/20'
-        if (value < 0.5) return 'bg-[#8B5CF6]/40'
-        if (value < 0.75) return 'bg-[#8B5CF6]/60'
-        if (value < 1) return 'bg-[#8B5CF6]/80'
-        return 'bg-[#8B5CF6] shadow-[0_0_8px_rgba(255,111,97,0.4)]'
-    }
-
-    const getTooltip = (date: string, value: number) => {
-        if (value < 0) return 'Future'
-        if (value === 0) return `${date}: No activity`
-        return `${date}: ${Math.round(value * 100)}% complete`
-    }
-
-    // Group cells by week for rendering
     const weekGroups = useMemo(() => {
         const groups: typeof grid[] = []
         for (let i = 0; i < weeks; i++) {
@@ -75,47 +47,52 @@ export function HeatMap({ data, weeks = 12, onCellClick }: HeatMapProps) {
         return groups
     }, [grid, weeks])
 
+    // Solid opaque colors that stand out against the dark glass card
+    const cellStyle = (value: number): React.CSSProperties => {
+        if (value < 0) return { backgroundColor: 'transparent' }
+        if (value === 0) return { backgroundColor: '#252540', border: '1px solid #35355a' }
+        if (value < 0.5) return { backgroundColor: '#6d3fc4', border: '1px solid #7d4fd4' }
+        if (value < 1) return { backgroundColor: '#8b5cf6', border: '1px solid #9b6cff' }
+        return { backgroundColor: '#a78bfa', border: '1px solid #b79bff', boxShadow: '0 0 4px rgba(139,92,246,0.4)' }
+    }
+
     return (
         <div className="w-full">
-            {/* Day labels */}
-            <div className="flex gap-1 mb-1">
-                <div className="w-6" /> {/* Spacer for week labels */}
-                {DAYS.map((day, i) => (
-                    <div key={day} className="flex-1 text-[9px] text-slate-500 text-center">
-                        {i % 2 === 0 ? day.charAt(0) : ''}
-                    </div>
-                ))}
-            </div>
+            <div className="flex gap-[5px]">
+                {/* Day labels */}
+                <div className="flex flex-col gap-[5px] shrink-0 w-3.5">
+                    {DAY_LABELS.map((label, i) => (
+                        <div key={i} className="h-3.5 flex items-center justify-end">
+                            <span className="text-[9px] text-white/40 leading-none">{label}</span>
+                        </div>
+                    ))}
+                </div>
 
-            {/* Grid */}
-            <div className="flex gap-0.5">
-                {weekGroups.map((week, weekIndex) => (
-                    <div key={weekIndex} className="flex flex-col gap-0.5 flex-1">
-                        {week.map((cell) => (
-                            <button
-                                key={cell.date}
-                                onClick={() => cell.value >= 0 && onCellClick?.(cell.date, cell.value)}
-                                title={getTooltip(cell.date, cell.value)}
-                                disabled={cell.value < 0}
-                                className={`
-                  aspect-square rounded-sm transition-all duration-200
-                  ${getColorClass(cell.value)}
-                  ${cell.value >= 0 ? 'hover:ring-1 hover:ring-white/30 hover:scale-110 cursor-pointer' : 'cursor-default'}
-                `}
-                            />
-                        ))}
-                    </div>
-                ))}
+                {/* Grid */}
+                <div className="flex-1 grid gap-[5px]" style={{ gridTemplateColumns: `repeat(${weeks}, 1fr)` }}>
+                    {weekGroups.map((week, wi) => (
+                        <div key={wi} className="flex flex-col gap-[5px]">
+                            {week.map((cell) => (
+                                <div
+                                    key={cell.date}
+                                    onClick={() => cell.value >= 0 && onCellClick?.(cell.date, cell.value)}
+                                    title={cell.value < 0 ? '' : cell.value === 0 ? `${cell.date}: Rest` : `${cell.date}: ${Math.round(cell.value * 100)}%`}
+                                    className={`h-3.5 rounded-[4px] ${cell.value >= 0 ? 'hover:brightness-125 cursor-pointer' : ''}`}
+                                    style={cellStyle(cell.value)}
+                                />
+                            ))}
+                        </div>
+                    ))}
+                </div>
             </div>
 
             {/* Legend */}
-            <div className="flex items-center justify-end gap-1 mt-3 text-[10px] text-[#8B8DA3]">
+            <div className="flex items-center justify-end gap-1.5 mt-2.5 text-[9px] text-white/40">
                 <span>Less</span>
-                <div className="w-2.5 h-2.5 rounded-sm bg-slate-700/40" />
-                <div className="w-2.5 h-2.5 rounded-sm bg-[#8B5CF6]/25" />
-                <div className="w-2.5 h-2.5 rounded-sm bg-[#8B5CF6]/50" />
-                <div className="w-2.5 h-2.5 rounded-sm bg-[#8B5CF6]/75" />
-                <div className="w-2.5 h-2.5 rounded-sm bg-[#8B5CF6]" />
+                <div className="w-2.5 h-2.5 rounded-[2px]" style={{ backgroundColor: '#252540', border: '1px solid #35355a' }} />
+                <div className="w-2.5 h-2.5 rounded-[2px]" style={{ backgroundColor: '#6d3fc4' }} />
+                <div className="w-2.5 h-2.5 rounded-[2px]" style={{ backgroundColor: '#8b5cf6' }} />
+                <div className="w-2.5 h-2.5 rounded-[2px]" style={{ backgroundColor: '#a78bfa' }} />
                 <span>More</span>
             </div>
         </div>
