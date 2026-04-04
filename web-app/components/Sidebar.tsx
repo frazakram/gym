@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { X, Archive, ArchiveRestore, Trash2, Loader2 } from 'lucide-react'
+import { X, Archive, ArchiveRestore, Trash2, Loader2, Key, ChevronDown, Eye, EyeOff, Check } from 'lucide-react'
 
 interface RoutineHistoryItem {
   id: number
@@ -14,6 +14,15 @@ interface RoutineHistoryItem {
   routine_json: any
 }
 
+interface AISettings {
+  apiKey: string
+  modelProvider: 'OpenAI' | 'Anthropic'
+  model: string
+  onApiKeyChange: (key: string) => void
+  onModelProviderChange: (provider: 'OpenAI' | 'Anthropic') => void
+  onModelChange: (model: string) => void
+}
+
 interface SidebarProps {
   isOpen: boolean
   onClose: () => void
@@ -23,7 +32,24 @@ interface SidebarProps {
   onArchiveRoutine: (routineId: number, archived: boolean) => void | Promise<void>
   onDeleteRoutine: (routineId: number) => void | Promise<void>
   loading: boolean
+  aiSettings?: AISettings
 }
+
+const OPENAI_MODELS = [
+  { id: '', label: 'Default (gpt-4o)' },
+  { id: 'gpt-4o', label: 'GPT-4o' },
+  { id: 'gpt-4o-mini', label: 'GPT-4o Mini' },
+  { id: 'gpt-4.1', label: 'GPT-4.1' },
+  { id: 'gpt-4.1-mini', label: 'GPT-4.1 Mini' },
+  { id: 'gpt-4.1-nano', label: 'GPT-4.1 Nano' },
+]
+
+const ANTHROPIC_MODELS = [
+  { id: '', label: 'Default (Claude 3.5 Sonnet)' },
+  { id: 'claude-sonnet-4-6', label: 'Claude Sonnet 4.6' },
+  { id: 'claude-haiku-4-5-20251001', label: 'Claude Haiku 4.5' },
+  { id: 'claude-3-5-sonnet-20241022', label: 'Claude 3.5 Sonnet' },
+]
 
 export function Sidebar({
   isOpen,
@@ -33,10 +59,14 @@ export function Sidebar({
   onSelectRoutine,
   onArchiveRoutine,
   onDeleteRoutine,
-  loading
+  loading,
+  aiSettings,
 }: SidebarProps) {
   const sidebarRef = useRef<HTMLDivElement>(null)
   const [showArchived, setShowArchived] = useState(false)
+  const [showAISettings, setShowAISettings] = useState(false)
+  const [showKey, setShowKey] = useState(false)
+  const [keySaved, setKeySaved] = useState(false)
 
   const { active, archived } = useMemo(() => {
     const a: RoutineHistoryItem[] = []
@@ -61,6 +91,35 @@ export function Sidebar({
       document.removeEventListener('mousedown', handleClickOutside)
     }
   }, [isOpen, onClose])
+
+  // Load saved AI settings from localStorage
+  useEffect(() => {
+    if (!aiSettings) return
+    try {
+      const saved = localStorage.getItem('gymbro_ai_settings')
+      if (saved) {
+        const parsed = JSON.parse(saved)
+        if (parsed.apiKey) aiSettings.onApiKeyChange(parsed.apiKey)
+        if (parsed.modelProvider) aiSettings.onModelProviderChange(parsed.modelProvider)
+        if (parsed.model) aiSettings.onModelChange(parsed.model)
+      }
+    } catch {}
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+
+  const handleSaveAISettings = () => {
+    if (!aiSettings) return
+    try {
+      localStorage.setItem('gymbro_ai_settings', JSON.stringify({
+        apiKey: aiSettings.apiKey,
+        modelProvider: aiSettings.modelProvider,
+        model: aiSettings.model,
+      }))
+      setKeySaved(true)
+      setTimeout(() => setKeySaved(false), 2000)
+    } catch {}
+  }
+
+  const models = aiSettings?.modelProvider === 'Anthropic' ? ANTHROPIC_MODELS : OPENAI_MODELS
 
   const RoutineCard = ({ routine, isArchived = false }: { routine: RoutineHistoryItem; isArchived?: boolean }) => {
     const isSelected = currentRoutineId === routine.id
@@ -203,6 +262,131 @@ export function Sidebar({
               </>
             )}
           </div>
+
+          {/* AI Settings Section */}
+          {aiSettings && (
+            <div className="border-t border-[#8B5CF6]/10">
+              <button
+                type="button"
+                onClick={() => setShowAISettings((v) => !v)}
+                className="w-full flex items-center justify-between px-4 py-3 text-sm font-semibold text-white hover:bg-white/5 transition-colors"
+              >
+                <div className="flex items-center gap-2">
+                  <Key className="w-4 h-4 text-[#8B5CF6]" />
+                  <span>AI Settings</span>
+                  {aiSettings.apiKey && (
+                    <span className="w-2 h-2 rounded-full bg-emerald-400" title="API key configured" />
+                  )}
+                </div>
+                <ChevronDown className={`w-4 h-4 text-slate-400 transition-transform ${showAISettings ? 'rotate-180' : ''}`} />
+              </button>
+
+              <AnimatePresence>
+                {showAISettings && (
+                  <motion.div
+                    initial={{ height: 0, opacity: 0 }}
+                    animate={{ height: 'auto', opacity: 1 }}
+                    exit={{ height: 0, opacity: 0 }}
+                    transition={{ duration: 0.2 }}
+                    className="overflow-hidden"
+                  >
+                    <div className="px-4 pb-4 space-y-3">
+                      {/* Provider Selection */}
+                      <div>
+                        <label className="text-[11px] font-semibold text-[#8B8DA3] uppercase tracking-wider">
+                          Provider
+                        </label>
+                        <div className="mt-1.5 flex gap-2">
+                          {(['OpenAI', 'Anthropic'] as const).map((p) => (
+                            <button
+                              key={p}
+                              type="button"
+                              onClick={() => {
+                                aiSettings.onModelProviderChange(p)
+                                aiSettings.onModelChange('') // Reset model on provider change
+                              }}
+                              className={`flex-1 px-3 py-2 rounded-lg text-xs font-semibold border transition-all ${
+                                aiSettings.modelProvider === p
+                                  ? 'bg-[#8B5CF6]/15 border-[#8B5CF6]/40 text-[#C4B5FD]'
+                                  : 'bg-white/5 border-white/10 text-slate-300 hover:bg-white/10'
+                              }`}
+                            >
+                              {p}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+
+                      {/* API Key */}
+                      <div>
+                        <label className="text-[11px] font-semibold text-[#8B8DA3] uppercase tracking-wider">
+                          API Key
+                        </label>
+                        <div className="mt-1.5 relative">
+                          <input
+                            type={showKey ? 'text' : 'password'}
+                            value={aiSettings.apiKey}
+                            onChange={(e) => aiSettings.onApiKeyChange(e.target.value)}
+                            placeholder={aiSettings.modelProvider === 'OpenAI' ? 'sk-proj-...' : 'sk-ant-...'}
+                            className="w-full px-3 py-2 pr-10 rounded-lg bg-white/5 border border-white/10 text-sm text-white placeholder:text-white/20 focus:outline-none focus:border-[#8B5CF6]/40 focus:ring-1 focus:ring-[#8B5CF6]/20 transition"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => setShowKey((v) => !v)}
+                            className="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-slate-400 hover:text-white transition"
+                          >
+                            {showKey ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* Model Selection */}
+                      <div>
+                        <label className="text-[11px] font-semibold text-[#8B8DA3] uppercase tracking-wider">
+                          Model
+                        </label>
+                        <select
+                          value={aiSettings.model}
+                          onChange={(e) => aiSettings.onModelChange(e.target.value)}
+                          className="mt-1.5 w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-sm text-white focus:outline-none focus:border-[#8B5CF6]/40 focus:ring-1 focus:ring-[#8B5CF6]/20 transition appearance-none"
+                        >
+                          {models.map((m) => (
+                            <option key={m.id} value={m.id} className="bg-[#0A0A14] text-white">
+                              {m.label}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+
+                      {/* Save Button */}
+                      <button
+                        type="button"
+                        onClick={handleSaveAISettings}
+                        className={`w-full flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-xs font-semibold transition-all ${
+                          keySaved
+                            ? 'bg-emerald-500/15 border border-emerald-500/30 text-emerald-300'
+                            : 'bg-[#8B5CF6]/15 border border-[#8B5CF6]/30 text-[#C4B5FD] hover:bg-[#8B5CF6]/25'
+                        }`}
+                      >
+                        {keySaved ? (
+                          <>
+                            <Check className="w-3.5 h-3.5" />
+                            Saved
+                          </>
+                        ) : (
+                          'Save Settings'
+                        )}
+                      </button>
+
+                      <p className="text-[10px] text-white/25 leading-snug">
+                        Your key is stored locally in your browser. It&apos;s sent directly to the AI provider and never stored on our servers.
+                      </p>
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+          )}
 
           {/* Footer */}
           <div className="p-4 border-t border-[#8B5CF6]/10">

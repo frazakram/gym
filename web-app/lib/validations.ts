@@ -105,6 +105,7 @@ export const RoutineGenerateSchema = z.object({
   model_provider: ModelProviderEnum,
   api_key: z.string().max(200).optional(),
   apiKey: z.string().max(200).optional(),
+  model: z.string().max(100).optional(),
   stream: z.boolean().optional(),
   week_number: z.coerce.number().int().min(1).max(52).optional(),
   regenerate: z.boolean().optional(),
@@ -146,6 +147,8 @@ export const DietGenerateSchema = z.object({
   routine: z.any().optional(),
   model_provider: ModelProviderEnum.optional().default("Anthropic"),
   apiKey: z.string().max(200).optional(),
+  api_key: z.string().max(200).optional(),
+  model: z.string().max(100).optional(),
 });
 
 export const DietSaveSchema = z.object({

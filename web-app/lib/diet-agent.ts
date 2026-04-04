@@ -36,6 +36,7 @@ export interface DietGenerationInput {
   bodyMeasurements?: BodyMeasurementContext; // Latest measurement trends
   model_provider: 'Anthropic' | 'OpenAI';
   apiKey?: string;
+  model?: string;
 }
 
 export async function generateDiet(input: DietGenerationInput): Promise<WeeklyDiet | null> {
@@ -45,14 +46,14 @@ export async function generateDiet(input: DietGenerationInput): Promise<WeeklyDi
     const apiKey = input.apiKey || process.env.ANTHROPIC_API_KEY;
     if (!apiKey) throw new Error('Anthropic API key is required');
     model = new ChatAnthropic({
-      model: "claude-3-5-sonnet-20241022",
+      model: input.model || "claude-3-5-sonnet-20241022",
       temperature: 0.7,
       apiKey: apiKey,
     });
   } else {
     const apiKey = input.apiKey || process.env.OPENAI_API_KEY;
     if (!apiKey) throw new Error('OpenAI API key is required');
-    const openaiModel = process.env.OPENAI_MODEL || "gpt-4o";
+    const openaiModel = input.model || process.env.OPENAI_MODEL || "gpt-4o";
     const customBaseURL = process.env.OPENAI_BASE_URL;
     model = new ChatOpenAI({
       model: openaiModel,

@@ -150,6 +150,7 @@ export interface RoutineGenerationInput {
     notes?: string;
     model_provider: 'Anthropic' | 'OpenAI';
     apiKey?: string;
+    model?: string;
 }
 
 // Progress Tracking Types

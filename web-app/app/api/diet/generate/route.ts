@@ -77,7 +77,8 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const { routine, model_provider, apiKey } = parsed.data;
+    const { routine, model_provider, apiKey, api_key, model: clientModel } = parsed.data;
+    const resolvedApiKey = apiKey || api_key;
 
     // Fetch user profile from DB to get latest preferences
     const profile = await getProfile(session.userId);
@@ -150,8 +151,9 @@ export async function POST(request: NextRequest) {
       profile,
       routine, // context
       bodyMeasurements,
-      model_provider: model_provider || 'Anthropic',
-      apiKey
+      model_provider: model_provider || 'OpenAI',
+      apiKey: resolvedApiKey,
+      model: typeof clientModel === 'string' ? clientModel : undefined,
     });
 
     if (!dietPlan) {

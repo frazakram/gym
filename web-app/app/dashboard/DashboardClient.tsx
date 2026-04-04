@@ -54,6 +54,11 @@ export default function DashboardPage() {
   const [premiumStatus, setPremiumStatus] = useState<PremiumStatus | null>(null)
   const [upgradeOpen, setUpgradeOpen] = useState(false)
 
+  // AI Settings (client-side key + model selection)
+  const [userApiKey, setUserApiKey] = useState('')
+  const [userModelProvider, setUserModelProvider] = useState<'OpenAI' | 'Anthropic'>('OpenAI')
+  const [userModel, setUserModel] = useState('')
+
   // Toast notifications
   const showToast = (message: string, type: ToastType) => {
     switch (type) {
@@ -688,7 +693,9 @@ export default function DashboardPage() {
           notes: profile.notes,
           goal_duration: profile.goal_duration,
           session_duration: profile.session_duration || sessionDuration,
-          model_provider: 'OpenAI',
+          model_provider: userModelProvider,
+          api_key: userApiKey || undefined,
+          model: userModel || undefined,
           is_next_week: isNextWeek,
           week_number: targetWeekNumber,
         }),
@@ -771,7 +778,9 @@ export default function DashboardPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           routine: routine, // Pass context if available
-          model_provider: 'OpenAI'
+          model_provider: userModelProvider,
+          api_key: userApiKey || undefined,
+          model: userModel || undefined,
         })
       })
       const dietData = await dietRes.json()
@@ -1227,6 +1236,14 @@ export default function DashboardPage() {
         onArchiveRoutine={handleArchiveRoutine}
         onDeleteRoutine={handleDeleteRoutine}
         loading={loadingHistory}
+        aiSettings={{
+          apiKey: userApiKey,
+          modelProvider: userModelProvider,
+          model: userModel,
+          onApiKeyChange: setUserApiKey,
+          onModelProviderChange: setUserModelProvider,
+          onModelChange: setUserModel,
+        }}
       />
 
       {/* Main Content Container */}

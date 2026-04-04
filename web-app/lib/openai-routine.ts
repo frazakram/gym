@@ -365,7 +365,7 @@ export async function generateRoutineOpenAI(
   assertValidOpenAIApiKey(apiKey);
 
   const baseURL = (process.env.OPENAI_BASE_URL || "https://api.openai.com").replace(/\/+$/, "");
-  const model = process.env.OPENAI_MODEL || "gpt-4o";
+  const model = input.model || process.env.OPENAI_MODEL || "gpt-4o";
   const timeoutMs = Number(process.env.OPENAI_TIMEOUT_MS || 120_000);
   const dispatcher = getProxyDispatcher();
 

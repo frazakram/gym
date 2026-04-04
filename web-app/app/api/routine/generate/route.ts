@@ -161,6 +161,7 @@ export async function POST(request: NextRequest) {
       notes: nullToUndefined(notes),
       model_provider,
       apiKey: keyFromClient || undefined, // Passed from client (optional if server env has key)
+      model: typeof body.model === 'string' ? body.model : undefined,
     };
 
     // Fetch equipment and body analysis upfront for both streaming and non-streaming modes

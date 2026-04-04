@@ -125,7 +125,7 @@ ${sessionStructure}
       throw new Error('Anthropic API key is required');
     }
     model = new ChatAnthropic({
-      model: "claude-3-5-sonnet-20241022",
+      model: input.model || "claude-3-5-sonnet-20241022",
       temperature: 0.7,
       apiKey: apiKey,
     });
@@ -134,7 +134,7 @@ ${sessionStructure}
     if (!apiKey) {
       throw new Error('OpenAI API key is required');
     }
-    const openaiModel = process.env.OPENAI_MODEL || "gpt-4o";
+    const openaiModel = input.model || process.env.OPENAI_MODEL || "gpt-4o";
     const customBaseURL = process.env.OPENAI_BASE_URL;
     model = new ChatOpenAI({
       model: openaiModel,
