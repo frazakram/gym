@@ -2,10 +2,10 @@
     "name": "Gym Bro - AI Fitness Coach",
     "short_name": "Gym Bro",
     "description": "Generate personalized weekly workout plans with AI",
-    "start_url": "/dashboard",
+    "start_url": "/",
     "display": "standalone",
-    "background_color": "#0f172a",
-    "theme_color": "#0891b2",
+    "background_color": "#0A0A14",
+    "theme_color": "#8B5CF6",
     "orientation": "portrait-primary",
     "icons": [
         {

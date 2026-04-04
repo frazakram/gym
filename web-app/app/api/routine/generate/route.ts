@@ -2,6 +2,9 @@ import { NextRequest, NextResponse } from 'next/server';
 import { generateRoutine } from '@/lib/ai-agent';
 import { getSession } from '@/lib/auth';
 import { generateRoutineOpenAI } from '@/lib/openai-routine';
+
+// Vercel Hobby plan: max 60s for serverless functions
+export const maxDuration = 60;
 import { buildHistoricalContext, formatHistoricalContextForPrompt } from '@/lib/historical-context';
 import { rateLimit, RATE_LIMITS } from '@/lib/rate-limit';
 import { initializeDatabase } from '@/lib/db';
