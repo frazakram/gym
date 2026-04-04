@@ -58,6 +58,7 @@ export async function generateDiet(input: DietGenerationInput): Promise<WeeklyDi
       model: openaiModel,
       temperature: 0.7,
       apiKey: apiKey,
+      configuration: { baseURL: "https://api.openai.com/v1" }, // Override env var OPENAI_BASE_URL if set
     });
   }
 

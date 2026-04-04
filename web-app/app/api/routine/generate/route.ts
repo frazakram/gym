@@ -192,8 +192,11 @@ export async function POST(request: NextRequest) {
           }, 1000);
 
           try {
+            const hasKey = Boolean(input.apiKey);
+            const keyPreview = input.apiKey ? `${input.apiKey.slice(0, 6)}...${input.apiKey.slice(-4)}` : 'NONE';
+            console.log(`[Routine SSE] Provider: ${provider}, Model: ${input.model || 'default'}, ClientKey: ${keyPreview}, ServerKey: ${hasServerKey ? 'YES' : 'NO'}`);
             controller.enqueue(sse('progress', { pct: 5, stage: 'Validating request…' }));
-            controller.enqueue(sse('progress', { pct: 10, stage: 'Contacting AI provider…' }));
+            controller.enqueue(sse('progress', { pct: 10, stage: `Contacting ${provider}…` }));
 
             const routine =
               provider === 'OpenAI'
@@ -333,11 +336,11 @@ export async function POST(request: NextRequest) {
       { status: 200 }
     );
   } catch (error: unknown) {
-    // Don't leak secrets in logs — log the message only
     const message = error instanceof Error ? error.message : String(error);
-    console.error('Error generating routine:', message);
+    const cause = error instanceof Error && error.cause ? String(error.cause) : '';
+    console.error('Error generating routine:', message, cause ? `| Cause: ${cause}` : '');
     return NextResponse.json(
-      { error: message || 'Internal server error' },
+      { error: cause ? `${message} (${cause})` : (message || 'Internal server error') },
       { status: 500 }
     );
   }
