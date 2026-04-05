@@ -5,6 +5,7 @@ import { motion } from 'framer-motion'
 import { GlassCard } from '@/components/ui/GlassCard'
 import { SectionHeader } from '@/components/ui/SectionHeader'
 import { AnimatedButton } from '@/components/ui/AnimatedButton'
+import { csrfFetch } from '@/lib/useCsrf'
 
 const stagger = {
   hidden: {},
@@ -176,7 +177,7 @@ export function CoachView({
         preferredAt: preferredAt ? new Date(preferredAt).toISOString() : null,
         message: message.trim() ? message.trim() : null,
       }
-      const res = await fetch('/api/coach/book', {
+      const res = await csrfFetch('/api/coach/book', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(body),
