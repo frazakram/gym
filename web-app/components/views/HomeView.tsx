@@ -34,7 +34,7 @@ interface HomeViewProps {
   heatmapData?: Array<{ date: string; value: number }>
   streakData?: { current: number; longest: number; last_workout_date: string | null } | null
   currentWeekNumber: number
-  onNavigateToWorkout: () => void
+  onNavigateToWorkout: (dayIndex?: number) => void
   onNavigateToCoach: () => void
   onGenerateRoutine: () => void
   onGenerateNextWeek: () => void
@@ -208,7 +208,7 @@ export function HomeView({
 
             <div className="mt-4">
               <AnimatedButton
-                onClick={onNavigateToWorkout}
+                onClick={() => onNavigateToWorkout(todayIndex)}
                 variant="primary"
                 fullWidth
                 icon={<ArrowRight className="w-4 h-4" />}

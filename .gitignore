@@ -61,7 +61,7 @@ gym_buddy.db
 # Logs
 *.log
 logs/
-
+.env
 # Testing
 .pytest_cache/
 .coverage

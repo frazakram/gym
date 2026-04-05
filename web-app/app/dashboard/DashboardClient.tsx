@@ -616,15 +616,18 @@ export default function DashboardPage() {
         }
       }
 
-      const res = await csrfFetch('/api/routines', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          weekNumber: typeof weekNumberOverride === 'number' ? weekNumberOverride : currentWeekNumber,
-          routine: routineData,
-          weekStartDate: (weekStartDateOverride ?? mondayOfThisWeekLocal(new Date())).toISOString().slice(0, 10),
-        }),
-      })
+        const dt = weekStartDateOverride ?? mondayOfThisWeekLocal(new Date());
+        const dateStr = `${dt.getFullYear()}-${String(dt.getMonth() + 1).padStart(2, '0')}-${String(dt.getDate()).padStart(2, '0')}`;
+
+        const res = await csrfFetch('/api/routines', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            weekNumber: typeof weekNumberOverride === 'number' ? weekNumberOverride : currentWeekNumber,
+            routine: routineData,
+            weekStartDate: dateStr,
+          }),
+        })
 
       if (!res.ok) {
         let errText = await res.text().catch(() => '');
@@ -1391,7 +1394,10 @@ export default function DashboardPage() {
                 heatmapData={heatmapData}
                 streakData={streakData}
                 currentWeekNumber={currentWeekNumber}
-                onNavigateToWorkout={() => setActiveView('workout')}
+                onNavigateToWorkout={(dayIndex) => {
+                  if (dayIndex !== undefined) setSelectedDayIndex(dayIndex)
+                  setActiveView('workout')
+                }}
                 onNavigateToCoach={() => handleViewChange('coach')}
                 onGenerateRoutine={() => handleGenerateRoutine(false)}
                 onGenerateNextWeek={handleGenerateNextWeek}
