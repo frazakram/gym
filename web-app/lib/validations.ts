@@ -119,7 +119,7 @@ export const RoutineSaveSchema = z.object({
       exercises: z.array(z.any()),
     })),
   }),
-  weekStartDate: z.string().datetime().optional().nullable(),
+  weekStartDate: z.string().optional().nullable(),
 });
 
 export const RoutineIdParamSchema = z.object({

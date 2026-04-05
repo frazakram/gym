@@ -626,15 +626,20 @@ export default function DashboardPage() {
         }),
       })
 
+      if (!res.ok) {
+        let errText = await res.text().catch(() => '');
+        throw new Error(`Failed to save routine to DB: ${res.status} ${errText}`);
+      }
+
       const data = await res.json()
       if (data.routineId) {
         setCurrentRoutineId(data.routineId)
         return data.routineId
       }
-      return null
-    } catch (err) {
-      console.error('Error saving routine:', err)
-      return null
+      throw new Error(`API returned success but no routineId: ${JSON.stringify(data)}`);
+    } catch (error) {
+      console.error('Failed to save routine:', error)
+      throw error;
     }
   }
 
@@ -1221,9 +1226,13 @@ export default function DashboardPage() {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ routineId: rid, dayIndex, exerciseIndex, completed }),
         })
-        if (!res.ok) throw new Error("Failed to save completion")
+        if (!res.ok) {
+          const text = await res.text().catch(() => '');
+          throw new Error(`API failed: ${res.status} ${text}`)
+        }
       } catch (e) {
         console.error('Failed to save completion:', e)
+        setError(e instanceof Error ? e.message : String(e));
         // Revert on error
         setExerciseCompletions(prev => {
           const next = new Map(prev)
