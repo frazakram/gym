@@ -1253,8 +1253,11 @@ export default function DashboardPage() {
   }
 
   const handleToggleDayComplete = async (dayIndex: number, completed: boolean) => {
-    if (!currentRoutineId) return
-    const rid = currentRoutineId
+    let rid = currentRoutineId
+    if (!rid && routine) {
+      rid = await saveRoutineToDatabase(routine)
+    }
+    if (!rid) return
     
     // Optimistic
     setDayCompletions(prev => {
@@ -1470,8 +1473,8 @@ export default function DashboardPage() {
         </AnimatePresence>
       </div>
 
-      {/* Bottom Navigation */}
-      <BottomNav activeView={activeView} onViewChange={handleViewChange} />
+      {/* Bottom Navigation — hide when sidebar is open */}
+      {!isSidebarOpen && <BottomNav activeView={activeView} onViewChange={handleViewChange} />}
 
       {/* Toast Notifications - Top Center */}
       <ToastContainer />

@@ -254,7 +254,7 @@ export function HomeView({
       {/* Rest Day Recovery Content */}
       {routine && todaysPlan && !(todaysPlan.exercises?.length) && (
         <motion.div variants={fadeUp}>
-          <RestDayCard routine={routine} todayIndex={todayIndex} />
+          <RestDayCard />
         </motion.div>
       )}
 

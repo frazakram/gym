@@ -211,7 +211,7 @@ export function RoutineView({
       {/* Rest Day Recovery Content */}
       {routine && isRestDay && (
         <motion.div variants={fadeUp} className="px-4 pt-3">
-          <RestDayCard routine={routine} todayIndex={selectedDay} />
+          <RestDayCard />
         </motion.div>
       )}
 

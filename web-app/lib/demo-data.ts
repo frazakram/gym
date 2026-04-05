@@ -392,7 +392,15 @@ export function getDemoResponse(url: string, method: string): { status: number; 
   // GET endpoints
   if (m === 'GET') {
     if (path.endsWith('/api/profile'))          return { status: 200, body: { profile: DEMO_PROFILE, username: 'alex_fit' } }
-    if (path.endsWith('/api/routines'))          return { status: 200, body: { routine: { id: 999, routine_json: DEMO_ROUTINE, week_number: 3, week_start_date: fmt(getMonday(new Date())), created_at: fmt(getMonday(new Date())) } } }
+    if (path.includes('/api/routines') && (path.includes('all=true') || path.includes('includeArchived'))) {
+      const mon = getMonday(new Date())
+      const prevMon = new Date(mon); prevMon.setDate(mon.getDate() - 7)
+      return { status: 200, body: { routines: [
+        { id: 999, routine_json: DEMO_ROUTINE, week_number: 3, week_start_date: fmt(mon), created_at: fmt(mon), archived: false },
+        { id: 998, routine_json: DEMO_ROUTINE, week_number: 2, week_start_date: fmt(prevMon), created_at: fmt(prevMon), archived: false },
+      ] } }
+    }
+    if (path.includes('/api/routines'))          return { status: 200, body: { routine: { id: 999, routine_json: DEMO_ROUTINE, week_number: 3, week_start_date: fmt(getMonday(new Date())), created_at: fmt(getMonday(new Date())) } } }
     if (path.includes('/api/completions'))       return { status: 200, body: { completions: DEMO_COMPLETIONS } }
     if (path.includes('/api/day-completions'))   return { status: 200, body: { days: DEMO_DAY_COMPLETIONS } }
     if (path.endsWith('/api/diet'))              return { status: 200, body: { diet: { diet_json: DEMO_DIET } } }
