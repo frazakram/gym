@@ -29,45 +29,15 @@ export function ExerciseCheckbox({
   }, [initialCompleted]);
 
   const handleToggle = async () => {
-    let activeRoutineId = routineId;
-    
-    if (!activeRoutineId) {
-      if (onEnsureRoutineSaved) {
-        setLoading(true);
-        try {
-          activeRoutineId = await onEnsureRoutineSaved();
-        } catch (e) {
-          console.error("Failed to ensure routine saved:", e);
-        }
-      }
-      
-      if (!activeRoutineId) {
-        setLoading(false); // CRITICAL FIX: reset loading if we still don't have an ID
-        return; 
-      }
-    }
-    
     const newState = !completed;
     setCompleted(newState); // Optimistic update
     setLoading(true);
 
     try {
-      const res = await csrfFetch('/api/completions', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          routineId: activeRoutineId,
-          dayIndex,
-          exerciseIndex,
-          completed: newState,
-        }),
-      });
-
-      if (!res.ok) {
-        throw new Error('Failed to update completion');
+      if (onToggle) {
+        // Await the onToggle if it returns a promise (it will in DashboardClient)
+        await onToggle(newState);
       }
-
-      onToggle?.(newState);
     } catch (error) {
       console.error('Error toggling exercise:', error);
       // Revert on error

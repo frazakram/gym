@@ -1216,11 +1216,12 @@ export default function DashboardPage() {
     }
     if (rid) {
       try {
-        await csrfFetch('/api/completions', {
+        const res = await csrfFetch('/api/completions', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ routineId: rid, dayIndex, exerciseIndex, completed }),
         })
+        if (!res.ok) throw new Error("Failed to save completion")
       } catch (e) {
         console.error('Failed to save completion:', e)
         // Revert on error
@@ -1229,7 +1230,16 @@ export default function DashboardPage() {
           next.set(`${dayIndex}-${exerciseIndex}`, !completed)
           return next
         })
+        throw e; // Rethrow to let caller know it failed
       }
+    } else {
+      // Revert if saving the routine failed
+      setExerciseCompletions(prev => {
+        const next = new Map(prev)
+        next.set(`${dayIndex}-${exerciseIndex}`, !completed)
+        return next
+      })
+      throw new Error("Could not save routine context");
     }
 
     fetchHeatmapData()

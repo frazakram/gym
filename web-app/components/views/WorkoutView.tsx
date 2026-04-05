@@ -130,10 +130,6 @@ export function WorkoutView({
               <motion.button
                 whileTap={{ scale: 0.97 }}
                 onClick={async () => {
-                  if (!currentRoutineId) {
-                    const rid = await onEnsureRoutineSaved()
-                    if (!rid) return
-                  }
                   await onToggleRestDay(selectedDayIndex, !restDone)
                 }}
                 className={`w-full px-5 py-3 rounded-2xl font-semibold text-sm transition border ${restDone
@@ -153,11 +149,7 @@ export function WorkoutView({
                 <motion.div key={exerciseIndex} variants={fadeUp}>
                   <SwipeableExerciseWrapper
                     isCompleted={isCompleted}
-                    onComplete={async () => {
-                      if (!currentRoutineId) {
-                        const rid = await onEnsureRoutineSaved()
-                        if (!rid) return
-                      }
+                    onComplete={() => {
                       onToggleExercise(selectedDayIndex, exerciseIndex, true)
                     }}
                     onSkip={() => {

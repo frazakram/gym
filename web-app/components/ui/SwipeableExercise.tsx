@@ -41,7 +41,7 @@ export function SwipeableExerciseWrapper({
 
         if (disabled) return
 
-        const threshold = 100
+        const threshold = 50
 
         if (info.offset.x > threshold) {
             // Swiped right - Complete
