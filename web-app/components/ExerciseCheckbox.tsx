@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Check } from 'lucide-react';
+import { csrfFetch } from '@/lib/useCsrf';
 
 interface ExerciseCheckboxProps {
   routineId: number | null;
@@ -51,7 +52,7 @@ export function ExerciseCheckbox({
     setLoading(true);
 
     try {
-      const res = await fetch('/api/completions', {
+      const res = await csrfFetch('/api/completions', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

@@ -1201,13 +1201,37 @@ export default function DashboardPage() {
     }
   }
 
-  const handleToggleExercise = (dayIndex: number, exerciseIndex: number, completed: boolean) => {
+  const handleToggleExercise = async (dayIndex: number, exerciseIndex: number, completed: boolean) => {
+    // Optimistic UI update
     setExerciseCompletions(prev => {
       const next = new Map(prev)
       next.set(`${dayIndex}-${exerciseIndex}`, completed)
       return next
     })
-    // Refresh heatmap + streak data after completion is recorded
+
+    // Persist to server
+    let rid = currentRoutineId
+    if (!rid && routine) {
+      rid = await saveRoutineToDatabase(routine)
+    }
+    if (rid) {
+      try {
+        await csrfFetch('/api/completions', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ routineId: rid, dayIndex, exerciseIndex, completed }),
+        })
+      } catch (e) {
+        console.error('Failed to save completion:', e)
+        // Revert on error
+        setExerciseCompletions(prev => {
+          const next = new Map(prev)
+          next.set(`${dayIndex}-${exerciseIndex}`, !completed)
+          return next
+        })
+      }
+    }
+
     fetchHeatmapData()
     fetchStreak()
   }
