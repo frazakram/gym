@@ -34,15 +34,15 @@ export function TabQuote({ category, triggerKey, duration = 3500 }: TabQuoteProp
           transition={{ duration: 0.3, ease: 'easeInOut' }}
           className="overflow-hidden pt-14"
         >
-          <div className="mx-4 mb-3 flex items-start gap-2.5 rounded-xl bg-[#8B5CF6]/[0.08] border border-[#8B5CF6]/20 px-3.5 py-3 shadow-sm shadow-[#8B5CF6]/5">
+          <div className="mx-4 mb-3 flex items-start gap-2.5 rounded-xl bg-primary/[0.08] border border-primary/20 px-3.5 py-3 shadow-sm shadow-primary/5">
             {/* Left accent bar */}
-            <div className="w-[3px] self-stretch rounded-full bg-gradient-to-b from-[#8B5CF6] to-[#A78BFA] shrink-0" />
-            <Sparkles className="w-3.5 h-3.5 text-[#A78BFA] shrink-0 mt-0.5" />
+            <div className="w-[3px] self-stretch rounded-full bg-gradient-to-b from-primary to-primary-light shrink-0" />
+            <Sparkles className="w-3.5 h-3.5 text-primary-light shrink-0 mt-0.5" />
             <div className="min-w-0 flex-1">
               <p className="text-[13px] text-white/90 italic leading-relaxed">
                 &ldquo;{quote.text}&rdquo;
               </p>
-              <p className="mt-1 text-[11px] text-[#A78BFA]/80 font-medium">— {quote.author}</p>
+              <p className="mt-1 text-xs text-primary-light/80 font-medium">— {quote.author}</p>
             </div>
           </div>
         </motion.div>

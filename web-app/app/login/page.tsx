@@ -92,9 +92,9 @@ export default function LoginPage() {
   const baseDelay = 0.2
 
   return (
-    <div className="min-h-screen flex items-stretch overflow-hidden">
-      {/* Left Side - Interactive Mascot Characters */}
-      <div className="hidden lg:flex lg:w-1/2 relative bg-[#0A0A14] border-r border-purple-500/20">
+    <div className="min-h-screen flex flex-col lg:flex-row items-stretch overflow-hidden">
+      {/* Left Side - Interactive Mascot Characters (desktop: half-width panel, mobile: compact header) */}
+      <div className="relative bg-navy-0 lg:w-1/2 lg:border-r border-purple-500/20">
         {/* Background effects - purple radial gradients */}
         <div className="absolute inset-0 bg-[#0e0e1a]" />
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(139,92,246,0.25),transparent_70%)]" />
@@ -106,14 +106,14 @@ export default function LoginPage() {
           initial={{ y: -200, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           transition={{ type: 'spring', stiffness: 120, damping: 15, delay: 0 }}
-          className="relative z-10 w-full h-full flex flex-col items-center justify-center p-8"
+          className="relative z-10 w-full h-full flex flex-col items-center justify-center p-8 lg:p-8"
         >
-          <div className="w-full max-w-lg aspect-square scale-110">
+          <div className="w-48 h-48 lg:w-full lg:max-w-lg lg:aspect-square lg:scale-110">
             <LoginMascot isPasswordFocused={passwordFocused} isLoginFailed={isLoginFailed} />
           </div>
-          <div className="mt-8 text-center">
-            <h2 className="text-3xl font-bold text-white mb-2 tracking-tight">Join the Movement</h2>
-            <p className="text-slate-400 max-w-sm mx-auto">
+          <div className="mt-4 lg:mt-8 text-center">
+            <h2 className="text-xl lg:text-3xl font-bold text-white mb-1 lg:mb-2 tracking-tight">Join the Movement</h2>
+            <p className="text-sm lg:text-base text-slate-400 max-w-sm mx-auto">
               Your personal AI fitness companion waiting to help you achieve your goals.
             </p>
           </div>
@@ -121,11 +121,7 @@ export default function LoginPage() {
       </div>
 
       {/* Right Side - Dark Glass Login Form */}
-      <div className="w-full lg:w-1/2 flex items-center justify-center px-4 py-10 relative bg-[#0A0A14]">
-        {/* Mobile background only */}
-        <div className="absolute inset-0 lg:hidden z-0">
-          <div className="absolute inset-0 bg-[#0A0A14]/90 backdrop-blur-xl" />
-        </div>
+      <div className="flex-1 flex items-center justify-center px-4 py-10 relative bg-navy-0">
 
         <div className="w-full max-w-md relative z-10">
           <motion.div

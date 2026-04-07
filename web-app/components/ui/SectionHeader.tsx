@@ -20,7 +20,7 @@ export function SectionHeader({
           {title}
         </h2>
         {subtitle ? (
-          <p className="mt-0.5 text-xs text-[#8B8DA3] leading-snug">{subtitle}</p>
+          <p className="mt-0.5 text-xs text-muted leading-snug">{subtitle}</p>
         ) : null}
       </div>
       {right ? <div className="shrink-0">{right}</div> : null}

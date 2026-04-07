@@ -106,7 +106,7 @@ export function UpgradeModal({ open, status, onClose, onUnlocked, showToast }: U
         subscription_id: data.subscriptionId,
         name: 'GymBro AI',
         description: 'Pro Analytics (₹1/month)',
-        theme: { color: '#F59E0B' },
+        theme: { color: 'var(--gold)' },
         // Try to force UPI if available for this subscription/account
         config: {
           display: {
@@ -154,15 +154,15 @@ export function UpgradeModal({ open, status, onClose, onUnlocked, showToast }: U
 
   return (
     <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm animate-in fade-in duration-200">
-      <div className="w-full max-w-md bg-slate-900 border border-[#8B5CF6]/10 rounded-3xl shadow-2xl overflow-hidden ring-1 ring-[#8B5CF6]/10">
+      <div className="w-full max-w-md bg-slate-900 border border-primary/10 rounded-3xl shadow-2xl overflow-hidden ring-1 ring-primary/10">
         <div className="p-6 sm:p-7">
           <div className="flex items-start justify-between gap-4">
             <div>
-              <div className="text-xs font-semibold text-[#FBBF24] bg-[#F59E0B]/15 border border-[#F59E0B]/30 inline-flex px-2.5 py-1 rounded-full shadow-[0_0_10px_rgba(245,158,11,0.2)]">
+              <div className="text-xs font-semibold text-gold-light bg-gold/15 border border-gold/30 inline-flex px-2.5 py-1 rounded-full shadow-[0_0_10px_rgba(245,158,11,0.2)]">
                 ✨ Premium
               </div>
               <h3 className="text-xl font-bold text-white mt-3">{headline}</h3>
-              <p className="text-sm text-[#8B8DA3] mt-2">
+              <p className="text-sm text-muted mt-2">
                 Subscribe for <span className="text-white font-semibold">₹1/month</span> to unlock Analytics Pro.
               </p>
             </div>
@@ -186,7 +186,7 @@ export function UpgradeModal({ open, status, onClose, onUnlocked, showToast }: U
               'Streaks + consistency insights',
               'Skipped exercise insights',
             ].map((t) => (
-              <div key={t} className="glass-soft rounded-xl p-3 text-sm text-slate-200/85 border border-[#8B5CF6]/10">
+              <div key={t} className="glass-soft rounded-xl p-3 text-sm text-slate-200/85 border border-primary/10">
                 {t}
               </div>
             ))}
@@ -198,7 +198,7 @@ export function UpgradeModal({ open, status, onClose, onUnlocked, showToast }: U
               disabled={loading || polling}
               className={`px-5 py-3 rounded-2xl font-semibold text-sm shadow-lg transition active:scale-[0.99] ${loading || polling
                   ? 'bg-slate-700 text-slate-200 cursor-wait'
-                  : 'bg-gradient-to-r from-[#F59E0B] to-[#FBBF24] text-slate-900 shadow-[0_0_25px_rgba(245,158,11,0.3)] hover:shadow-[0_0_35px_rgba(245,158,11,0.4)]'
+                  : 'bg-gradient-to-r from-gold to-gold-light text-slate-900 shadow-[0_0_25px_rgba(245,158,11,0.3)] hover:shadow-[0_0_35px_rgba(245,158,11,0.4)]'
                 }`}
             >
               {polling ? 'Activating…' : loading ? 'Opening payment…' : 'Pay ₹1/month'}
@@ -212,7 +212,7 @@ export function UpgradeModal({ open, status, onClose, onUnlocked, showToast }: U
             </button>
           </div>
 
-          <div className="mt-4 text-[11px] text-slate-400/80 leading-relaxed">
+          <div className="mt-4 text-xs text-slate-400/80 leading-relaxed">
             Payments are processed securely by Razorpay. Pro unlock is confirmed via server verification (webhook).
           </div>
         </div>

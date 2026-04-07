@@ -79,7 +79,7 @@ export function ExerciseCard({
   const points = getTutorialPoints()
 
   return (
-    <div className="glass-soft rounded-2xl overflow-hidden hover:ring-1 hover:ring-[#8B5CF6]/40 transition-all">
+    <div className="glass-soft rounded-2xl overflow-hidden hover:ring-1 hover:ring-primary/40 transition-all">
       {/* Exercise Image */}
       {imageUrl && (
         <div className="relative h-44 bg-slate-800/50 overflow-hidden">
@@ -101,7 +101,7 @@ export function ExerciseCard({
       <div className="p-4">
         {/* Exercise Name */}
         <h5 className={`text-lg font-semibold mb-2 transition ${
-          isCompleted ? 'text-emerald-300 line-through opacity-70' : 'text-[#A78BFA]'
+          isCompleted ? 'text-emerald-300 line-through opacity-70' : 'text-primary-light'
         }`}>
           {exercise.name}
         </h5>
@@ -151,7 +151,7 @@ export function ExerciseCard({
           <div>
             <button
               onClick={() => setIsExpanded(!isExpanded)}
-              className="w-full flex items-center justify-between text-sm font-semibold text-slate-100 mb-2 hover:text-[#A78BFA] transition"
+              className="w-full flex items-center justify-between text-sm font-semibold text-slate-100 mb-2 hover:text-primary-light transition"
             >
               <span>Tutorial Points</span>
               <ChevronDown className={`w-4 h-4 transition-transform ${isExpanded ? 'rotate-180' : ''}`} />

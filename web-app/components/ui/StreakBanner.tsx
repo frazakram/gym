@@ -44,7 +44,7 @@ export function StreakBanner({ current, longest, lastWorkoutDate }: StreakBanner
           ? 'bg-gradient-to-r from-orange-500/15 via-red-500/10 to-yellow-500/10 border-orange-500/30 shadow-[0_0_30px_rgba(249,115,22,0.15)]'
           : isHot
             ? 'bg-gradient-to-r from-orange-500/10 to-amber-500/8 border-orange-500/20'
-            : 'bg-gradient-to-r from-[#8B5CF6]/10 to-[#22D3EE]/5 border-[#8B5CF6]/20'
+            : 'bg-gradient-to-r from-primary/10 to-brand-cyan/5 border-primary/20'
         }
       `}
     >
@@ -77,7 +77,7 @@ export function StreakBanner({ current, longest, lastWorkoutDate }: StreakBanner
               ? 'bg-orange-500/25 text-orange-400'
               : isHot
                 ? 'bg-orange-500/20 text-orange-400'
-                : 'bg-[#8B5CF6]/15 text-[#A78BFA]'
+                : 'bg-primary/15 text-primary-light'
             }
           `}
         >
@@ -92,7 +92,7 @@ export function StreakBanner({ current, longest, lastWorkoutDate }: StreakBanner
             }`}>
               {current}
             </span>
-            <span className={`text-sm ${isHot ? 'text-orange-300/80' : 'text-[#C4B5FD]'}`}>
+            <span className={`text-sm ${isHot ? 'text-orange-300/80' : 'text-primary-lighter'}`}>
               day streak
             </span>
             {workedOutToday && (
@@ -101,7 +101,7 @@ export function StreakBanner({ current, longest, lastWorkoutDate }: StreakBanner
               </span>
             )}
           </div>
-          <p className={`text-xs mt-0.5 ${isHot ? 'text-orange-200/60' : 'text-[#8B8DA3]'}`}>
+          <p className={`text-xs mt-0.5 ${isHot ? 'text-orange-200/60' : 'text-muted'}`}>
             {message}
           </p>
         </div>
@@ -111,7 +111,7 @@ export function StreakBanner({ current, longest, lastWorkoutDate }: StreakBanner
           <div className="flex flex-col items-center gap-0.5 px-3 py-1.5 rounded-xl bg-white/5 border border-white/8">
             <Trophy className="w-3.5 h-3.5 text-amber-400" />
             <span className="text-xs font-bold text-white">{longest}</span>
-            <span className="text-[10px] text-[#8B8DA3]">best</span>
+            <span className="text-xs text-muted">best</span>
           </div>
         )}
       </div>

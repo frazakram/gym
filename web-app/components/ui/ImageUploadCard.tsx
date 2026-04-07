@@ -105,9 +105,9 @@ export function ImageUploadCard({
 
       {/* Existing Images Control */}
       {images.length > 0 && (
-        <div className="flex items-center justify-between bg-white/5 p-3 rounded-xl border border-[#8B5CF6]/10">
+        <div className="flex items-center justify-between bg-white/5 p-3 rounded-xl border border-primary/10">
           <div className="flex items-center gap-2">
-            <div className="w-2 h-2 rounded-full bg-[#8B5CF6] shadow-[0_0_8px_rgba(139,92,246,0.6)]"></div>
+            <div className="w-2 h-2 rounded-full bg-primary shadow-[0_0_8px_rgba(139,92,246,0.6)]"></div>
             <span className="text-sm text-white/90 font-medium">
               {images.length} photo{images.length !== 1 ? 's' : ''} uploaded
             </span>
@@ -115,7 +115,7 @@ export function ImageUploadCard({
           <button
             type="button"
             onClick={() => setShowImages(!showImages)}
-            className="text-xs text-[#A78BFA] hover:text-[#C4B5FD] font-medium flex items-center gap-1 transition-colors"
+            className="text-xs text-primary-light hover:text-primary-lighter font-medium flex items-center gap-1 transition-colors"
           >
             {showImages ? 'Hide photos' : 'View photos'}
             <svg
@@ -134,8 +134,8 @@ export function ImageUploadCard({
       {hasCapacity ? (
         <div
           className={`relative border-2 border-dashed rounded-2xl p-6 transition-all cursor-pointer ${dragActive
-              ? 'border-[#8B5CF6] bg-[#8B5CF6]/5'
-              : 'border-[#8B5CF6]/20 hover:border-[#8B5CF6]/30'
+              ? 'border-primary bg-primary/5'
+              : 'border-primary/20 hover:border-primary/30'
             } ${loading ? 'opacity-50' : ''}`}
           onDragEnter={handleDrag}
           onDragLeave={handleDrag}
@@ -163,13 +163,13 @@ export function ImageUploadCard({
             <p className="text-sm font-medium text-white/90 mb-1">
               Drop photos here or click to browse
             </p>
-            <p className="text-xs text-[#8B8DA3]/70">
+            <p className="text-xs text-muted/70">
               {images.length + pendingFiles.length}/{maxImages} images • Max {maxSizeMB}MB each
             </p>
           </div>
         </div>
       ) : (
-        <p className="text-xs text-[#8B8DA3] text-center py-2">
+        <p className="text-xs text-muted text-center py-2">
           Maximum limit reached. Remove images to add new ones.
         </p>
       )}
@@ -177,23 +177,23 @@ export function ImageUploadCard({
       {/* Pending Files List */}
       {pendingFiles.length > 0 && (
         <div className="space-y-2 animate-in fade-in duration-200">
-          <p className="text-xs text-[#8B8DA3] font-medium ml-1">Ready to upload:</p>
+          <p className="text-xs text-muted font-medium ml-1">Ready to upload:</p>
           <div className="grid grid-cols-2 gap-2">
             {pendingFiles.map((file, i) => (
-              <div key={i} className="flex items-center gap-2 bg-white/5 border border-[#8B5CF6]/10 p-2 rounded-lg">
+              <div key={i} className="flex items-center gap-2 bg-white/5 border border-primary/10 p-2 rounded-lg">
                 <div className="w-10 h-10 rounded bg-slate-800 flex items-center justify-center flex-shrink-0">
-                  <svg className="w-5 h-5 text-[#8B8DA3]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <svg className="w-5 h-5 text-muted" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                   </svg>
                 </div>
                 <div className="min-w-0 flex-1">
                   <p className="text-xs text-white truncate">{file.name}</p>
-                  <p className="text-[10px] text-[#8B8DA3]">{(file.size / 1024).toFixed(0)}KB</p>
+                  <p className="text-xs text-muted">{(file.size / 1024).toFixed(0)}KB</p>
                 </div>
                 <button
                   type="button"
                   onClick={() => removePending(i)}
-                  className="p-1 hover:bg-white/10 rounded-full text-[#8B8DA3] hover:text-white"
+                  className="p-1 hover:bg-white/10 rounded-full text-muted hover:text-white"
                 >
                   <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -253,7 +253,7 @@ export function ImageUploadCard({
           {images.map((photo) => (
             <div
               key={photo.id}
-              className="relative group rounded-xl overflow-hidden border border-[#8B5CF6]/10 bg-white/5 aspect-square"
+              className="relative group rounded-xl overflow-hidden border border-primary/10 bg-white/5 aspect-square"
             >
               <img
                 src={photo.base64}
@@ -274,7 +274,7 @@ export function ImageUploadCard({
               </button>
 
               {/* File Size */}
-              <div className="absolute bottom-2 left-2 px-2 py-1 rounded-md bg-black/60 text-[10px] text-white/90">
+              <div className="absolute bottom-2 left-2 px-2 py-1 rounded-md bg-black/60 text-xs text-white/90">
                 {(photo.size_bytes / 1024 / 1024).toFixed(1)}MB
               </div>
             </div>

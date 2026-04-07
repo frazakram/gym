@@ -3,12 +3,12 @@
 import { useMemo } from 'react'
 
 const GRADIENT_PAIRS = [
-  ['#8B5CF6', '#06B6D4'],
-  ['#F43F5E', '#F59E0B'],
-  ['#10B981', '#22D3EE'],
-  ['#EC4899', '#8B5CF6'],
-  ['#F59E0B', '#EF4444'],
-  ['#06B6D4', '#8B5CF6'],
+  ['var(--primary)', 'var(--cyan-dark)'],
+  ['var(--error)', 'var(--gold)'],
+  ['var(--accent)', 'var(--cyan)'],
+  ['#EC4899', 'var(--primary)'],
+  ['var(--gold)', '#EF4444'],
+  ['var(--cyan-dark)', 'var(--primary)'],
 ]
 
 function hashString(str: string): number {

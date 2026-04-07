@@ -1,4 +1,15 @@
 # CLAUDE.md
+## Session Starters
+When I say "new feature", always:
+1. Read this CLAUDE.md first
+2. Follow Critical Code Patterns
+3. Check Known Bugs before starting
+4. Use csrfFetch never plain fetch
+## Workflow Preferences
+- After making code changes, DO NOT run build verification, npm run build, or npm run lint
+- DO NOT run tests unless explicitly asked
+- DO NOT run npm run dev to verify
+- Make the changes and STOP — I will verify myself
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
@@ -75,7 +86,11 @@ This project uses Next.js 16 which has breaking changes from earlier versions. R
 - `ai-agent.ts` and `openai-routine.ts` have duplicate prompt-building logic — fix in both when editing either
 - Coach credentials are hardcoded in `lib/coach.ts` — must move to env vars
 - Analytics premium check runs AFTER the DB query in `app/api/analytics/route.ts` — should be BEFORE
-- `DashboardClient.tsx` is 1300+ lines — extract hooks, never add more logic directly to it
+## High-Traffic Files (Summary)
+- `DashboardClient.tsx` — Main dashboard UI. Contains workout display, diet tabs, 
+  coach section. DO NOT add logic here, extract to hooks first.
+- `lib/db.ts` — All DB queries live here. Schema at top of file.
+- `app/api/` — 40+ routes, all follow the Critical Code Patterns above.
 - Login page uses plain `fetch` instead of `csrfFetch` — inconsistent with rest of app
 
 ## Critical Code Patterns (Always Follow)

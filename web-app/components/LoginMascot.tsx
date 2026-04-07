@@ -118,7 +118,7 @@ export function LoginMascot({ isPasswordFocused, isLoginFailed }: LoginMascotPro
                         transition={{ type: 'spring', stiffness: 150, damping: 20, delay: 0.1 }}
                     >
                         {/* Extended height to touch base (y=450) - Taller (y=20) */}
-                        <rect x="120" y="20" width="100" height="430" rx="24" fill="#7C3AED" />
+                        <rect x="120" y="20" width="100" height="430" rx="24" fill="var(--primary-dark)" />
 
                         {/* Eyes - WHITE sclera with dark pupils (Red on error) - Moved UP to 80 */}
                         <circle cx="150" cy="80" r="10" fill="white" />
@@ -210,7 +210,7 @@ export function LoginMascot({ isPasswordFocused, isLoginFailed }: LoginMascotPro
                         transition={{ type: 'spring', stiffness: 150, damping: 20, delay: 0.4 }}
                     >
                         {/* Darker Yellow */}
-                        <rect x="240" y="270" width="90" height="180" rx="45" fill="#F59E0B" />
+                        <rect x="240" y="270" width="90" height="180" rx="45" fill="var(--gold)" />
 
                         {/* Single eye - Just a dark pupil (no sclera) - Red on error */}
                         <motion.circle
@@ -237,8 +237,8 @@ export function LoginMascot({ isPasswordFocused, isLoginFailed }: LoginMascotPro
                             transition={{ type: 'spring', stiffness: 200, damping: 15 }}
                         >
                             {/* Purple character hands - Moved UP to 80 to cover eyes */}
-                            <ellipse cx="130" cy="80" rx="20" ry="25" fill="#8B5CF6" opacity="0.9" />
-                            <ellipse cx="210" cy="80" rx="20" ry="25" fill="#8B5CF6" opacity="0.9" />
+                            <ellipse cx="130" cy="80" rx="20" ry="25" fill="var(--primary)" opacity="0.9" />
+                            <ellipse cx="210" cy="80" rx="20" ry="25" fill="var(--primary)" opacity="0.9" />
 
                             {/* Gray character hands */}
                             <ellipse cx="180" cy="230" rx="18" ry="22" fill="#334155" opacity="0.9" />

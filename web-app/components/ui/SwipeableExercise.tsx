@@ -113,7 +113,7 @@ export function SwipeableExerciseWrapper({
 
                 {/* Swipe hint for first-time users */}
                 {!disabled && (
-                    <div className="absolute bottom-2 left-1/2 -translate-x-1/2 text-[10px] text-slate-500 flex items-center gap-1 opacity-60">
+                    <div className="absolute bottom-2 left-1/2 -translate-x-1/2 text-xs text-slate-500 flex items-center gap-1 opacity-60">
                         <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
                         </svg>

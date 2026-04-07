@@ -60,11 +60,11 @@ function TrendChart({ data, label, unit, color }: { data: { date: string; value:
   return (
     <div className="space-y-2">
       <div className="flex items-center justify-between">
-        <span className="text-xs font-medium text-[#C4B5FD]">{label}</span>
+        <span className="text-xs font-medium text-primary-lighter">{label}</span>
         <div className="flex items-center gap-1.5">
           <span className="text-sm font-bold text-white">{last.toFixed(1)} {unit}</span>
           {diff !== 0 && (
-            <span className={`flex items-center gap-0.5 text-[10px] font-medium ${
+            <span className={`flex items-center gap-0.5 text-xs font-medium ${
               diff < 0 ? 'text-green-400' : 'text-orange-400'
             }`}>
               <TrendIcon className="w-3 h-3" />
@@ -85,10 +85,10 @@ function TrendChart({ data, label, unit, color }: { data: { date: string; value:
         {sorted.map((d, i) => {
           const x = padding + (i / (sorted.length - 1)) * (width - padding * 2)
           const y = height - padding - ((d.value - min) / range) * (height - padding * 2)
-          return <circle key={i} cx={x} cy={y} r="3" fill={color} stroke="#0A0A14" strokeWidth="1.5" />
+          return <circle key={i} cx={x} cy={y} r="3" fill={color} stroke="var(--navy-0)" strokeWidth="1.5" />
         })}
       </svg>
-      <div className="flex justify-between text-[10px] text-[#8B8DA3]">
+      <div className="flex justify-between text-xs text-muted">
         <span>{sorted[0].date.slice(5)}</span>
         <span>{sorted[sorted.length - 1].date.slice(5)}</span>
       </div>
@@ -202,7 +202,7 @@ export function MeasurementsView() {
           <h1 className="text-[22px] font-semibold tracking-tight text-white font-[family-name:var(--font-display)]">
             Body Tracker
           </h1>
-          <p className="text-xs text-[#8B8DA3] mt-1">Log weight & measurements to track your transformation</p>
+          <p className="text-xs text-muted mt-1">Log weight & measurements to track your transformation</p>
         </div>
         <AnimatedButton
           onClick={() => setShowForm(!showForm)}
@@ -220,83 +220,83 @@ export function MeasurementsView() {
             <SectionHeader title="New Entry" subtitle="Record today's measurements" />
             <form onSubmit={handleSubmit} className="mt-4 space-y-3">
               <div>
-                <label className="text-xs text-[#8B8DA3] mb-1 block">Date</label>
+                <label className="text-xs text-muted mb-1 block">Date</label>
                 <input
                   type="date"
                   value={measuredAt}
                   onChange={(e) => setMeasuredAt(e.target.value)}
-                  className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2.5 text-sm text-white focus:border-[#8B5CF6]/50 focus:outline-none"
+                  className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2.5 text-sm text-white focus:border-primary/50 focus:outline-none"
                 />
               </div>
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="text-xs text-[#8B8DA3] mb-1 flex items-center gap-1"><Scale className="w-3 h-3" /> Weight (kg)</label>
+                  <label className="text-xs text-muted mb-1 flex items-center gap-1"><Scale className="w-3 h-3" /> Weight (kg)</label>
                   <input
                     type="number"
                     step="0.1"
                     value={weight}
                     onChange={(e) => setWeight(e.target.value)}
                     placeholder="72.5"
-                    className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2.5 text-sm text-white focus:border-[#8B5CF6]/50 focus:outline-none"
+                    className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2.5 text-sm text-white focus:border-primary/50 focus:outline-none"
                   />
                 </div>
                 <div>
-                  <label className="text-xs text-[#8B8DA3] mb-1 flex items-center gap-1"><Ruler className="w-3 h-3" /> Waist (cm)</label>
+                  <label className="text-xs text-muted mb-1 flex items-center gap-1"><Ruler className="w-3 h-3" /> Waist (cm)</label>
                   <input
                     type="number"
                     step="0.1"
                     value={waist}
                     onChange={(e) => setWaist(e.target.value)}
                     placeholder="80.0"
-                    className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2.5 text-sm text-white focus:border-[#8B5CF6]/50 focus:outline-none"
+                    className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2.5 text-sm text-white focus:border-primary/50 focus:outline-none"
                   />
                 </div>
                 <div>
-                  <label className="text-xs text-[#8B8DA3] mb-1 block">Chest (cm)</label>
+                  <label className="text-xs text-muted mb-1 block">Chest (cm)</label>
                   <input
                     type="number"
                     step="0.1"
                     value={chest}
                     onChange={(e) => setChest(e.target.value)}
                     placeholder="96.0"
-                    className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2.5 text-sm text-white focus:border-[#8B5CF6]/50 focus:outline-none"
+                    className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2.5 text-sm text-white focus:border-primary/50 focus:outline-none"
                   />
                 </div>
                 <div>
-                  <label className="text-xs text-[#8B8DA3] mb-1 block">Arms (cm)</label>
+                  <label className="text-xs text-muted mb-1 block">Arms (cm)</label>
                   <input
                     type="number"
                     step="0.1"
                     value={arms}
                     onChange={(e) => setArms(e.target.value)}
                     placeholder="35.0"
-                    className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2.5 text-sm text-white focus:border-[#8B5CF6]/50 focus:outline-none"
+                    className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2.5 text-sm text-white focus:border-primary/50 focus:outline-none"
                   />
                 </div>
               </div>
 
               <div>
-                <label className="text-xs text-[#8B8DA3] mb-1 block">Hips (cm)</label>
+                <label className="text-xs text-muted mb-1 block">Hips (cm)</label>
                 <input
                   type="number"
                   step="0.1"
                   value={hips}
                   onChange={(e) => setHips(e.target.value)}
                   placeholder="95.0"
-                  className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2.5 text-sm text-white focus:border-[#8B5CF6]/50 focus:outline-none"
+                  className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2.5 text-sm text-white focus:border-primary/50 focus:outline-none"
                 />
               </div>
 
               <div>
-                <label className="text-xs text-[#8B8DA3] mb-1 block">Notes (optional)</label>
+                <label className="text-xs text-muted mb-1 block">Notes (optional)</label>
                 <input
                   type="text"
                   value={notes}
                   onChange={(e) => setNotes(e.target.value)}
                   placeholder="Morning weigh-in, fasted..."
                   maxLength={500}
-                  className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2.5 text-sm text-white focus:border-[#8B5CF6]/50 focus:outline-none"
+                  className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2.5 text-sm text-white focus:border-primary/50 focus:outline-none"
                 />
               </div>
 
@@ -329,16 +329,16 @@ export function MeasurementsView() {
           <GlassCard className="p-4 space-y-5">
             <SectionHeader title="Trends" subtitle="Your progress over time" />
             {chartData.weight.length >= 2 && (
-              <TrendChart data={chartData.weight} label="Weight" unit="kg" color="#8B5CF6" />
+              <TrendChart data={chartData.weight} label="Weight" unit="kg" color="var(--primary)" />
             )}
             {chartData.waist.length >= 2 && (
-              <TrendChart data={chartData.waist} label="Waist" unit="cm" color="#22D3EE" />
+              <TrendChart data={chartData.waist} label="Waist" unit="cm" color="var(--cyan)" />
             )}
             {chartData.chest.length >= 2 && (
-              <TrendChart data={chartData.chest} label="Chest" unit="cm" color="#F59E0B" />
+              <TrendChart data={chartData.chest} label="Chest" unit="cm" color="var(--gold)" />
             )}
             {chartData.arms.length >= 2 && (
-              <TrendChart data={chartData.arms} label="Arms" unit="cm" color="#10B981" />
+              <TrendChart data={chartData.arms} label="Arms" unit="cm" color="var(--accent)" />
             )}
             {chartData.hips.length >= 2 && (
               <TrendChart data={chartData.hips} label="Hips" unit="cm" color="#EC4899" />
@@ -353,14 +353,14 @@ export function MeasurementsView() {
           <SectionHeader title="History" subtitle={`${measurements.length} entries logged`} />
 
           {loading && (
-            <div className="py-8 text-center text-sm text-[#8B8DA3]">Loading...</div>
+            <div className="py-8 text-center text-sm text-muted">Loading...</div>
           )}
 
           {!loading && measurements.length === 0 && (
             <div className="py-12 text-center">
-              <Scale className="w-10 h-10 text-[#8B5CF6]/30 mx-auto mb-3" />
-              <p className="text-sm text-[#8B8DA3]">No measurements yet</p>
-              <p className="text-xs text-[#8B8DA3]/60 mt-1">Tap &ldquo;Log&rdquo; to record your first entry</p>
+              <Scale className="w-10 h-10 text-primary/30 mx-auto mb-3" />
+              <p className="text-sm text-muted">No measurements yet</p>
+              <p className="text-xs text-muted mt-1">Tap &ldquo;Log&rdquo; to record your first entry</p>
             </div>
           )}
 
@@ -373,30 +373,30 @@ export function MeasurementsView() {
                 >
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 flex-wrap">
-                      <span className="text-xs font-medium text-[#C4B5FD]">{m.measured_at}</span>
+                      <span className="text-xs font-medium text-primary-lighter">{m.measured_at}</span>
                       {m.weight != null && (
                         <span className="text-xs text-white/80">{m.weight} kg</span>
                       )}
                       {m.waist != null && (
-                        <span className="text-[10px] text-[#8B8DA3]">W: {m.waist}</span>
+                        <span className="text-xs text-muted">W: {m.waist}</span>
                       )}
                       {m.chest != null && (
-                        <span className="text-[10px] text-[#8B8DA3]">C: {m.chest}</span>
+                        <span className="text-xs text-muted">C: {m.chest}</span>
                       )}
                       {m.arms != null && (
-                        <span className="text-[10px] text-[#8B8DA3]">A: {m.arms}</span>
+                        <span className="text-xs text-muted">A: {m.arms}</span>
                       )}
                       {m.hips != null && (
-                        <span className="text-[10px] text-[#8B8DA3]">H: {m.hips}</span>
+                        <span className="text-xs text-muted">H: {m.hips}</span>
                       )}
                     </div>
                     {m.notes && (
-                      <p className="text-[10px] text-[#8B8DA3]/60 mt-0.5 truncate">{m.notes}</p>
+                      <p className="text-xs text-muted mt-0.5 truncate">{m.notes}</p>
                     )}
                   </div>
                   <button
                     onClick={() => handleDelete(m.id)}
-                    className="shrink-0 p-1.5 rounded-lg hover:bg-red-500/15 text-[#8B8DA3] hover:text-red-400 transition-colors"
+                    className="shrink-0 p-1.5 rounded-lg hover:bg-red-500/15 text-muted hover:text-red-400 transition-colors"
                   >
                     <Trash2 className="w-3.5 h-3.5" />
                   </button>
