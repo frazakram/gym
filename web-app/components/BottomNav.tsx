@@ -26,10 +26,10 @@ const HALF    = SZ / 2
 
 // 4 items spread evenly across a 120° arc (from 150° down to 30°)
 const ITEMS = [
-  { id: 'analytics'    as const, label: 'Analytics', icon: BarChart3,     color: '#A78BFA', bg: 'rgba(139,92,246,0.20)', border: 'rgba(139,92,246,0.40)', angle: 150 },
+  { id: 'analytics'    as const, label: 'Analytics', icon: BarChart3,     color: 'var(--primary-light)', bg: 'rgba(139,92,246,0.20)', border: 'rgba(139,92,246,0.40)', angle: 150 },
   { id: 'diet'         as const, label: 'Diet',      icon: Utensils,      color: '#6EE7B7', bg: 'rgba(16,185,129,0.20)', border: 'rgba(16,185,129,0.40)', angle: 110 },
   { id: 'coach'        as const, label: 'Coach',     icon: MessageCircle, color: '#FCD34D', bg: 'rgba(245,158,11,0.20)', border: 'rgba(245,158,11,0.40)', angle: 70  },
-  { id: 'measurements' as const, label: 'Body',      icon: Ruler,         color: '#67E8F9', bg: 'rgba(34,211,238,0.20)', border: 'rgba(34,211,238,0.40)', angle: 30  },
+  { id: 'measurements' as const, label: 'Body',      icon: Ruler,         color: 'var(--cyan-light)', bg: 'rgba(34,211,238,0.20)', border: 'rgba(34,211,238,0.40)', angle: 30  },
 ]
 
 function arc(deg: number) {
@@ -51,16 +51,16 @@ export function BottomNav({ activeView, onViewChange }: BottomNavProps) {
         className="relative flex flex-col items-center justify-center gap-0.5 px-3 py-2 rounded-xl transition-all duration-200 min-w-[56px]">
         {isActive && (
           <motion.div layoutId="nav-pill"
-            className="absolute -top-0.5 w-6 h-[3px] rounded-full bg-[#8B5CF6] shadow-[0_0_8px_rgba(139,92,246,0.6)]"
+            className="absolute -top-0.5 w-6 h-[3px] rounded-full bg-primary shadow-[0_0_8px_rgba(139,92,246,0.6)]"
             transition={{ type:'spring', stiffness:400, damping:30 }} />
         )}
-        <div className={isActive ? 'text-[#8B5CF6] drop-shadow-[0_0_8px_rgba(139,92,246,0.6)]' : 'text-slate-400'}>
+        <div className={isActive ? 'text-primary drop-shadow-[0_0_8px_rgba(139,92,246,0.6)]' : 'text-slate-400'}>
           <Icon className="w-5 h-5" />
         </div>
         <AnimatePresence>
           {isActive && (
             <motion.span initial={{opacity:0,height:0}} animate={{opacity:1,height:'auto'}} exit={{opacity:0,height:0}}
-              className="text-[10px] font-medium text-[#8B5CF6]">{item.label}</motion.span>
+              className="text-xs font-medium text-primary">{item.label}</motion.span>
           )}
         </AnimatePresence>
       </button>
@@ -133,7 +133,7 @@ export function BottomNav({ activeView, onViewChange }: BottomNavProps) {
                   <motion.span
                     initial={{opacity:0, y:4}} animate={{opacity:1, y:0}}
                     transition={{delay: i*0.065+0.22, duration:0.18}}
-                    className="absolute left-1/2 -translate-x-1/2 whitespace-nowrap text-[10px] font-bold tracking-wide px-2 py-0.5 rounded-md backdrop-blur-sm pointer-events-none"
+                    className="absolute left-1/2 -translate-x-1/2 whitespace-nowrap text-xs font-bold tracking-wide px-2 py-0.5 rounded-md backdrop-blur-sm pointer-events-none"
                     style={{ bottom: SZ + 6, color:item.color, background:item.bg, border:`1px solid ${item.border}` }}>
                     {item.label}
                   </motion.span>
@@ -165,7 +165,7 @@ export function BottomNav({ activeView, onViewChange }: BottomNavProps) {
       {/* ── Bottom Nav Bar ── */}
       <nav className="fixed bottom-0 left-0 right-0 safe-area-bottom" style={{zIndex:50}}>
         <div className="max-w-md mx-auto px-4 pb-2">
-          <div className="flex items-center justify-between bg-[#0A0A14]/95 backdrop-blur-xl rounded-2xl border border-[#8B5CF6]/15 shadow-[0_8px_32px_rgba(0,0,0,0.4)] px-2 py-1">
+          <div className="flex items-center justify-between bg-navy-0/95 backdrop-blur-xl rounded-2xl border border-primary/15 shadow-[0_8px_32px_rgba(0,0,0,0.4)] px-2 py-1">
 
             {/* Left tabs */}
             <div className="flex items-center">
@@ -186,7 +186,7 @@ export function BottomNav({ activeView, onViewChange }: BottomNavProps) {
                     <motion.div key="r2"
                       initial={{scale:1,opacity:0.25}} animate={{scale:1.8,opacity:0}} exit={{opacity:0}}
                       transition={{duration:0.7,ease:'easeOut',repeat:Infinity,repeatDelay:0.7,delay:0.25}}
-                      className="absolute inset-0 rounded-full bg-[#22D3EE]/20" />
+                      className="absolute inset-0 rounded-full bg-brand-cyan/20" />
                   </>
                 )}
               </AnimatePresence>
@@ -196,7 +196,7 @@ export function BottomNav({ activeView, onViewChange }: BottomNavProps) {
                 whileTap={{scale:0.82}}
                 animate={{ scale: open?1.15:1, rotate: open?45:0 }}
                 transition={{type:'spring',stiffness:500,damping:24}}
-                className="relative flex items-center justify-center w-14 h-14 rounded-full bg-gradient-to-br from-[#8B5CF6] via-[#7C3AED] to-[#22D3EE] transition-shadow duration-300"
+                className="relative flex items-center justify-center w-14 h-14 rounded-full bg-gradient-to-br from-primary via-primary-dark to-brand-cyan transition-shadow duration-300"
                 style={{
                   boxShadow: open
                     ? '0 0 32px rgba(139,92,246,0.6), 0 0 64px rgba(34,211,238,0.25)'

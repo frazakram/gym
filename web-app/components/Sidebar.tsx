@@ -135,12 +135,12 @@ export function Sidebar({
         }}
         className={`w-full p-3 rounded-xl text-left transition-all border ${
           isSelected
-            ? 'bg-[#8B5CF6]/10 border-[#8B5CF6]/40 shadow-lg shadow-[#8B5CF6]/10'
-            : 'bg-white/5 border-transparent hover:bg-white/10 hover:border-[#8B5CF6]/15'
+            ? 'bg-primary/10 border-primary/40 shadow-lg shadow-primary/10'
+            : 'bg-white/5 border-transparent hover:bg-white/10 hover:border-primary/15'
         }`}
       >
         <div className="flex items-center justify-between gap-2 mb-1">
-          <span className={`font-semibold ${isSelected ? 'text-[#A78BFA]' : 'text-slate-200'}`}>
+          <span className={`font-semibold ${isSelected ? 'text-primary-light' : 'text-slate-200'}`}>
             Week {routine.week_number}
           </span>
           <div className="flex items-center gap-1">
@@ -151,7 +151,7 @@ export function Sidebar({
                 e.stopPropagation()
                 onArchiveRoutine(routine.id, !isArchived)
               }}
-              className="p-1.5 rounded-lg text-slate-300 hover:text-white hover:bg-[#8B5CF6]/10 transition"
+              className="p-1.5 rounded-lg text-slate-300 hover:text-white hover:bg-primary/10 transition"
               aria-label={isArchived ? 'Unarchive routine' : 'Archive routine'}
               title={isArchived ? 'Unarchive' : 'Archive'}
             >
@@ -189,7 +189,7 @@ export function Sidebar({
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-[#0A0A14]/85 backdrop-blur-sm z-40"
+            className="fixed inset-0 bg-navy-0/85 backdrop-blur-sm z-40"
           />
         )}
       </AnimatePresence>
@@ -200,16 +200,16 @@ export function Sidebar({
         initial={false}
         animate={{ x: isOpen ? 0 : -288 }}
         transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-        className="fixed inset-y-0 left-0 w-72 bg-[#0A0A14]/98 border-r border-[#8B5CF6]/15 z-50 backdrop-blur-xl"
+        className="fixed inset-y-0 left-0 w-72 bg-navy-0/98 border-r border-primary/15 z-50 backdrop-blur-xl"
       >
         <div className="flex flex-col h-full">
           {/* Header */}
-          <div className="p-4 border-b border-[#8B5CF6]/10 flex items-center justify-between">
+          <div className="p-4 border-b border-primary/10 flex items-center justify-between">
             <h2 className="text-xl font-bold text-white font-[family-name:var(--font-display)]">History</h2>
             <motion.button
               whileTap={{ scale: 0.9 }}
               onClick={onClose}
-              className="p-2 text-slate-400 hover:text-white rounded-lg hover:bg-[#8B5CF6]/10 transition-colors"
+              className="p-2 text-slate-400 hover:text-white rounded-lg hover:bg-primary/10 transition-colors"
               aria-label="Close sidebar"
             >
               <X className="w-5 h-5" />
@@ -220,13 +220,13 @@ export function Sidebar({
           <div className="flex-1 overflow-y-auto p-4 space-y-3 scrollbar-hide">
             {loading ? (
               <div className="flex items-center justify-center py-8">
-                <Loader2 className="w-8 h-8 animate-spin text-[#8B5CF6]" />
+                <Loader2 className="w-8 h-8 animate-spin text-primary" />
               </div>
             ) : active.length === 0 && archived.length === 0 ? (
               <p className="text-slate-400 text-sm text-center py-4">No saved routines found.</p>
             ) : (
               <>
-                <div className="text-[11px] font-semibold text-[#8B8DA3] uppercase tracking-wider px-1">Saved weeks</div>
+                <div className="text-xs font-semibold text-muted uppercase tracking-wider px-1">Saved weeks</div>
                 {active.map((routine) => (
                   <RoutineCard key={routine.id} routine={routine} />
                 ))}
@@ -239,7 +239,7 @@ export function Sidebar({
                       className="w-full flex items-center justify-between px-1 py-2 text-xs font-semibold text-slate-200/80 hover:text-white transition"
                     >
                       <span>Archived ({archived.length})</span>
-                      <span className="text-[#8B5CF6]">{showArchived ? 'Hide' : 'Show'}</span>
+                      <span className="text-primary">{showArchived ? 'Hide' : 'Show'}</span>
                     </button>
 
                     <AnimatePresence>
@@ -265,14 +265,14 @@ export function Sidebar({
 
           {/* AI Settings Section */}
           {aiSettings && (
-            <div className="border-t border-[#8B5CF6]/10">
+            <div className="border-t border-primary/10">
               <button
                 type="button"
                 onClick={() => setShowAISettings((v) => !v)}
                 className="w-full flex items-center justify-between px-4 py-3 text-sm font-semibold text-white hover:bg-white/5 transition-colors"
               >
                 <div className="flex items-center gap-2">
-                  <Key className="w-4 h-4 text-[#8B5CF6]" />
+                  <Key className="w-4 h-4 text-primary" />
                   <span>AI Settings</span>
                   {aiSettings.apiKey && (
                     <span className="w-2 h-2 rounded-full bg-emerald-400" title="API key configured" />
@@ -293,7 +293,7 @@ export function Sidebar({
                     <div className="px-4 pb-4 space-y-3">
                       {/* Provider Selection */}
                       <div>
-                        <label className="text-[11px] font-semibold text-[#8B8DA3] uppercase tracking-wider">
+                        <label className="text-xs font-semibold text-muted uppercase tracking-wider">
                           Provider
                         </label>
                         <div className="mt-1.5 flex gap-2">
@@ -307,7 +307,7 @@ export function Sidebar({
                               }}
                               className={`flex-1 px-3 py-2 rounded-lg text-xs font-semibold border transition-all ${
                                 aiSettings.modelProvider === p
-                                  ? 'bg-[#8B5CF6]/15 border-[#8B5CF6]/40 text-[#C4B5FD]'
+                                  ? 'bg-primary/15 border-primary/40 text-primary-lighter'
                                   : 'bg-white/5 border-white/10 text-slate-300 hover:bg-white/10'
                               }`}
                             >
@@ -319,7 +319,7 @@ export function Sidebar({
 
                       {/* API Key */}
                       <div>
-                        <label className="text-[11px] font-semibold text-[#8B8DA3] uppercase tracking-wider">
+                        <label className="text-xs font-semibold text-muted uppercase tracking-wider">
                           API Key
                         </label>
                         <div className="mt-1.5 relative">
@@ -328,7 +328,7 @@ export function Sidebar({
                             value={aiSettings.apiKey}
                             onChange={(e) => aiSettings.onApiKeyChange(e.target.value)}
                             placeholder={aiSettings.modelProvider === 'OpenAI' ? 'sk-proj-...' : 'sk-ant-...'}
-                            className="w-full px-3 py-2 pr-10 rounded-lg bg-white/5 border border-white/10 text-sm text-white placeholder:text-white/20 focus:outline-none focus:border-[#8B5CF6]/40 focus:ring-1 focus:ring-[#8B5CF6]/20 transition"
+                            className="w-full px-3 py-2 pr-10 rounded-lg bg-white/5 border border-white/10 text-sm text-white placeholder:text-white/20 focus:outline-none focus:border-primary/40 focus:ring-1 focus:ring-primary/20 transition"
                           />
                           <button
                             type="button"
@@ -342,16 +342,16 @@ export function Sidebar({
 
                       {/* Model Selection */}
                       <div>
-                        <label className="text-[11px] font-semibold text-[#8B8DA3] uppercase tracking-wider">
+                        <label className="text-xs font-semibold text-muted uppercase tracking-wider">
                           Model
                         </label>
                         <select
                           value={aiSettings.model}
                           onChange={(e) => aiSettings.onModelChange(e.target.value)}
-                          className="mt-1.5 w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-sm text-white focus:outline-none focus:border-[#8B5CF6]/40 focus:ring-1 focus:ring-[#8B5CF6]/20 transition appearance-none"
+                          className="mt-1.5 w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-sm text-white focus:outline-none focus:border-primary/40 focus:ring-1 focus:ring-primary/20 transition appearance-none"
                         >
                           {models.map((m) => (
-                            <option key={m.id} value={m.id} className="bg-[#0A0A14] text-white">
+                            <option key={m.id} value={m.id} className="bg-navy-0 text-white">
                               {m.label}
                             </option>
                           ))}
@@ -365,7 +365,7 @@ export function Sidebar({
                         className={`w-full flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-xs font-semibold transition-all ${
                           keySaved
                             ? 'bg-emerald-500/15 border border-emerald-500/30 text-emerald-300'
-                            : 'bg-[#8B5CF6]/15 border border-[#8B5CF6]/30 text-[#C4B5FD] hover:bg-[#8B5CF6]/25'
+                            : 'bg-primary/15 border border-primary/30 text-primary-lighter hover:bg-primary/25'
                         }`}
                       >
                         {keySaved ? (
@@ -378,7 +378,7 @@ export function Sidebar({
                         )}
                       </button>
 
-                      <p className="text-[10px] text-white/25 leading-snug">
+                      <p className="text-xs text-white/60 leading-snug">
                         Your key is stored locally in your browser. It&apos;s sent directly to the AI provider and never stored on our servers.
                       </p>
                     </div>
@@ -389,7 +389,7 @@ export function Sidebar({
           )}
 
           {/* Footer */}
-          <div className="p-4 border-t border-[#8B5CF6]/10">
+          <div className="p-4 border-t border-primary/10">
             <p className="text-xs text-slate-500 text-center">
               GymBro AI v1.0
             </p>

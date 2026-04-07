@@ -259,28 +259,28 @@ export function CoachView({
           title="Personal Coach"
           subtitle="Premium (trial allowed) • Book a 1:1 coach call or message"
           right={
-            <div className="text-[11px] text-amber-200 bg-amber-400/10 border border-amber-400/20 inline-flex px-2.5 py-1 rounded-full">
+            <div className="text-xs text-amber-200 bg-amber-400/10 border border-amber-400/20 inline-flex px-2.5 py-1 rounded-full">
               Premium
             </div>
           }
         />
 
         {loadingCoach && !coach ? (
-          <div className="mt-4 text-sm text-[#8B8DA3]">Loading coach…</div>
+          <div className="mt-4 text-sm text-muted">Loading coach…</div>
         ) : coach ? (
           <div className="mt-4 space-y-3">
             {/* Marketplace coaches (approved) */}
             {coaches.length > 0 ? (
-              <div className="rounded-xl border border-[#8B5CF6]/10 bg-white/5 p-3">
+              <div className="rounded-xl border border-primary/10 bg-white/5 p-3">
                 <p className="text-sm font-semibold text-white">Choose a coach</p>
-                <p className="text-xs text-[#8B8DA3] mt-1">
+                <p className="text-xs text-muted mt-1">
                   These coaches signed up and were approved by admin. If you don’t select, default coach is used.
                 </p>
                 <div className="mt-3">
                   <select
                     value={selectedCoachId ?? ''}
                     onChange={(e) => setSelectedCoachId(e.target.value ? Number(e.target.value) : null)}
-                    className="w-full px-4 py-3 glass-soft rounded-2xl text-white ui-focus-ring border border-[#8B5CF6]/10 bg-transparent"
+                    className="w-full px-4 py-3 glass-soft rounded-2xl text-white ui-focus-ring border border-primary/10 bg-transparent"
                   >
                     {coaches.map((c) => (
                       <option key={c.coach_id} value={c.coach_id} className="bg-slate-900">
@@ -300,10 +300,10 @@ export function CoachView({
                         return (
                           <div className="space-y-1">
                             <div>
-                              <span className="text-[#8B8DA3]">Bio:</span> {c.bio || '—'}
+                              <span className="text-muted">Bio:</span> {c.bio || '—'}
                             </div>
                             <div>
-                              <span className="text-[#8B8DA3]">Certifications:</span> {c.certifications || '—'}
+                              <span className="text-muted">Certifications:</span> {c.certifications || '—'}
                             </div>
                           </div>
                         )
@@ -314,26 +314,26 @@ export function CoachView({
               </div>
             ) : null}
 
-            <div className="rounded-xl border border-[#8B5CF6]/10 bg-white/5 p-3">
+            <div className="rounded-xl border border-primary/10 bg-white/5 p-3">
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0">
                   <p className="text-sm font-semibold text-white">{coach.name}</p>
-                  <p className="text-xs text-[#8B8DA3] mt-1">Personal Coach</p>
+                  <p className="text-xs text-muted mt-1">Personal Coach</p>
                 </div>
-                <div className="shrink-0 text-[11px] text-slate-200/80 glass-soft px-2.5 py-1 rounded-full border border-[#8B5CF6]/10">
+                <div className="shrink-0 text-xs text-slate-200/80 glass-soft px-2.5 py-1 rounded-full border border-primary/10">
                   Available
                 </div>
               </div>
 
               <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-2">
                 <a
-                  className="glass-soft rounded-xl px-3 py-2 border border-[#8B5CF6]/10 text-sm text-white/90 hover:bg-white/10 transition"
+                  className="glass-soft rounded-xl px-3 py-2 border border-primary/10 text-sm text-white/90 hover:bg-white/10 transition"
                   href={telHref}
                 >
                   Call: <span className="text-slate-200">{coach.phone}</span>
                 </a>
                 <a
-                  className="glass-soft rounded-xl px-3 py-2 border border-[#8B5CF6]/10 text-sm text-white/90 hover:bg-white/10 transition"
+                  className="glass-soft rounded-xl px-3 py-2 border border-primary/10 text-sm text-white/90 hover:bg-white/10 transition"
                   href={mailHref}
                 >
                   Email: <span className="text-slate-200">{coach.email}</span>
@@ -341,9 +341,9 @@ export function CoachView({
               </div>
             </div>
 
-            <div className="rounded-xl border border-[#8B5CF6]/10 bg-white/5 p-3">
+            <div className="rounded-xl border border-primary/10 bg-white/5 p-3">
               <p className="text-sm font-semibold text-white">Request a session</p>
-              <p className="text-xs text-[#8B8DA3] mt-1">
+              <p className="text-xs text-muted mt-1">
                 Enter your contact info so the coach can reach you, plus your preferred time and goals.
               </p>
               {activeBooking ? (
@@ -366,7 +366,7 @@ export function CoachView({
                         >
                           Cancel booking
                         </AnimatedButton>
-                        {!c.ok && c.reason ? <div className="mt-2 text-[11px] text-amber-100/80">{c.reason}</div> : null}
+                        {!c.ok && c.reason ? <div className="mt-2 text-xs text-amber-100/80">{c.reason}</div> : null}
                       </div>
                     )
                   })()}
@@ -374,51 +374,51 @@ export function CoachView({
               ) : null}
 
               <div className="mt-3 space-y-2">
-                <label className="block text-xs text-[#8B8DA3]">Your name</label>
+                <label className="block text-xs text-muted">Your name</label>
                 <input
                   type="text"
                   value={userName}
                   onChange={(e) => setUserName(e.target.value)}
                   placeholder="e.g. Harshit"
                   disabled={Boolean(activeBooking)}
-                  className="w-full rounded-xl bg-slate-900/60 border border-[#8B5CF6]/10 px-3 py-2 text-sm text-white outline-none focus:ring-2 focus:ring-[#8B5CF6]/30"
+                  className="w-full rounded-xl bg-slate-900/60 border border-primary/10 px-3 py-2 text-sm text-white outline-none focus:ring-2 focus:ring-primary/30"
                 />
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                   <div>
-                    <label className="block text-xs text-[#8B8DA3]">Your email</label>
+                    <label className="block text-xs text-muted">Your email</label>
                     <input
                       type="email"
                       value={userEmail}
                       onChange={(e) => setUserEmail(e.target.value)}
                       placeholder="you@example.com"
                       disabled={Boolean(activeBooking)}
-                      className="w-full rounded-xl bg-slate-900/60 border border-[#8B5CF6]/10 px-3 py-2 text-sm text-white outline-none focus:ring-2 focus:ring-[#8B5CF6]/30"
+                      className="w-full rounded-xl bg-slate-900/60 border border-primary/10 px-3 py-2 text-sm text-white outline-none focus:ring-2 focus:ring-primary/30"
                     />
                   </div>
                   <div>
-                    <label className="block text-xs text-[#8B8DA3]">Your phone</label>
+                    <label className="block text-xs text-muted">Your phone</label>
                     <input
                       type="tel"
                       value={userPhone}
                       onChange={(e) => setUserPhone(e.target.value)}
                       placeholder="9000000000"
                       disabled={Boolean(activeBooking)}
-                      className="w-full rounded-xl bg-slate-900/60 border border-[#8B5CF6]/10 px-3 py-2 text-sm text-white outline-none focus:ring-2 focus:ring-[#8B5CF6]/30"
+                      className="w-full rounded-xl bg-slate-900/60 border border-primary/10 px-3 py-2 text-sm text-white outline-none focus:ring-2 focus:ring-primary/30"
                     />
                   </div>
                 </div>
 
-                <label className="block text-xs text-[#8B8DA3]">Preferred date & time</label>
+                <label className="block text-xs text-muted">Preferred date & time</label>
                 <input
                   type="datetime-local"
                   value={preferredAt}
                   onChange={(e) => setPreferredAt(e.target.value)}
                   disabled={Boolean(activeBooking)}
-                  className="w-full rounded-xl bg-slate-900/60 border border-[#8B5CF6]/10 px-3 py-2 text-sm text-white outline-none focus:ring-2 focus:ring-[#8B5CF6]/30"
+                  className="w-full rounded-xl bg-slate-900/60 border border-primary/10 px-3 py-2 text-sm text-white outline-none focus:ring-2 focus:ring-primary/30"
                 />
 
-                <label className="block text-xs text-[#8B8DA3] mt-2">Message (optional)</label>
+                <label className="block text-xs text-muted mt-2">Message (optional)</label>
                 <textarea
                   value={message}
                   onChange={(e) => setMessage(e.target.value)}
@@ -426,7 +426,7 @@ export function CoachView({
                   maxLength={1000}
                   placeholder="Example: Knee pain on squats, want form check + 4-week strength plan."
                   disabled={Boolean(activeBooking)}
-                  className="w-full rounded-xl bg-slate-900/60 border border-[#8B5CF6]/10 px-3 py-2 text-sm text-white outline-none focus:ring-2 focus:ring-[#8B5CF6]/30 resize-none"
+                  className="w-full rounded-xl bg-slate-900/60 border border-primary/10 px-3 py-2 text-sm text-white outline-none focus:ring-2 focus:ring-primary/30 resize-none"
                 />
 
                 <div className="pt-2">
@@ -440,7 +440,7 @@ export function CoachView({
                     Submit booking request
                   </AnimatedButton>
                   {!activeBooking && (!userName.trim() || !userEmail.trim() || !userPhone.trim()) ? (
-                    <p className="mt-2 text-xs text-[#8B8DA3]">
+                    <p className="mt-2 text-xs text-muted">
                       Please enter your name, email and phone so the coach can contact you.
                     </p>
                   ) : null}
@@ -449,7 +449,7 @@ export function CoachView({
             </div>
           </div>
         ) : (
-          <div className="mt-4 text-sm text-[#8B8DA3]">Coach unavailable right now.</div>
+          <div className="mt-4 text-sm text-muted">Coach unavailable right now.</div>
         )}
       </GlassCard>
       </motion.div>
@@ -462,7 +462,7 @@ export function CoachView({
           right={
             <button
               onClick={() => void fetchBookings()}
-              className="text-xs text-slate-200/80 hover:text-white glass-soft px-2.5 py-1 rounded-full border border-[#8B5CF6]/10"
+              className="text-xs text-slate-200/80 hover:text-white glass-soft px-2.5 py-1 rounded-full border border-primary/10"
               disabled={loadingBookings}
             >
               {loadingBookings ? 'Refreshing…' : 'Refresh'}
@@ -471,19 +471,19 @@ export function CoachView({
         />
 
         {loadingBookings && bookings.length === 0 ? (
-          <div className="mt-4 text-sm text-[#8B8DA3]">Loading…</div>
+          <div className="mt-4 text-sm text-muted">Loading…</div>
         ) : bookings.length === 0 ? (
-          <div className="mt-4 text-sm text-[#8B8DA3]">No requests yet.</div>
+          <div className="mt-4 text-sm text-muted">No requests yet.</div>
         ) : (
           <div className="mt-3 space-y-2">
             {bookings.map((b) => (
-              <div key={b.id} className="rounded-xl border border-[#8B5CF6]/10 bg-white/5 p-3">
+              <div key={b.id} className="rounded-xl border border-primary/10 bg-white/5 p-3">
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0">
                     <p className="text-sm font-semibold text-white">
-                      {b.coach_name} <span className="text-[#8B8DA3] font-normal">• #{b.id}</span>
+                      {b.coach_name} <span className="text-muted font-normal">• #{b.id}</span>
                     </p>
-                    <p className="text-xs text-[#8B8DA3] mt-1">
+                    <p className="text-xs text-muted mt-1">
                       Preferred:{' '}
                       {b.preferred_at ? new Date(b.preferred_at).toLocaleString() : 'Not specified'}
                     </p>
@@ -527,15 +527,15 @@ export function CoachView({
                     {(() => {
                       const c = canCancelBooking(b)
                       return !c.ok && c.reason ? (
-                        <div className="mt-2 text-[11px] text-amber-200/90">{c.reason}</div>
+                        <div className="mt-2 text-xs text-amber-200/90">{c.reason}</div>
                       ) : null
                     })()}
                   </div>
-                  <div className="shrink-0 text-[11px] text-slate-200/80 glass-soft px-2.5 py-1 rounded-full border border-[#8B5CF6]/10">
+                  <div className="shrink-0 text-xs text-slate-200/80 glass-soft px-2.5 py-1 rounded-full border border-primary/10">
                     {b.status}
                   </div>
                 </div>
-                <div className="mt-2 text-[11px] text-[#8B8DA3]">
+                <div className="mt-2 text-xs text-muted">
                   Created: {new Date(b.created_at).toLocaleString()}
                 </div>
               </div>

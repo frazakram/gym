@@ -113,16 +113,16 @@ export function DemoModeProvider({ children }: { children: React.ReactNode }) {
   // This prevents DashboardClient from making real API calls
   if (!interceptorReady) {
     return (
-      <div className="min-h-screen bg-[#0A0A14] flex items-center justify-center">
+      <div className="min-h-screen bg-navy-0 flex items-center justify-center">
         <motion.div
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
           className="flex flex-col items-center gap-3"
         >
-          <div className="h-12 w-12 rounded-2xl bg-gradient-to-br from-[#8B5CF6] to-[#6D28D9] flex items-center justify-center shadow-lg shadow-[#8B5CF6]/30">
+          <div className="h-12 w-12 rounded-2xl bg-gradient-to-br from-primary to-[#6D28D9] flex items-center justify-center shadow-lg shadow-primary/30">
             <Dumbbell size={22} className="text-white" />
           </div>
-          <p className="text-sm text-white/40">Loading GymBro...</p>
+          <p className="text-sm text-white/70">Loading GymBro...</p>
         </motion.div>
       </div>
     )
@@ -151,19 +151,19 @@ export function DemoModeProvider({ children }: { children: React.ReactNode }) {
               animate={{ scale: 1, opacity: 1, y: 0 }}
               exit={{ scale: 0.9, opacity: 0, y: 20 }}
               transition={{ type: 'spring', damping: 25, stiffness: 350 }}
-              className="relative w-full max-w-sm rounded-2xl border border-[#8B5CF6]/20 bg-[#0A0A14]/95 backdrop-blur-xl p-6 shadow-2xl shadow-[#8B5CF6]/10"
+              className="relative w-full max-w-sm rounded-2xl border border-primary/20 bg-navy-0/95 backdrop-blur-xl p-6 shadow-2xl shadow-primary/10"
               onClick={(e) => e.stopPropagation()}
             >
               {/* Close */}
               <button
                 onClick={() => setShowLoginPrompt(false)}
-                className="absolute right-3 top-3 rounded-full p-1.5 text-white/40 hover:text-white/80 hover:bg-white/5 transition-colors"
+                className="absolute right-3 top-3 rounded-full p-1.5 text-white/60 hover:text-white/90 hover:bg-white/5 transition-colors"
               >
                 <X size={18} />
               </button>
 
               {/* Icon */}
-              <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-[#8B5CF6] to-[#6D28D9] shadow-lg shadow-[#8B5CF6]/30">
+              <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-primary to-[#6D28D9] shadow-lg shadow-primary/30">
                 <Lock size={24} className="text-white" />
               </div>
 
@@ -179,7 +179,7 @@ export function DemoModeProvider({ children }: { children: React.ReactNode }) {
               <div className="flex flex-col gap-3">
                 <button
                   onClick={() => router.push('/login?mode=register')}
-                  className="flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[#8B5CF6] to-[#6D28D9] px-4 py-3 text-sm font-semibold text-white shadow-lg shadow-[#8B5CF6]/25 hover:shadow-[#8B5CF6]/40 transition-all active:scale-[0.98]"
+                  className="flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-primary to-[#6D28D9] px-4 py-3 text-sm font-semibold text-white shadow-lg shadow-primary/25 hover:shadow-primary/40 transition-all active:scale-[0.98]"
                 >
                   <UserPlus size={18} />
                   Sign Up Free
@@ -193,7 +193,7 @@ export function DemoModeProvider({ children }: { children: React.ReactNode }) {
                 </button>
                 <button
                   onClick={() => setShowLoginPrompt(false)}
-                  className="text-sm text-white/40 hover:text-white/60 transition-colors py-1"
+                  className="text-sm text-white/60 hover:text-white/80 transition-colors py-1"
                 >
                   Continue Exploring
                 </button>

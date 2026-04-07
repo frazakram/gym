@@ -42,9 +42,9 @@ export function WorkoutView({
   if (!routine) {
     return (
       <div className="pb-24 px-4 py-6">
-        <div className="glass rounded-2xl p-8 text-center border-[#8B5CF6]/10">
+        <div className="glass rounded-2xl p-8 text-center border-primary/10">
           <h2 className="text-2xl font-bold text-white mb-3 font-[family-name:var(--font-display)]">No Workout Selected</h2>
-          <p className="text-[#8B8DA3]">Go to Routine to select a workout</p>
+          <p className="text-muted">Go to Routine to select a workout</p>
         </div>
       </div>
     )
@@ -55,9 +55,9 @@ export function WorkoutView({
   if (!day) {
     return (
       <div className="pb-24 px-4 py-6">
-        <div className="glass rounded-2xl p-8 text-center border-[#8B5CF6]/10">
+        <div className="glass rounded-2xl p-8 text-center border-primary/10">
           <h2 className="text-2xl font-bold text-white mb-3 font-[family-name:var(--font-display)]">Day Not Found</h2>
-          <p className="text-[#8B8DA3]">Please select a valid day from the routine</p>
+          <p className="text-muted">Please select a valid day from the routine</p>
         </div>
       </div>
     )
@@ -75,28 +75,28 @@ export function WorkoutView({
   return (
     <div className="pb-24">
       {/* Header */}
-      <div className="sticky top-0 z-10 glass-menu backdrop-blur-xl px-4 py-3 border-b border-[#8B5CF6]/10">
+      <div className="sticky top-0 z-10 glass-menu backdrop-blur-xl px-4 py-3 border-b border-primary/10">
         <div className="flex items-center gap-2">
           <motion.button
             whileTap={{ scale: 0.9 }}
             onClick={onBack}
-            className="p-1.5 rounded-lg glass-soft hover:bg-[#8B5CF6]/10 transition"
+            className="p-1.5 rounded-lg glass-soft hover:bg-primary/10 transition"
             aria-label="Go back"
           >
             <ChevronLeft className="w-4 h-4 text-white" />
           </motion.button>
           <div className="flex-1 min-w-0">
             <h1 className="text-base font-bold text-white truncate font-[family-name:var(--font-display)]">{day.day}</h1>
-            <p className="text-xs text-[#8B8DA3]">
+            <p className="text-xs text-muted">
               {isRestDay ? (restDone ? 'Rest day completed' : 'Rest day') : `${completedCount}/${totalCount} completed \u2022 ${progressPercentage}%`}
             </p>
           </div>
         </div>
 
         {/* Progress Bar */}
-        <div className="mt-2 w-full bg-[#8B5CF6]/10 rounded-full h-1.5 overflow-hidden">
+        <div className="mt-2 w-full bg-primary/10 rounded-full h-1.5 overflow-hidden">
           <motion.div
-            className="bg-gradient-to-r from-[#8B5CF6] to-[#22D3EE] h-1.5 rounded-full"
+            className="bg-gradient-to-r from-primary to-brand-cyan h-1.5 rounded-full"
             initial={{ width: 0 }}
             animate={{ width: `${isRestDay ? (restDone ? 100 : 0) : progressPercentage}%` }}
             transition={{ duration: 0.5, ease: 'easeOut' as const }}
@@ -112,15 +112,15 @@ export function WorkoutView({
         animate="visible"
       >
         {isRestDay ? (
-          <motion.div variants={fadeUp} className="glass rounded-2xl p-5 border border-[#8B5CF6]/10">
+          <motion.div variants={fadeUp} className="glass rounded-2xl p-5 border border-primary/10">
             <div className="flex items-start justify-between gap-4">
               <div>
                 <div className="text-base font-semibold text-white">Rest day</div>
-                <div className="text-xs text-[#8B8DA3] mt-1">
+                <div className="text-xs text-muted mt-1">
                   Take recovery seriously. You can still mark today as complete.
                 </div>
               </div>
-              <span className="px-2.5 py-1 rounded-full text-xs font-semibold bg-[#8B5CF6]/10 text-[#A78BFA] border border-[#8B5CF6]/20">
+              <span className="px-2.5 py-1 rounded-full text-xs font-semibold bg-primary/10 text-primary-light border border-primary/20">
                 <Moon className="w-3 h-3 inline mr-1" />
                 Recovery
               </span>
@@ -134,7 +134,7 @@ export function WorkoutView({
                 }}
                 className={`w-full px-5 py-3 rounded-2xl font-semibold text-sm transition border ${restDone
                     ? 'bg-emerald-400/10 border-emerald-400/25 text-emerald-100 hover:bg-emerald-400/15'
-                    : 'bg-[#8B5CF6]/10 border-[#8B5CF6]/25 text-[#A78BFA] hover:bg-[#8B5CF6]/15'
+                    : 'bg-primary/10 border-primary/25 text-primary-light hover:bg-primary/15'
                   }`}
               >
                 {restDone ? '\u2713 Marked complete' : 'Mark rest day complete'}
@@ -183,7 +183,7 @@ export function WorkoutView({
             transition={{ type: 'spring', stiffness: 200, damping: 15 }}
             className="px-4 pt-4"
           >
-            <div className="glass rounded-xl p-5 text-center bg-gradient-to-r from-[#8B5CF6]/15 to-[#22D3EE]/10 border border-[#8B5CF6]/25 relative overflow-hidden">
+            <div className="glass rounded-xl p-5 text-center bg-gradient-to-r from-primary/15 to-brand-cyan/10 border border-primary/25 relative overflow-hidden">
               {/* Celebration glow */}
               <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(139,92,246,0.15),transparent_70%)]" />
 
@@ -193,7 +193,7 @@ export function WorkoutView({
                 animate={{ scale: 1 }}
                 transition={{ type: 'spring', stiffness: 300, damping: 15, delay: 0.2 }}
               >
-                <PartyPopper className="w-10 h-10 text-[#A78BFA] mx-auto mb-3" />
+                <PartyPopper className="w-10 h-10 text-primary-light mx-auto mb-3" />
               </motion.div>
               <motion.h3
                 className="relative z-10 text-base font-bold text-white mb-1 font-[family-name:var(--font-display)]"
@@ -204,7 +204,7 @@ export function WorkoutView({
                 Workout Complete!
               </motion.h3>
               <motion.p
-                className="relative z-10 text-xs text-[#8B8DA3]"
+                className="relative z-10 text-xs text-muted"
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ delay: 0.4 }}

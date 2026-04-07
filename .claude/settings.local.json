@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(find /c/Users/RagaAI_User/Desktop/gymm_main/gym -maxdepth 3 -name CLAUDE.md -o -name AGENTS.md -o -name .cursorrules -o -name docker-compose* -o -name Dockerfile -o -name .env.example)",
+      "Bash(find C:UsersRagaAI_UserDesktopgymm_maingymweb-app -name tailwind.config.* -o -name next.config.*)"
+    ]
+  }
+}

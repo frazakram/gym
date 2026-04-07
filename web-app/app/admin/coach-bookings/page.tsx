@@ -180,7 +180,7 @@ export default function AdminCoachBookingsPage() {
                         {b.message ? (
                           <p className="text-xs text-slate-200/80 mt-2 whitespace-pre-wrap">{b.message}</p>
                         ) : null}
-                        <div className="mt-2 text-[11px] text-slate-300/60">
+                        <div className="mt-2 text-xs text-slate-300">
                           Created: {new Date(b.created_at).toLocaleString()}
                         </div>
                       </div>
@@ -200,7 +200,7 @@ export default function AdminCoachBookingsPage() {
                             </option>
                           ))}
                         </select>
-                        <div className="text-[11px] text-slate-200/70 glass-soft px-2.5 py-1 rounded-full border border-white/10">
+                        <div className="text-xs text-slate-200/70 glass-soft px-2.5 py-1 rounded-full border border-white/10">
                           {b.status}
                         </div>
                       </div>

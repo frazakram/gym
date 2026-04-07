@@ -48,16 +48,16 @@ export function AnimatedButton({
   }
 
   const variantClasses = {
-    primary: 'bg-gradient-to-r from-[#8B5CF6] to-[#A78BFA] text-white shadow-lg hover:shadow-[0_0_30px_rgba(139,92,246,0.4)] hover:brightness-110',
-    secondary: 'bg-white/5 border border-[#8B5CF6]/20 text-slate-100 hover:bg-[#8B5CF6]/10 hover:border-[#8B5CF6]/30 hover:shadow-[0_0_20px_rgba(139,92,246,0.15)]',
-    ghost: 'glass-soft text-slate-100 hover:text-white hover:bg-[#8B5CF6]/10',
-    premium: 'bg-gradient-to-r from-[#F59E0B] to-[#FBBF24] text-slate-900 font-bold shadow-lg hover:shadow-[0_0_30px_rgba(245,158,11,0.5)] hover:brightness-110',
-    coral: 'bg-gradient-to-r from-[#FF6F61] to-[#FF8A65] text-white shadow-lg hover:shadow-[0_0_30px_rgba(255,111,97,0.4)] hover:brightness-110',
+    primary: 'bg-gradient-to-r from-primary to-primary-light text-white shadow-lg hover:shadow-[0_0_30px_rgba(139,92,246,0.4)] hover:brightness-110',
+    secondary: 'bg-white/5 border border-primary/20 text-slate-100 hover:bg-primary/10 hover:border-primary/30 hover:shadow-[0_0_20px_rgba(139,92,246,0.15)]',
+    ghost: 'glass-soft text-slate-100 hover:text-white hover:bg-primary/10',
+    premium: 'bg-gradient-to-r from-gold to-gold-light text-slate-900 font-bold shadow-lg hover:shadow-[0_0_30px_rgba(245,158,11,0.5)] hover:brightness-110',
+    coral: 'bg-gradient-to-r from-coral to-[#FF8A65] text-white shadow-lg hover:shadow-[0_0_30px_rgba(255,111,97,0.4)] hover:brightness-110',
   }
 
   const rippleColors: Record<string, string> = {
     primary: 'bg-white/20',
-    secondary: 'bg-[#8B5CF6]/20',
+    secondary: 'bg-primary/20',
     ghost: 'bg-white/15',
     premium: 'bg-white/30',
     coral: 'bg-white/25',
@@ -133,7 +133,7 @@ export function IconButton({
       aria-label={ariaLabel}
       whileTap={{ scale: 0.9 }}
       className={`
-        p-2 rounded-full glass-soft text-slate-300 hover:text-white hover:bg-[#8B5CF6]/10
+        p-2 rounded-full glass-soft text-slate-300 hover:text-white hover:bg-primary/10
         transition-all ui-focus-ring ${className}
       `}
     >
