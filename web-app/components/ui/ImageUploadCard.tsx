@@ -136,7 +136,7 @@ export function ImageUploadCard({
             ref={fileInputRef}
             type="file"
             multiple
-            accept="image/jpeg,image/png,image/webp"
+            accept="image/*"
             onChange={handleFileInput}
             className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
             disabled={loading}
