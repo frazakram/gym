@@ -93,16 +93,6 @@ export function ImageUploadCard({
 
   return (
     <div className="space-y-4">
-      {/* Hidden file input - at top level for reliable access */}
-      <input
-        ref={fileInputRef}
-        type="file"
-        multiple
-        accept="image/jpeg,image/png,image/webp"
-        onChange={handleFileInput}
-        className="hidden"
-      />
-
       {/* Existing Images Control */}
       {images.length > 0 && (
         <div className="flex items-center justify-between bg-white/5 p-3 rounded-xl border border-primary/10">
@@ -133,7 +123,7 @@ export function ImageUploadCard({
       {/* Upload Zone */}
       {hasCapacity ? (
         <div
-          className={`relative border-2 border-dashed rounded-2xl p-6 transition-all cursor-pointer ${dragActive
+          className={`relative overflow-hidden border-2 border-dashed rounded-2xl p-6 transition-all cursor-pointer ${dragActive
               ? 'border-primary bg-primary/5'
               : 'border-primary/20 hover:border-primary/30'
             } ${loading ? 'opacity-50' : ''}`}
@@ -141,9 +131,17 @@ export function ImageUploadCard({
           onDragLeave={handleDrag}
           onDragOver={handleDrag}
           onDrop={handleDrop}
-          onClick={openFilePicker}
         >
-          <div className="text-center pointer-events-none">
+          <input
+            ref={fileInputRef}
+            type="file"
+            multiple
+            accept="image/jpeg,image/png,image/webp"
+            onChange={handleFileInput}
+            className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+            disabled={loading}
+          />
+          <div className="text-center pointer-events-none relative z-0">
             <div className="mx-auto w-12 h-12 mb-3 rounded-full bg-white/10 flex items-center justify-center">
               <svg
                 className="w-6 h-6 text-white/70"

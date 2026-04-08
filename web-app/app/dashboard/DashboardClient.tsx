@@ -1080,6 +1080,14 @@ export default function DashboardPage() {
       const { analysis } = await response.json()
       setEquipmentAnalysis(analysis)
       setSuccess('Gym equipment analyzed successfully!')
+
+      await csrfFetch('/api/profile', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          gym_equipment_analysis: analysis
+        }),
+      });
     } catch (error) {
       setEquipmentError('Failed to analyze gym equipment. Please try again.')
       console.error('Equipment analysis error:', error)
@@ -1094,6 +1102,11 @@ export default function DashboardPage() {
 
     if (updatedPhotos.length === 0) {
       setEquipmentAnalysis(null)
+      await csrfFetch('/api/profile', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ gym_equipment_analysis: null }),
+      });
     } else {
       try {
         setAnalyzingEquipment(true)
@@ -1104,6 +1117,11 @@ export default function DashboardPage() {
         })
         const { analysis } = await response.json()
         setEquipmentAnalysis(analysis)
+        await csrfFetch('/api/profile', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ gym_equipment_analysis: analysis }),
+        });
       } catch (error) {
         console.error('Re-analysis error:', error)
       } finally {
