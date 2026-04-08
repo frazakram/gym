@@ -199,7 +199,7 @@ export function MeasurementsView() {
       {/* Header */}
       <motion.div variants={fadeUp} className="flex items-center justify-between pt-10">
         <div>
-          <h1 className="text-[22px] font-semibold tracking-tight text-white font-[family-name:var(--font-display)]">
+          <h1 className="text-[22px] font-semibold tracking-tight text-white font-display">
             Body Tracker
           </h1>
           <p className="text-xs text-muted mt-1">Log weight & measurements to track your transformation</p>

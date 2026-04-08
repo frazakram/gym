@@ -205,7 +205,7 @@ export function Sidebar({
         <div className="flex flex-col h-full">
           {/* Header */}
           <div className="p-4 border-b border-primary/10 flex items-center justify-between">
-            <h2 className="text-xl font-bold text-white font-[family-name:var(--font-display)]">History</h2>
+            <h2 className="text-xl font-bold text-white font-display">History</h2>
             <motion.button
               whileTap={{ scale: 0.9 }}
               onClick={onClose}

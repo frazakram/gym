@@ -444,7 +444,7 @@ export function AnalyticsView({ premiumStatus, onUpgrade }: AnalyticsViewProps) 
         <div className="glass rounded-2xl p-8 border border-primary/10">
           <div className="flex items-start justify-between gap-4">
             <div>
-              <h2 className="text-2xl font-bold text-white mb-2 font-[family-name:var(--font-display)]">Analytics (Pro)</h2>
+              <h2 className="text-2xl font-bold text-white mb-2 font-display">Analytics (Pro)</h2>
               <p className="text-muted text-sm leading-relaxed">
                 {trialEndedText
                   ? `Your free trial ended on ${trialEndedText}. Upgrade to unlock your progress dashboard: workout history, completion trends, and consistency insights.`
@@ -619,7 +619,7 @@ export function AnalyticsView({ premiumStatus, onUpgrade }: AnalyticsViewProps) 
       <div className="glass rounded-2xl p-8 border border-primary/10">
         <div className="flex items-start justify-between gap-4">
           <div>
-            <h2 className="text-2xl font-bold text-white mb-2 font-[family-name:var(--font-display)]">Analytics</h2>
+            <h2 className="text-2xl font-bold text-white mb-2 font-display">Analytics</h2>
             <p className="text-muted text-sm leading-relaxed">
               {isTrial
                 ? 'Your free trial is active. Your analytics will appear here. (Next: charts + history panels.)'

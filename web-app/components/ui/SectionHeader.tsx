@@ -16,7 +16,7 @@ export function SectionHeader({
   return (
     <div className={`flex items-start justify-between gap-3 ${className}`}>
       <div className="min-w-0">
-        <h2 className="text-[15px] font-semibold tracking-tight text-white truncate font-[family-name:var(--font-display)]">
+        <h2 className="text-[15px] font-semibold tracking-tight text-white truncate font-display">
           {title}
         </h2>
         {subtitle ? (

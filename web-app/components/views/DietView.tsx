@@ -38,7 +38,7 @@ export const DietView: React.FC<DietViewProps> = ({ diet, onGenerateDiet, genera
             <div className="w-16 h-16 rounded-2xl bg-primary/12 border border-primary/20 flex items-center justify-center mb-4">
               <Utensils className="w-8 h-8 text-primary-light" />
             </div>
-            <h2 className="text-2xl font-bold text-white mb-3 font-[family-name:var(--font-display)]">Nutrition Plan</h2>
+            <h2 className="text-2xl font-bold text-white mb-3 font-display">Nutrition Plan</h2>
             <p className="text-muted mb-6">
               Generate a personalized meal plan tailored to your goal, diet type (e.g., Keto, Vegan), and calorie needs.
             </p>

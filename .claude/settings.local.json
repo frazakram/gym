@@ -2,7 +2,12 @@
   "permissions": {
     "allow": [
       "Bash(find /c/Users/RagaAI_User/Desktop/gymm_main/gym -maxdepth 3 -name CLAUDE.md -o -name AGENTS.md -o -name .cursorrules -o -name docker-compose* -o -name Dockerfile -o -name .env.example)",
-      "Bash(find C:UsersRagaAI_UserDesktopgymm_maingymweb-app -name tailwind.config.* -o -name next.config.*)"
+      "Bash(find C:UsersRagaAI_UserDesktopgymm_maingymweb-app -name tailwind.config.* -o -name next.config.*)",
+      "Bash(ls web-app/components/*.tsx)",
+      "Bash(grep -rn 8B5CF6 /c/Users/RagaAI_User/Desktop/gymm_main/gym/web-app/components/ /c/Users/RagaAI_User/Desktop/gymm_main/gym/web-app/app/ --include=*.tsx)",
+      "Bash(uvx --version)",
+      "Bash(uvx code-review-graph:*)",
+      "mcp__code-review-graph__build_or_update_graph_tool"
     ]
   }
 }

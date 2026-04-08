@@ -43,7 +43,7 @@ export function WorkoutView({
     return (
       <div className="pb-24 px-4 py-6">
         <div className="glass rounded-2xl p-8 text-center border-primary/10">
-          <h2 className="text-2xl font-bold text-white mb-3 font-[family-name:var(--font-display)]">No Workout Selected</h2>
+          <h2 className="text-2xl font-bold text-white mb-3 font-display">No Workout Selected</h2>
           <p className="text-muted">Go to Routine to select a workout</p>
         </div>
       </div>
@@ -56,7 +56,7 @@ export function WorkoutView({
     return (
       <div className="pb-24 px-4 py-6">
         <div className="glass rounded-2xl p-8 text-center border-primary/10">
-          <h2 className="text-2xl font-bold text-white mb-3 font-[family-name:var(--font-display)]">Day Not Found</h2>
+          <h2 className="text-2xl font-bold text-white mb-3 font-display">Day Not Found</h2>
           <p className="text-muted">Please select a valid day from the routine</p>
         </div>
       </div>
@@ -86,7 +86,7 @@ export function WorkoutView({
             <ChevronLeft className="w-4 h-4 text-white" />
           </motion.button>
           <div className="flex-1 min-w-0">
-            <h1 className="text-base font-bold text-white truncate font-[family-name:var(--font-display)]">{day.day}</h1>
+            <h1 className="text-base font-bold text-white truncate font-display">{day.day}</h1>
             <p className="text-xs text-muted">
               {isRestDay ? (restDone ? 'Rest day completed' : 'Rest day') : `${completedCount}/${totalCount} completed \u2022 ${progressPercentage}%`}
             </p>
@@ -196,7 +196,7 @@ export function WorkoutView({
                 <PartyPopper className="w-10 h-10 text-primary-light mx-auto mb-3" />
               </motion.div>
               <motion.h3
-                className="relative z-10 text-base font-bold text-white mb-1 font-[family-name:var(--font-display)]"
+                className="relative z-10 text-base font-bold text-white mb-1 font-display"
                 initial={{ opacity: 0, y: 8 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.3 }}

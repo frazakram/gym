@@ -68,7 +68,7 @@ export function RoutineView({
     return (
       <div className="pb-24 px-4 py-6">
         <div className="glass rounded-2xl p-8 text-center">
-          <h2 className="text-2xl font-bold text-white mb-3">No Routine Yet</h2>
+          <h2 className="text-2xl font-bold text-white mb-3 font-display">No Routine Yet</h2>
           <p className="text-muted mb-6">Generate your personalized workout routine to get started</p>
           <button
             onClick={onGenerateRoutine}
@@ -94,7 +94,7 @@ export function RoutineView({
       <motion.div variants={stagger} initial="hidden" animate="visible">
       {/* Header */}
       <motion.div variants={fadeUp} className="px-4 pt-4 pb-3">
-        <h1 className="text-[18px] font-semibold tracking-tight text-white mb-0.5 font-[family-name:var(--font-display)]">
+        <h1 className="text-[18px] font-semibold tracking-tight text-white mb-0.5 font-display">
           {currentDay?.day || 'Select a Day'}
         </h1>
         <p className="text-xs text-muted">
