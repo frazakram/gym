@@ -19,7 +19,7 @@ export const metadata: Metadata = {
   title: 'Gym Bro - AI - Powered Gym Routine Generator',
   description: 'Generate personalized weekly workout plans with AI',
   manifest: '/manifest.json',
-  themeColor: '#8B5CF6',
+  themeColor: 'var(--primary)',
   viewport: {
     width: 'device-width',
     initialScale: 1,

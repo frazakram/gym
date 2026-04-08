@@ -28,8 +28,8 @@ export function QuoteLoader({ mode = 'full', category, className = '' }: QuoteLo
 
   if (mode === 'compact') {
     return (
-      <div className={`flex items-center gap-2 text-[#8B8DA3] ${className}`}>
-        <Sparkles className="w-3.5 h-3.5 text-[#A78BFA] shrink-0" />
+      <div className={`flex items-center gap-2 text-muted ${className}`}>
+        <Sparkles className="w-3.5 h-3.5 text-primary-light shrink-0" />
         <p className="text-xs italic truncate">&ldquo;{quote.text}&rdquo;</p>
       </div>
     )
@@ -37,11 +37,11 @@ export function QuoteLoader({ mode = 'full', category, className = '' }: QuoteLo
 
   // Full mode — glass card with progress bar and shimmer
   return (
-    <div className={`glass border-[#8B5CF6]/10 rounded-2xl p-5 relative overflow-hidden ${className}`}>
+    <div className={`glass border-primary/10 rounded-2xl p-5 relative overflow-hidden ${className}`}>
       {/* Progress bar at top */}
-      <div className="absolute top-0 left-0 right-0 h-[2px] bg-[#8B5CF6]/10 overflow-hidden rounded-full">
+      <div className="absolute top-0 left-0 right-0 h-[2px] bg-primary/10 overflow-hidden rounded-full">
         <motion.div
-          className="h-full bg-gradient-to-r from-[#8B5CF6] to-[#A78BFA]"
+          className="h-full bg-gradient-to-r from-primary to-primary-light"
           initial={{ width: '0%' }}
           animate={{ width: '100%' }}
           transition={{ duration: 5, ease: 'linear', repeat: Infinity }}
@@ -51,10 +51,10 @@ export function QuoteLoader({ mode = 'full', category, className = '' }: QuoteLo
       {/* Pulsing dot */}
       <div className="flex items-center gap-2 mb-3">
         <span className="relative flex h-2.5 w-2.5">
-          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#8B5CF6] opacity-50" />
-          <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-[#A78BFA]" />
+          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-50" />
+          <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-primary-light" />
         </span>
-        <span className="text-[11px] text-[#8B8DA3] uppercase tracking-wider font-medium">Generating</span>
+        <span className="text-xs text-muted uppercase tracking-wider font-medium">Generating</span>
       </div>
 
       {/* Quote with AnimatePresence */}
@@ -70,15 +70,15 @@ export function QuoteLoader({ mode = 'full', category, className = '' }: QuoteLo
             <p className="text-sm text-white/85 italic leading-relaxed">
               &ldquo;{quote.text}&rdquo;
             </p>
-            <p className="mt-1.5 text-[11px] text-[#8B8DA3]">— {quote.author}</p>
+            <p className="mt-1.5 text-xs text-muted">— {quote.author}</p>
           </motion.div>
         </AnimatePresence>
       </div>
 
       {/* Shimmer lines */}
       <div className="mt-4 space-y-2">
-        <div className="h-2 rounded-full bg-gradient-to-r from-[#8B5CF6]/10 via-[#8B5CF6]/5 to-[#8B5CF6]/10 bg-[length:200%_100%] skeleton-shimmer" style={{ width: '80%' }} />
-        <div className="h-2 rounded-full bg-gradient-to-r from-[#8B5CF6]/10 via-[#8B5CF6]/5 to-[#8B5CF6]/10 bg-[length:200%_100%] skeleton-shimmer" style={{ width: '55%' }} />
+        <div className="h-2 rounded-full bg-gradient-to-r from-primary/10 via-primary/5 to-primary/10 bg-[length:200%_100%] skeleton-shimmer" style={{ width: '80%' }} />
+        <div className="h-2 rounded-full bg-gradient-to-r from-primary/10 via-primary/5 to-primary/10 bg-[length:200%_100%] skeleton-shimmer" style={{ width: '55%' }} />
       </div>
     </div>
   )

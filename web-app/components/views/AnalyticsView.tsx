@@ -32,7 +32,7 @@ function TrendLineChart({ points }: { points: TrendPoint[] }) {
   const hasAny = points.some((p) => p.value != null && Number.isFinite(p.value))
   if (!hasAny) {
     return (
-      <div className="h-[190px] flex items-center justify-center text-sm text-[#8B8DA3]">
+      <div className="h-[190px] flex items-center justify-center text-sm text-muted">
         No trend data yet — complete a workout to start tracking.
       </div>
     )
@@ -291,7 +291,7 @@ function StreakCalendar({ days }: { days: AnalyticsPayload['calendar'] }) {
   const slice = days.slice(-84)
   if (!slice.length) {
     return (
-      <div className="text-sm text-[#8B8DA3]">
+      <div className="text-sm text-muted">
         No streak data yet — complete exercises to start your calendar.
       </div>
     )
@@ -311,7 +311,7 @@ function StreakCalendar({ days }: { days: AnalyticsPayload['calendar'] }) {
   const weeks = Math.ceil(cells.length / 7)
 
   const color = (v: number | null, workouts: number) => {
-    if (!workouts || v == null) return 'bg-white/5 border-[#8B5CF6]/10'
+    if (!workouts || v == null) return 'bg-white/5 border-primary/10'
     if (v >= 85) return 'bg-emerald-400/70 border-emerald-300/30'
     if (v >= 60) return 'bg-emerald-400/45 border-emerald-300/25'
     if (v >= 35) return 'bg-amber-400/35 border-amber-300/25'
@@ -351,11 +351,11 @@ function MonthlyStreakCalendar({
   days: AnalyticsPayload['calendar']
 }) {
   if (!month) {
-    return <div className="text-sm text-[#8B8DA3]">Select a month to view.</div>
+    return <div className="text-sm text-muted">Select a month to view.</div>
   }
 
   const color = (v: number | null, workouts: number) => {
-    if (!workouts || v == null) return 'bg-white/5 border-[#8B5CF6]/10'
+    if (!workouts || v == null) return 'bg-white/5 border-primary/10'
     if (v >= 85) return 'bg-emerald-400/70 border-emerald-300/30'
     if (v >= 60) return 'bg-emerald-400/45 border-emerald-300/25'
     if (v >= 35) return 'bg-amber-400/35 border-amber-300/25'
@@ -397,7 +397,7 @@ function MonthlyStreakCalendar({
 
   return (
     <div>
-      <div className="grid grid-cols-7 gap-1 text-[10px] text-[#8B8DA3] mb-2">
+      <div className="grid grid-cols-7 gap-1 text-xs text-muted mb-2">
         {weekDayLabels.map((d) => (
           <div key={d} className="text-center">
             {d}
@@ -441,11 +441,11 @@ export function AnalyticsView({ premiumStatus, onUpgrade }: AnalyticsViewProps) 
       premiumStatus.trial_end ? new Date(premiumStatus.trial_end).toLocaleString() : null
     return (
       <div className="pb-24 px-4 py-6">
-        <div className="glass rounded-2xl p-8 border border-[#8B5CF6]/10">
+        <div className="glass rounded-2xl p-8 border border-primary/10">
           <div className="flex items-start justify-between gap-4">
             <div>
-              <h2 className="text-2xl font-bold text-white mb-2 font-[family-name:var(--font-display)]">Analytics (Pro)</h2>
-              <p className="text-[#8B8DA3] text-sm leading-relaxed">
+              <h2 className="text-2xl font-bold text-white mb-2 font-display">Analytics (Pro)</h2>
+              <p className="text-muted text-sm leading-relaxed">
                 {trialEndedText
                   ? `Your free trial ended on ${trialEndedText}. Upgrade to unlock your progress dashboard: workout history, completion trends, and consistency insights.`
                   : 'Upgrade to unlock your progress dashboard: workout history, completion trends, and consistency insights.'}
@@ -463,7 +463,7 @@ export function AnalyticsView({ premiumStatus, onUpgrade }: AnalyticsViewProps) 
               'Streaks and consistency calendar',
               'Most skipped exercises',
             ].map((t) => (
-              <div key={t} className="glass-soft rounded-xl p-3 text-sm text-slate-200/85 border border-[#8B5CF6]/10">
+              <div key={t} className="glass-soft rounded-xl p-3 text-sm text-slate-200/85 border border-primary/10">
                 {t}
               </div>
             ))}
@@ -476,7 +476,7 @@ export function AnalyticsView({ premiumStatus, onUpgrade }: AnalyticsViewProps) 
             >
               Upgrade for ₹1/month
             </button>
-            <div className="text-xs text-[#8B8DA3] self-center">
+            <div className="text-xs text-muted self-center">
               Status: {premiumStatus.status ?? 'not subscribed'}
             </div>
           </div>
@@ -616,11 +616,11 @@ export function AnalyticsView({ premiumStatus, onUpgrade }: AnalyticsViewProps) 
 
   return (
     <div className="pb-24 px-4 py-6">
-      <div className="glass rounded-2xl p-8 border border-[#8B5CF6]/10">
+      <div className="glass rounded-2xl p-8 border border-primary/10">
         <div className="flex items-start justify-between gap-4">
           <div>
-            <h2 className="text-2xl font-bold text-white mb-2 font-[family-name:var(--font-display)]">Analytics</h2>
-            <p className="text-[#8B8DA3] text-sm leading-relaxed">
+            <h2 className="text-2xl font-bold text-white mb-2 font-display">Analytics</h2>
+            <p className="text-muted text-sm leading-relaxed">
               {isTrial
                 ? 'Your free trial is active. Your analytics will appear here. (Next: charts + history panels.)'
                 : 'Your Pro analytics will appear here. (Next: charts + history panels.)'}
@@ -648,36 +648,36 @@ export function AnalyticsView({ premiumStatus, onUpgrade }: AnalyticsViewProps) 
         </div>
 
         <div className="mt-6 grid gap-3">
-          <div className="glass-soft rounded-xl p-4 border border-[#8B5CF6]/10">
+          <div className="glass-soft rounded-xl p-4 border border-primary/10">
             <div className="text-sm font-semibold text-white">{isTrial ? 'Trial' : 'Subscription'}</div>
-            <div className="text-xs text-[#8B8DA3] mt-1">
+            <div className="text-xs text-muted mt-1">
               Status: {premiumStatus.status ?? 'unknown'}
             </div>
             {isTrial && trialEndsText && (
-              <div className="text-xs text-[#8B8DA3] mt-1">
+              <div className="text-xs text-muted mt-1">
                 Trial ends: {trialEndsText}
               </div>
             )}
             {premiumStatus.current_end && (
-              <div className="text-xs text-[#8B8DA3] mt-1">
+              <div className="text-xs text-muted mt-1">
                 Current period ends: {new Date(premiumStatus.current_end).toLocaleString()}
               </div>
             )}
           </div>
 
-          <div className="glass-soft rounded-xl p-4 border border-[#8B5CF6]/10">
+          <div className="glass-soft rounded-xl p-4 border border-primary/10">
             <div className="flex items-center justify-between gap-4">
               <div>
                 <div className="text-sm font-semibold text-white">Streaks</div>
-                <div className="text-xs text-[#8B8DA3] mt-1">Stay consistent — even small sessions count.</div>
+                <div className="text-xs text-muted mt-1">Stay consistent — even small sessions count.</div>
               </div>
               <div className="text-right">
                 <div className="text-sm font-bold text-white">{data ? `${data.streak.current} day` : '—'}</div>
-                <div className="text-[11px] text-[#8B8DA3]">Longest: {data ? `${data.streak.longest} day` : '—'}</div>
+                <div className="text-xs text-muted">Longest: {data ? `${data.streak.longest} day` : '—'}</div>
               </div>
             </div>
             {data?.streak?.last_workout_date && (
-              <div className="text-[11px] text-[#8B8DA3] mt-2">
+              <div className="text-xs text-muted mt-2">
                 Last workout: {formatDateShort(data.streak.last_workout_date)}
               </div>
             )}
@@ -685,11 +685,11 @@ export function AnalyticsView({ premiumStatus, onUpgrade }: AnalyticsViewProps) 
         </div>
 
         <div className="mt-6 grid gap-3">
-          <div className="glass-soft rounded-xl p-4 border border-[#8B5CF6]/10">
+          <div className="glass-soft rounded-xl p-4 border border-primary/10">
             <div className="flex items-start justify-between gap-4">
               <div>
                 <div className="text-sm font-semibold text-white">Completion trends</div>
-                <div className="text-xs text-[#8B8DA3] mt-1">
+                <div className="text-xs text-muted mt-1">
                   {trendMode === 'daily'
                     ? 'Daily (last 30 days)'
                     : trendMode === 'weekly'
@@ -698,7 +698,7 @@ export function AnalyticsView({ premiumStatus, onUpgrade }: AnalyticsViewProps) 
                 </div>
               </div>
               <div className="text-right">
-                <div className="text-[11px] text-[#8B8DA3]">Workouts</div>
+                <div className="text-xs text-muted">Workouts</div>
                 <div className="text-sm font-bold text-white">
                   {data ? (data.calendar?.reduce((a, d) => a + (d.workouts || 0), 0) ?? 0) : '—'}
                 </div>
@@ -712,8 +712,8 @@ export function AnalyticsView({ premiumStatus, onUpgrade }: AnalyticsViewProps) 
                   onClick={() => setTrendMode(m)}
                   className={`px-3 py-1.5 rounded-full text-xs font-semibold border transition ${
                     trendMode === m
-                      ? 'bg-[#8B5CF6]/12 border-[#8B5CF6]/25 text-[#C4B5FD]'
-                      : 'bg-white/5 border-[#8B5CF6]/10 text-slate-200/80 hover:bg-white/10'
+                      ? 'bg-primary/12 border-primary/25 text-primary-lighter'
+                      : 'bg-white/5 border-primary/10 text-slate-200/80 hover:bg-white/10'
                   }`}
                 >
                   {m === 'daily' ? 'Daily' : m === 'weekly' ? 'Weekly' : 'Monthly'}
@@ -723,7 +723,7 @@ export function AnalyticsView({ premiumStatus, onUpgrade }: AnalyticsViewProps) 
 
             <div className="mt-3">
               {loading ? (
-                <div className="h-[160px] animate-pulse rounded-xl bg-white/5 border border-[#8B5CF6]/10" />
+                <div className="h-[160px] animate-pulse rounded-xl bg-white/5 border border-primary/10" />
               ) : error ? (
                 <div className="text-sm text-rose-200 bg-rose-500/10 border border-rose-500/20 rounded-xl p-3">
                   {error}
@@ -734,22 +734,22 @@ export function AnalyticsView({ premiumStatus, onUpgrade }: AnalyticsViewProps) 
             </div>
           </div>
 
-          <div className="glass-soft rounded-xl p-4 border border-[#8B5CF6]/10">
+          <div className="glass-soft rounded-xl p-4 border border-primary/10">
             <div className="flex items-start justify-between gap-4">
               <div>
                 <div className="text-sm font-semibold text-white">Streak calendar</div>
-                <div className="text-xs text-[#8B8DA3] mt-1">
+                <div className="text-xs text-muted mt-1">
                   {calendarMode === 'weeks' ? 'Last 12 weeks' : activeMonth ? `Month: ${activeMonth}` : 'Month view'}
                 </div>
               </div>
               <div className="flex items-center gap-2">
-                <div className="text-xs text-[#8B8DA3] hidden sm:block">Darker = higher completion</div>
+                <div className="text-xs text-muted hidden sm:block">Darker = higher completion</div>
                 <button
                   onClick={() => setCalendarMode('weeks')}
                   className={`px-3 py-1.5 rounded-full text-xs font-semibold border transition ${
                     calendarMode === 'weeks'
-                      ? 'bg-[#8B5CF6]/12 border-[#8B5CF6]/25 text-[#C4B5FD]'
-                      : 'bg-white/5 border-[#8B5CF6]/10 text-slate-200/80 hover:bg-white/10'
+                      ? 'bg-primary/12 border-primary/25 text-primary-lighter'
+                      : 'bg-white/5 border-primary/10 text-slate-200/80 hover:bg-white/10'
                   }`}
                 >
                   12 weeks
@@ -758,8 +758,8 @@ export function AnalyticsView({ premiumStatus, onUpgrade }: AnalyticsViewProps) 
                   onClick={() => setCalendarMode('month')}
                   className={`px-3 py-1.5 rounded-full text-xs font-semibold border transition ${
                     calendarMode === 'month'
-                      ? 'bg-[#8B5CF6]/12 border-[#8B5CF6]/25 text-[#C4B5FD]'
-                      : 'bg-white/5 border-[#8B5CF6]/10 text-slate-200/80 hover:bg-white/10'
+                      ? 'bg-primary/12 border-primary/25 text-primary-lighter'
+                      : 'bg-white/5 border-primary/10 text-slate-200/80 hover:bg-white/10'
                   }`}
                 >
                   Month
@@ -768,7 +768,7 @@ export function AnalyticsView({ premiumStatus, onUpgrade }: AnalyticsViewProps) 
             </div>
             <div className="mt-3">
               {loading ? (
-                <div className="h-[70px] animate-pulse rounded-xl bg-white/5 border border-[#8B5CF6]/10" />
+                <div className="h-[70px] animate-pulse rounded-xl bg-white/5 border border-primary/10" />
               ) : error ? (
                 <div className="text-sm text-rose-200 bg-rose-500/10 border border-rose-500/20 rounded-xl p-3">
                   {error}
@@ -784,7 +784,7 @@ export function AnalyticsView({ premiumStatus, onUpgrade }: AnalyticsViewProps) 
                           className={`px-3 py-1.5 rounded-full text-xs font-semibold border transition ${
                             activeMonth === m
                               ? 'bg-white/10 border-white/15 text-white'
-                              : 'bg-white/5 border-[#8B5CF6]/10 text-slate-200/80 hover:bg-white/10'
+                              : 'bg-white/5 border-primary/10 text-slate-200/80 hover:bg-white/10'
                           }`}
                         >
                           {m}
@@ -803,13 +803,13 @@ export function AnalyticsView({ premiumStatus, onUpgrade }: AnalyticsViewProps) 
             </div>
           </div>
 
-          <div className="glass-soft rounded-xl p-4 border border-[#8B5CF6]/10">
+          <div className="glass-soft rounded-xl p-4 border border-primary/10">
             <div className="flex items-start justify-between gap-4">
               <div>
                 <div className="text-sm font-semibold text-white">Workout history</div>
-                <div className="text-xs text-[#8B8DA3] mt-1">Last 10 workouts</div>
+                <div className="text-xs text-muted mt-1">Last 10 workouts</div>
               </div>
-              <div className="text-xs text-[#8B8DA3]">Completion %</div>
+              <div className="text-xs text-muted">Completion %</div>
             </div>
 
             {!loading && !error && (data?.workout_history?.length ?? 0) > 0 && (
@@ -817,7 +817,7 @@ export function AnalyticsView({ premiumStatus, onUpgrade }: AnalyticsViewProps) 
                 {historyThumbs.map((w) => (
                   <div
                     key={w.key}
-                    className="rounded-2xl border border-[#8B5CF6]/10 bg-white/5 hover:bg-white/7 transition p-3 flex items-center gap-3"
+                    className="rounded-2xl border border-primary/10 bg-white/5 hover:bg-white/7 transition p-3 flex items-center gap-3"
                     title={`${w.date} · ${w.dayName} · ${pctText(w.completion)}`}
                   >
                     <div className="relative shrink-0" data-muscle-popover="root">
@@ -831,7 +831,7 @@ export function AnalyticsView({ premiumStatus, onUpgrade }: AnalyticsViewProps) 
                         <MuscleIcon group={w.group} />
                       </button>
                       {openIconKey === w.key && (
-                        <div className="absolute left-0 top-11 z-20 w-44 rounded-xl bg-slate-950/90 border border-[#8B5CF6]/10 text-[11px] text-slate-100 px-3 py-2 shadow-xl">
+                        <div className="absolute left-0 top-11 z-20 w-44 rounded-xl bg-slate-950/90 border border-primary/10 text-xs text-slate-100 px-3 py-2 shadow-xl">
                           <div className="font-semibold">{muscleLabel(w.group)}</div>
                           <div className="text-slate-200/75 mt-0.5">{muscleHelp(w.group)}</div>
                         </div>
@@ -839,7 +839,7 @@ export function AnalyticsView({ premiumStatus, onUpgrade }: AnalyticsViewProps) 
                     </div>
                     <div className="min-w-0">
                       <div className="text-sm text-white font-semibold truncate">{formatDateShort(w.date)}</div>
-                      <div className="text-[11px] text-[#8B8DA3] truncate">{w.dayName}</div>
+                      <div className="text-xs text-muted truncate">{w.dayName}</div>
                     </div>
                     <div className="ml-auto text-sm font-semibold text-emerald-200 shrink-0">{pctText(w.completion)}</div>
                   </div>
@@ -855,7 +855,7 @@ export function AnalyticsView({ premiumStatus, onUpgrade }: AnalyticsViewProps) 
                       <div className="text-sm text-white truncate">
                         {formatDateShort(w.date)} · {w.day_name}
                       </div>
-                      <div className="text-[11px] text-[#8B8DA3]">
+                      <div className="text-xs text-muted">
                         {w.day_name.toLowerCase().includes('rest')
                           ? 'Rest day completed'
                           : `${w.completed_exercises}/${w.total_exercises} exercises`}
@@ -869,7 +869,7 @@ export function AnalyticsView({ premiumStatus, onUpgrade }: AnalyticsViewProps) 
             )}
 
             {!loading && !error && (data?.workout_history?.length ?? 0) === 0 && (
-              <div className="text-sm text-[#8B8DA3] mt-3">
+              <div className="text-sm text-muted mt-3">
                 No workouts detected yet. Mark exercises as completed in the Workout tab to start building analytics.
               </div>
             )}

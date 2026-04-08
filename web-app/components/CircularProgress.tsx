@@ -32,8 +32,8 @@ export function CircularProgress({
         >
           <defs>
             <linearGradient id={gradientId} x1="0%" y1="0%" x2="100%" y2="100%">
-              <stop offset="0%" stopColor="#8B5CF6" />
-              <stop offset="100%" stopColor="#22D3EE" />
+              <stop offset="0%" stopColor="var(--primary)" />
+              <stop offset="100%" stopColor="var(--cyan)" />
             </linearGradient>
             <filter id={glowId}>
               <feGaussianBlur stdDeviation="3" result="blur" />
@@ -73,7 +73,7 @@ export function CircularProgress({
         </div>
       </div>
       {label && (
-        <p className="mt-2 text-xs text-[#8B8DA3] text-center">{label}</p>
+        <p className="mt-2 text-xs text-muted text-center">{label}</p>
       )}
     </div>
   )

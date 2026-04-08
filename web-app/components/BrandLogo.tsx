@@ -28,13 +28,13 @@ export function BrandLogo({
 
   return (
     <div
-      className={`relative overflow-hidden rounded-2xl ring-1 ring-[#8B5CF6]/10 shadow-lg shadow-[#8B5CF6]/10 ${className}`}
+      className={`relative overflow-hidden rounded-2xl ring-1 ring-primary/10 shadow-lg shadow-primary/10 ${className}`}
       style={{ width: size, height: size }}
       aria-label={alt}
       role="img"
     >
       {/* Fallback badge sits behind the image (prevents “broken image” icon from showing). */}
-      <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-[#8B5CF6] to-[#6D28D9]">
+      <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-primary to-[#6D28D9]">
         <span className="text-white font-extrabold tracking-tight">G</span>
       </div>
 

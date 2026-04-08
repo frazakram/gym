@@ -289,11 +289,11 @@ export default function CoachPortalPage() {
                           </div>
                         </div>
                       </div>
-                      <div className="shrink-0 text-[11px] text-slate-200/80 glass-soft px-2.5 py-1 rounded-full border border-white/10">
+                      <div className="shrink-0 text-xs text-slate-200/80 glass-soft px-2.5 py-1 rounded-full border border-white/10">
                         {b.status}
                       </div>
                     </div>
-                    <div className="mt-2 text-[11px] text-slate-300/60">
+                    <div className="mt-2 text-xs text-slate-300">
                       Created: {new Date(b.created_at).toLocaleString()}
                     </div>
                   </div>

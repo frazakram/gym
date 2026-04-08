@@ -20,26 +20,26 @@ export function BodyCompositionSummary({ analysis }: BodyCompositionSummaryProps
   } = analysis
 
   return (
-    <div className="mt-4 glass-soft rounded-2xl border border-[#8B5CF6]/10 p-4 space-y-4">
+    <div className="mt-4 glass-soft rounded-2xl border border-primary/10 p-4 space-y-4">
       <div className="flex items-center justify-between">
         <h4 className="text-sm font-semibold text-white">AI Body Analysis</h4>
-        <span className="text-xs text-[#8B8DA3]">
+        <span className="text-xs text-muted">
           {Math.round(confidence_score * 100)}% confidence
         </span>
       </div>
 
       <div className="grid grid-cols-2 gap-3 pt-2">
         <div>
-          <p className="text-xs text-[#8B8DA3] mb-1">Body Type</p>
+          <p className="text-xs text-muted mb-1">Body Type</p>
           <p className="text-sm font-medium text-white capitalize">{body_type}</p>
         </div>
         <div>
-          <p className="text-xs text-[#8B8DA3] mb-1">Muscle Dev.</p>
+          <p className="text-xs text-muted mb-1">Muscle Dev.</p>
           <p className="text-sm font-medium text-white capitalize">{muscle_development.replace('_', ' ')}</p>
         </div>
         {estimated_body_fat_range && (
           <div className="col-span-2">
-            <p className="text-xs text-[#8B8DA3] mb-1">Modern Est. Body Fat</p>
+            <p className="text-xs text-muted mb-1">Modern Est. Body Fat</p>
             <p className="text-sm font-medium text-emerald-400">{estimated_body_fat_range}</p>
           </div>
         )}
@@ -51,7 +51,7 @@ export function BodyCompositionSummary({ analysis }: BodyCompositionSummaryProps
 
       {focus_areas && focus_areas.length > 0 && (
         <div>
-          <p className="text-xs text-[#8B8DA3] mb-2">Recommended Focus Areas</p>
+          <p className="text-xs text-muted mb-2">Recommended Focus Areas</p>
           <div className="flex flex-wrap gap-2">
             {focus_areas.map((area) => (
               <span
@@ -67,7 +67,7 @@ export function BodyCompositionSummary({ analysis }: BodyCompositionSummaryProps
 
       {posture_notes && posture_notes.length > 0 && (
         <div>
-          <p className="text-xs text-[#8B8DA3] mb-2">Posture & Form Notes</p>
+          <p className="text-xs text-muted mb-2">Posture & Form Notes</p>
           <ul className="list-disc list-inside space-y-1">
             {posture_notes.map((note) => (
               <li key={note} className="text-xs text-slate-300">{note}</li>
@@ -83,7 +83,7 @@ export function BodyCompositionSummary({ analysis }: BodyCompositionSummaryProps
         </div>
       )}
 
-      <div className="pt-2 border-t border-[#8B5CF6]/5 text-[10px] text-slate-500 leading-tight">
+      <div className="pt-2 border-t border-primary/5 text-xs text-slate-500 leading-tight">
         <p>Private analysis. Photos are not permanently stored. Results used to personalize your routine.</p>
       </div>
     </div>

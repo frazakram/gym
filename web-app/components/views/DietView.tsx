@@ -35,11 +35,11 @@ export const DietView: React.FC<DietViewProps> = ({ diet, onGenerateDiet, genera
           <QuoteLoader mode="full" category="diet" />
         ) : (
           <GlassCard className="p-8 flex flex-col items-center">
-            <div className="w-16 h-16 rounded-2xl bg-[#8B5CF6]/12 border border-[#8B5CF6]/20 flex items-center justify-center mb-4">
-              <Utensils className="w-8 h-8 text-[#A78BFA]" />
+            <div className="w-16 h-16 rounded-2xl bg-primary/12 border border-primary/20 flex items-center justify-center mb-4">
+              <Utensils className="w-8 h-8 text-primary-light" />
             </div>
-            <h2 className="text-2xl font-bold text-white mb-3 font-[family-name:var(--font-display)]">Nutrition Plan</h2>
-            <p className="text-[#8B8DA3] mb-6">
+            <h2 className="text-2xl font-bold text-white mb-3 font-display">Nutrition Plan</h2>
+            <p className="text-muted mb-6">
               Generate a personalized meal plan tailored to your goal, diet type (e.g., Keto, Vegan), and calorie needs.
             </p>
             <AnimatedButton onClick={onGenerateDiet} disabled={generating} loading={generating} variant="primary">
@@ -66,7 +66,7 @@ export const DietView: React.FC<DietViewProps> = ({ diet, onGenerateDiet, genera
             <button
               onClick={() => onGenerateDiet()}
               disabled={generating}
-              className="text-[11px] px-3 py-1.5 rounded-full btn-secondary disabled:opacity-50 transition ui-focus-ring inline-flex items-center gap-1"
+              className="text-xs px-3 py-1.5 rounded-full btn-secondary disabled:opacity-50 transition ui-focus-ring inline-flex items-center gap-1"
             >
               <RefreshCw className="w-3 h-3" />
               {generating ? 'Refreshing…' : 'Regenerate'}
@@ -81,7 +81,7 @@ export const DietView: React.FC<DietViewProps> = ({ diet, onGenerateDiet, genera
 
       <motion.div variants={fadeUp}>
         <GlassCard className="p-4">
-          <p className="text-sm text-[#8B8DA3] leading-relaxed">
+          <p className="text-sm text-muted leading-relaxed">
             This plan is based on your profile preferences. Update diet type, allergies, or meals per day in Profile.
           </p>
         </GlassCard>
@@ -92,7 +92,7 @@ export const DietView: React.FC<DietViewProps> = ({ diet, onGenerateDiet, genera
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-semibold text-white">Manage plan</p>
-              <p className="text-xs text-[#8B8DA3]">Get ready for the upcoming week</p>
+              <p className="text-xs text-muted">Get ready for the upcoming week</p>
             </div>
             <AnimatedButton
               onClick={() => onGenerateDiet(true)}

@@ -194,10 +194,10 @@ export default function OnboardingWizard({ isReset = false }: { isReset?: boolea
         className="flex flex-col items-center mb-6"
       >
         <BrandLogo size={56} className="mb-3" />
-        <h1 className="text-2xl font-bold tracking-tight text-white font-[family-name:var(--font-display)]">
+        <h1 className="text-2xl font-bold tracking-tight text-white font-display">
           {isReset ? 'Re-setup your profile' : "Let's set you up"}
         </h1>
-        <p className="text-sm text-[#8B8DA3] mt-1">
+        <p className="text-sm text-muted mt-1">
           {isReset ? 'Update your basics in 3 quick steps' : '~40 seconds to your first routine'}
         </p>
       </motion.div>
@@ -215,12 +215,12 @@ export default function OnboardingWizard({ isReset = false }: { isReset?: boolea
               <div
                 className={`h-1.5 w-full rounded-full transition-all duration-500 ${
                   i <= step
-                    ? 'bg-gradient-to-r from-[#8B5CF6] to-[#A78BFA] shadow-[0_0_12px_rgba(139,92,246,0.4)]'
+                    ? 'bg-gradient-to-r from-primary to-primary-light shadow-[0_0_12px_rgba(139,92,246,0.4)]'
                     : 'bg-white/8'
                 }`}
               />
-              <span className={`text-[10px] font-medium transition-colors duration-300 ${
-                i <= step ? 'text-[#C4B5FD]' : 'text-[#8B8DA3]/60'
+              <span className={`text-xs font-medium transition-colors duration-300 ${
+                i <= step ? 'text-primary-lighter' : 'text-muted'
               }`}>
                 {label}
               </span>
@@ -249,12 +249,12 @@ export default function OnboardingWizard({ isReset = false }: { isReset?: boolea
                 <motion.div custom={0} variants={fadeUp} initial="hidden" animate="visible">
                   <GlassCard className="p-5">
                     <div className="flex items-center gap-2 mb-4">
-                      <div className="p-2 rounded-xl bg-[#8B5CF6]/15 border border-[#8B5CF6]/20">
-                        <Target className="w-4 h-4 text-[#A78BFA]" />
+                      <div className="p-2 rounded-xl bg-primary/15 border border-primary/20">
+                        <Target className="w-4 h-4 text-primary-light" />
                       </div>
                       <div>
                         <p className="text-sm font-semibold text-white">What&apos;s your goal?</p>
-                        <p className="text-[11px] text-[#8B8DA3]">Pick the one that matters most</p>
+                        <p className="text-xs text-muted">Pick the one that matters most</p>
                       </div>
                     </div>
                     <div className="grid grid-cols-2 gap-2">
@@ -277,12 +277,12 @@ export default function OnboardingWizard({ isReset = false }: { isReset?: boolea
                 <motion.div custom={1} variants={fadeUp} initial="hidden" animate="visible">
                   <GlassCard className="p-5">
                     <div className="flex items-center gap-2 mb-4">
-                      <div className="p-2 rounded-xl bg-[#22D3EE]/15 border border-[#22D3EE]/20">
-                        <Dumbbell className="w-4 h-4 text-[#67E8F9]" />
+                      <div className="p-2 rounded-xl bg-brand-cyan/15 border border-brand-cyan/20">
+                        <Dumbbell className="w-4 h-4 text-brand-cyan-light" />
                       </div>
                       <div>
                         <p className="text-sm font-semibold text-white">Fitness level</p>
-                        <p className="text-[11px] text-[#8B8DA3]">Be honest — we&apos;ll match intensity</p>
+                        <p className="text-xs text-muted">Be honest — we&apos;ll match intensity</p>
                       </div>
                     </div>
                     <div className="flex flex-col gap-2">
@@ -293,14 +293,14 @@ export default function OnboardingWizard({ isReset = false }: { isReset?: boolea
                           onClick={() => setLevel(l.value)}
                           className={`w-full flex items-center justify-between px-4 py-3 rounded-xl border transition-all ${
                             level === l.value
-                              ? 'border-[#8B5CF6]/40 bg-[#8B5CF6]/15 shadow-[0_0_15px_rgba(139,92,246,0.15)]'
-                              : 'border-[#8B5CF6]/10 bg-white/5 hover:bg-[#8B5CF6]/8'
+                              ? 'border-primary/40 bg-primary/15 shadow-[0_0_15px_rgba(139,92,246,0.15)]'
+                              : 'border-primary/10 bg-white/5 hover:bg-primary/8'
                           }`}
                         >
-                          <span className={`text-sm font-medium ${level === l.value ? 'text-[#C4B5FD]' : 'text-slate-300'}`}>
+                          <span className={`text-sm font-medium ${level === l.value ? 'text-primary-lighter' : 'text-slate-300'}`}>
                             {l.label}
                           </span>
-                          <span className="text-[11px] text-[#8B8DA3]">{l.desc}</span>
+                          <span className="text-xs text-muted">{l.desc}</span>
                         </button>
                       ))}
                     </div>
@@ -311,12 +311,12 @@ export default function OnboardingWizard({ isReset = false }: { isReset?: boolea
                 <motion.div custom={2} variants={fadeUp} initial="hidden" animate="visible">
                   <GlassCard className="p-5">
                     <div className="flex items-center gap-2 mb-4">
-                      <div className="p-2 rounded-xl bg-[#10B981]/15 border border-[#10B981]/20">
-                        <User className="w-4 h-4 text-[#34D399]" />
+                      <div className="p-2 rounded-xl bg-accent/15 border border-accent/20">
+                        <User className="w-4 h-4 text-accent-2" />
                       </div>
                       <div>
                         <p className="text-sm font-semibold text-white">Gender</p>
-                        <p className="text-[11px] text-[#8B8DA3]">Helps tailor calorie estimates</p>
+                        <p className="text-xs text-muted">Helps tailor calorie estimates</p>
                       </div>
                     </div>
                     <div className="flex flex-wrap gap-2">
@@ -342,19 +342,19 @@ export default function OnboardingWizard({ isReset = false }: { isReset?: boolea
                 <motion.div custom={0} variants={fadeUp} initial="hidden" animate="visible">
                   <GlassCard className="p-5">
                     <div className="flex items-center gap-2 mb-5">
-                      <div className="p-2 rounded-xl bg-[#F59E0B]/15 border border-[#F59E0B]/20">
-                        <Ruler className="w-4 h-4 text-[#FBBF24]" />
+                      <div className="p-2 rounded-xl bg-gold/15 border border-gold/20">
+                        <Ruler className="w-4 h-4 text-gold-light" />
                       </div>
                       <div>
                         <p className="text-sm font-semibold text-white">Body measurements</p>
-                        <p className="text-[11px] text-[#8B8DA3]">Used for calorie &amp; training estimates</p>
+                        <p className="text-xs text-muted">Used for calorie &amp; training estimates</p>
                       </div>
                     </div>
 
                     <div className="space-y-4">
                       {/* Age */}
                       <div>
-                        <label className="block text-xs text-[#8B8DA3] mb-2 font-medium">Age</label>
+                        <label className="block text-xs text-muted mb-2 font-medium">Age</label>
                         <div className="relative">
                           <input
                             id="onboarding-age"
@@ -365,15 +365,15 @@ export default function OnboardingWizard({ isReset = false }: { isReset?: boolea
                             min="16"
                             max="100"
                             placeholder="e.g. 25"
-                            className="w-full px-4 py-3.5 glass-soft rounded-xl text-white placeholder:text-[#8B8DA3]/40 ui-focus-ring border border-[#8B5CF6]/10 text-lg font-medium"
+                            className="w-full px-4 py-3.5 glass-soft rounded-xl text-white placeholder:text-muted/40 ui-focus-ring border border-primary/10 text-lg font-medium"
                           />
-                          <span className="absolute right-4 top-1/2 -translate-y-1/2 text-xs text-[#8B8DA3]">years</span>
+                          <span className="absolute right-4 top-1/2 -translate-y-1/2 text-xs text-muted">years</span>
                         </div>
                       </div>
 
                       {/* Weight */}
                       <div>
-                        <label className="block text-xs text-[#8B8DA3] mb-2 font-medium">Weight</label>
+                        <label className="block text-xs text-muted mb-2 font-medium">Weight</label>
                         <div className="relative">
                           <input
                             id="onboarding-weight"
@@ -385,15 +385,15 @@ export default function OnboardingWizard({ isReset = false }: { isReset?: boolea
                             max="300"
                             step="0.1"
                             placeholder="e.g. 70"
-                            className="w-full px-4 py-3.5 glass-soft rounded-xl text-white placeholder:text-[#8B8DA3]/40 ui-focus-ring border border-[#8B5CF6]/10 text-lg font-medium"
+                            className="w-full px-4 py-3.5 glass-soft rounded-xl text-white placeholder:text-muted/40 ui-focus-ring border border-primary/10 text-lg font-medium"
                           />
-                          <span className="absolute right-4 top-1/2 -translate-y-1/2 text-xs text-[#8B8DA3]">kg</span>
+                          <span className="absolute right-4 top-1/2 -translate-y-1/2 text-xs text-muted">kg</span>
                         </div>
                       </div>
 
                       {/* Height */}
                       <div>
-                        <label className="block text-xs text-[#8B8DA3] mb-2 font-medium">Height</label>
+                        <label className="block text-xs text-muted mb-2 font-medium">Height</label>
                         <div className="relative">
                           <input
                             id="onboarding-height"
@@ -405,9 +405,9 @@ export default function OnboardingWizard({ isReset = false }: { isReset?: boolea
                             max="250"
                             step="0.1"
                             placeholder="e.g. 170"
-                            className="w-full px-4 py-3.5 glass-soft rounded-xl text-white placeholder:text-[#8B8DA3]/40 ui-focus-ring border border-[#8B5CF6]/10 text-lg font-medium"
+                            className="w-full px-4 py-3.5 glass-soft rounded-xl text-white placeholder:text-muted/40 ui-focus-ring border border-primary/10 text-lg font-medium"
                           />
-                          <span className="absolute right-4 top-1/2 -translate-y-1/2 text-xs text-[#8B8DA3]">cm</span>
+                          <span className="absolute right-4 top-1/2 -translate-y-1/2 text-xs text-muted">cm</span>
                         </div>
                       </div>
                     </div>
@@ -416,9 +416,9 @@ export default function OnboardingWizard({ isReset = false }: { isReset?: boolea
 
                 {/* Friendly tip */}
                 <motion.div custom={1} variants={fadeUp} initial="hidden" animate="visible">
-                  <div className="flex items-start gap-3 px-4 py-3 rounded-xl bg-[#8B5CF6]/8 border border-[#8B5CF6]/15">
-                    <Sparkles className="w-4 h-4 text-[#A78BFA] mt-0.5 shrink-0" />
-                    <p className="text-xs text-[#C4B5FD]/80 leading-relaxed">
+                  <div className="flex items-start gap-3 px-4 py-3 rounded-xl bg-primary/8 border border-primary/15">
+                    <Sparkles className="w-4 h-4 text-primary-light mt-0.5 shrink-0" />
+                    <p className="text-xs text-primary-lighter/80 leading-relaxed">
                       Don&apos;t worry about being exact — you can always fine-tune these later in your profile.
                     </p>
                   </div>
@@ -433,12 +433,12 @@ export default function OnboardingWizard({ isReset = false }: { isReset?: boolea
                 <motion.div custom={0} variants={fadeUp} initial="hidden" animate="visible">
                   <GlassCard className="p-5">
                     <div className="flex items-center gap-2 mb-4">
-                      <div className="p-2 rounded-xl bg-[#8B5CF6]/15 border border-[#8B5CF6]/20">
-                        <Calendar className="w-4 h-4 text-[#A78BFA]" />
+                      <div className="p-2 rounded-xl bg-primary/15 border border-primary/20">
+                        <Calendar className="w-4 h-4 text-primary-light" />
                       </div>
                       <div>
                         <p className="text-sm font-semibold text-white">How long have you been training?</p>
-                        <p className="text-[11px] text-[#8B8DA3]">Helps us match volume &amp; recovery</p>
+                        <p className="text-xs text-muted">Helps us match volume &amp; recovery</p>
                       </div>
                     </div>
                     <div className="flex flex-col gap-2">
@@ -449,12 +449,12 @@ export default function OnboardingWizard({ isReset = false }: { isReset?: boolea
                           onClick={() => setTenure(t.value)}
                           className={`w-full text-left px-4 py-3 rounded-xl border transition-all ${
                             tenure === t.value
-                              ? 'border-[#8B5CF6]/40 bg-[#8B5CF6]/15 shadow-[0_0_15px_rgba(139,92,246,0.15)]'
-                              : 'border-[#8B5CF6]/10 bg-white/5 hover:bg-[#8B5CF6]/8'
+                              ? 'border-primary/40 bg-primary/15 shadow-[0_0_15px_rgba(139,92,246,0.15)]'
+                              : 'border-primary/10 bg-white/5 hover:bg-primary/8'
                           }`}
                         >
                           <span className={`text-sm font-medium ${
-                            tenure === t.value ? 'text-[#C4B5FD]' : 'text-slate-300'
+                            tenure === t.value ? 'text-primary-lighter' : 'text-slate-300'
                           }`}>
                             {t.label}
                           </span>
@@ -468,12 +468,12 @@ export default function OnboardingWizard({ isReset = false }: { isReset?: boolea
                 <motion.div custom={1} variants={fadeUp} initial="hidden" animate="visible">
                   <GlassCard className="p-5">
                     <div className="flex items-center gap-2 mb-4">
-                      <div className="p-2 rounded-xl bg-[#22D3EE]/15 border border-[#22D3EE]/20">
-                        <Clock className="w-4 h-4 text-[#67E8F9]" />
+                      <div className="p-2 rounded-xl bg-brand-cyan/15 border border-brand-cyan/20">
+                        <Clock className="w-4 h-4 text-brand-cyan-light" />
                       </div>
                       <div>
                         <p className="text-sm font-semibold text-white">Session duration</p>
-                        <p className="text-[11px] text-[#8B8DA3]">How long is each workout?</p>
+                        <p className="text-xs text-muted">How long is each workout?</p>
                       </div>
                     </div>
                     <div className="flex flex-wrap gap-2">
@@ -567,7 +567,7 @@ export default function OnboardingWizard({ isReset = false }: { isReset?: boolea
         transition={{ delay: 0.8 }}
         type="button"
         onClick={() => router.replace('/dashboard')}
-        className="mt-4 text-xs text-[#8B8DA3]/60 hover:text-[#8B8DA3] transition-colors"
+        className="mt-4 text-xs text-muted hover:text-muted transition-colors"
       >
         Skip for now — I&apos;ll fill this in later
       </motion.button>

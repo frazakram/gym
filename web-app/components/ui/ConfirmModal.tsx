@@ -42,9 +42,9 @@ export function ConfirmModal({
                 }
             case 'warning':
                 return {
-                    iconBg: 'bg-[#8B5CF6]/15 text-[#A78BFA]',
-                    accent: 'from-[#8B5CF6] to-[#7C3AED]',
-                    ring: 'ring-[#8B5CF6]/20',
+                    iconBg: 'bg-primary/15 text-primary-light',
+                    accent: 'from-primary to-primary-dark',
+                    ring: 'ring-primary/20',
                     defaultIcon: <Info className="w-7 h-7" />,
                     defaultConfirmLabel: 'Continue',
                 }
@@ -59,9 +59,9 @@ export function ConfirmModal({
             case 'info':
             default:
                 return {
-                    iconBg: 'bg-[#22D3EE]/15 text-[#22D3EE]',
-                    accent: 'from-[#22D3EE] to-[#06B6D4]',
-                    ring: 'ring-[#22D3EE]/20',
+                    iconBg: 'bg-brand-cyan/15 text-brand-cyan',
+                    accent: 'from-brand-cyan to-brand-cyan-dark',
+                    ring: 'ring-brand-cyan/20',
                     defaultIcon: <Info className="w-7 h-7" />,
                     defaultConfirmLabel: 'Okay',
                 }
@@ -79,7 +79,7 @@ export function ConfirmModal({
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     exit={{ opacity: 0 }}
-                    className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-[#0A0A14]/85 backdrop-blur-sm"
+                    className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-navy-0/85 backdrop-blur-sm"
                 >
                     <motion.div
                         initial={{ scale: 0.9, opacity: 0 }}
@@ -88,8 +88,8 @@ export function ConfirmModal({
                         transition={{ type: 'spring', stiffness: 350, damping: 25 }}
                         className={`
                             w-full max-w-sm
-                            bg-[#12121E]/95 border border-[#8B5CF6]/15 rounded-3xl
-                            shadow-2xl shadow-[#8B5CF6]/5 overflow-hidden
+                            bg-navy-1/95 border border-primary/15 rounded-3xl
+                            shadow-2xl shadow-primary/5 overflow-hidden
                             ring-1 ${styles.ring}
                         `}
                     >
@@ -100,7 +100,7 @@ export function ConfirmModal({
                                 </div>
                             </div>
 
-                            <h3 className="text-xl font-bold text-white text-center mb-2 tracking-tight font-[family-name:var(--font-display)]">
+                            <h3 className="text-xl font-bold text-white text-center mb-2 tracking-tight font-display">
                                 {title}
                             </h3>
 

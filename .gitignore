@@ -78,3 +78,7 @@ Thumbs.db
 
 # Force include Next.js lib directory
 !web-app/lib/
+
+# Claude configs
+.claude/skills/
+.mcp.json

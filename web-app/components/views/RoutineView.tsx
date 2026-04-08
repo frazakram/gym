@@ -68,8 +68,8 @@ export function RoutineView({
     return (
       <div className="pb-24 px-4 py-6">
         <div className="glass rounded-2xl p-8 text-center">
-          <h2 className="text-2xl font-bold text-white mb-3">No Routine Yet</h2>
-          <p className="text-[#8B8DA3] mb-6">Generate your personalized workout routine to get started</p>
+          <h2 className="text-2xl font-bold text-white mb-3 font-display">No Routine Yet</h2>
+          <p className="text-muted mb-6">Generate your personalized workout routine to get started</p>
           <button
             onClick={onGenerateRoutine}
             disabled={generating}
@@ -94,10 +94,10 @@ export function RoutineView({
       <motion.div variants={stagger} initial="hidden" animate="visible">
       {/* Header */}
       <motion.div variants={fadeUp} className="px-4 pt-4 pb-3">
-        <h1 className="text-[18px] font-semibold tracking-tight text-white mb-0.5 font-[family-name:var(--font-display)]">
+        <h1 className="text-[18px] font-semibold tracking-tight text-white mb-0.5 font-display">
           {currentDay?.day || 'Select a Day'}
         </h1>
-        <p className="text-xs text-[#8B8DA3]">
+        <p className="text-xs text-muted">
           {isRestDay ? 'Rest & Recovery' : `${currentDay?.exercises?.length || 0} exercises`}
         </p>
       </motion.div>
@@ -119,7 +119,7 @@ export function RoutineView({
             subtitle={isRestDay ? "Take time to recover" : "Everything you need in one flow"}
             right={
               !isRestDay ? (
-                <div className="text-[11px] text-slate-200/80 glass-soft px-2.5 py-1 rounded-full border border-[#8B5CF6]/10 flex items-center gap-1">
+                <div className="text-xs text-slate-200/80 glass-soft px-2.5 py-1 rounded-full border border-primary/10 flex items-center gap-1">
                   <Timer className="w-3 h-3" /> {estimatedMinutes} min
                 </div>
               ) : null
@@ -144,22 +144,22 @@ export function RoutineView({
                 return (
                   <div
                     key={index}
-                    className="flex items-start justify-between gap-3 bg-white/5 border border-[#8B5CF6]/10 rounded-2xl px-3.5 py-3"
+                    className="flex items-start justify-between gap-3 bg-white/5 border border-primary/10 rounded-2xl px-3.5 py-3"
                   >
                     <div className="min-w-0">
                       <p className="text-sm font-medium text-white/90 truncate">{exercise.name}</p>
-                      <p className="mt-0.5 text-xs text-[#8B8DA3] truncate">{exercise.sets_reps}</p>
+                      <p className="mt-0.5 text-xs text-muted truncate">{exercise.sets_reps}</p>
                     </div>
 
-                    <div className="shrink-0 flex flex-col items-end gap-1 text-[11px] text-slate-200/80">
+                    <div className="shrink-0 flex flex-col items-end gap-1 text-xs text-slate-200/80">
                       <div className="flex items-center gap-1.5">
                         {typeof meta.sets === 'number' ? (
-                          <span className="inline-flex items-center rounded-full bg-white/5 border border-[#8B5CF6]/10 px-2 py-0.5">
+                          <span className="inline-flex items-center rounded-full bg-white/5 border border-primary/10 px-2 py-0.5">
                             {meta.sets} sets
                           </span>
                         ) : null}
                         {typeof meta.reps === 'number' ? (
-                          <span className="inline-flex items-center rounded-full bg-white/5 border border-[#8B5CF6]/10 px-2 py-0.5">
+                          <span className="inline-flex items-center rounded-full bg-white/5 border border-primary/10 px-2 py-0.5">
                             {meta.reps} reps
                           </span>
                         ) : null}
@@ -226,11 +226,11 @@ export function RoutineView({
                 <div className="flex items-center justify-between px-1">
                   <div>
                     <p className="text-sm font-semibold text-white">Manage plan</p>
-                    <p className="text-xs text-[#8B8DA3]">
+                    <p className="text-xs text-muted">
                       You&apos;ve completed {completionPercentage}% this week
                     </p>
                   </div>
-                  <ChevronRight className="w-5 h-5 text-[#8B5CF6]" />
+                  <ChevronRight className="w-5 h-5 text-primary" />
                 </div>
               }
             >
@@ -283,9 +283,9 @@ export function RoutineView({
                 <div className="flex items-center justify-between px-1">
                   <div>
                     <p className="text-sm font-semibold text-white">Nutrition plan</p>
-                    <p className="text-xs text-[#8B8DA3]">Weekly meal plan synced to your routine</p>
+                    <p className="text-xs text-muted">Weekly meal plan synced to your routine</p>
                   </div>
-                  <ChevronRight className="w-5 h-5 text-[#8B5CF6]" />
+                  <ChevronRight className="w-5 h-5 text-primary" />
                 </div>
               }
             >

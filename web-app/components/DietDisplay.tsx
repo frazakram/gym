@@ -34,7 +34,7 @@ export const DietDisplay: React.FC<DietDisplayProps> = ({ diet }) => {
         title="Weekly meal plan"
         subtitle="Tap a day to expand meals and macros"
         right={
-          <div className="w-9 h-9 rounded-2xl bg-[#8B5CF6]/12 border border-[#8B5CF6]/20 flex items-center justify-center text-[#A78BFA]">
+          <div className="w-9 h-9 rounded-2xl bg-primary/12 border border-primary/20 flex items-center justify-center text-primary-light">
             <Salad className="w-5 h-5" />
           </div>
         }
@@ -42,24 +42,24 @@ export const DietDisplay: React.FC<DietDisplayProps> = ({ diet }) => {
 
       {/* Summary */}
       <div className="mt-4 grid grid-cols-2 gap-3">
-        <div className="glass-soft rounded-2xl border border-[#8B5CF6]/10 p-3">
+        <div className="glass-soft rounded-2xl border border-primary/10 p-3">
           <div className="flex items-center justify-between">
-            <p className="text-[11px] text-[#8B8DA3]">Avg calories/day</p>
+            <p className="text-xs text-muted">Avg calories/day</p>
             <Flame className="w-4 h-4 text-orange-300/90" />
           </div>
           <p className="mt-1 text-[20px] font-semibold tracking-tight text-white">
             {summary.avgCalories}
-            <span className="ml-1 text-xs text-[#8B8DA3]">kcal</span>
+            <span className="ml-1 text-xs text-muted">kcal</span>
           </p>
         </div>
         <div className="glass-soft rounded-2xl border border-emerald-400/20 p-3 bg-emerald-400/6">
           <div className="flex items-center justify-between">
-            <p className="text-[11px] text-[#8B8DA3]">Avg protein/day</p>
+            <p className="text-xs text-muted">Avg protein/day</p>
             <Utensils className="w-4 h-4 text-emerald-200/90" />
           </div>
           <p className="mt-1 text-[20px] font-semibold tracking-tight text-white">
             {summary.avgProtein}
-            <span className="ml-1 text-xs text-[#8B8DA3]">g</span>
+            <span className="ml-1 text-xs text-muted">g</span>
           </p>
         </div>
       </div>
@@ -80,7 +80,7 @@ export const DietDisplay: React.FC<DietDisplayProps> = ({ diet }) => {
               variant="soft" 
               className={`p-3 transition-colors ${
                 isToday
-                  ? 'bg-[#8B5CF6]/14 border-[#8B5CF6]/25 shadow-[0_8px_30px_rgba(139,92,246,0.1)]'
+                  ? 'bg-primary/14 border-primary/25 shadow-[0_8px_30px_rgba(139,92,246,0.1)]'
                   : ''
               }`}
             >
@@ -91,17 +91,17 @@ export const DietDisplay: React.FC<DietDisplayProps> = ({ diet }) => {
                   <div className="flex items-center justify-between gap-3">
                     <div className="min-w-0">
                       <div className="flex items-center gap-2">
-                        <p className={`text-sm font-semibold truncate ${isToday ? 'text-[#C4B5FD]' : 'text-white'}`}>
+                        <p className={`text-sm font-semibold truncate ${isToday ? 'text-primary-lighter' : 'text-white'}`}>
                           {displayDay}
                         </p>
                         {isToday && (
-                          <span className="px-1.5 py-0.5 rounded-md bg-[#8B5CF6]/20 border border-[#8B5CF6]/30 text-[9px] font-bold text-[#C4B5FD] tracking-wider uppercase">
+                          <span className="px-1.5 py-0.5 rounded-md bg-primary/20 border border-primary/30 text-xs font-bold text-primary-lighter tracking-wider uppercase">
                             Today
                           </span>
                         )}
                       </div>
-                      <div className="mt-1 flex items-center gap-2 text-[11px] text-[#8B8DA3]">
-                        <span className="inline-flex items-center gap-1 rounded-full bg-white/5 border border-[#8B5CF6]/10 px-2 py-0.5">
+                      <div className="mt-1 flex items-center gap-2 text-xs text-muted">
+                        <span className="inline-flex items-center gap-1 rounded-full bg-white/5 border border-primary/10 px-2 py-0.5">
                           🔥 {day.total_calories} kcal
                         </span>
                         <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 ${
@@ -112,7 +112,7 @@ export const DietDisplay: React.FC<DietDisplayProps> = ({ diet }) => {
                       </div>
                     </div>
                     <ChevronDown
-                      className={`w-5 h-5 text-[#8B5CF6] transition-transform ${open ? 'rotate-180' : ''}`}
+                      className={`w-5 h-5 text-primary transition-transform ${open ? 'rotate-180' : ''}`}
                     />
                   </div>
                 }
@@ -121,16 +121,16 @@ export const DietDisplay: React.FC<DietDisplayProps> = ({ diet }) => {
                   {day.meals.map((meal, j) => (
                     <div
                       key={j}
-                      className="rounded-2xl border border-[#8B5CF6]/10 bg-white/5 px-3.5 py-3"
+                      className="rounded-2xl border border-primary/10 bg-white/5 px-3.5 py-3"
                     >
                       <div className="flex items-start justify-between gap-3">
                         <div className="min-w-0">
                           <p className="text-sm font-medium text-white/90 truncate">{meal.name}</p>
-                          <p className="mt-0.5 text-[11px] text-[#8B8DA3]">
+                          <p className="mt-0.5 text-xs text-muted">
                             {meal.calories} kcal
                           </p>
                         </div>
-                        <div className="shrink-0 text-right text-[11px] text-slate-200/80">
+                        <div className="shrink-0 text-right text-xs text-slate-200/80">
                           <div className="flex items-center justify-end gap-2">
                             <span className="inline-flex items-center gap-1">
                               <span className="w-1.5 h-1.5 rounded-full bg-emerald-300" />

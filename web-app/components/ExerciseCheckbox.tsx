@@ -57,7 +57,7 @@ export function ExerciseCheckbox({
         flex items-center gap-2
         ${completed 
           ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-200 hover:bg-emerald-500/20'
-          : 'bg-[#8B5CF6]/5 border-[#8B5CF6]/20 text-slate-300 hover:bg-[#8B5CF6]/10 hover:border-[#8B5CF6]/30 hover:text-white'
+          : 'bg-primary/5 border-primary/20 text-slate-300 hover:bg-primary/10 hover:border-primary/30 hover:text-white'
         }
         ${loading ? 'opacity-70 cursor-wait' : 'cursor-pointer'}
         ${(!routineId && !onEnsureRoutineSaved) ? 'cursor-not-allowed opacity-50' : ''}

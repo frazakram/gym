@@ -122,15 +122,15 @@ export function HomeView({
             className="shrink-0"
           />
           <div className="min-w-0">
-            <h1 className="text-[22px] font-semibold tracking-tight text-white leading-tight font-[family-name:var(--font-display)]">
+            <h1 className="text-[22px] font-semibold tracking-tight text-white leading-tight font-display">
               {getGreeting()}, {getDisplayName()}
             </h1>
-            <p className="mt-1 text-xs text-[#8B8DA3]">
+            <p className="mt-1 text-xs text-muted">
               {profile?.goal || 'General fitness'} &bull; {profile?.level || 'Beginner'}
             </p>
           </div>
         </div>
-        <div className="shrink-0 glass-soft rounded-full px-3 py-1.5 text-[11px] text-[#A78BFA] border border-[#8B5CF6]/20">
+        <div className="shrink-0 glass-soft rounded-full px-3 py-1.5 text-xs text-primary-light border border-primary/20">
           Week {currentWeekNumber}
         </div>
       </motion.div>
@@ -149,16 +149,16 @@ export function HomeView({
       {/* Stale routine banner */}
       {routineIsStale && routine && !viewingHistory && (
         <motion.div variants={fadeUp}>
-          <GlassCard className="p-4 bg-gradient-to-r from-[#8B5CF6]/10 to-[#22D3EE]/5 border-[#8B5CF6]/25">
+          <GlassCard className="p-4 bg-gradient-to-r from-primary/10 to-brand-cyan/5 border-primary/25">
             <div className="flex items-start gap-3">
-              <div className="w-10 h-10 rounded-xl bg-[#8B5CF6]/15 flex items-center justify-center shrink-0">
-                <CalendarPlus className="w-5 h-5 text-[#A78BFA]" />
+              <div className="w-10 h-10 rounded-xl bg-primary/15 flex items-center justify-center shrink-0">
+                <CalendarPlus className="w-5 h-5 text-primary-light" />
               </div>
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-semibold text-white">
                   Welcome back! You&apos;ve been away {weeksElapsed} week{weeksElapsed !== 1 ? 's' : ''}
                 </p>
-                <p className="text-xs text-[#8B8DA3] mt-1">
+                <p className="text-xs text-muted mt-1">
                   Your last routine is from Week {currentWeekNumber}. Generate a fresh plan for this week.
                 </p>
                 <div className="mt-3">
@@ -189,18 +189,18 @@ export function HomeView({
               title="Today"
               subtitle={todaysPlan.day}
               right={
-                <div className="text-[11px] text-[#8B8DA3] glass-soft px-2.5 py-1 rounded-full border border-[#8B5CF6]/15">
+                <div className="text-xs text-muted glass-soft px-2.5 py-1 rounded-full border border-primary/15">
                   {todaysPlan.exercises?.length || 0} exercises
                 </div>
               }
             />
 
-            <div className="mt-3 flex items-center gap-2 text-xs text-[#8B8DA3]">
-              <span className="inline-flex items-center gap-1.5 rounded-full bg-white/5 px-2.5 py-1 border border-[#8B5CF6]/10">
+            <div className="mt-3 flex items-center gap-2 text-xs text-muted">
+              <span className="inline-flex items-center gap-1.5 rounded-full bg-white/5 px-2.5 py-1 border border-primary/10">
                 <Timer className="w-3 h-3" />
                 Est. {(todaysPlan.exercises?.length || 0) * 8 + 12} min
               </span>
-              <span className="inline-flex items-center gap-1.5 rounded-full bg-white/5 px-2.5 py-1 border border-[#8B5CF6]/10">
+              <span className="inline-flex items-center gap-1.5 rounded-full bg-white/5 px-2.5 py-1 border border-primary/10">
                 <Percent className="w-3 h-3" />
                 {progress.percentage}% week done
               </span>
@@ -219,11 +219,11 @@ export function HomeView({
 
             {/* Nutrition peek */}
             {diet && todaysDiet ? (
-              <div className="mt-4 pt-4 border-t border-[#8B5CF6]/10">
+              <div className="mt-4 pt-4 border-t border-primary/10">
                 <div className="flex items-center justify-between">
-                  <p className="text-xs text-[#8B8DA3]">Today&apos;s nutrition</p>
-                  <div className="flex items-center gap-2 text-[11px] text-slate-200/80">
-                    <span className="inline-flex items-center gap-1 rounded-full bg-white/5 px-2.5 py-1 border border-[#8B5CF6]/10">
+                  <p className="text-xs text-muted">Today&apos;s nutrition</p>
+                  <div className="flex items-center gap-2 text-xs text-slate-200">
+                    <span className="inline-flex items-center gap-1 rounded-full bg-white/5 px-2.5 py-1 border border-primary/10">
                       <Flame className="w-3 h-3 text-orange-400" />
                       {todaysDiet.total_calories} kcal
                     </span>
@@ -235,9 +235,9 @@ export function HomeView({
                 </div>
                 <div className="mt-2 space-y-2">
                   {todaysDiet.meals.slice(0, 2).map((meal, i) => (
-                    <div key={i} className="flex items-center justify-between gap-3 bg-white/5 border border-[#8B5CF6]/10 rounded-xl px-3 py-2">
+                    <div key={i} className="flex items-center justify-between gap-3 bg-white/5 border border-primary/10 rounded-xl px-3 py-2">
                       <span className="text-sm text-white/85 truncate">{meal.name}</span>
-                      <span className="text-[11px] text-[#8B8DA3] shrink-0">{meal.calories} kcal</span>
+                      <span className="text-xs text-muted shrink-0">{meal.calories} kcal</span>
                     </div>
                   ))}
                 </div>
@@ -267,7 +267,7 @@ export function HomeView({
             <div className="flex items-center justify-between mb-3">
               <div>
                 <p className="text-sm font-semibold text-white">Weekly Progress</p>
-                <p className="text-xs text-[#8B8DA3] mt-0.5">{progress.completed} of {progress.total} workouts this week</p>
+                <p className="text-xs text-muted mt-0.5">{progress.completed} of {progress.total} workouts this week</p>
               </div>
               <CircularProgress percentage={progress.percentage} size={48} strokeWidth={4} />
             </div>
@@ -279,11 +279,11 @@ export function HomeView({
                     <div
                       className="w-full h-2 rounded-full"
                       style={{
-                        backgroundColor: d.value >= 1 ? '#8b5cf6' : d.value > 0 ? '#6d3fc4' : '#252540',
+                        backgroundColor: d.value >= 1 ? 'var(--primary)' : d.value > 0 ? '#6d3fc4' : '#252540',
                         boxShadow: d.value >= 1 ? '0 0 6px rgba(139,92,246,0.4)' : 'none',
                       }}
                     />
-                    <span className="text-[9px] text-white/30">{dayLabels[i]}</span>
+                    <span className="text-xs text-white/70">{dayLabels[i]}</span>
                   </div>
                 )
               })}
@@ -299,7 +299,7 @@ export function HomeView({
             title="Personal Coach"
             subtitle="Premium (trial allowed) \u2022 Book a 1:1 session"
             right={
-              <div className="text-[11px] text-amber-200 bg-amber-400/10 border border-amber-400/20 inline-flex px-2.5 py-1 rounded-full">
+              <div className="text-xs text-amber-200 bg-amber-400/10 border border-amber-400/20 inline-flex px-2.5 py-1 rounded-full">
                 Premium
               </div>
             }
@@ -313,7 +313,7 @@ export function HomeView({
             >
               Book a coach
             </AnimatedButton>
-            <p className="mt-2 text-xs text-[#8B8DA3]">
+            <p className="mt-2 text-xs text-muted">
               You&apos;ll be able to call/email the coach and submit a booking request from the next screen.
             </p>
           </div>
@@ -331,9 +331,9 @@ export function HomeView({
                 <div className="flex items-center justify-between px-1">
                   <div>
                     <p className="text-sm font-semibold text-white">Manage plan</p>
-                    <p className="text-xs text-[#8B8DA3]">Regenerate or advance when ready</p>
+                    <p className="text-xs text-muted">Regenerate or advance when ready</p>
                   </div>
-                  <ChevronRight className={`w-5 h-5 text-[#8B5CF6] transition-transform ${manageOpen ? 'rotate-90' : ''}`} />
+                  <ChevronRight className={`w-5 h-5 text-primary transition-transform ${manageOpen ? 'rotate-90' : ''}`} />
                 </div>
               }
             >

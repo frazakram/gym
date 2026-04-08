@@ -23,19 +23,19 @@ export default async function AdminLayout({ children }: { children: React.ReactN
           <div className="flex items-center gap-2">
             <Link
               href="/admin"
-              className="text-[11px] px-3 py-1.5 rounded-full btn-secondary transition ui-focus-ring"
+              className="text-xs px-3 py-1.5 rounded-full btn-secondary transition ui-focus-ring"
             >
               Home
             </Link>
             <Link
               href="/admin/coach-approvals"
-              className="text-[11px] px-3 py-1.5 rounded-full btn-secondary transition ui-focus-ring"
+              className="text-xs px-3 py-1.5 rounded-full btn-secondary transition ui-focus-ring"
             >
               Coach Applications
             </Link>
             <Link
               href="/admin/coach-bookings"
-              className="text-[11px] px-3 py-1.5 rounded-full btn-secondary transition ui-focus-ring"
+              className="text-xs px-3 py-1.5 rounded-full btn-secondary transition ui-focus-ring"
             >
               Coach Requests
             </Link>

@@ -169,10 +169,10 @@ export function ProfileView({
         <div className="flex items-center gap-3">
           <UserAvatar name={name || undefined} username={profile?.username} size={56} />
           <div className="flex-1 min-w-0">
-            <p className="text-[15px] font-semibold tracking-tight text-white truncate font-[family-name:var(--font-display)]">
+            <p className="text-[15px] font-semibold tracking-tight text-white truncate font-display">
               {name || profile?.username || 'Profile'}
             </p>
-            <p className="mt-0.5 text-xs text-[#8B8DA3]">
+            <p className="mt-0.5 text-xs text-muted">
               {age || '—'} yrs • {gender}
             </p>
           </div>
@@ -182,17 +182,17 @@ export function ProfileView({
         </div>
 
         <div className="mt-4 grid grid-cols-3 gap-2">
-          <div className="glass-soft rounded-2xl border border-[#8B5CF6]/10 p-2 text-center">
+          <div className="glass-soft rounded-2xl border border-primary/10 p-2 text-center">
             <p className="text-[16px] font-semibold text-white">{weight || '—'}</p>
-            <p className="text-[10px] text-[#8B8DA3] mt-0.5">kg</p>
+            <p className="text-xs text-muted mt-0.5">kg</p>
           </div>
-          <div className="glass-soft rounded-2xl border border-[#8B5CF6]/10 p-2 text-center">
+          <div className="glass-soft rounded-2xl border border-primary/10 p-2 text-center">
             <p className="text-[16px] font-semibold text-white">{resolvedHeightCm || '—'}</p>
-            <p className="text-[10px] text-[#8B8DA3] mt-0.5">cm</p>
+            <p className="text-xs text-muted mt-0.5">cm</p>
           </div>
-          <div className="glass-soft rounded-2xl border border-[#8B5CF6]/10 p-2 text-center">
+          <div className="glass-soft rounded-2xl border border-primary/10 p-2 text-center">
             <p className="text-[14px] font-semibold text-white">{level}</p>
-            <p className="text-[10px] text-[#8B8DA3] mt-0.5">level</p>
+            <p className="text-xs text-muted mt-0.5">level</p>
           </div>
         </div>
       </GlassCard>
@@ -222,7 +222,7 @@ export function ProfileView({
                 Coach Approvals (Admin)
               </AnimatedButton>
             </div>
-            <p className="mt-2 text-xs text-[#8B8DA3]">
+            <p className="mt-2 text-xs text-muted">
               You can update booking status: pending → confirmed/cancelled/completed.
             </p>
           </div>
@@ -242,7 +242,7 @@ export function ProfileView({
             Coach portal
           </AnimatedButton>
         </div>
-        <p className="mt-2 text-xs text-[#8B8DA3]">
+        <p className="mt-2 text-xs text-muted">
           Open signup is enabled, but you must be approved by admin before users can see your profile.
         </p>
       </GlassCard>
@@ -255,7 +255,7 @@ export function ProfileView({
 
         <div className="mt-4 space-y-4">
           <div>
-            <p className="text-xs text-[#8B8DA3] mb-2">Goal</p>
+            <p className="text-xs text-muted mb-2">Goal</p>
             <div className="flex flex-wrap gap-2">
               {goalOptions.map((g) => (
                 <Chip key={g} selected={goal === g} onClick={() => onUpdateField('goal', g)}>
@@ -266,7 +266,7 @@ export function ProfileView({
           </div>
 
           <div>
-            <p className="text-xs text-[#8B8DA3] mb-2">Level</p>
+            <p className="text-xs text-muted mb-2">Level</p>
             <div className="flex flex-wrap gap-2">
               {levelOptions.map((l) => (
                 <Chip key={l} selected={level === l} onClick={() => onUpdateField('level', l)}>
@@ -277,7 +277,7 @@ export function ProfileView({
           </div>
 
           <div>
-            <p className="text-xs text-[#8B8DA3] mb-2">Gender</p>
+            <p className="text-xs text-muted mb-2">Gender</p>
             <div className="flex flex-wrap gap-2">
               {genderOptions.map((g) => (
                 <Chip key={g} selected={gender === g} onClick={() => onUpdateField('gender', g)}>
@@ -297,18 +297,18 @@ export function ProfileView({
 
         <div className="mt-4 space-y-3">
           <div>
-            <label className="block text-xs text-[#8B8DA3] mb-2">Display Name (optional)</label>
+            <label className="block text-xs text-muted mb-2">Display Name (optional)</label>
             <input
               type="text"
               value={name}
               onChange={(e) => onUpdateField('name', e.target.value)}
               placeholder={profile?.username?.split('@')[0] || 'Your Name'}
-              className="w-full px-4 py-3 glass-soft rounded-2xl text-white placeholder:text-[#8B8DA3]/50 ui-focus-ring border border-[#8B5CF6]/10"
+              className="w-full px-4 py-3 glass-soft rounded-2xl text-white placeholder:text-muted/50 ui-focus-ring border border-primary/10"
             />
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-xs text-[#8B8DA3] mb-2">Age</label>
+              <label className="block text-xs text-muted mb-2">Age</label>
               <input
                 inputMode="numeric"
                 type="number"
@@ -316,11 +316,11 @@ export function ProfileView({
                 onChange={(e) => onUpdateField('age', e.target.value === '' ? '' : Number(e.target.value))}
                 min="16"
                 max="100"
-                className="w-full px-4 py-3 glass-soft rounded-2xl text-white ui-focus-ring border border-[#8B5CF6]/10"
+                className="w-full px-4 py-3 glass-soft rounded-2xl text-white ui-focus-ring border border-primary/10"
               />
             </div>
             <div>
-              <label className="block text-xs text-[#8B8DA3] mb-2">Weight (kg)</label>
+              <label className="block text-xs text-muted mb-2">Weight (kg)</label>
               <input
                 inputMode="decimal"
                 type="number"
@@ -329,14 +329,14 @@ export function ProfileView({
                 min="30"
                 max="300"
                 step="0.1"
-                className="w-full px-4 py-3 glass-soft rounded-2xl text-white ui-focus-ring border border-[#8B5CF6]/10"
+                className="w-full px-4 py-3 glass-soft rounded-2xl text-white ui-focus-ring border border-primary/10"
               />
             </div>
           </div>
         </div>
 
         <div className="mt-4">
-          <p className="text-xs text-[#8B8DA3] mb-2">Height unit</p>
+          <p className="text-xs text-muted mb-2">Height unit</p>
           <div className="flex gap-2">
             <Chip selected={heightUnit === 'cm'} onClick={() => onUpdateField('heightUnit', 'cm')}>
               cm
@@ -350,7 +350,7 @@ export function ProfileView({
         <div className="mt-3">
           {heightUnit === 'cm' ? (
             <div>
-              <label className="block text-xs text-[#8B8DA3] mb-2">Height (cm)</label>
+              <label className="block text-xs text-muted mb-2">Height (cm)</label>
               <input
                 inputMode="decimal"
                 type="number"
@@ -359,13 +359,13 @@ export function ProfileView({
                 min="100"
                 max="250"
                 step="0.1"
-                className="w-full px-4 py-3 glass-soft rounded-2xl text-white ui-focus-ring border border-[#8B5CF6]/10"
+                className="w-full px-4 py-3 glass-soft rounded-2xl text-white ui-focus-ring border border-primary/10"
               />
             </div>
           ) : (
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="block text-xs text-[#8B8DA3] mb-2">Feet</label>
+                <label className="block text-xs text-muted mb-2">Feet</label>
                 <input
                   inputMode="numeric"
                   type="number"
@@ -373,11 +373,11 @@ export function ProfileView({
                   onChange={(e) => onUpdateField('heightFeet', e.target.value === '' ? '' : Number(e.target.value))}
                   min="3"
                   max="8"
-                  className="w-full px-4 py-3 glass-soft rounded-2xl text-white ui-focus-ring border border-[#8B5CF6]/10"
+                  className="w-full px-4 py-3 glass-soft rounded-2xl text-white ui-focus-ring border border-primary/10"
                 />
               </div>
               <div>
-                <label className="block text-xs text-[#8B8DA3] mb-2">Inches</label>
+                <label className="block text-xs text-muted mb-2">Inches</label>
                 <input
                   inputMode="decimal"
                   type="number"
@@ -387,7 +387,7 @@ export function ProfileView({
                   min="0"
                   max="11.9"
                   step="0.1"
-                  className="w-full px-4 py-3 glass-soft rounded-2xl text-white ui-focus-ring border border-[#8B5CF6]/10"
+                  className="w-full px-4 py-3 glass-soft rounded-2xl text-white ui-focus-ring border border-primary/10"
                 />
               </div>
             </div>
@@ -402,18 +402,18 @@ export function ProfileView({
         <SectionHeader title="Training" subtitle="Helps the AI match volume and recovery" />
         <div className="mt-4 space-y-3">
           <div>
-            <label className="block text-xs text-[#8B8DA3] mb-2">Training duration</label>
+            <label className="block text-xs text-muted mb-2">Training duration</label>
             <input
               type="text"
               value={tenure}
               onChange={(e) => onUpdateField('tenure', e.target.value)}
               placeholder="e.g., Just started, 6 months, 2 years"
-              className="w-full px-4 py-3 glass-soft rounded-2xl text-white placeholder:text-[#8B8DA3]/50 ui-focus-ring border border-[#8B5CF6]/10"
+              className="w-full px-4 py-3 glass-soft rounded-2xl text-white placeholder:text-muted/50 ui-focus-ring border border-primary/10"
             />
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-xs text-[#8B8DA3] mb-2">Goal weight (kg)</label>
+              <label className="block text-xs text-muted mb-2">Goal weight (kg)</label>
               <input
                 inputMode="decimal"
                 type="number"
@@ -423,25 +423,25 @@ export function ProfileView({
                 max="300"
                 step="0.1"
                 placeholder="Optional"
-                className="w-full px-4 py-3 glass-soft rounded-2xl text-white placeholder:text-[#8B8DA3]/50 ui-focus-ring border border-[#8B5CF6]/10"
+                className="w-full px-4 py-3 glass-soft rounded-2xl text-white placeholder:text-muted/50 ui-focus-ring border border-primary/10"
               />
             </div>
             <div>
-              <label className="block text-xs text-[#8B8DA3] mb-2">Goal timeline</label>
+              <label className="block text-xs text-muted mb-2">Goal timeline</label>
               <input
                 type="text"
                 value={goalDuration}
                 onChange={(e) => onUpdateField('goalDuration', e.target.value)}
                 placeholder="Optional"
-                className="w-full px-4 py-3 glass-soft rounded-2xl text-white placeholder:text-[#8B8DA3]/50 ui-focus-ring border border-[#8B5CF6]/10"
+                className="w-full px-4 py-3 glass-soft rounded-2xl text-white placeholder:text-muted/50 ui-focus-ring border border-primary/10"
               />
             </div>
           </div>
 
           {/* Session Duration */}
           <div>
-            <label className="block text-xs text-[#8B8DA3] mb-2">Session duration (minutes)</label>
-            <p className="text-[10px] text-[#8B8DA3] mb-2">How long is each workout session? This determines exercise count.</p>
+            <label className="block text-xs text-muted mb-2">Session duration (minutes)</label>
+            <p className="text-xs text-muted mb-2">How long is each workout session? This determines exercise count.</p>
             <div className="flex flex-wrap gap-2">
               {[30, 45, 60, 90, 120].map((mins) => (
                 <Chip
@@ -461,11 +461,11 @@ export function ProfileView({
               <div className="flex items-center justify-between px-1">
                 <div>
                   <p className="text-sm font-semibold text-white">Notes</p>
-                  <p className="text-xs text-[#8B8DA3] truncate">
+                  <p className="text-xs text-muted truncate">
                     {notes ? 'Used to avoid injuries and match preferences' : 'Add injuries, constraints, or preferences'}
                   </p>
                 </div>
-                <ChevronRight className="w-5 h-5 text-[#8B5CF6]" />
+                <ChevronRight className="w-5 h-5 text-primary" />
               </div>
             }
             className="mt-2"
@@ -475,7 +475,7 @@ export function ProfileView({
               onChange={(e) => onUpdateField('notes', e.target.value)}
               rows={4}
               placeholder="Example: knee pain (avoid heavy squats), prefer dumbbells, 45 min sessions."
-              className="w-full px-4 py-3 glass-soft rounded-2xl text-white placeholder:text-[#8B8DA3]/50 ui-focus-ring border border-[#8B5CF6]/10 resize-none"
+              className="w-full px-4 py-3 glass-soft rounded-2xl text-white placeholder:text-muted/50 ui-focus-ring border border-primary/10 resize-none"
             />
           </Collapsible>
         </div>
@@ -491,19 +491,19 @@ export function ProfileView({
           header={
             <div className="flex items-center justify-between w-full">
               <div className="flex items-center gap-2">
-                <Dumbbell className="w-4 h-4 text-[#8B5CF6]" />
+                <Dumbbell className="w-4 h-4 text-primary" />
                 <div>
                   <p className="text-sm font-semibold text-white">Gym Equipment</p>
-                  <p className="text-[10px] text-[#8B8DA3]">Upload gym photos for equipment-aware routines</p>
+                  <p className="text-xs text-muted">Upload gym photos for equipment-aware routines</p>
                 </div>
                 {equipmentAnalysis && <CheckCircle className="w-3.5 h-3.5 text-green-400" />}
               </div>
-              <ChevronRight className={`w-4 h-4 text-[#8B8DA3] transition-transform ${gymPhotosOpen ? 'rotate-90' : ''}`} />
+              <ChevronRight className={`w-4 h-4 text-muted transition-transform ${gymPhotosOpen ? 'rotate-90' : ''}`} />
             </div>
           }
         >
           <div className="mt-3 space-y-3">
-            <p className="text-xs text-[#8B8DA3]">
+            <p className="text-xs text-muted">
               Upload 1–6 photos of your gym. AI will detect equipment and tailor exercises to what you have available.
             </p>
             {onGymPhotoUpload && onGymPhotoDelete && (
@@ -520,23 +520,23 @@ export function ProfileView({
 
             {/* Equipment analysis results */}
             {equipmentAnalysis && (
-              <div className="mt-3 p-3 glass-soft rounded-xl border border-[#8B5CF6]/10 space-y-2">
-                <p className="text-xs font-medium text-[#8B5CF6]">Detected Equipment</p>
+              <div className="mt-3 p-3 glass-soft rounded-xl border border-primary/10 space-y-2">
+                <p className="text-xs font-medium text-primary">Detected Equipment</p>
                 <div className="flex flex-wrap gap-1.5">
                   {equipmentAnalysis.equipment_detected?.map((item, i) => (
-                    <span key={i} className="text-[10px] px-2 py-0.5 rounded-full bg-[#8B5CF6]/15 text-[#C4B5FD]">
+                    <span key={i} className="text-xs px-2 py-0.5 rounded-full bg-primary/15 text-primary-lighter">
                       {item}
                     </span>
                   ))}
                 </div>
-                <div className="grid grid-cols-2 gap-2 text-[10px] text-[#8B8DA3]">
+                <div className="grid grid-cols-2 gap-2 text-xs text-muted">
                   <div>Type: <span className="text-white capitalize">{equipmentAnalysis.gym_type}</span></div>
                   <div>Space: <span className="text-white capitalize">{equipmentAnalysis.space_assessment}</span></div>
                 </div>
                 {equipmentAnalysis.limitations && equipmentAnalysis.limitations.length > 0 && (
                   <div className="flex items-start gap-1.5 mt-1">
                     <AlertCircle className="w-3 h-3 text-amber-400 mt-0.5 shrink-0" />
-                    <p className="text-[10px] text-amber-300/80">{equipmentAnalysis.limitations.join('; ')}</p>
+                    <p className="text-xs text-amber-300/80">{equipmentAnalysis.limitations.join('; ')}</p>
                   </div>
                 )}
               </div>
@@ -555,19 +555,19 @@ export function ProfileView({
           header={
             <div className="flex items-center justify-between w-full">
               <div className="flex items-center gap-2">
-                <Camera className="w-4 h-4 text-[#8B5CF6]" />
+                <Camera className="w-4 h-4 text-primary" />
                 <div>
                   <p className="text-sm font-semibold text-white">Body Analysis</p>
-                  <p className="text-[10px] text-[#8B8DA3]">Upload body photos for personalized training</p>
+                  <p className="text-xs text-muted">Upload body photos for personalized training</p>
                 </div>
                 {bodyAnalysis && <CheckCircle className="w-3.5 h-3.5 text-green-400" />}
               </div>
-              <ChevronRight className={`w-4 h-4 text-[#8B8DA3] transition-transform ${bodyPhotosOpen ? 'rotate-90' : ''}`} />
+              <ChevronRight className={`w-4 h-4 text-muted transition-transform ${bodyPhotosOpen ? 'rotate-90' : ''}`} />
             </div>
           }
         >
           <div className="mt-3 space-y-3">
-            <p className="text-xs text-[#8B8DA3]">
+            <p className="text-xs text-muted">
               Upload 1–2 body photos. AI will assess body composition and personalize your routine for faster results.
             </p>
             {onBodyPhotoUpload && onBodyPhotoDelete && (
@@ -584,9 +584,9 @@ export function ProfileView({
 
             {/* Body analysis results */}
             {bodyAnalysis && (
-              <div className="mt-3 p-3 glass-soft rounded-xl border border-[#8B5CF6]/10 space-y-2">
-                <p className="text-xs font-medium text-[#8B5CF6]">Analysis Results</p>
-                <div className="grid grid-cols-2 gap-2 text-[10px] text-[#8B8DA3]">
+              <div className="mt-3 p-3 glass-soft rounded-xl border border-primary/10 space-y-2">
+                <p className="text-xs font-medium text-primary">Analysis Results</p>
+                <div className="grid grid-cols-2 gap-2 text-xs text-muted">
                   <div>Body Type: <span className="text-white capitalize">{bodyAnalysis.body_type}</span></div>
                   <div>Muscle Dev: <span className="text-white capitalize">{bodyAnalysis.muscle_development}</span></div>
                   {bodyAnalysis.estimated_body_fat_range && (
@@ -595,10 +595,10 @@ export function ProfileView({
                 </div>
                 {bodyAnalysis.focus_areas && bodyAnalysis.focus_areas.length > 0 && (
                   <div>
-                    <p className="text-[10px] text-[#8B8DA3] mb-1">Focus Areas:</p>
+                    <p className="text-xs text-muted mb-1">Focus Areas:</p>
                     <div className="flex flex-wrap gap-1.5">
                       {bodyAnalysis.focus_areas.map((area, i) => (
-                        <span key={i} className="text-[10px] px-2 py-0.5 rounded-full bg-[#8B5CF6]/15 text-[#C4B5FD]">
+                        <span key={i} className="text-xs px-2 py-0.5 rounded-full bg-primary/15 text-primary-lighter">
                           {area}
                         </span>
                       ))}
@@ -606,10 +606,10 @@ export function ProfileView({
                   </div>
                 )}
                 {bodyAnalysis.realistic_timeline && (
-                  <p className="text-[10px] text-green-300/80">🎯 {bodyAnalysis.realistic_timeline}</p>
+                  <p className="text-xs text-green-300/80">🎯 {bodyAnalysis.realistic_timeline}</p>
                 )}
                 {bodyAnalysis.overall_assessment && (
-                  <p className="text-[10px] text-[#8B8DA3] mt-1 leading-relaxed">{bodyAnalysis.overall_assessment}</p>
+                  <p className="text-xs text-muted mt-1 leading-relaxed">{bodyAnalysis.overall_assessment}</p>
                 )}
               </div>
             )}
@@ -625,7 +625,7 @@ export function ProfileView({
 
         <div className="mt-4 space-y-4">
           <div>
-            <p className="text-xs text-[#8B8DA3] mb-2">Diet type</p>
+            <p className="text-xs text-muted mb-2">Diet type</p>
             <div className="flex flex-wrap gap-2">
               {dietTypeOptions.map((t) => {
                 const selected = (dietType || []).includes(t)
@@ -654,7 +654,7 @@ export function ProfileView({
           </div>
 
           <div>
-            <p className="text-xs text-[#8B8DA3] mb-2">Allergies (optional)</p>
+            <p className="text-xs text-muted mb-2">Allergies (optional)</p>
             <div className="flex flex-wrap gap-2">
               {allergyOptions.map((a) => {
                 const selected = (allergies || []).includes(a)
@@ -679,7 +679,7 @@ export function ProfileView({
           </div>
 
           <div>
-            <p className="text-xs text-[#8B8DA3] mb-2">Meals per day</p>
+            <p className="text-xs text-muted mb-2">Meals per day</p>
             <div className="flex flex-wrap gap-2">
               {[2, 3, 4, 5, 6].map((m) => (
                 <Chip key={m} selected={mealsPerDay === m} onClick={() => onUpdateField('mealsPerDay', m)}>
@@ -696,19 +696,19 @@ export function ProfileView({
               <div className="flex items-center justify-between px-1">
                 <div>
                   <p className="text-sm font-semibold text-white">Advanced nutrition</p>
-                  <p className="text-xs text-[#8B8DA3]">Cuisine, protein powder, strict inclusions</p>
+                  <p className="text-xs text-muted">Cuisine, protein powder, strict inclusions</p>
                 </div>
-                <ChevronRight className="w-5 h-5 text-[#8B5CF6]" />
+                <ChevronRight className="w-5 h-5 text-primary" />
               </div>
             }
           >
             <div className="space-y-3">
               <div>
-                <label className="block text-xs text-[#8B8DA3] mb-2">Cuisine</label>
+                <label className="block text-xs text-muted mb-2">Cuisine</label>
                 <select
                   value={cuisine || 'No Preference'}
                   onChange={(e) => onUpdateField('cuisine', e.target.value)}
-                  className="w-full px-4 py-3 glass-soft rounded-2xl text-white ui-focus-ring border border-[#8B5CF6]/10 bg-transparent"
+                  className="w-full px-4 py-3 glass-soft rounded-2xl text-white ui-focus-ring border border-primary/10 bg-transparent"
                 >
                   {[
                     'No Preference',
@@ -728,7 +728,7 @@ export function ProfileView({
               </div>
 
               <div>
-                <p className="text-xs text-[#8B8DA3] mb-2">Protein powder</p>
+                <p className="text-xs text-muted mb-2">Protein powder</p>
                 <div className="flex gap-2">
                   <Chip selected={proteinPowder === 'Yes'} onClick={() => onUpdateField('proteinPowder', 'Yes')}>
                     Yes
@@ -741,7 +741,7 @@ export function ProfileView({
 
               {proteinPowder === 'Yes' ? (
                 <div>
-                  <label className="block text-xs text-[#8B8DA3] mb-2">Protein from powder (g/day)</label>
+                  <label className="block text-xs text-muted mb-2">Protein from powder (g/day)</label>
                   <input
                     inputMode="numeric"
                     type="number"
@@ -749,29 +749,29 @@ export function ProfileView({
                     onChange={(e) => onUpdateField('proteinPowderAmount', e.target.value === '' ? 0 : Number(e.target.value))}
                     onWheel={(e) => e.currentTarget.blur()}
                     placeholder="e.g. 25"
-                    className="w-full px-4 py-3 glass-soft rounded-2xl text-white ui-focus-ring border border-[#8B5CF6]/10"
+                    className="w-full px-4 py-3 glass-soft rounded-2xl text-white ui-focus-ring border border-primary/10"
                   />
                 </div>
               ) : null}
 
               <div>
-                <label className="block text-xs text-[#8B8DA3] mb-2">Specific inclusions / exclusions</label>
+                <label className="block text-xs text-muted mb-2">Specific inclusions / exclusions</label>
                 <textarea
                   value={specificFoodPreferences || ''}
                   onChange={(e) => onUpdateField('specificFoodPreferences', e.target.value)}
                   rows={3}
                   placeholder="Example: include oats daily, exclude mushrooms; no bell peppers."
-                  className="w-full px-4 py-3 glass-soft rounded-2xl text-white ui-focus-ring border border-[#8B5CF6]/10 placeholder:text-[#8B8DA3]/50 resize-none"
+                  className="w-full px-4 py-3 glass-soft rounded-2xl text-white ui-focus-ring border border-primary/10 placeholder:text-muted/50 resize-none"
                 />
               </div>
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs text-[#8B8DA3] mb-2">Cooking</label>
+                  <label className="block text-xs text-muted mb-2">Cooking</label>
                   <select
                     value={cookingLevel || 'Moderate'}
                     onChange={(e) => onUpdateField('cookingLevel', e.target.value)}
-                    className="w-full px-4 py-3 glass-soft rounded-2xl text-white ui-focus-ring border border-[#8B5CF6]/10 bg-transparent"
+                    className="w-full px-4 py-3 glass-soft rounded-2xl text-white ui-focus-ring border border-primary/10 bg-transparent"
                   >
                     {['Full Prep', 'Moderate', 'Minimal', 'No Cooking'].map((v) => (
                       <option key={v} value={v} className="bg-slate-900">
@@ -781,11 +781,11 @@ export function ProfileView({
                   </select>
                 </div>
                 <div>
-                  <label className="block text-xs text-[#8B8DA3] mb-2">Budget</label>
+                  <label className="block text-xs text-muted mb-2">Budget</label>
                   <select
                     value={budget || 'Standard'}
                     onChange={(e) => onUpdateField('budget', e.target.value)}
-                    className="w-full px-4 py-3 glass-soft rounded-2xl text-white ui-focus-ring border border-[#8B5CF6]/10 bg-transparent"
+                    className="w-full px-4 py-3 glass-soft rounded-2xl text-white ui-focus-ring border border-primary/10 bg-transparent"
                   >
                     {['Budget-Friendly', 'Standard', 'Premium'].map((v) => (
                       <option key={v} value={v} className="bg-slate-900">
@@ -814,7 +814,7 @@ export function ProfileView({
 
       <Link
         href="/onboarding?reset=true"
-        className="w-full py-3 px-4 rounded-2xl bg-[#8B5CF6]/12 hover:bg-[#8B5CF6]/20 text-[#C4B5FD] flex items-center justify-center gap-2 text-sm font-medium transition border border-[#8B5CF6]/20 ui-focus-ring mb-3"
+        className="w-full py-3 px-4 rounded-2xl bg-primary/12 hover:bg-primary/20 text-primary-lighter flex items-center justify-center gap-2 text-sm font-medium transition border border-primary/20 ui-focus-ring mb-3"
       >
         <Settings className="w-4 h-4" />
         Quick Re-setup (Wizard)
