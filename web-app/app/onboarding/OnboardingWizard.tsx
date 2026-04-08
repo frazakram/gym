@@ -194,7 +194,7 @@ export default function OnboardingWizard({ isReset = false }: { isReset?: boolea
         className="flex flex-col items-center mb-6"
       >
         <BrandLogo size={56} className="mb-3" />
-        <h1 className="text-2xl font-bold tracking-tight text-white font-[family-name:var(--font-display)]">
+        <h1 className="text-2xl font-bold tracking-tight text-white font-display">
           {isReset ? 'Re-setup your profile' : "Let's set you up"}
         </h1>
         <p className="text-sm text-muted mt-1">

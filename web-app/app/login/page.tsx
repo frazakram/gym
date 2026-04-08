@@ -112,7 +112,7 @@ export default function LoginPage() {
             <LoginMascot isPasswordFocused={passwordFocused} isLoginFailed={isLoginFailed} />
           </div>
           <div className="mt-4 lg:mt-8 text-center">
-            <h2 className="text-xl lg:text-3xl font-bold text-white mb-1 lg:mb-2 tracking-tight">Join the Movement</h2>
+            <h2 className="text-xl lg:text-3xl font-bold text-white mb-1 lg:mb-2 tracking-tight font-display">Join the Movement</h2>
             <p className="text-sm lg:text-base text-slate-400 max-w-sm mx-auto">
               Your personal AI fitness companion waiting to help you achieve your goals.
             </p>
@@ -133,7 +133,7 @@ export default function LoginPage() {
             <div className="flex justify-center mb-4">
               <BrandLogo size={72} className="rounded-3xl" />
             </div>
-            <h1 className="text-4xl font-semibold tracking-tight bg-gradient-to-r from-purple-400 via-violet-300 to-cyan-300 bg-clip-text text-transparent mb-2">
+            <h1 className="text-4xl font-semibold tracking-tight bg-gradient-to-r from-purple-400 via-violet-300 to-cyan-300 bg-clip-text text-transparent mb-2 font-display">
               Gym Bro
             </h1>
             <p className="text-sm text-slate-300/80">

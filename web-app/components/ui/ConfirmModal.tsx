@@ -100,7 +100,7 @@ export function ConfirmModal({
                                 </div>
                             </div>
 
-                            <h3 className="text-xl font-bold text-white text-center mb-2 tracking-tight font-[family-name:var(--font-display)]">
+                            <h3 className="text-xl font-bold text-white text-center mb-2 tracking-tight font-display">
                                 {title}
                             </h3>
 

@@ -87,7 +87,7 @@ export function StreakBanner({ current, longest, lastWorkoutDate }: StreakBanner
         {/* Streak info */}
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2">
-            <span className={`text-2xl font-bold font-[family-name:var(--font-display)] ${
+            <span className={`text-2xl font-bold font-display ${
               isHot ? 'text-orange-300' : 'text-white'
             }`}>
               {current}

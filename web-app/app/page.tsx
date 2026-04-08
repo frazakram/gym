@@ -25,7 +25,7 @@ export default function LandingPage() {
         className="flex flex-col items-center mb-8"
       >
         <BrandLogo size={72} className="mb-4" />
-        <h1 className="text-3xl font-bold text-white tracking-tight">
+        <h1 className="text-3xl font-bold text-white tracking-tight font-display">
           Gym<span className="text-primary">Bro</span>
         </h1>
         <p className="mt-2 text-sm text-white/50 text-center max-w-[280px]">

@@ -169,7 +169,7 @@ export function ProfileView({
         <div className="flex items-center gap-3">
           <UserAvatar name={name || undefined} username={profile?.username} size={56} />
           <div className="flex-1 min-w-0">
-            <p className="text-[15px] font-semibold tracking-tight text-white truncate font-[family-name:var(--font-display)]">
+            <p className="text-[15px] font-semibold tracking-tight text-white truncate font-display">
               {name || profile?.username || 'Profile'}
             </p>
             <p className="mt-0.5 text-xs text-muted">
