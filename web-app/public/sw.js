@@ -1,7 +1,7 @@
 // Service Worker for Gym Bro PWA
-const CACHE_NAME = 'gymbro-v1';
-const STATIC_CACHE_NAME = 'gymbro-static-v1';
-const API_CACHE_NAME = 'gymbro-api-v1';
+const CACHE_NAME = 'gymbro-v2';
+const STATIC_CACHE_NAME = 'gymbro-static-v2';
+const API_CACHE_NAME = 'gymbro-api-v2';
 
 // Static assets to cache immediately
 const STATIC_ASSETS = [

@@ -125,15 +125,15 @@ export function ImageUploadCard({
         </div>
       )}
 
-      {/* File input — fixed position escapes overflow-hidden parent (Collapsible), zero-size so invisible */}
+      {/* File input — visually hidden but stays in viewport for Android PWA compatibility */}
       <input
         ref={fileInputRef}
         id={fileInputId}
         type="file"
         multiple
-        accept="image/*"
+        accept="image/jpeg,image/png,image/webp,image/heic,image/heif,image/*"
         onChange={handleFileInput}
-        style={{ position: 'fixed', top: '-100px', left: '-100px', width: '1px', height: '1px', opacity: 0 }}
+        style={{ position: 'fixed', top: 0, left: 0, width: '1px', height: '1px', opacity: 0.01, zIndex: -1 }}
         disabled={loading}
         tabIndex={-1}
         aria-hidden="true"
