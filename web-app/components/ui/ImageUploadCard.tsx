@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useRef, useId, DragEvent } from 'react'
+import { useState, useRef, DragEvent } from 'react'
 import type { GymPhoto } from '@/types'
 
 interface ImageUploadCardProps {
@@ -26,7 +26,6 @@ export function ImageUploadCard({
   const [showImages, setShowImages] = useState(false)
   const [dragActive, setDragActive] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
-  const fileInputId = useId() + '-file-input'
 
   const handleDrag = (e: DragEvent) => {
     e.preventDefault()
@@ -97,7 +96,7 @@ export function ImageUploadCard({
   const hasCapacity = images.length + pendingFiles.length < maxImages
 
   return (
-    <div className="space-y-4 relative">
+    <div className="space-y-4">
       {/* Existing Images Control */}
       {images.length > 0 && (
         <div className="flex items-center justify-between bg-white/5 p-3 rounded-xl border border-primary/10">
@@ -125,18 +124,15 @@ export function ImageUploadCard({
         </div>
       )}
 
-      {/* File input — visually hidden but stays in viewport for Android PWA compatibility */}
+      {/* Hidden file input — triggered by button below */}
       <input
         ref={fileInputRef}
-        id={fileInputId}
         type="file"
         multiple
-        accept="image/jpeg,image/png,image/webp,image/heic,image/heif,image/*"
+        accept="image/jpeg,image/png,image/webp,image/heic,image/heif"
         onChange={handleFileInput}
-        style={{ position: 'fixed', top: 0, left: 0, width: '1px', height: '1px', opacity: 0.01, zIndex: -1 }}
+        className="hidden"
         disabled={loading}
-        tabIndex={-1}
-        aria-hidden="true"
       />
 
       {/* Upload Zone */}
@@ -183,17 +179,18 @@ export function ImageUploadCard({
             {images.length + pendingFiles.length}/{maxImages} images • Max {maxSizeMB}MB each
           </p>
 
-          {/* Upload button — uses <label> for native file input trigger (most reliable on mobile) */}
-          <label
-            htmlFor={fileInputId}
-            style={{ touchAction: 'manipulation' }}
-            className={`w-full py-3 rounded-xl bg-primary/15 border border-primary/30 text-sm font-semibold text-primary-light hover:bg-primary/25 active:bg-primary/30 transition-all active:scale-[0.97] flex items-center justify-center gap-2 cursor-pointer select-none relative z-10 ${loading ? 'opacity-50 pointer-events-none' : ''}`}
+          {/* Upload button — standalone, outside drag zone, always tappable */}
+          <button
+            type="button"
+            onClick={openFilePicker}
+            disabled={loading}
+            className="w-full py-3 rounded-xl bg-primary/15 border border-primary/30 text-sm font-semibold text-primary-light hover:bg-primary/25 active:bg-primary/30 transition-all active:scale-[0.97] disabled:opacity-50 flex items-center justify-center gap-2"
           >
             <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
             </svg>
             Choose Photos
-          </label>
+          </button>
         </div>
       ) : (
         <p className="text-xs text-muted text-center py-2">
