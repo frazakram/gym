@@ -55,12 +55,16 @@ export function ImageUploadCard({
   }
 
   const handleFiles = (files: File[]) => {
-    const validTypes = ['image/jpeg', 'image/png', 'image/webp']
+    const validTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/heic', 'image/heif']
     const maxBytes = maxSizeMB * 1024 * 1024
 
     const validFiles = files.filter(file => {
-      if (!validTypes.includes(file.type)) {
-        console.warn(`Invalid file type: ${file.type}`)
+      // On mobile, file.type can be empty or incorrect for camera photos — accept if extension looks right
+      const ext = file.name.toLowerCase().split('.').pop() || ''
+      const validExts = ['jpg', 'jpeg', 'png', 'webp', 'heic', 'heif']
+      const typeOk = validTypes.includes(file.type) || file.type.startsWith('image/') || validExts.includes(ext)
+      if (!typeOk) {
+        console.warn(`Invalid file type: ${file.type} (${file.name})`)
         return false
       }
       if (file.size > maxBytes) {
@@ -136,7 +140,7 @@ export function ImageUploadCard({
             ref={fileInputRef}
             type="file"
             multiple
-            accept="image/*"
+            accept="image/jpeg,image/png,image/webp,image/heic,image/heif"
             onChange={handleFileInput}
             className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
             disabled={loading}
