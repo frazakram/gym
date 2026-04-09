@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useRef, DragEvent } from 'react'
+import { useState, useRef, useId, DragEvent } from 'react'
 import type { GymPhoto } from '@/types'
 
 interface ImageUploadCardProps {
@@ -26,6 +26,7 @@ export function ImageUploadCard({
   const [showImages, setShowImages] = useState(false)
   const [dragActive, setDragActive] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const fileInputId = useId() + '-file-input'
 
   const handleDrag = (e: DragEvent) => {
     e.preventDefault()
@@ -96,7 +97,7 @@ export function ImageUploadCard({
   const hasCapacity = images.length + pendingFiles.length < maxImages
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 relative">
       {/* Existing Images Control */}
       {images.length > 0 && (
         <div className="flex items-center justify-between bg-white/5 p-3 rounded-xl border border-primary/10">
@@ -124,67 +125,75 @@ export function ImageUploadCard({
         </div>
       )}
 
-      {/* Hidden file input — triggered by buttons below */}
+      {/* File input — fixed position escapes overflow-hidden parent (Collapsible), zero-size so invisible */}
       <input
         ref={fileInputRef}
+        id={fileInputId}
         type="file"
         multiple
-        accept="image/jpeg,image/png,image/webp,image/heic,image/heif"
+        accept="image/*"
         onChange={handleFileInput}
-        className="hidden"
+        style={{ position: 'fixed', top: '-100px', left: '-100px', width: '1px', height: '1px', opacity: 0 }}
         disabled={loading}
+        tabIndex={-1}
+        aria-hidden="true"
       />
 
       {/* Upload Zone */}
       {hasCapacity ? (
-        <div
-          className={`border-2 border-dashed rounded-2xl p-6 transition-all ${dragActive
-              ? 'border-primary bg-primary/5'
-              : 'border-primary/20'
-            } ${loading ? 'opacity-50' : ''}`}
-          onDragEnter={handleDrag}
-          onDragLeave={handleDrag}
-          onDragOver={handleDrag}
-          onDrop={handleDrop}
-        >
-          <div className="text-center">
-            <div className="mx-auto w-12 h-12 mb-3 rounded-full bg-white/10 flex items-center justify-center">
-              <svg
-                className="w-6 h-6 text-white/70"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
-                />
-              </svg>
-            </div>
-
-            <p className="text-sm font-medium text-white/90 mb-2">
-              Upload your photos
-            </p>
-            <p className="text-xs text-muted/70 mb-4">
-              {images.length + pendingFiles.length}/{maxImages} images • Max {maxSizeMB}MB each
-            </p>
-
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-2">
-              <button
-                type="button"
-                onClick={openFilePicker}
-                disabled={loading}
-                className="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-primary/15 border border-primary/30 text-sm font-medium text-primary-light hover:bg-primary/25 transition-all active:scale-[0.97] disabled:opacity-50 flex items-center justify-center gap-2"
-              >
-                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+        <div className="space-y-3">
+          {/* Drag-drop area (desktop only) */}
+          <div
+            className={`hidden sm:block border-2 border-dashed rounded-2xl p-6 transition-all ${dragActive
+                ? 'border-primary bg-primary/5'
+                : 'border-primary/20'
+              } ${loading ? 'opacity-50' : ''}`}
+            onDragEnter={handleDrag}
+            onDragLeave={handleDrag}
+            onDragOver={handleDrag}
+            onDrop={handleDrop}
+          >
+            <div className="text-center">
+              <div className="mx-auto w-12 h-12 mb-3 rounded-full bg-white/10 flex items-center justify-center">
+                <svg
+                  className="w-6 h-6 text-white/70"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
+                  />
                 </svg>
-                Choose Photos
-              </button>
+              </div>
+              <p className="text-sm font-medium text-white/90 mb-1">
+                Drop photos here
+              </p>
+              <p className="text-xs text-muted/70">
+                {images.length + pendingFiles.length}/{maxImages} images • Max {maxSizeMB}MB each
+              </p>
             </div>
           </div>
+
+          {/* Mobile info text */}
+          <p className="sm:hidden text-xs text-muted/70 text-center">
+            {images.length + pendingFiles.length}/{maxImages} images • Max {maxSizeMB}MB each
+          </p>
+
+          {/* Upload button — uses <label> for native file input trigger (most reliable on mobile) */}
+          <label
+            htmlFor={fileInputId}
+            style={{ touchAction: 'manipulation' }}
+            className={`w-full py-3 rounded-xl bg-primary/15 border border-primary/30 text-sm font-semibold text-primary-light hover:bg-primary/25 active:bg-primary/30 transition-all active:scale-[0.97] flex items-center justify-center gap-2 cursor-pointer select-none relative z-10 ${loading ? 'opacity-50 pointer-events-none' : ''}`}
+          >
+            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+            </svg>
+            Choose Photos
+          </label>
         </div>
       ) : (
         <p className="text-xs text-muted text-center py-2">
