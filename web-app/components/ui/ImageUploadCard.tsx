@@ -124,28 +124,30 @@ export function ImageUploadCard({
         </div>
       )}
 
+      {/* Hidden file input — triggered by buttons below */}
+      <input
+        ref={fileInputRef}
+        type="file"
+        multiple
+        accept="image/jpeg,image/png,image/webp,image/heic,image/heif"
+        onChange={handleFileInput}
+        className="hidden"
+        disabled={loading}
+      />
+
       {/* Upload Zone */}
       {hasCapacity ? (
         <div
-          className={`relative overflow-hidden border-2 border-dashed rounded-2xl p-6 transition-all cursor-pointer ${dragActive
+          className={`border-2 border-dashed rounded-2xl p-6 transition-all ${dragActive
               ? 'border-primary bg-primary/5'
-              : 'border-primary/20 hover:border-primary/30'
+              : 'border-primary/20'
             } ${loading ? 'opacity-50' : ''}`}
           onDragEnter={handleDrag}
           onDragLeave={handleDrag}
           onDragOver={handleDrag}
           onDrop={handleDrop}
         >
-          <input
-            ref={fileInputRef}
-            type="file"
-            multiple
-            accept="image/jpeg,image/png,image/webp,image/heic,image/heif"
-            onChange={handleFileInput}
-            className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
-            disabled={loading}
-          />
-          <div className="text-center pointer-events-none relative z-0">
+          <div className="text-center">
             <div className="mx-auto w-12 h-12 mb-3 rounded-full bg-white/10 flex items-center justify-center">
               <svg
                 className="w-6 h-6 text-white/70"
@@ -162,12 +164,26 @@ export function ImageUploadCard({
               </svg>
             </div>
 
-            <p className="text-sm font-medium text-white/90 mb-1">
-              Drop photos here or click to browse
+            <p className="text-sm font-medium text-white/90 mb-2">
+              Upload your photos
             </p>
-            <p className="text-xs text-muted/70">
+            <p className="text-xs text-muted/70 mb-4">
               {images.length + pendingFiles.length}/{maxImages} images • Max {maxSizeMB}MB each
             </p>
+
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-2">
+              <button
+                type="button"
+                onClick={openFilePicker}
+                disabled={loading}
+                className="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-primary/15 border border-primary/30 text-sm font-medium text-primary-light hover:bg-primary/25 transition-all active:scale-[0.97] disabled:opacity-50 flex items-center justify-center gap-2"
+              >
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                </svg>
+                Choose Photos
+              </button>
+            </div>
           </div>
         </div>
       ) : (
