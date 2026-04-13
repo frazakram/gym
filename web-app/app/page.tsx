@@ -3,20 +3,14 @@
 import { useRouter } from 'next/navigation'
 import { motion } from 'framer-motion'
 import { BrandLogo } from '@/components/BrandLogo'
-import { Dumbbell, Utensils, BarChart3, Users } from 'lucide-react'
-
-const features = [
-  { icon: Dumbbell, label: 'AI Workout Plans', desc: 'Personalized routines that adapt to you', color: 'var(--primary)' },
-  { icon: Utensils, label: 'Smart Diet Plans', desc: 'Nutrition matched to your training', color: '#6EE7B7' },
-  { icon: BarChart3, label: 'Track Progress', desc: 'Body metrics, streaks & analytics', color: '#FCD34D' },
-  { icon: Users, label: 'Coach Connect', desc: 'Find and book expert coaches', color: 'var(--cyan-light)' },
-]
+import { ThemeToggle } from '@/components/ThemeToggle'
 
 export default function LandingPage() {
   const router = useRouter()
 
   return (
-    <div className="min-h-screen bg-navy-0 flex flex-col items-center justify-center px-5 py-10 overflow-hidden">
+    <div className="relative min-h-screen bg-white dark:bg-navy-0 flex flex-col items-center justify-center px-5 py-16 overflow-hidden">
+      <ThemeToggle />
       {/* Logo + Title */}
       <motion.div
         initial={{ opacity: 0, y: -20 }}
@@ -25,44 +19,46 @@ export default function LandingPage() {
         className="flex flex-col items-center mb-8"
       >
         <BrandLogo size={72} className="mb-4" />
-        <h1 className="text-3xl font-bold text-white tracking-tight font-display">
-          Gym<span className="text-primary">Bro</span>
+        <h1 className="text-3xl font-bold text-gray-900 dark:text-white tracking-tight font-display">
+          Gym<span className="text-[#22c55e]">Bro</span>
         </h1>
-        <p className="mt-2 text-sm text-white/50 text-center max-w-[280px]">
-          Your AI-powered fitness companion for workouts, nutrition & progress tracking
+        <p className="mt-2 text-sm text-gray-500 dark:text-white/50 text-center max-w-[280px]">
+          Build a routine, eat better, and actually stick to it this time
         </p>
       </motion.div>
 
-      {/* Feature Cards */}
+      {/* Screenshot + proof points */}
       <motion.div
-        initial="hidden"
-        animate="visible"
-        variants={{
-          hidden: {},
-          visible: { transition: { staggerChildren: 0.08 } },
-        }}
-        className="w-full max-w-sm grid grid-cols-2 gap-3 mb-10"
+        initial={{ opacity: 0, y: 16 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.2, duration: 0.5 }}
+        className="w-full max-w-2xl grid grid-cols-1 md:grid-cols-2 gap-8 items-center mb-8"
       >
-        {features.map((f) => (
-          <motion.div
-            key={f.label}
-            variants={{
-              hidden: { opacity: 0, y: 16 },
-              visible: { opacity: 1, y: 0 },
-            }}
-            transition={{ duration: 0.4, ease: 'easeOut' }}
-            className="rounded-xl border border-white/[0.06] bg-white/[0.03] p-4 backdrop-blur-sm"
-          >
-            <div
-              className="mb-2 flex h-9 w-9 items-center justify-center rounded-lg"
-              style={{ backgroundColor: `${f.color}15` }}
-            >
-              <f.icon size={18} style={{ color: f.color }} />
-            </div>
-            <h3 className="text-[13px] font-semibold text-white mb-0.5">{f.label}</h3>
-            <p className="text-xs text-white/70 leading-snug">{f.desc}</p>
-          </motion.div>
-        ))}
+        <img
+          src="/dashboard-screenshot.png"
+          alt="GymBro dashboard showing today's workout and nutrition"
+          className="rounded-2xl shadow-2xl w-full order-first md:order-last"
+        />
+        <div className="space-y-8">
+          <div>
+            <h3 className="text-base font-bold text-gray-900 dark:text-white mb-1">Your day, laid out.</h3>
+            <p className="text-sm text-gray-500 dark:text-white/60 leading-relaxed">
+              Today&apos;s workout, estimated time, and meals like Rajma Chawal and Egg Bhurji — planned for you automatically.
+            </p>
+          </div>
+          <div>
+            <h3 className="text-base font-bold text-gray-900 dark:text-white mb-1">Keep your streak.</h3>
+            <p className="text-sm text-gray-500 dark:text-white/60 leading-relaxed">
+              A simple daily streak counter keeps you consistent without nagging notifications.
+            </p>
+          </div>
+          <div>
+            <h3 className="text-base font-bold text-gray-900 dark:text-white mb-1">Starts at ₹1/month.</h3>
+            <p className="text-sm text-gray-500 dark:text-white/60 leading-relaxed">
+              Free to use for workouts and diet plans. Unlock analytics and coach booking for ₹1/month.
+            </p>
+          </div>
+        </div>
       </motion.div>
 
       {/* CTA Buttons */}
@@ -70,19 +66,19 @@ export default function LandingPage() {
         initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.4, duration: 0.4 }}
-        className="w-full max-w-sm flex flex-col gap-3"
+        className="w-full max-w-sm flex flex-col gap-4"
       >
         <button
           onClick={() => router.push('/demo')}
-          className="w-full rounded-xl bg-gradient-to-r from-primary to-[#6D28D9] px-6 py-3.5 text-sm font-semibold text-white shadow-lg shadow-primary/25 hover:shadow-primary/40 transition-all active:scale-[0.98]"
+          className="w-full rounded-xl bg-[#22c55e] px-6 py-3.5 text-sm font-semibold text-white shadow-sm hover:bg-[#16a34a] transition-all active:scale-[0.98]"
         >
-          Explore App →
+          Try it for free
         </button>
         <button
           onClick={() => router.push('/login')}
-          className="w-full rounded-xl border border-white/10 bg-white/[0.03] px-6 py-3.5 text-sm font-medium text-white/70 hover:bg-white/[0.06] hover:text-white/90 transition-all active:scale-[0.98]"
+          className="w-full rounded-xl border border-gray-200 dark:border-white/10 bg-white dark:bg-white/[0.03] px-6 py-3.5 text-sm font-medium text-gray-600 dark:text-white/70 hover:bg-gray-50 dark:hover:bg-white/[0.06] hover:text-gray-900 dark:hover:text-white/90 transition-all active:scale-[0.98]"
         >
-          Login / Sign Up
+          Sign in to your account
         </button>
       </motion.div>
 
@@ -91,9 +87,9 @@ export default function LandingPage() {
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 0.6 }}
-        className="mt-8 text-xs text-white/50"
+        className="mt-8 text-xs text-gray-400 dark:text-white/50"
       >
-        No credit card required · Free to explore
+        No credit card needed · Takes about 2 minutes to set up
       </motion.p>
     </div>
   )

@@ -39,8 +39,11 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="en">
-      <body className={`min-h-screen text-slate-100 ${inter.variable} ${jakarta.variable}`}>
+    <html lang="en" suppressHydrationWarning>
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: `(function(){var t=localStorage.getItem('theme');if(t!=='light'){document.documentElement.classList.add('dark');}})();` }} />
+      </head>
+      <body className={`min-h-screen text-gray-900 dark:text-slate-100 ${inter.variable} ${jakarta.variable}`}>
         <ServiceWorkerRegistration />
         <div className="app-shell">
           <div className="app-bg" />
