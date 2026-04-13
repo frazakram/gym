@@ -49,36 +49,60 @@ export default function LandingPage() {
         </p>
       </motion.div>
 
-      {/* Screenshot + proof points */}
+      {/* How it works */}
       <motion.div
         initial={{ opacity: 0, y: 16 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.2, duration: 0.5 }}
-        className="w-full max-w-2xl grid grid-cols-1 md:grid-cols-2 gap-8 items-center mb-8"
+        className="w-full max-w-xs mb-8"
       >
-        <img
-          src="/dashboard-screenshot.png"
-          alt="GymBro dashboard showing today's workout and nutrition"
-          className="rounded-2xl shadow-2xl w-full order-first md:order-last"
-        />
-        <div className="space-y-8">
-          <div>
-            <h3 className="text-base font-bold text-gray-900 dark:text-white mb-1">Your day, laid out.</h3>
-            <p className="text-sm text-gray-500 dark:text-white/60 leading-relaxed">
-              Today&apos;s workout, estimated time, and meals like Rajma Chawal and Egg Bhurji — planned for you automatically.
-            </p>
+        <div className="relative">
+          {/* Vertical connector line */}
+          <div className="absolute left-[13px] top-7 bottom-7 w-px bg-gray-200 dark:bg-white/10" />
+
+          {/* Step 1 */}
+          <div className="relative flex gap-4 pb-7">
+            <div className="shrink-0 w-7 h-7 rounded-full bg-[#22c55e] flex items-center justify-center z-10">
+              <span className="text-white text-xs font-bold">1</span>
+            </div>
+            <div className="pt-0.5">
+              <p className="text-[15px] font-semibold text-gray-900 dark:text-white leading-snug">Tell us your goal</p>
+              <div className="flex flex-wrap gap-1.5 mt-2">
+                {['Muscle gain', 'Fat loss', 'Maintain'].map(tag => (
+                  <span key={tag} className="text-xs px-2.5 py-1 rounded-full bg-gray-100 dark:bg-white/[0.06] text-gray-500 dark:text-white/50 border border-gray-200 dark:border-white/10">{tag}</span>
+                ))}
+              </div>
+            </div>
           </div>
-          <div>
-            <h3 className="text-base font-bold text-gray-900 dark:text-white mb-1">Keep your streak.</h3>
-            <p className="text-sm text-gray-500 dark:text-white/60 leading-relaxed">
-              A simple daily streak counter keeps you consistent without nagging notifications.
-            </p>
+
+          {/* Step 2 */}
+          <div className="relative flex gap-4 pb-7">
+            <div className="shrink-0 w-7 h-7 rounded-full bg-[#22c55e] flex items-center justify-center z-10">
+              <span className="text-white text-xs font-bold">2</span>
+            </div>
+            <div className="pt-0.5">
+              <p className="text-[15px] font-semibold text-gray-900 dark:text-white leading-snug">Get your week planned</p>
+              <div className="flex flex-wrap gap-1.5 mt-2">
+                {['Workouts', 'Rajma Chawal', 'Egg Bhurji'].map(tag => (
+                  <span key={tag} className="text-xs px-2.5 py-1 rounded-full bg-gray-100 dark:bg-white/[0.06] text-gray-500 dark:text-white/50 border border-gray-200 dark:border-white/10">{tag}</span>
+                ))}
+              </div>
+            </div>
           </div>
-          <div>
-            <h3 className="text-base font-bold text-gray-900 dark:text-white mb-1">Starts at ₹1/month.</h3>
-            <p className="text-sm text-gray-500 dark:text-white/60 leading-relaxed">
-              Free to use for workouts and diet plans. Unlock analytics and coach booking for ₹1/month.
-            </p>
+
+          {/* Step 3 */}
+          <div className="relative flex gap-4">
+            <div className="shrink-0 w-7 h-7 rounded-full bg-[#22c55e] flex items-center justify-center z-10">
+              <span className="text-white text-xs font-bold">3</span>
+            </div>
+            <div className="pt-0.5">
+              <p className="text-[15px] font-semibold text-gray-900 dark:text-white leading-snug">Show up and track it</p>
+              <div className="flex flex-wrap gap-1.5 mt-2">
+                {['Daily streak', 'No notifications'].map(tag => (
+                  <span key={tag} className="text-xs px-2.5 py-1 rounded-full bg-gray-100 dark:bg-white/[0.06] text-gray-500 dark:text-white/50 border border-gray-200 dark:border-white/10">{tag}</span>
+                ))}
+              </div>
+            </div>
           </div>
         </div>
       </motion.div>

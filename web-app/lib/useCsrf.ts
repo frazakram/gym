@@ -123,45 +123,49 @@ export async function csrfFetch(
   options: RequestInit = {}
 ): Promise<Response> {
   const method = (options.method || "GET").toUpperCase();
-  
+
   // Skip CSRF for safe methods
   if (["GET", "HEAD", "OPTIONS"].includes(method)) {
     return fetch(url, options);
   }
 
-  const csrfToken = getCsrfTokenFromCookie();
-  
-  // If no token, try to get one first
-  if (!csrfToken) {
-    try {
-      const res = await fetch("/api/csrf", { credentials: "include" });
-      if (res.ok) {
-        // Token should now be in cookie, retry
-        const newToken = getCsrfTokenFromCookie();
-        if (newToken) {
-          return fetch(url, {
-            ...options,
-            credentials: "include",
-            headers: {
-              ...options.headers,
-              [CSRF_HEADER_NAME]: newToken,
-            },
-          });
-        }
-      }
-    } catch {
-      // Continue without CSRF if we can't get a token
-    }
-  }
-
-  return fetch(url, {
+  const buildRequest = (token: string | null): RequestInit => ({
     ...options,
     credentials: "include",
     headers: {
       ...options.headers,
-      ...(csrfToken ? { [CSRF_HEADER_NAME]: csrfToken } : {}),
+      ...(token ? { [CSRF_HEADER_NAME]: token } : {}),
     },
   });
+
+  const fetchFreshToken = async (): Promise<string | null> => {
+    try {
+      const res = await fetch("/api/csrf", { credentials: "include" });
+      if (res.ok) return getCsrfTokenFromCookie();
+    } catch {
+      // ignore
+    }
+    return null;
+  };
+
+  let token = getCsrfTokenFromCookie();
+
+  // No token at all — fetch one before the first attempt
+  if (!token) {
+    token = await fetchFreshToken();
+  }
+
+  const response = await fetch(url, buildRequest(token));
+
+  // Token was expired or invalid — refresh and retry once
+  if (response.status === 403) {
+    const newToken = await fetchFreshToken();
+    if (newToken && newToken !== token) {
+      return fetch(url, buildRequest(newToken));
+    }
+  }
+
+  return response;
 }
 
 /**
