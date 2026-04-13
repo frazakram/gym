@@ -1,9 +1,119 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 @import "tailwindcss";
 
+@custom-variant dark (&:where(.dark, .dark *));
+
 :root {
-  /* --- Brand tokens: Neon Edge --- */
+  /* --- Light mode defaults --- */
+  --background: #ffffff;
+  --foreground: #111827;
+
+  /* Feature icon accent colors (light mode: all green) */
+  --feature-color-1: #22c55e;
+  --feature-color-2: #22c55e;
+  --feature-color-3: #22c55e;
+  --feature-color-4: #22c55e;
+}
+
+.dark {
+  /* --- Dark mode: restore original Neon Edge scheme --- */
   --background: #0A0A14;
   --foreground: #F1F5F9;
+
+  /* Feature icon accent colors (dark mode: original palette) */
+  --feature-color-1: #8B5CF6;
+  --feature-color-2: #6EE7B7;
+  --feature-color-3: #FCD34D;
+  --feature-color-4: #22D3EE;
+}
+
+/* Show aurora background layers only in dark mode */
+.app-bg,
+.app-atmos {
+  display: none;
+}
+.dark .app-bg,
+.dark .app-atmos {
+  display: block;
+}
+
+/* ─── Light mode overrides ─── */
+html:not(.dark) {
+  background: #f1f5f9;
+
+  /* Remap navy → light grays so bg-navy-* utilities go light */
+  --navy-0: #ffffff;
+  --navy-1: #f9fafb;
+  --navy-2: #f3f4f6;
+  --navy-3: #e5e7eb;
+
+  /* Primary → green */
+  --primary: #22c55e;
+  --primary-light: #4ade80;
+  --primary-dark: #16a34a;
+  --primary-glow: rgba(34, 197, 94, 0.2);
+
+  /* Light glass surfaces */
+  --glass: rgba(255, 255, 255, 0.98);
+  --glass-soft: rgba(249, 250, 251, 0.95);
+  --glass-border: rgba(0, 0, 0, 0.06);
+  --glass-border-strong: rgba(0, 0, 0, 0.10);
+
+  /* Muted text readable on white */
+  --color-muted: #6b7280;
+}
+
+/* Override glass CSS classes in light mode */
+html:not(.dark) .glass {
+  background: rgba(255, 255, 255, 0.98) !important;
+  border: 1px solid rgba(0, 0, 0, 0.08) !important;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06) !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+html:not(.dark) .glass-soft {
+  background: rgba(249, 250, 251, 0.95) !important;
+  border: 1px solid rgba(0, 0, 0, 0.06) !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+html:not(.dark) .glass-menu {
+  background: rgba(255, 255, 255, 0.99) !important;
+  border: 1px solid rgba(0, 0, 0, 0.08) !important;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.12) !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+html:not(.dark) .panel-solid {
+  background: rgba(255, 255, 255, 1) !important;
+  border: 1px solid rgba(0, 0, 0, 0.08) !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06) !important;
+}
+
+/* Fix invisible white/near-white text on light backgrounds */
+html:not(.dark) [class*="text-white"] {
+  color: #111827 !important;
+}
+html:not(.dark) [class*="text-slate-1"],
+html:not(.dark) [class*="text-slate-2"],
+html:not(.dark) [class*="text-slate-3"] {
+  color: #374151 !important;
+}
+
+/* Preserve white text on colored/gradient backgrounds */
+html:not(.dark) [class*="bg-gradient"][class*="text-white"],
+html:not(.dark) [class*="bg-gradient"] [class*="text-white"],
+html:not(.dark) [class*="bg-primary"][class*="text-white"],
+html:not(.dark) [class*="bg-primary"] [class*="text-white"],
+html:not(.dark) [class*="bg-coral"][class*="text-white"],
+html:not(.dark) [class*="bg-coral"] [class*="text-white"],
+html:not(.dark) [class*="bg-\[#22c55e\]"][class*="text-white"],
+html:not(.dark) [class*="bg-\[#22c55e\]"] [class*="text-white"] {
+  color: white !important;
+}
+
+:root {
+  /* --- Brand tokens: Neon Edge (theme-neutral constants) --- */
 
   /* Deep Space base */
   --navy-0: #0A0A14;
@@ -100,13 +210,18 @@
 
 body {
   color: var(--foreground);
-  font-family: var(--font-inter), ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial,
+  font-family: 'Inter', var(--font-inter), ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial,
     "Apple Color Emoji", "Segoe UI Emoji";
   background: transparent;
+  line-height: 1.6;
+}
+
+p {
+  line-height: 1.6;
 }
 
 h1, h2, h3, h4, h5, h6 {
-  font-family: var(--font-display), var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  font-family: var(--font-display), 'Inter', var(--font-inter), ui-sans-serif, system-ui, sans-serif;
 }
 
 html,
