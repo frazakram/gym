@@ -1381,7 +1381,7 @@ export default function DashboardPage() {
               setIsSidebarOpen(true)
               fetchHistory()
             }}
-            className="p-2 glass backdrop-blur rounded-full text-white shadow-lg border border-primary/15 hover:bg-primary/10 transition-colors"
+            className="p-2 glass backdrop-blur rounded-full text-gray-700 dark:text-white shadow-lg border border-primary/15 hover:bg-primary/10 transition-colors"
           >
             <Menu className="w-6 h-6" />
           </button>

@@ -54,7 +54,7 @@ export function BottomNav({ activeView, onViewChange }: BottomNavProps) {
             className="absolute -top-0.5 w-6 h-[3px] rounded-full bg-primary shadow-[0_0_8px_rgba(139,92,246,0.6)]"
             transition={{ type:'spring', stiffness:400, damping:30 }} />
         )}
-        <div className={isActive ? 'text-primary drop-shadow-[0_0_8px_rgba(139,92,246,0.6)]' : 'text-slate-400'}>
+        <div className={isActive ? 'text-primary drop-shadow-[0_0_8px_rgba(139,92,246,0.6)]' : 'text-gray-500 dark:text-slate-400'}>
           <Icon className="w-5 h-5" />
         </div>
         <AnimatePresence>

@@ -496,6 +496,7 @@ export function AnalyticsView({ premiumStatus, onUpgrade }: AnalyticsViewProps) 
   const [openIconKey, setOpenIconKey] = useState<string | null>(null)
   const [calendarMode, setCalendarMode] = useState<'weeks' | 'month'>('weeks')
   const [activeMonth, setActiveMonth] = useState<string | null>(null) // YYYY-MM
+  const [showMoreStats, setShowMoreStats] = useState(false)
 
   useEffect(() => {
     let cancelled = false
@@ -616,7 +617,7 @@ export function AnalyticsView({ premiumStatus, onUpgrade }: AnalyticsViewProps) 
 
   return (
     <div className="pb-24 px-4 py-6">
-      <div className="glass rounded-2xl p-8 border border-primary/10">
+      <div className="glass rounded-2xl p-5 border border-primary/10">
         <div className="flex items-start justify-between gap-4">
           <div>
             <h2 className="text-2xl font-bold text-white mb-2 font-display">Analytics</h2>
@@ -647,41 +648,58 @@ export function AnalyticsView({ premiumStatus, onUpgrade }: AnalyticsViewProps) 
           </div>
         </div>
 
-        <div className="mt-6 grid gap-3">
-          <div className="glass-soft rounded-xl p-4 border border-primary/10">
-            <div className="text-sm font-semibold text-white">{isTrial ? 'Trial' : 'Subscription'}</div>
-            <div className="text-xs text-muted mt-1">
-              Status: {premiumStatus.status ?? 'unknown'}
+        {/* Stats — flat rows, max-w-sm, Show more toggle */}
+        <div className="mt-5 w-full max-w-sm">
+          <div className="divide-y divide-gray-100 dark:divide-gray-800">
+            <div className="flex justify-between items-center py-2">
+              <span className="text-sm text-muted">Current streak</span>
+              <span className="text-sm font-bold text-white">{data ? `${data.streak.current} day` : '—'}</span>
             </div>
-            {isTrial && trialEndsText && (
-              <div className="text-xs text-muted mt-1">
-                Trial ends: {trialEndsText}
-              </div>
-            )}
-            {premiumStatus.current_end && (
-              <div className="text-xs text-muted mt-1">
-                Current period ends: {new Date(premiumStatus.current_end).toLocaleString()}
-              </div>
+            <div className="flex justify-between items-center py-2">
+              <span className="text-sm text-muted">Longest streak</span>
+              <span className="text-sm font-bold text-white">{data ? `${data.streak.longest} day` : '—'}</span>
+            </div>
+            <div className="flex justify-between items-center py-2">
+              <span className="text-sm text-muted">Last workout</span>
+              <span className="text-sm font-bold text-white">
+                {data?.streak?.last_workout_date ? formatDateShort(data.streak.last_workout_date) : '—'}
+              </span>
+            </div>
+            <div className="flex justify-between items-center py-2">
+              <span className="text-sm text-muted">Total workouts</span>
+              <span className="text-sm font-bold text-white">
+                {data ? (data.calendar?.reduce((a, d) => a + (d.workouts || 0), 0) ?? 0) : '—'}
+              </span>
+            </div>
+
+            {showMoreStats && (
+              <>
+                <div className="flex justify-between items-center py-2">
+                  <span className="text-sm text-muted">Subscription</span>
+                  <span className="text-sm font-bold text-white">{premiumStatus.status ?? 'unknown'}</span>
+                </div>
+                {isTrial && trialEndsText && (
+                  <div className="flex justify-between items-center py-2">
+                    <span className="text-sm text-muted">Trial ends</span>
+                    <span className="text-sm font-bold text-white">{trialEndsText}</span>
+                  </div>
+                )}
+                {premiumStatus.current_end && (
+                  <div className="flex justify-between items-center py-2">
+                    <span className="text-sm text-muted">Period ends</span>
+                    <span className="text-sm font-bold text-white">{new Date(premiumStatus.current_end).toLocaleString()}</span>
+                  </div>
+                )}
+              </>
             )}
           </div>
 
-          <div className="glass-soft rounded-xl p-4 border border-primary/10">
-            <div className="flex items-center justify-between gap-4">
-              <div>
-                <div className="text-sm font-semibold text-white">Streaks</div>
-                <div className="text-xs text-muted mt-1">Stay consistent — even small sessions count.</div>
-              </div>
-              <div className="text-right">
-                <div className="text-sm font-bold text-white">{data ? `${data.streak.current} day` : '—'}</div>
-                <div className="text-xs text-muted">Longest: {data ? `${data.streak.longest} day` : '—'}</div>
-              </div>
-            </div>
-            {data?.streak?.last_workout_date && (
-              <div className="text-xs text-muted mt-2">
-                Last workout: {formatDateShort(data.streak.last_workout_date)}
-              </div>
-            )}
-          </div>
+          <button
+            onClick={() => setShowMoreStats((v) => !v)}
+            className="mt-2 text-xs text-muted hover:text-white transition-colors"
+          >
+            {showMoreStats ? 'Show less' : 'Show more'}
+          </button>
         </div>
 
         <div className="mt-6 grid gap-3">

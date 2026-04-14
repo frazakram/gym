@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { X, Archive, ArchiveRestore, Trash2, Loader2, Key, ChevronDown, Eye, EyeOff, Check } from 'lucide-react'
 
@@ -33,6 +33,35 @@ interface SidebarProps {
   onDeleteRoutine: (routineId: number) => void | Promise<void>
   loading: boolean
   aiSettings?: AISettings
+}
+
+function ThemeToggleButton() {
+  const [dark, setDark] = useState(false)
+  useEffect(() => {
+    setDark(document.documentElement.classList.contains('dark'))
+  }, [])
+  const toggle = useCallback(() => {
+    const isDark = document.documentElement.classList.toggle('dark')
+    localStorage.setItem('theme', isDark ? 'dark' : 'light')
+    setDark(isDark)
+  }, [])
+  return (
+    <button
+      onClick={toggle}
+      aria-label="Toggle theme"
+      className="p-1.5 rounded-lg text-gray-500 dark:text-slate-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-white/10 transition-colors"
+    >
+      {dark ? (
+        <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/>
+        </svg>
+      ) : (
+        <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+        </svg>
+      )}
+    </button>
+  )
 }
 
 const OPENAI_MODELS = [
@@ -140,7 +169,7 @@ export function Sidebar({
         }`}
       >
         <div className="flex items-center justify-between gap-2 mb-1">
-          <span className={`font-semibold ${isSelected ? 'text-primary-light' : 'text-slate-200'}`}>
+          <span className={`font-semibold ${isSelected ? 'text-primary-light' : 'text-gray-900 dark:text-slate-200'}`}>
             Week {routine.week_number}
           </span>
           <div className="flex items-center gap-1">
@@ -151,7 +180,7 @@ export function Sidebar({
                 e.stopPropagation()
                 onArchiveRoutine(routine.id, !isArchived)
               }}
-              className="p-1.5 rounded-lg text-slate-300 hover:text-white hover:bg-primary/10 transition"
+              className="p-1.5 rounded-lg text-gray-500 dark:text-slate-300 hover:text-gray-900 dark:hover:text-white hover:bg-primary/10 transition"
               aria-label={isArchived ? 'Unarchive routine' : 'Archive routine'}
               title={isArchived ? 'Unarchive' : 'Archive'}
             >
@@ -164,7 +193,7 @@ export function Sidebar({
                 e.stopPropagation()
                 onDeleteRoutine(routine.id)
               }}
-              className="p-1.5 rounded-lg text-rose-200/80 hover:text-rose-100 hover:bg-rose-500/10 transition"
+              className="p-1.5 rounded-lg text-red-600 dark:text-rose-200/80 hover:text-red-700 dark:hover:text-rose-100 hover:bg-rose-500/10 transition"
               aria-label="Delete routine"
               title="Delete"
             >
@@ -172,7 +201,7 @@ export function Sidebar({
             </button>
           </div>
         </div>
-        <div className="flex items-center justify-between text-xs text-slate-400">
+        <div className="flex items-center justify-between text-xs text-gray-500 dark:text-slate-400">
           <span>{routine.routine_json?.days?.length || 0} Days</span>
           <span>{date}</span>
         </div>
@@ -205,11 +234,11 @@ export function Sidebar({
         <div className="flex flex-col h-full">
           {/* Header */}
           <div className="p-4 border-b border-primary/10 flex items-center justify-between">
-            <h2 className="text-xl font-bold text-white font-display">History</h2>
+            <h2 className="text-xl font-bold text-gray-900 dark:text-white font-display">History</h2>
             <motion.button
               whileTap={{ scale: 0.9 }}
               onClick={onClose}
-              className="p-2 text-slate-400 hover:text-white rounded-lg hover:bg-primary/10 transition-colors"
+              className="p-2 text-gray-500 dark:text-slate-400 hover:text-gray-900 dark:hover:text-white rounded-lg hover:bg-primary/10 transition-colors"
               aria-label="Close sidebar"
             >
               <X className="w-5 h-5" />
@@ -223,7 +252,7 @@ export function Sidebar({
                 <Loader2 className="w-8 h-8 animate-spin text-primary" />
               </div>
             ) : active.length === 0 && archived.length === 0 ? (
-              <p className="text-slate-400 text-sm text-center py-4">No saved routines found.</p>
+              <p className="text-gray-500 dark:text-slate-400 text-sm text-center py-4">No saved routines found.</p>
             ) : (
               <>
                 <div className="text-xs font-semibold text-muted uppercase tracking-wider px-1">Saved weeks</div>
@@ -236,7 +265,7 @@ export function Sidebar({
                     <button
                       type="button"
                       onClick={() => setShowArchived((v) => !v)}
-                      className="w-full flex items-center justify-between px-1 py-2 text-xs font-semibold text-slate-200/80 hover:text-white transition"
+                      className="w-full flex items-center justify-between px-1 py-2 text-xs font-semibold text-gray-600 dark:text-slate-200/80 hover:text-gray-900 dark:hover:text-white transition"
                     >
                       <span>Archived ({archived.length})</span>
                       <span className="text-primary">{showArchived ? 'Hide' : 'Show'}</span>
@@ -269,7 +298,7 @@ export function Sidebar({
               <button
                 type="button"
                 onClick={() => setShowAISettings((v) => !v)}
-                className="w-full flex items-center justify-between px-4 py-3 text-sm font-semibold text-white hover:bg-white/5 transition-colors"
+                className="w-full flex items-center justify-between px-4 py-3 text-sm font-semibold text-gray-900 dark:text-white hover:bg-gray-50 dark:hover:bg-white/5 transition-colors"
               >
                 <div className="flex items-center gap-2">
                   <Key className="w-4 h-4 text-primary" />
@@ -278,7 +307,7 @@ export function Sidebar({
                     <span className="w-2 h-2 rounded-full bg-emerald-400" title="API key configured" />
                   )}
                 </div>
-                <ChevronDown className={`w-4 h-4 text-slate-400 transition-transform ${showAISettings ? 'rotate-180' : ''}`} />
+                <ChevronDown className={`w-4 h-4 text-gray-500 dark:text-slate-400 transition-transform ${showAISettings ? 'rotate-180' : ''}`} />
               </button>
 
               <AnimatePresence>
@@ -308,7 +337,7 @@ export function Sidebar({
                               className={`flex-1 px-3 py-2 rounded-lg text-xs font-semibold border transition-all ${
                                 aiSettings.modelProvider === p
                                   ? 'bg-primary/15 border-primary/40 text-primary-lighter'
-                                  : 'bg-white/5 border-white/10 text-slate-300 hover:bg-white/10'
+                                  : 'bg-white/5 border-white/10 text-gray-600 dark:text-slate-300 hover:bg-white/10'
                               }`}
                             >
                               {p}
@@ -328,12 +357,12 @@ export function Sidebar({
                             value={aiSettings.apiKey}
                             onChange={(e) => aiSettings.onApiKeyChange(e.target.value)}
                             placeholder={aiSettings.modelProvider === 'OpenAI' ? 'sk-proj-...' : 'sk-ant-...'}
-                            className="w-full px-3 py-2 pr-10 rounded-lg bg-white/5 border border-white/10 text-sm text-white placeholder:text-white/20 focus:outline-none focus:border-primary/40 focus:ring-1 focus:ring-primary/20 transition"
+                            className="w-full px-3 py-2 pr-10 rounded-lg bg-white/5 border border-white/10 text-sm text-gray-900 dark:text-white placeholder:text-gray-400 dark:placeholder:text-white/20 focus:outline-none focus:border-primary/40 focus:ring-1 focus:ring-primary/20 transition"
                           />
                           <button
                             type="button"
                             onClick={() => setShowKey((v) => !v)}
-                            className="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-slate-400 hover:text-white transition"
+                            className="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-gray-500 dark:text-slate-400 hover:text-gray-900 dark:hover:text-white transition"
                           >
                             {showKey ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
                           </button>
@@ -348,7 +377,7 @@ export function Sidebar({
                         <select
                           value={aiSettings.model}
                           onChange={(e) => aiSettings.onModelChange(e.target.value)}
-                          className="mt-1.5 w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-sm text-white focus:outline-none focus:border-primary/40 focus:ring-1 focus:ring-primary/20 transition appearance-none"
+                          className="mt-1.5 w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-sm text-gray-900 dark:text-white focus:outline-none focus:border-primary/40 focus:ring-1 focus:ring-primary/20 transition appearance-none"
                         >
                           {models.map((m) => (
                             <option key={m.id} value={m.id} className="bg-navy-0 text-white">
@@ -378,7 +407,7 @@ export function Sidebar({
                         )}
                       </button>
 
-                      <p className="text-xs text-white/60 leading-snug">
+                      <p className="text-xs text-gray-500 dark:text-white/60 leading-snug">
                         Your key is stored locally in your browser. It&apos;s sent directly to the AI provider and never stored on our servers.
                       </p>
                     </div>
@@ -389,10 +418,9 @@ export function Sidebar({
           )}
 
           {/* Footer */}
-          <div className="p-4 border-t border-primary/10">
-            <p className="text-xs text-slate-500 text-center">
-              GymBro AI v1.0
-            </p>
+          <div className="p-4 border-t border-primary/10 flex items-center justify-between">
+            <p className="text-xs text-slate-500">GymBro AI v1.0</p>
+            <ThemeToggleButton />
           </div>
         </div>
       </motion.div>

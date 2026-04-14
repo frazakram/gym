@@ -3,7 +3,7 @@
 
 import React, { useMemo, useState } from 'react'
 import { WeeklyDiet } from '@/types'
-import { ChevronDown, Flame, Salad, Utensils } from 'lucide-react'
+import { ChevronDown, Salad } from 'lucide-react'
 import { GlassCard } from '@/components/ui/GlassCard'
 import { SectionHeader } from '@/components/ui/SectionHeader'
 import { Collapsible } from '@/components/ui/Collapsible'
@@ -29,7 +29,7 @@ export const DietDisplay: React.FC<DietDisplayProps> = ({ diet }) => {
   if (!diet) return null
 
   return (
-    <GlassCard className="w-full p-4">
+    <GlassCard className="w-full p-4 dark:bg-gray-900 dark:text-white">
       <SectionHeader
         title="Weekly meal plan"
         subtitle="Tap a day to expand meals and macros"
@@ -41,28 +41,9 @@ export const DietDisplay: React.FC<DietDisplayProps> = ({ diet }) => {
       />
 
       {/* Summary */}
-      <div className="mt-4 grid grid-cols-2 gap-3">
-        <div className="glass-soft rounded-2xl border border-primary/10 p-3">
-          <div className="flex items-center justify-between">
-            <p className="text-xs text-muted">Avg calories/day</p>
-            <Flame className="w-4 h-4 text-orange-300/90" />
-          </div>
-          <p className="mt-1 text-[20px] font-semibold tracking-tight text-white">
-            {summary.avgCalories}
-            <span className="ml-1 text-xs text-muted">kcal</span>
-          </p>
-        </div>
-        <div className="glass-soft rounded-2xl border border-emerald-400/20 p-3 bg-emerald-400/6">
-          <div className="flex items-center justify-between">
-            <p className="text-xs text-muted">Avg protein/day</p>
-            <Utensils className="w-4 h-4 text-emerald-200/90" />
-          </div>
-          <p className="mt-1 text-[20px] font-semibold tracking-tight text-white">
-            {summary.avgProtein}
-            <span className="ml-1 text-xs text-muted">g</span>
-          </p>
-        </div>
-      </div>
+      <p className="mt-3 text-sm font-bold text-gray-900 dark:text-white">
+        {summary.avgCalories} kcal · {summary.avgProtein}g protein
+      </p>
 
       {/* Days accordion */}
       <div className="mt-4 space-y-2">
@@ -117,39 +98,11 @@ export const DietDisplay: React.FC<DietDisplayProps> = ({ diet }) => {
                   </div>
                 }
               >
-                <div className="space-y-2">
+                <div className="divide-y divide-gray-100 dark:divide-gray-800">
                   {day.meals.map((meal, j) => (
-                    <div
-                      key={j}
-                      className="rounded-2xl border border-primary/10 bg-white/5 px-3.5 py-3"
-                    >
-                      <div className="flex items-start justify-between gap-3">
-                        <div className="min-w-0">
-                          <p className="text-sm font-medium text-white/90 truncate">{meal.name}</p>
-                          <p className="mt-0.5 text-xs text-muted">
-                            {meal.calories} kcal
-                          </p>
-                        </div>
-                        <div className="shrink-0 text-right text-xs text-slate-200/80">
-                          <div className="flex items-center justify-end gap-2">
-                            <span className="inline-flex items-center gap-1">
-                              <span className="w-1.5 h-1.5 rounded-full bg-emerald-300" />
-                              P {meal.protein}g
-                            </span>
-                            <span className="inline-flex items-center gap-1">
-                              <span className="w-1.5 h-1.5 rounded-full bg-sky-300" />
-                              C {meal.carbs}g
-                            </span>
-                            <span className="inline-flex items-center gap-1">
-                              <span className="w-1.5 h-1.5 rounded-full bg-amber-300" />
-                              F {meal.fats}g
-                            </span>
-                          </div>
-                        </div>
-                      </div>
-                      <p className="mt-2 text-sm text-white/70 leading-relaxed">
-                        {meal.ingredients}
-                      </p>
+                    <div key={j} className="flex items-center justify-between py-3">
+                      <p className="text-sm text-gray-900 dark:text-white">{meal.name}</p>
+                      <p className="text-sm text-gray-400">{meal.calories} kcal</p>
                     </div>
                   ))}
                 </div>

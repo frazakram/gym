@@ -6,16 +6,8 @@ When I say "new feature", always:
 3. Check Known Bugs before starting
 4. Use csrfFetch never plain fetch
 ## Workflow Preferences
-- After making code changes, DO NOT run build verification, npm run build, or npm run lint
-- DO NOT run tests unless explicitly asked
-- DO NOT run npm run dev to verify
-- Make the changes and STOP — I will verify myself
-
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
-
-## Project Overview
-
-GymBro AI — an AI-powered fitness platform with personalized workout routines, diet plans, coach booking, body/gym photo analysis, and subscription billing. The production app lives in `web-app/`; the root-level Python files (`app.py`, `agent.py`, `database.py`) are a legacy Streamlit prototype.
+- After making code changes, DO NOT run build verification, npm run build, or npm run l
+thon files (`app.py`, `agent.py`, `database.py`) are a legacy Streamlit prototype.
 
 ## Commands
 
