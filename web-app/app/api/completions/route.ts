@@ -10,7 +10,7 @@ export async function POST(req: NextRequest) {
   try {
     const session = await getSession();
     if (!session) {
-      return withCors(NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return withCors(NextResponse.json({ error: 'Unauthorized' }, { status: 401 }));
     }
 
     // CSRF validation for state-changing request
@@ -27,7 +27,7 @@ export async function POST(req: NextRequest) {
       return withCors(NextResponse.json(
         { error: parsed.error },
         { status: 400 }
-      );
+      ));
     }
 
     const { routineId, dayIndex, exerciseIndex, completed } = parsed.data;
@@ -44,19 +44,19 @@ export async function POST(req: NextRequest) {
       return withCors(NextResponse.json(
         { error: 'Failed to update completion status (Access Denied or Error)' },
         { status: 403 } // 403 Forbidden is more appropriate if it was an ownership issue
-      );
+      ));
     }
 
     // Invalidate derived analytics cache for ALL `days=` values (best-effort).
     await redisIncr(`analytics_ver:${session.userId}`);
 
-    return withCors(NextResponse.json({ success: true });
+    return withCors(NextResponse.json({ success: true }));
   } catch (error) {
     console.error('Error toggling exercise completion:', error);
     return withCors(NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }
-    );
+    ));
   }
 }
 
@@ -64,7 +64,7 @@ export async function GET(req: NextRequest) {
   try {
     const session = await getSession();
     if (!session) {
-      return withCors(NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return withCors(NextResponse.json({ error: 'Unauthorized' }, { status: 401 }));
     }
 
     await initializeDatabase();
@@ -76,16 +76,16 @@ export async function GET(req: NextRequest) {
       return withCors(NextResponse.json(
         { error: 'routineId is required' },
         { status: 400 }
-      );
+      ));
     }
 
     const completions = await getCompletionStats(session.userId, Number(routineId));
-    return withCors(NextResponse.json({ completions });
+    return withCors(NextResponse.json({ completions }));
   } catch (error) {
     console.error('Error fetching completions:', error);
     return withCors(NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }
-    );
+    ));
   }
 }

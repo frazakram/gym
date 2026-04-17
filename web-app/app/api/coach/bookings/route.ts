@@ -7,7 +7,7 @@ export const runtime = "nodejs";
 
 export async function GET(req: NextRequest) {
   const session = await getSession();
-  if (!session) return withCors(NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  if (!session) return withCors(NextResponse.json({ error: "Unauthorized" }, { status: 401 }));
 
   const { searchParams } = new URL(req.url);
   const limit = Math.max(1, Math.min(50, Number(searchParams.get("limit") ?? 10) || 10));
@@ -23,5 +23,5 @@ export async function GET(req: NextRequest) {
       })),
     },
     { status: 200 }
-  );
+  ));
 }

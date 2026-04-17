@@ -41,7 +41,7 @@ export async function POST(request: NextRequest) {
     const session = await getSession();
 
     if (!session) {
-      return withCors(NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return withCors(NextResponse.json({ error: 'Unauthorized' }, { status: 401 }));
     }
 
     const { images, api_key } = await request.json();
@@ -50,14 +50,14 @@ export async function POST(request: NextRequest) {
       return withCors(NextResponse.json(
         { error: 'No images provided' },
         { status: 400 }
-      );
+      ));
     }
 
     if (images.length > 6) {
       return withCors(NextResponse.json(
         { error: 'Maximum 6 images allowed' },
         { status: 400 }
-      );
+      ));
     }
 
     // Get OpenAI API key (prefer client key from AI Settings)
@@ -66,7 +66,7 @@ export async function POST(request: NextRequest) {
       return withCors(NextResponse.json(
         { error: 'OpenAI API key not configured. Add it in AI Settings (sidebar menu).' },
         { status: 500 }
-      );
+      ));
     }
 
     // Build vision API request
@@ -111,7 +111,7 @@ export async function POST(request: NextRequest) {
       return withCors(NextResponse.json(
         { error: 'Failed to analyze images' },
         { status: response.status }
-      );
+      ));
     }
 
     const data = await response.json();
@@ -121,7 +121,7 @@ export async function POST(request: NextRequest) {
       return withCors(NextResponse.json(
         { error: 'No analysis returned from AI' },
         { status: 500 }
-      );
+      ));
     }
 
     // Parse the JSON response
@@ -142,15 +142,15 @@ export async function POST(request: NextRequest) {
       return withCors(NextResponse.json(
         { error: 'Invalid analysis format' },
         { status: 500 }
-      );
+      ));
     }
 
-    return withCors(NextResponse.json({ analysis }, { status: 200 });
+    return withCors(NextResponse.json({ analysis }, { status: 200 }));
   } catch (error) {
     console.error('Error analyzing gym equipment:', error);
     return withCors(NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }
-    );
+    ));
   }
 }

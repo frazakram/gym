@@ -23,7 +23,7 @@ export async function POST(request: NextRequest) {
     const session = await getSession();
 
     if (!session) {
-      return withCors(NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return withCors(NextResponse.json({ error: 'Unauthorized' }, { status: 401 }));
     }
 
     // CSRF validation for state-changing request
@@ -51,7 +51,7 @@ export async function POST(request: NextRequest) {
               'X-RateLimit-Remaining': String(burst.remaining),
             },
           }
-        );
+        ));
       }
 
       const rl = await rateLimit({
@@ -70,7 +70,7 @@ export async function POST(request: NextRequest) {
               'X-RateLimit-Remaining': String(rl.remaining),
             },
           }
-        );
+        ));
       }
     }
 
@@ -82,7 +82,7 @@ export async function POST(request: NextRequest) {
       return withCors(NextResponse.json(
         { error: parsed.error },
         { status: 400 }
-      );
+      ));
     }
 
     const body = parsed.data;
@@ -125,7 +125,7 @@ export async function POST(request: NextRequest) {
       return withCors(NextResponse.json(
         { error: `${provider} API key is required (enter it in the UI, or set it in server env)` },
         { status: 400 }
-      );
+      ));
     }
 
     const ftInToCm = (ft: number, inches: number) => ft * 30.48 + inches * 2.54;
@@ -259,7 +259,7 @@ export async function POST(request: NextRequest) {
               week_number: existing.week_number,
               week_start_date: existing.week_start_date ?? null,
               routine_id: existing.id
-            });
+            }));
           } else {
             // Profile changed significantly, log and continue to generate new routine
             console.log(`Profile changed significantly for user ${session.userId}, regenerating routine for week ${body.week_number}`);
@@ -301,7 +301,7 @@ export async function POST(request: NextRequest) {
           routine: cached.data,
           source: 'cache',
           week_number: typeof body.week_number === 'number' ? body.week_number : null,
-        });
+        }));
       }
     }
 
@@ -315,7 +315,7 @@ export async function POST(request: NextRequest) {
       return withCors(NextResponse.json(
         { error: 'Failed to generate routine. Check your API key and provider.' },
         { status: 500 }
-      );
+      ));
     }
 
     // ========== CACHE THE GENERATED ROUTINE ==========
@@ -335,7 +335,7 @@ export async function POST(request: NextRequest) {
         week_number: typeof body.week_number === 'number' ? body.week_number : null,
       },
       { status: 200 }
-    );
+    ));
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : String(error);
     const cause = error instanceof Error && error.cause ? String(error.cause) : '';
@@ -343,6 +343,6 @@ export async function POST(request: NextRequest) {
     return withCors(NextResponse.json(
       { error: cause ? `${message} (${cause})` : (message || 'Internal server error') },
       { status: 500 }
-    );
+    ));
   }
 }

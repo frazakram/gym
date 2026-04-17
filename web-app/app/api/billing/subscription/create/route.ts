@@ -16,13 +16,13 @@ function requireEnv(name: string): string {
 export async function POST(req: NextRequest) {
   try {
     const session = await getSession();
-    if (!session) return withCors(NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    if (!session) return withCors(NextResponse.json({ error: "Unauthorized" }, { status: 401 }));
 
     await initializeDatabase();
 
     const current = await getPremiumStatus(session.userId);
     if (current.premium) {
-      return withCors(NextResponse.json({ error: "You already have an active subscription." }, { status: 409 });
+      return withCors(NextResponse.json({ error: "You already have an active subscription." }, { status: 409 }));
     }
 
     const keyId = process.env.RAZORPAY_KEY_ID;
@@ -73,11 +73,11 @@ export async function POST(req: NextRequest) {
         status: subscription.status,
       },
       { status: 200 }
-    );
+    ));
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : String(error);
     console.error("Create subscription error:", message);
     
-    return withCors(NextResponse.json({ error: message || "Internal server error" }, { status: 500 });
+    return withCors(NextResponse.json({ error: message || "Internal server error" }, { status: 500 }));
   }
 }

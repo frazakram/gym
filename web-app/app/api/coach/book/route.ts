@@ -19,7 +19,7 @@ export const runtime = "nodejs";
 export async function POST(req: NextRequest) {
   try {
     const session = await getSession();
-    if (!session) return withCors(NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    if (!session) return withCors(NextResponse.json({ error: "Unauthorized" }, { status: 401 }));
 
     // CSRF validation for state-changing request
     const csrfError = await requireCsrf(req, session.userId);
@@ -28,7 +28,7 @@ export async function POST(req: NextRequest) {
     await initializeDatabase();
     const premium = await getPremiumStatus(session.userId);
     if (!premium.access) {
-      return withCors(NextResponse.json({ error: "Personal Coach is a premium feature." }, { status: 403 });
+      return withCors(NextResponse.json({ error: "Personal Coach is a premium feature." }, { status: 403 }));
     }
 
     // Enforce: user can have only ONE active booking at a time (pending/confirmed)
@@ -47,7 +47,7 @@ export async function POST(req: NextRequest) {
             },
           },
           { status: 409 }
-        );
+        ));
       }
     }
 
@@ -69,7 +69,7 @@ export async function POST(req: NextRequest) {
               "X-RateLimit-Remaining": String(burst.remaining),
             },
           }
-        );
+        ));
       }
 
       const dayKey = new Date().toISOString().slice(0, 10); // YYYY-MM-DD UTC
@@ -89,7 +89,7 @@ export async function POST(req: NextRequest) {
               "X-RateLimit-Remaining": String(rl.remaining),
             },
           }
-        );
+        ));
       }
     }
 
@@ -101,7 +101,7 @@ export async function POST(req: NextRequest) {
       return withCors(NextResponse.json(
         { error: parsed.error },
         { status: 400 }
-      );
+      ));
     }
 
     const body = parsed.data;
@@ -122,7 +122,7 @@ export async function POST(req: NextRequest) {
       return withCors(NextResponse.json(
         { error: "Selected coach is missing contact info. Ask the coach to update their profile." },
         { status: 409 }
-      );
+      ));
     }
 
     const booking = await createCoachBooking({
@@ -210,10 +210,10 @@ export async function POST(req: NextRequest) {
         coach,
       },
       { status: 200 }
-    );
+    ));
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : String(error);
-    return withCors(NextResponse.json({ error: message || "Internal server error" }, { status: 500 });
+    return withCors(NextResponse.json({ error: message || "Internal server error" }, { status: 500 }));
   }
 }
 

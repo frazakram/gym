@@ -14,7 +14,7 @@ const RoutineArchiveSchema = z.object({
 
 export async function PATCH(req: NextRequest, ctx: { params: Promise<{ id: string }> }) {
   const session = await getSession();
-  if (!session) return withCors(NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  if (!session) return withCors(NextResponse.json({ error: "Unauthorized" }, { status: 401 }));
 
   // CSRF validation for state-changing request
   const csrfError = await requireCsrf(req, session.userId);
@@ -22,27 +22,27 @@ export async function PATCH(req: NextRequest, ctx: { params: Promise<{ id: strin
 
   const { id } = await ctx.params;
   const paramsParsed = safeParseWithError(RoutineIdParamSchema, { id });
-  if (!paramsParsed.success) return withCors(NextResponse.json({ error: paramsParsed.error }, { status: 400 });
+  if (!paramsParsed.success) return withCors(NextResponse.json({ error: paramsParsed.error }, { status: 400 }));
 
   const routineId = paramsParsed.data.id;
 
   // Validate body
   const rawBody = await req.json().catch(() => ({}));
   const bodyParsed = safeParseWithError(RoutineArchiveSchema, rawBody);
-  if (!bodyParsed.success) return withCors(NextResponse.json({ error: bodyParsed.error }, { status: 400 });
+  if (!bodyParsed.success) return withCors(NextResponse.json({ error: bodyParsed.error }, { status: 400 }));
 
   const { archived } = bodyParsed.data;
 
   await initializeDatabase();
   const ok = await setRoutineArchived(session.userId, routineId, archived);
-  if (!ok) return withCors(NextResponse.json({ error: "Not found" }, { status: 404 });
+  if (!ok) return withCors(NextResponse.json({ error: "Not found" }, { status: 404 }));
 
-  return withCors(NextResponse.json({ success: true }, { status: 200 });
+  return withCors(NextResponse.json({ success: true }, { status: 200 }));
 }
 
 export async function DELETE(req: NextRequest, ctx: { params: Promise<{ id: string }> }) {
   const session = await getSession();
-  if (!session) return withCors(NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  if (!session) return withCors(NextResponse.json({ error: "Unauthorized" }, { status: 401 }));
 
   // CSRF validation for state-changing request
   const csrfError = await requireCsrf(req, session.userId);
@@ -50,13 +50,13 @@ export async function DELETE(req: NextRequest, ctx: { params: Promise<{ id: stri
 
   const { id } = await ctx.params;
   const paramsParsed = safeParseWithError(RoutineIdParamSchema, { id });
-  if (!paramsParsed.success) return withCors(NextResponse.json({ error: paramsParsed.error }, { status: 400 });
+  if (!paramsParsed.success) return withCors(NextResponse.json({ error: paramsParsed.error }, { status: 400 }));
 
   const routineId = paramsParsed.data.id;
 
   await initializeDatabase();
   const ok = await deleteRoutineById(session.userId, routineId);
-  if (!ok) return withCors(NextResponse.json({ error: "Not found" }, { status: 404 });
+  if (!ok) return withCors(NextResponse.json({ error: "Not found" }, { status: 404 }));
 
-  return withCors(NextResponse.json({ success: true }, { status: 200 });
+  return withCors(NextResponse.json({ success: true }, { status: 200 }));
 }

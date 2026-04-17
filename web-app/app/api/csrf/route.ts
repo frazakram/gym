@@ -41,6 +41,6 @@ export async function GET(request: NextRequest) {
     return withCors(NextResponse.json(
       { error: "Failed to generate CSRF token" },
       { status: 500 }
-    );
+    ));
   }
 }

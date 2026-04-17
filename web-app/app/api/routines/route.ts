@@ -9,7 +9,7 @@ export async function POST(req: NextRequest) {
   try {
     const session = await getSession();
     if (!session) {
-      return withCors(NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return withCors(NextResponse.json({ error: 'Unauthorized' }, { status: 401 }));
     }
 
     // CSRF validation for state-changing request
@@ -26,7 +26,7 @@ export async function POST(req: NextRequest) {
       return withCors(NextResponse.json(
         { error: parsed.error },
         { status: 400 }
-      );
+      ));
     }
 
     const { weekNumber, routine, weekStartDate } = parsed.data;
@@ -48,16 +48,16 @@ export async function POST(req: NextRequest) {
       return withCors(NextResponse.json(
         { error: 'Failed to save routine' },
         { status: 500 }
-      );
+      ));
     }
 
-    return withCors(NextResponse.json({ success: true, routineId });
+    return withCors(NextResponse.json({ success: true, routineId }));
   } catch (error) {
     console.error('Error saving routine:', error);
     return withCors(NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }
-    );
+    ));
   }
 }
 
@@ -65,7 +65,7 @@ export async function GET(req: NextRequest) {
   try {
     const session = await getSession();
     if (!session) {
-      return withCors(NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return withCors(NextResponse.json({ error: 'Unauthorized' }, { status: 401 }));
     }
 
     await initializeDatabase();
@@ -78,16 +78,16 @@ export async function GET(req: NextRequest) {
     // Use session userId instead of accepting it from query params
     if (getAll) {
       const routines = await getRoutinesByUser(session.userId, { includeArchived, archivedOnly });
-      return withCors(NextResponse.json({ routines });
+      return withCors(NextResponse.json({ routines }));
     } else {
       const routine = await getLatestRoutine(session.userId);
-      return withCors(NextResponse.json({ routine });
+      return withCors(NextResponse.json({ routine }));
     }
   } catch (error) {
     console.error('Error fetching routine:', error);
     return withCors(NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }
-    );
+    ));
   }
 }

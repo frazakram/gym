@@ -8,7 +8,7 @@ export async function DELETE(request: NextRequest) {
         const session = await getSession();
 
         if (!session) {
-            return withCors(NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+            return withCors(NextResponse.json({ error: 'Unauthorized' }, { status: 401 }));
         }
 
         await initializeDatabase();
@@ -17,7 +17,7 @@ export async function DELETE(request: NextRequest) {
         return withCors(NextResponse.json({
             success: true,
             message: 'All routine data has been reset successfully'
-        }, { status: 200 });
+        }, { status: 200 }));
 
     } catch (error: unknown) {
         const message = error instanceof Error ? error.message : String(error);
@@ -26,6 +26,6 @@ export async function DELETE(request: NextRequest) {
         return withCors(NextResponse.json(
             { error: 'Failed to reset routine data' },
             { status: 500 }
-        );
+        ));
     }
 }

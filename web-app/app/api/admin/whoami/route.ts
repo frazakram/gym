@@ -7,8 +7,8 @@ export const runtime = "nodejs";
 
 export async function GET() {
   const session = await getSession();
-  if (!session) return withCors(NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  if (!session) return withCors(NextResponse.json({ error: "Unauthorized" }, { status: 401 }));
 
   const isAdmin = await isAdminUser(session.userId);
-  return withCors(NextResponse.json({ isAdmin }, { status: 200 });
+  return withCors(NextResponse.json({ isAdmin }, { status: 200 }));
 }

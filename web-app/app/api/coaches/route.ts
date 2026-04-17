@@ -10,5 +10,5 @@ export async function GET(req: NextRequest) {
 
   await initializeDatabase();
   const coaches = await listApprovedCoachesPublic(limit);
-  return withCors(NextResponse.json({ coaches }, { status: 200 });
+  return withCors(NextResponse.json({ coaches }, { status: 200 }));
 }

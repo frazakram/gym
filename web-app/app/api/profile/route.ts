@@ -10,7 +10,7 @@ export async function GET() {
     const session = await getSession();
 
     if (!session) {
-      return withCors(NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return withCors(NextResponse.json({ error: 'Unauthorized' }, { status: 401 }));
     }
 
     await initializeDatabase();
@@ -24,13 +24,13 @@ export async function GET() {
     return withCors(NextResponse.json({
       profile,
       username: user?.username || `User ${session.userId}`
-    }, { status: 200 });
+    }, { status: 200 }));
   } catch (error) {
     console.error('Error fetching profile:', error);
     return withCors(NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }
-    );
+    ));
   }
 }
 
@@ -39,7 +39,7 @@ export async function PUT(request: NextRequest) {
     const session = await getSession();
 
     if (!session) {
-      return withCors(NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return withCors(NextResponse.json({ error: 'Unauthorized' }, { status: 401 }));
     }
 
     // CSRF validation for state-changing request
@@ -56,7 +56,7 @@ export async function PUT(request: NextRequest) {
       return withCors(NextResponse.json(
         { error: parsed.error },
         { status: 400 }
-      );
+      ));
     }
 
     const data = parsed.data;
@@ -94,12 +94,12 @@ export async function PUT(request: NextRequest) {
       nullToUndefined(data.body_composition_analysis)
     );
 
-    return withCors(NextResponse.json({ profile }, { status: 200 });
+    return withCors(NextResponse.json({ profile }, { status: 200 }));
   } catch (error) {
     console.error('Error saving profile:', error);
     return withCors(NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }
-    );
+    ));
   }
 }

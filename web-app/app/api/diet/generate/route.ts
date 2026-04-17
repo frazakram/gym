@@ -20,7 +20,7 @@ export async function POST(request: NextRequest) {
   try {
     const session = await getSession();
     if (!session) {
-      return withCors(NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return withCors(NextResponse.json({ error: 'Unauthorized' }, { status: 401 }));
     }
 
     // CSRF validation for state-changing request
@@ -47,7 +47,7 @@ export async function POST(request: NextRequest) {
               'X-RateLimit-Remaining': String(burst.remaining),
             },
           }
-        );
+        ));
       }
 
       const rl = await rateLimit({
@@ -66,7 +66,7 @@ export async function POST(request: NextRequest) {
               'X-RateLimit-Remaining': String(rl.remaining),
             },
           }
-        );
+        ));
       }
     }
 
@@ -78,7 +78,7 @@ export async function POST(request: NextRequest) {
       return withCors(NextResponse.json(
         { error: parsed.error },
         { status: 400 }
-      );
+      ));
     }
 
     const { routine, model_provider, apiKey, api_key, model: clientModel } = parsed.data;
@@ -87,7 +87,7 @@ export async function POST(request: NextRequest) {
     // Fetch user profile from DB to get latest preferences
     const profile = await getProfile(session.userId);
     if (!profile) {
-      return withCors(NextResponse.json({ error: 'Profile not found' }, { status: 404 });
+      return withCors(NextResponse.json({ error: 'Profile not found' }, { status: 404 }));
     }
 
     // Fetch latest body measurements for weight trend context
@@ -148,7 +148,7 @@ export async function POST(request: NextRequest) {
     const cached = await getCachedAIResponse<any>(cacheKey);
     if (cached.hit) {
       console.log(`[Diet] Cache hit for user ${session.userId}, saving AI cost!`);
-      return withCors(NextResponse.json({ dietPlan: cached.data, source: 'cache' }, { status: 200 });
+      return withCors(NextResponse.json({ dietPlan: cached.data, source: 'cache' }, { status: 200 }));
     }
 
     const dietPlan = await generateDiet({
@@ -161,7 +161,7 @@ export async function POST(request: NextRequest) {
     });
 
     if (!dietPlan) {
-      return withCors(NextResponse.json({ error: 'Failed to generate diet plan' }, { status: 500 });
+      return withCors(NextResponse.json({ error: 'Failed to generate diet plan' }, { status: 500 }));
     }
 
     // ========== CACHE THE GENERATED DIET ==========
@@ -172,10 +172,10 @@ export async function POST(request: NextRequest) {
       console.warn('[Diet] Failed to cache:', cacheErr);
     }
 
-    return withCors(NextResponse.json({ dietPlan, source: 'ai' }, { status: 200 });
+    return withCors(NextResponse.json({ dietPlan, source: 'ai' }, { status: 200 }));
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : String(error);
     console.error('Error generating diet:', message);
-    return withCors(NextResponse.json({ error: message }, { status: 500 });
+    return withCors(NextResponse.json({ error: message }, { status: 500 }));
   }
 }

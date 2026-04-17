@@ -7,14 +7,14 @@ export const runtime = "nodejs";
 
 export async function GET(req: NextRequest) {
   const session = await getSession();
-  if (!session) return withCors(NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  if (!session) return withCors(NextResponse.json({ error: "Unauthorized" }, { status: 401 }));
 
   const { searchParams } = new URL(req.url);
   const limit = Math.max(1, Math.min(100, Number(searchParams.get("limit") ?? 50) || 50));
 
   await initializeDatabase();
   const coachId = await getApprovedCoachIdByUserId(session.userId);
-  if (!coachId) return withCors(NextResponse.json({ error: "Not a coach (or not approved)" }, { status: 403 });
+  if (!coachId) return withCors(NextResponse.json({ error: "Not a coach (or not approved)" }, { status: 403 }));
 
   const bookings = await listAssignedCoachBookings(coachId, limit);
 
@@ -32,5 +32,5 @@ export async function GET(req: NextRequest) {
     created_at: b.created_at.toISOString(),
   }));
 
-  return withCors(NextResponse.json({ bookings: out }, { status: 200 });
+  return withCors(NextResponse.json({ bookings: out }, { status: 200 }));
 }

@@ -28,7 +28,7 @@ export async function POST(request: NextRequest) {
         return withCors(NextResponse.json(
           { error: `Too many login attempts. Try again in ${rl.retryAfterSeconds}s.` },
           { status: 429, headers: { 'Retry-After': String(rl.retryAfterSeconds) } }
-        );
+        ));
       }
     }
 
@@ -40,7 +40,7 @@ export async function POST(request: NextRequest) {
       return withCors(NextResponse.json(
         { error: parsed.error },
         { status: 400 }
-      );
+      ));
     }
 
     const { username, password } = parsed.data;
@@ -54,7 +54,7 @@ export async function POST(request: NextRequest) {
       return withCors(NextResponse.json(
         { error: 'Invalid credentials' },
         { status: 401 }
-      );
+      ));
     }
 
     const token = await createSession(userId);
@@ -92,6 +92,6 @@ export async function POST(request: NextRequest) {
     return withCors(NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }
-    );
+    ));
   }
 }

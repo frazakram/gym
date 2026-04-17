@@ -18,6 +18,6 @@ export async function POST() {
     return withCors(NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }
-    );
+    ));
   }
 }

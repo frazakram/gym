@@ -14,15 +14,15 @@ const QuerySchema = z.object({
 
 export async function GET(req: NextRequest) {
   const session = await getSession();
-  if (!session) return withCors(NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  if (!(await isAdminUser(session.userId))) return withCors(NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  if (!session) return withCors(NextResponse.json({ error: "Unauthorized" }, { status: 401 }));
+  if (!(await isAdminUser(session.userId))) return withCors(NextResponse.json({ error: "Forbidden" }, { status: 403 }));
 
   const { searchParams } = new URL(req.url);
   const parsed = QuerySchema.safeParse({
     status: searchParams.get("status") ?? undefined,
     limit: searchParams.get("limit") ?? undefined,
   });
-  if (!parsed.success) return withCors(NextResponse.json({ error: "Invalid query" }, { status: 400 });
+  if (!parsed.success) return withCors(NextResponse.json({ error: "Invalid query" }, { status: 400 }));
 
   await initializeDatabase();
   const rows = await listCoachApplicationsAdmin({
@@ -30,5 +30,5 @@ export async function GET(req: NextRequest) {
     limit: parsed.data.limit ?? 50,
   });
 
-  return withCors(NextResponse.json({ coaches: rows }, { status: 200 });
+  return withCors(NextResponse.json({ coaches: rows }, { status: 200 }));
 }

@@ -35,7 +35,7 @@ function extractText(out: unknown): string {
 export async function POST(request: NextRequest) {
   try {
     const session = await getSession();
-    if (!session) return withCors(NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    if (!session) return withCors(NextResponse.json({ error: "Unauthorized" }, { status: 401 }));
 
     // CSRF validation for state-changing request
     const csrfError = await requireCsrf(request, session.userId);
@@ -59,7 +59,7 @@ export async function POST(request: NextRequest) {
               "X-RateLimit-Remaining": String(burst.remaining),
             },
           }
-        );
+        ));
       }
 
       const rl = await rateLimit({
@@ -78,7 +78,7 @@ export async function POST(request: NextRequest) {
               "X-RateLimit-Remaining": String(rl.remaining),
             },
           }
-        );
+        ));
       }
     }
 
@@ -87,7 +87,7 @@ export async function POST(request: NextRequest) {
     const parsed = safeParseWithError(NotesImproveSchema, rawBody);
     
     if (!parsed.success) {
-      return withCors(NextResponse.json({ error: parsed.error }, { status: 400 });
+      return withCors(NextResponse.json({ error: parsed.error }, { status: 400 }));
     }
 
     const { notes, model_provider, apiKey } = parsed.data;
@@ -102,7 +102,7 @@ export async function POST(request: NextRequest) {
       return withCors(NextResponse.json(
         { error: `${provider} API key is required (enter it in the UI, or set it in server env)` },
         { status: 400 }
-      );
+      ));
     }
 
     const userNotes = notes;
@@ -134,7 +134,7 @@ ${wrapUntrustedBlock("ORIGINAL_NOTES", userNotes, { maxChars: 2000 })}`.trim();
       const out = await model.invoke([{ role: "user", content: prompt }] as any);
       const improved = extractText(out).trim();
       if (!improved) throw new Error("No improved notes returned.");
-      return withCors(NextResponse.json({ notes: improved }, { status: 200 });
+      return withCors(NextResponse.json({ notes: improved }, { status: 200 }));
     }
 
     // OpenAI
@@ -181,10 +181,10 @@ ${wrapUntrustedBlock("ORIGINAL_NOTES", userNotes, { maxChars: 2000 })}`.trim();
     }
     improved = String(improved || "").trim();
     if (!improved) throw new Error("No improved notes returned.");
-    return withCors(NextResponse.json({ notes: improved }, { status: 200 });
+    return withCors(NextResponse.json({ notes: improved }, { status: 200 }));
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : String(error);
-    return withCors(NextResponse.json({ error: message || "Internal server error" }, { status: 500 });
+    return withCors(NextResponse.json({ error: message || "Internal server error" }, { status: 500 }));
   }
 }
 

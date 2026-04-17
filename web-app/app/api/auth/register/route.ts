@@ -28,7 +28,7 @@ export async function POST(request: NextRequest) {
         return withCors(NextResponse.json(
           { error: `Too many registrations. Try again in ${rl.retryAfterSeconds}s.` },
           { status: 429, headers: { 'Retry-After': String(rl.retryAfterSeconds) } }
-        );
+        ));
       }
     }
 
@@ -40,7 +40,7 @@ export async function POST(request: NextRequest) {
       return withCors(NextResponse.json(
         { error: parsed.error },
         { status: 400 }
-      );
+      ));
     }
 
     const { username, password } = parsed.data;
@@ -54,7 +54,7 @@ export async function POST(request: NextRequest) {
       return withCors(NextResponse.json(
         { error: 'Username already exists' },
         { status: 409 }
-      );
+      ));
     }
 
     // Auto-login the user after successful registration
@@ -93,6 +93,6 @@ export async function POST(request: NextRequest) {
     return withCors(NextResponse.json(
       { error: message },
       { status: 500 }
-    );
+    ));
   }
 }

@@ -8,7 +8,7 @@ export const runtime = "nodejs";
 export async function GET(req: NextRequest) {
   const session = await getSession();
   if (!session) {
-    return withCors(NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    return withCors(NextResponse.json({ error: "Unauthorized" }, { status: 401 }));
   }
 
   const { searchParams } = new URL(req.url);
@@ -20,5 +20,5 @@ export async function GET(req: NextRequest) {
 
   const heatmapData = await getHeatmapData(session.userId, days);
 
-  return withCors(NextResponse.json({ heatmap: heatmapData }, { status: 200 });
+  return withCors(NextResponse.json({ heatmap: heatmapData }, { status: 200 }));
 }
