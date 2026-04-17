@@ -1,3 +1,4 @@
+import { withCors } from "@/lib/corsMiddleware";
 import { NextRequest, NextResponse } from 'next/server';
 import { generateRoutine } from '@/lib/ai-agent';
 import { getSession } from '@/lib/auth';
@@ -22,7 +23,7 @@ export async function POST(request: NextRequest) {
     const session = await getSession();
 
     if (!session) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return withCors(NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     // CSRF validation for state-changing request
@@ -40,7 +41,7 @@ export async function POST(request: NextRequest) {
         windowSeconds: 60,
       });
       if (!burst.allowed) {
-        return NextResponse.json(
+        return withCors(NextResponse.json(
           { error: `Too many requests. Try again in ${burst.retryAfterSeconds}s.` },
           {
             status: 429,
@@ -59,7 +60,7 @@ export async function POST(request: NextRequest) {
         windowSeconds: 60 * 60,
       });
       if (!rl.allowed) {
-        return NextResponse.json(
+        return withCors(NextResponse.json(
           { error: `Too many routine generations. Try again in ${rl.retryAfterSeconds}s.` },
           {
             status: 429,
@@ -78,7 +79,7 @@ export async function POST(request: NextRequest) {
     const parsed = safeParseWithError(RoutineGenerateSchema, rawBody);
     
     if (!parsed.success) {
-      return NextResponse.json(
+      return withCors(NextResponse.json(
         { error: parsed.error },
         { status: 400 }
       );
@@ -121,7 +122,7 @@ export async function POST(request: NextRequest) {
 
     // Only require a client key if we don't have a server-side key for the selected provider
     if (!keyFromClient && !hasServerKey) {
-      return NextResponse.json(
+      return withCors(NextResponse.json(
         { error: `${provider} API key is required (enter it in the UI, or set it in server env)` },
         { status: 400 }
       );
@@ -252,7 +253,7 @@ export async function POST(request: NextRequest) {
 
           if (!profileChanged) {
             // Profile hasn't changed significantly, return cached routine
-            return NextResponse.json({
+            return withCors(NextResponse.json({
               routine: existing.routine_json,
               source: 'db',
               week_number: existing.week_number,
@@ -296,7 +297,7 @@ export async function POST(request: NextRequest) {
       const cached = await getCachedAIResponse<any>(cacheKey);
       if (cached.hit) {
         console.log(`[Routine] Cache hit for user ${session.userId}, saving AI cost!`);
-        return NextResponse.json({
+        return withCors(NextResponse.json({
           routine: cached.data,
           source: 'cache',
           week_number: typeof body.week_number === 'number' ? body.week_number : null,
@@ -311,7 +312,7 @@ export async function POST(request: NextRequest) {
         : await generateRoutine(input, historicalContextStr, equipmentAnalysis, bodyAnalysis);
 
     if (!routine) {
-      return NextResponse.json(
+      return withCors(NextResponse.json(
         { error: 'Failed to generate routine. Check your API key and provider.' },
         { status: 500 }
       );
@@ -327,7 +328,7 @@ export async function POST(request: NextRequest) {
       console.warn('[Routine] Failed to cache:', cacheErr);
     }
 
-    return NextResponse.json(
+    return withCors(NextResponse.json(
       {
         routine,
         source: 'ai',
@@ -339,7 +340,7 @@ export async function POST(request: NextRequest) {
     const message = error instanceof Error ? error.message : String(error);
     const cause = error instanceof Error && error.cause ? String(error.cause) : '';
     console.error('Error generating routine:', message, cause ? `| Cause: ${cause}` : '');
-    return NextResponse.json(
+    return withCors(NextResponse.json(
       { error: cause ? `${message} (${cause})` : (message || 'Internal server error') },
       { status: 500 }
     );

@@ -1,3 +1,4 @@
+import { withCors } from "@/lib/corsMiddleware";
 import { NextRequest, NextResponse } from 'next/server';
 import { getProfile, initializeDatabase, saveProfile } from '@/lib/db';
 import { getSession } from '@/lib/auth';
@@ -9,7 +10,7 @@ export async function GET() {
     const session = await getSession();
 
     if (!session) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return withCors(NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     await initializeDatabase();
@@ -20,13 +21,13 @@ export async function GET() {
       getUser(session.userId)
     ]);
 
-    return NextResponse.json({
+    return withCors(NextResponse.json({
       profile,
       username: user?.username || `User ${session.userId}`
     }, { status: 200 });
   } catch (error) {
     console.error('Error fetching profile:', error);
-    return NextResponse.json(
+    return withCors(NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }
     );
@@ -38,7 +39,7 @@ export async function PUT(request: NextRequest) {
     const session = await getSession();
 
     if (!session) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return withCors(NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     // CSRF validation for state-changing request
@@ -52,7 +53,7 @@ export async function PUT(request: NextRequest) {
     const parsed = safeParseWithError(ProfileUpdateSchema, rawBody);
     
     if (!parsed.success) {
-      return NextResponse.json(
+      return withCors(NextResponse.json(
         { error: parsed.error },
         { status: 400 }
       );
@@ -93,10 +94,10 @@ export async function PUT(request: NextRequest) {
       nullToUndefined(data.body_composition_analysis)
     );
 
-    return NextResponse.json({ profile }, { status: 200 });
+    return withCors(NextResponse.json({ profile }, { status: 200 });
   } catch (error) {
     console.error('Error saving profile:', error);
-    return NextResponse.json(
+    return withCors(NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }
     );

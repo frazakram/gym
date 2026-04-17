@@ -1,5 +1,5 @@
-import { withCors } from "../../cors-middleware";
 import { NextRequest, NextResponse } from 'next/server';
+import { withCors } from '@/lib/corsMiddleware';
 import OpenAI from 'openai';
 import { getSession } from '@/lib/auth';
 import type { BodyCompositionAnalysis } from '@/types';

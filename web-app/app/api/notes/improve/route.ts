@@ -1,3 +1,4 @@
+import { withCors } from "@/lib/corsMiddleware";
 import { NextRequest, NextResponse } from "next/server";
 import { getSession } from "@/lib/auth";
 import { ChatAnthropic } from "@langchain/anthropic";
@@ -34,7 +35,7 @@ function extractText(out: unknown): string {
 export async function POST(request: NextRequest) {
   try {
     const session = await getSession();
-    if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    if (!session) return withCors(NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
     // CSRF validation for state-changing request
     const csrfError = await requireCsrf(request, session.userId);
@@ -48,7 +49,7 @@ export async function POST(request: NextRequest) {
         windowSeconds: 60,
       });
       if (!burst.allowed) {
-        return NextResponse.json(
+        return withCors(NextResponse.json(
           { error: `Too many requests. Try again in ${burst.retryAfterSeconds}s.` },
           {
             status: 429,
@@ -67,7 +68,7 @@ export async function POST(request: NextRequest) {
         windowSeconds: 60 * 60,
       });
       if (!rl.allowed) {
-        return NextResponse.json(
+        return withCors(NextResponse.json(
           { error: `Too many requests. Try again in ${rl.retryAfterSeconds}s.` },
           {
             status: 429,
@@ -86,7 +87,7 @@ export async function POST(request: NextRequest) {
     const parsed = safeParseWithError(NotesImproveSchema, rawBody);
     
     if (!parsed.success) {
-      return NextResponse.json({ error: parsed.error }, { status: 400 });
+      return withCors(NextResponse.json({ error: parsed.error }, { status: 400 });
     }
 
     const { notes, model_provider, apiKey } = parsed.data;
@@ -98,7 +99,7 @@ export async function POST(request: NextRequest) {
       provider === "Anthropic" ? Boolean(process.env.ANTHROPIC_API_KEY) : Boolean(process.env.OPENAI_API_KEY);
 
     if (!keyFromClient && !hasServerKey) {
-      return NextResponse.json(
+      return withCors(NextResponse.json(
         { error: `${provider} API key is required (enter it in the UI, or set it in server env)` },
         { status: 400 }
       );
@@ -133,7 +134,7 @@ ${wrapUntrustedBlock("ORIGINAL_NOTES", userNotes, { maxChars: 2000 })}`.trim();
       const out = await model.invoke([{ role: "user", content: prompt }] as any);
       const improved = extractText(out).trim();
       if (!improved) throw new Error("No improved notes returned.");
-      return NextResponse.json({ notes: improved }, { status: 200 });
+      return withCors(NextResponse.json({ notes: improved }, { status: 200 });
     }
 
     // OpenAI
@@ -180,11 +181,10 @@ ${wrapUntrustedBlock("ORIGINAL_NOTES", userNotes, { maxChars: 2000 })}`.trim();
     }
     improved = String(improved || "").trim();
     if (!improved) throw new Error("No improved notes returned.");
-    return NextResponse.json({ notes: improved }, { status: 200 });
+    return withCors(NextResponse.json({ notes: improved }, { status: 200 });
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : String(error);
-    return NextResponse.json({ error: message || "Internal server error" }, { status: 500 });
+    return withCors(NextResponse.json({ error: message || "Internal server error" }, { status: 500 });
   }
 }
-
 

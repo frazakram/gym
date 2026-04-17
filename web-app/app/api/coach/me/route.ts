@@ -1,3 +1,4 @@
+import { withCors } from "@/lib/corsMiddleware";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { getSession } from "@/lib/auth";
@@ -25,14 +26,14 @@ const PatchSchema = z.object({
 export async function GET(req: NextRequest) {
   void req;
   const session = await getSession();
-  if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  if (!session) return withCors(NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   await initializeDatabase();
   const app = await getCoachApplicationByUserId(session.userId);
-  if (!app) return NextResponse.json({ application: null }, { status: 200 });
+  if (!app) return withCors(NextResponse.json({ application: null }, { status: 200 });
 
   const profile = await getCoachProfileByCoachId(app.id);
-  return NextResponse.json(
+  return withCors(NextResponse.json(
     {
       application: {
         id: app.id,
@@ -51,19 +52,18 @@ export async function GET(req: NextRequest) {
 export async function PATCH(req: NextRequest) {
   try {
     const session = await getSession();
-    if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    if (!session) return withCors(NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
     const raw = await req.json().catch(() => ({}));
     const body = PatchSchema.parse(raw);
 
     await initializeDatabase();
     const ok = await updateCoachProfileByUser({ userId: session.userId, profile: body });
-    if (!ok) return NextResponse.json({ error: "No coach application found" }, { status: 404 });
+    if (!ok) return withCors(NextResponse.json({ error: "No coach application found" }, { status: 404 });
 
-    return NextResponse.json({ ok: true }, { status: 200 });
+    return withCors(NextResponse.json({ ok: true }, { status: 200 });
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : String(error);
-    return NextResponse.json({ error: message || "Internal server error" }, { status: 500 });
+    return withCors(NextResponse.json({ error: message || "Internal server error" }, { status: 500 });
   }
 }
-

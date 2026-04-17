@@ -1,3 +1,4 @@
+import { withCors } from "@/lib/corsMiddleware";
 import { NextRequest, NextResponse } from 'next/server';
 import { initializeDatabase, saveDiet } from '@/lib/db';
 import { getSession } from '@/lib/auth';
@@ -8,7 +9,7 @@ export async function POST(request: NextRequest) {
   try {
     const session = await getSession();
     if (!session) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return withCors(NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     // CSRF validation for state-changing request
@@ -22,7 +23,7 @@ export async function POST(request: NextRequest) {
     const parsed = safeParseWithError(DietSaveSchema, rawBody);
     
     if (!parsed.success) {
-      return NextResponse.json({ error: parsed.error }, { status: 400 });
+      return withCors(NextResponse.json({ error: parsed.error }, { status: 400 });
     }
 
     const { weekNumber, diet } = parsed.data;
@@ -30,13 +31,13 @@ export async function POST(request: NextRequest) {
     const savedId = await saveDiet(session.userId, weekNumber, diet);
 
     if (!savedId) {
-      return NextResponse.json({ error: 'Failed to save diet' }, { status: 500 });
+      return withCors(NextResponse.json({ error: 'Failed to save diet' }, { status: 500 });
     }
 
-    return NextResponse.json({ success: true, dietId: savedId }, { status: 200 });
+    return withCors(NextResponse.json({ success: true, dietId: savedId }, { status: 200 });
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : String(error);
     console.error('Error saving diet:', message);
-    return NextResponse.json({ error: message }, { status: 500 });
+    return withCors(NextResponse.json({ error: message }, { status: 500 });
   }
 }

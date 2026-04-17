@@ -1,3 +1,4 @@
+import { withCors } from "@/lib/corsMiddleware";
 import { NextRequest, NextResponse } from 'next/server';
 import { getSession } from '@/lib/auth';
 import type { GymEquipmentAnalysis } from '@/types';
@@ -40,20 +41,20 @@ export async function POST(request: NextRequest) {
     const session = await getSession();
 
     if (!session) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return withCors(NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     const { images, api_key } = await request.json();
 
     if (!images || !Array.isArray(images) || images.length === 0) {
-      return NextResponse.json(
+      return withCors(NextResponse.json(
         { error: 'No images provided' },
         { status: 400 }
       );
     }
 
     if (images.length > 6) {
-      return NextResponse.json(
+      return withCors(NextResponse.json(
         { error: 'Maximum 6 images allowed' },
         { status: 400 }
       );
@@ -62,7 +63,7 @@ export async function POST(request: NextRequest) {
     // Get OpenAI API key (prefer client key from AI Settings)
     const apiKey = (typeof api_key === 'string' ? api_key.trim() : '') || process.env.OPENAI_API_KEY;
     if (!apiKey) {
-      return NextResponse.json(
+      return withCors(NextResponse.json(
         { error: 'OpenAI API key not configured. Add it in AI Settings (sidebar menu).' },
         { status: 500 }
       );
@@ -107,7 +108,7 @@ export async function POST(request: NextRequest) {
     if (!response.ok) {
       const errorText = await response.text();
       console.error('OpenAI API error:', errorText);
-      return NextResponse.json(
+      return withCors(NextResponse.json(
         { error: 'Failed to analyze images' },
         { status: response.status }
       );
@@ -117,7 +118,7 @@ export async function POST(request: NextRequest) {
     const content = data.choices?.[0]?.message?.content;
 
     if (!content) {
-      return NextResponse.json(
+      return withCors(NextResponse.json(
         { error: 'No analysis returned from AI' },
         { status: 500 }
       );
@@ -138,16 +139,16 @@ export async function POST(request: NextRequest) {
       };
     } catch (parseError) {
       console.error('Failed to parse AI response:', parseError);
-      return NextResponse.json(
+      return withCors(NextResponse.json(
         { error: 'Invalid analysis format' },
         { status: 500 }
       );
     }
 
-    return NextResponse.json({ analysis }, { status: 200 });
+    return withCors(NextResponse.json({ analysis }, { status: 200 });
   } catch (error) {
     console.error('Error analyzing gym equipment:', error);
-    return NextResponse.json(
+    return withCors(NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }
     );

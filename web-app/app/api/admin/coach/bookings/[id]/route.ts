@@ -1,3 +1,4 @@
+import { withCors } from "@/lib/corsMiddleware";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { getSession } from "@/lib/auth";
@@ -14,15 +15,15 @@ const BodySchema = z.object({
 export async function PATCH(req: NextRequest, ctx: { params: Promise<{ id: string }> }) {
   try {
     const session = await getSession();
-    if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    if (!session) return withCors(NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
     const ok = await isAdminUser(session.userId);
-    if (!ok) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    if (!ok) return withCors(NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
     const { id } = await ctx.params;
     const bookingId = Math.floor(Number(id));
     if (!Number.isFinite(bookingId) || bookingId <= 0) {
-      return NextResponse.json({ error: "Invalid booking id" }, { status: 400 });
+      return withCors(NextResponse.json({ error: "Invalid booking id" }, { status: 400 });
     }
 
     const raw = await req.json().catch(() => ({}));
@@ -30,7 +31,7 @@ export async function PATCH(req: NextRequest, ctx: { params: Promise<{ id: strin
 
     await initializeDatabase();
     const updated = await updateCoachBookingStatusAdmin({ id: bookingId, status: body.status });
-    if (!updated) return NextResponse.json({ error: "Not found" }, { status: 404 });
+    if (!updated) return withCors(NextResponse.json({ error: "Not found" }, { status: 404 });
 
     // If booking is confirmed, share contact details with coach + notify user.
     if (body.status === "confirmed") {
@@ -131,10 +132,10 @@ export async function PATCH(req: NextRequest, ctx: { params: Promise<{ id: strin
       }
     }
 
-    return NextResponse.json({ ok: true }, { status: 200 });
+    return withCors(NextResponse.json({ ok: true }, { status: 200 });
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : String(error);
-    return NextResponse.json({ error: message || "Internal server error" }, { status: 500 });
+    return withCors(NextResponse.json({ error: message || "Internal server error" }, { status: 500 });
   }
 }
 
@@ -146,4 +147,3 @@ function escapeHtml(s: string): string {
     .replace(/"/g, "&quot;")
     .replace(/'/g, "&#39;");
 }
-

@@ -1,3 +1,4 @@
+import { withCors } from "@/lib/corsMiddleware";
 import { NextRequest, NextResponse } from "next/server";
 import { createRemoteJWKSet, jwtVerify } from "jose";
 import { createSession } from "@/lib/auth";
@@ -91,7 +92,7 @@ export async function GET(request: NextRequest) {
     // Cleanup
     res.cookies.set("google_oauth_state", "", { path: "/", maxAge: 0 });
     res.cookies.set("google_oauth_return_to", "", { path: "/", maxAge: 0 });
-    return res;
+    return withCors(res);
   } catch (err: unknown) {
     const origin = request.nextUrl.origin;
     const url = new URL("/login", origin);
@@ -99,5 +100,4 @@ export async function GET(request: NextRequest) {
     return NextResponse.redirect(url);
   }
 }
-
 

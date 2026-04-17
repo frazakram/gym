@@ -1,3 +1,4 @@
+import { withCors } from "@/lib/corsMiddleware";
 import { NextRequest, NextResponse } from "next/server";
 import { getSession } from "@/lib/auth";
 import {
@@ -18,7 +19,7 @@ export const runtime = "nodejs";
 export async function POST(req: NextRequest) {
   try {
     const session = await getSession();
-    if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    if (!session) return withCors(NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
     // CSRF validation for state-changing request
     const csrfError = await requireCsrf(req, session.userId);
@@ -27,14 +28,14 @@ export async function POST(req: NextRequest) {
     await initializeDatabase();
     const premium = await getPremiumStatus(session.userId);
     if (!premium.access) {
-      return NextResponse.json({ error: "Personal Coach is a premium feature." }, { status: 403 });
+      return withCors(NextResponse.json({ error: "Personal Coach is a premium feature." }, { status: 403 });
     }
 
     // Enforce: user can have only ONE active booking at a time (pending/confirmed)
     {
       const active = await getActiveCoachBookingForUser(session.userId);
       if (active) {
-        return NextResponse.json(
+        return withCors(NextResponse.json(
           {
             error: `You already have an active coach booking (#${active.id}, ${active.status}). Cancel it before booking again.`,
             activeBooking: {
@@ -58,7 +59,7 @@ export async function POST(req: NextRequest) {
         windowSeconds: 60,
       });
       if (!burst.allowed) {
-        return NextResponse.json(
+        return withCors(NextResponse.json(
           { error: `Too many requests. Try again in ${burst.retryAfterSeconds}s.` },
           {
             status: 429,
@@ -78,7 +79,7 @@ export async function POST(req: NextRequest) {
         windowSeconds: 60 * 60 * 24,
       });
       if (!rl.allowed) {
-        return NextResponse.json(
+        return withCors(NextResponse.json(
           { error: `Too many booking requests. Try again in ${rl.retryAfterSeconds}s.` },
           {
             status: 429,
@@ -97,7 +98,7 @@ export async function POST(req: NextRequest) {
     const parsed = safeParseWithError(CoachBookingSchema, raw);
     
     if (!parsed.success) {
-      return NextResponse.json(
+      return withCors(NextResponse.json(
         { error: parsed.error },
         { status: 400 }
       );
@@ -118,7 +119,7 @@ export async function POST(req: NextRequest) {
       : HARD_CODED_COACH;
 
     if (selectedCoach && (!coach.email || !coach.phone)) {
-      return NextResponse.json(
+      return withCors(NextResponse.json(
         { error: "Selected coach is missing contact info. Ask the coach to update their profile." },
         { status: 409 }
       );
@@ -201,7 +202,7 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    return NextResponse.json(
+    return withCors(NextResponse.json(
       {
         bookingId: booking.id,
         status: booking.status,
@@ -212,7 +213,7 @@ export async function POST(req: NextRequest) {
     );
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : String(error);
-    return NextResponse.json({ error: message || "Internal server error" }, { status: 500 });
+    return withCors(NextResponse.json({ error: message || "Internal server error" }, { status: 500 });
   }
 }
 
@@ -224,4 +225,3 @@ function escapeHtml(s: string): string {
     .replace(/"/g, "&quot;")
     .replace(/'/g, "&#39;");
 }
-

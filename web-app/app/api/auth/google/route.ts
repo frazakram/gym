@@ -1,11 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-
-function withCors(response: NextResponse) {
-  response.headers.set("Access-Control-Allow-Origin", "*");
-  response.headers.set("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
-  response.headers.set("Access-Control-Allow-Headers", "Content-Type, Authorization, X-CSRF-Token");
-  return response;
-}
+import { withCors } from "@/lib/corsMiddleware";
 import { createRemoteJWKSet, jwtVerify } from "jose";
 import { createSession } from "@/lib/auth";
 import {

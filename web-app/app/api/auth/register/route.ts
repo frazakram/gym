@@ -1,3 +1,4 @@
+import { withCors } from "@/lib/corsMiddleware";
 import { NextRequest, NextResponse } from 'next/server';
 import { createUser, initializeDatabase } from '@/lib/db';
 import { createSession, setSessionCookie } from '@/lib/auth';
@@ -24,7 +25,7 @@ export async function POST(request: NextRequest) {
         windowSeconds: 60,
       });
       if (!rl.allowed) {
-        return NextResponse.json(
+        return withCors(NextResponse.json(
           { error: `Too many registrations. Try again in ${rl.retryAfterSeconds}s.` },
           { status: 429, headers: { 'Retry-After': String(rl.retryAfterSeconds) } }
         );
@@ -36,7 +37,7 @@ export async function POST(request: NextRequest) {
     const parsed = safeParseWithError(RegisterSchema, rawBody);
     
     if (!parsed.success) {
-      return NextResponse.json(
+      return withCors(NextResponse.json(
         { error: parsed.error },
         { status: 400 }
       );
@@ -50,7 +51,7 @@ export async function POST(request: NextRequest) {
     const user = await createUser(username, password);
 
     if (!user) {
-      return NextResponse.json(
+      return withCors(NextResponse.json(
         { error: 'Username already exists' },
         { status: 409 }
       );
@@ -85,11 +86,11 @@ export async function POST(request: NextRequest) {
       path: '/',
     });
 
-    return res;
+    return withCors(res);
   } catch (error) {
     console.error('Registration error:', error);
     const message = error instanceof Error ? error.message : 'Internal server error';
-    return NextResponse.json(
+    return withCors(NextResponse.json(
       { error: message },
       { status: 500 }
     );

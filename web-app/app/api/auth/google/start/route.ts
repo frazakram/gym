@@ -1,3 +1,4 @@
+import { withCors } from "@/lib/corsMiddleware";
 import { NextRequest, NextResponse } from "next/server";
 import crypto from "crypto";
 
@@ -49,7 +50,6 @@ export async function GET(request: NextRequest) {
     maxAge: 60 * 10,
     path: "/",
   });
-  return res;
+  return withCors(res);
 }
-
 

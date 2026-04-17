@@ -1,3 +1,4 @@
+import { withCors } from "@/lib/corsMiddleware";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { getSession } from "@/lib/auth";
@@ -14,10 +15,10 @@ const QuerySchema = z.object({
 
 export async function GET(req: NextRequest) {
   const session = await getSession();
-  if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  if (!session) return withCors(NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const ok = await isAdminUser(session.userId);
-  if (!ok) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  if (!ok) return withCors(NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
   const { searchParams } = new URL(req.url);
   const parsed = QuerySchema.safeParse({
@@ -26,13 +27,13 @@ export async function GET(req: NextRequest) {
     offset: searchParams.get("offset") ?? undefined,
   });
   if (!parsed.success) {
-    return NextResponse.json({ error: "Invalid query" }, { status: 400 });
+    return withCors(NextResponse.json({ error: "Invalid query" }, { status: 400 });
   }
 
   await initializeDatabase();
   const rows = await listAllCoachBookingsAdmin(parsed.data);
 
-  return NextResponse.json(
+  return withCors(NextResponse.json(
     {
       bookings: rows.map((b) => ({
         ...b,
@@ -43,4 +44,3 @@ export async function GET(req: NextRequest) {
     { status: 200 }
   );
 }
-
