@@ -285,11 +285,11 @@ export function ImageUploadCard({
                 className="w-full h-full object-cover"
               />
 
-              {/* Delete Button */}
+              {/* Delete Button — always visible on touch, hover-reveal on desktop */}
               <button
                 type="button"
                 onClick={() => onDelete(photo.id)}
-                className="absolute top-2 right-2 w-8 h-8 rounded-full bg-red-500/90 hover:bg-red-500 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                className="absolute top-2 right-2 w-8 h-8 rounded-full bg-red-500/90 hover:bg-red-500 flex items-center justify-center sm:opacity-0 sm:group-hover:opacity-100 transition-opacity"
                 aria-label="Delete photo"
               >
                 <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">

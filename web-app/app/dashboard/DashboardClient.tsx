@@ -238,6 +238,8 @@ export default function DashboardPage() {
         setBudget(data.profile.budget ?? 'Standard')
         setGymPhotos(data.profile.gym_photos || [])
         setEquipmentAnalysis(data.profile.gym_equipment_analysis || null)
+        setBodyPhotos(data.profile.body_photos || [])
+        setBodyAnalysis(data.profile.body_composition_analysis || null)
       }
     } catch (err: unknown) {
       console.error('Error fetching profile:', err)
@@ -1082,7 +1084,8 @@ export default function DashboardPage() {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          gym_equipment_analysis: analysis
+          gym_photos: updatedPhotos,
+          gym_equipment_analysis: analysis,
         }),
       });
     } catch (error) {
@@ -1103,7 +1106,7 @@ export default function DashboardPage() {
       await csrfFetch('/api/profile', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ gym_equipment_analysis: null }),
+        body: JSON.stringify({ gym_photos: [], gym_equipment_analysis: null }),
       });
     } else {
       try {
@@ -1118,7 +1121,7 @@ export default function DashboardPage() {
         await csrfFetch('/api/profile', {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ gym_equipment_analysis: analysis }),
+          body: JSON.stringify({ gym_photos: updatedPhotos, gym_equipment_analysis: analysis }),
         });
       } catch (error) {
         console.error('Re-analysis error:', error)
@@ -1161,16 +1164,12 @@ export default function DashboardPage() {
       setBodyAnalysis(analysis)
       setSuccess('Body composition analyzed successfully!')
 
-      // We should probably save the analysis result to the profile immediately?
-      // Or rely on the user clicking "Save Profile"? 
-      // The user prompt said photos are not stored, but analysis should be used.
-      // Saving the analysis to profile seems correct.
       await csrfFetch('/api/profile', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          // We only transmit the analysis part to be saved
-          body_composition_analysis: analysis
+          body_photos: updatedPhotos,
+          body_composition_analysis: analysis,
         }),
       });
 
@@ -1189,16 +1188,10 @@ export default function DashboardPage() {
 
     if (updatedPhotos.length === 0) {
       setBodyAnalysis(null)
-      // Clear analysis in backend too if needed, or just keep it until replaced?
-      // Let's clear it for consistency.
       await csrfFetch('/api/profile', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          body_composition_analysis: null // Explicitly clear it ?? 
-          // Actually the API might merge, need to check. 
-          // For now, let's just clear local.
-        }),
+        body: JSON.stringify({ body_photos: [], body_composition_analysis: null }),
       });
     } else {
       try {
@@ -1213,7 +1206,7 @@ export default function DashboardPage() {
         await csrfFetch('/api/profile', {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ body_composition_analysis: analysis }),
+          body: JSON.stringify({ body_photos: updatedPhotos, body_composition_analysis: analysis }),
         });
       } catch (error) {
         console.error('Re-analysis error:', error)

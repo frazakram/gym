@@ -1,5 +1,7 @@
+import { withCors } from "../../cors-middleware";
 import { NextRequest, NextResponse } from 'next/server'
 import OpenAI from 'openai'
+import { getSession } from '@/lib/auth'
 import type { BodyCompositionAnalysis } from '@/types'
 
 function getOpenAI(clientKey?: string) {
@@ -8,20 +10,25 @@ function getOpenAI(clientKey?: string) {
   return new OpenAI({ apiKey, baseURL: 'https://api.openai.com/v1' })
 }
 
+export const runtime = "nodejs";
+
 export async function POST(req: NextRequest) {
+  const session = await getSession();
+  if (!session) return withCors(NextResponse.json({ error: 'Unauthorized' }, { status: 401 }));
+
   try {
     const body = await req.json()
     const { images, api_key } = body
 
     if (!images || !Array.isArray(images) || images.length === 0) {
-      return NextResponse.json(
+      return withCors(NextResponse.json(
         { error: 'At least one image is required' },
         { status: 400 }
       )
     }
 
     if (images.length > 2) {
-      return NextResponse.json(
+      return withCors(NextResponse.json(
         { error: 'Maximum 2 images allowed' },
         { status: 400 }
       )
@@ -30,7 +37,7 @@ export async function POST(req: NextRequest) {
     // Validate images are base64 encoded
     for (const img of images) {
       if (typeof img !== 'string' || !img.startsWith('data:image/')) {
-        return NextResponse.json(
+        return withCors(NextResponse.json(
           { error: 'Invalid image format. Must be base64 encoded.' },
           { status: 400 }
         )
@@ -139,10 +146,10 @@ Return your analysis as a JSON object with these fields:
       }
     }
 
-    return NextResponse.json({ analysis })
+    return withCors(NextResponse.json({ analysis })
   } catch (error) {
     console.error('Body analysis error:', error)
-    return NextResponse.json(
+    return withCors(NextResponse.json(
       { error: error instanceof Error ? error.message : 'Failed to analyze body composition' },
       { status: 500 }
     )
