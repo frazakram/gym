@@ -12,6 +12,7 @@ import {
   createUserWithRandomPassword,
   getUserIdByUsername,
   getUser,
+  getProfile,
   initializeDatabase,
 } from "@/lib/db";
 
@@ -67,10 +68,13 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const [token, dbUser] = await Promise.all([
+    const [token, dbUser, profile] = await Promise.all([
       createSession(userId),
       getUser(userId),
+      getProfile(userId),
     ]);
+
+    const profileComplete = !!(profile?.name && profile?.goal && profile?.level);
 
     return withCors(
       NextResponse.json(
@@ -81,6 +85,7 @@ export async function POST(request: NextRequest) {
             email,
             name: dbUser?.username === email ? name : (dbUser?.username ?? email),
           },
+          profileComplete,
         },
         { status: 200 }
       )
