@@ -124,14 +124,14 @@ export function ImageUploadCard({
         </div>
       )}
 
-      {/* Hidden file input — triggered by button below */}
+      {/* Visually hidden file input — display:none blocks programmatic .click() on Android */}
       <input
         ref={fileInputRef}
         type="file"
         multiple
         accept="image/jpeg,image/jpg,image/png,image/webp,image/heic,image/heif"
         onChange={handleFileInput}
-        className="hidden"
+        style={{ position: 'absolute', width: 1, height: 1, opacity: 0, overflow: 'hidden', pointerEvents: 'none' }}
         disabled={loading}
       />
 
