@@ -1,4 +1,4 @@
-import { withCors } from "../../cors-middleware";
+import { withCors } from "@/app/api/cors-middleware";
 import { NextRequest, NextResponse } from "next/server";
 import { createRemoteJWKSet, jwtVerify } from "jose";
 import { createSession } from "@/lib/auth";
