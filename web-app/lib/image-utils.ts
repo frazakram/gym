@@ -17,15 +17,19 @@ export interface CompressionOptions {
 }
 
 const DEFAULT_OPTIONS: CompressionOptions = {
-  maxWidth: 1200,
-  maxHeight: 1200,
-  quality: 0.8,
+  maxWidth: 800,
+  maxHeight: 800,
+  quality: 0.7,
   timeoutMs: 15000,
 };
+
+/** Max allowed size in bytes after compression (1MB). */
+export const MAX_COMPRESSED_SIZE = 1 * 1024 * 1024;
 
 /**
  * Compress and resize an image. On failure (e.g. HEIC on non-Safari,
  * mobile memory limits), returns the original file instead of throwing.
+ * Throws if the resulting file exceeds MAX_COMPRESSED_SIZE.
  */
 export async function compressImage(
   file: File,
@@ -98,6 +102,10 @@ export async function compressImage(
                 type: 'image/jpeg',
                 lastModified: Date.now(),
               });
+              if (compressedFile.size > MAX_COMPRESSED_SIZE) {
+                reject(new Error(`Image is too large after compression (${(compressedFile.size / 1024 / 1024).toFixed(1)}MB). Please use a smaller image.`));
+                return;
+              }
               resolve(compressedFile);
             },
             'image/jpeg',

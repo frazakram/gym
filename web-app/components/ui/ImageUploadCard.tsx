@@ -129,7 +129,7 @@ export function ImageUploadCard({
         ref={fileInputRef}
         type="file"
         multiple
-        accept="image/jpeg,image/png,image/webp,image/heic,image/heif"
+        accept="image/jpeg,image/jpg,image/png,image/webp,image/heic,image/heif"
         onChange={handleFileInput}
         className="hidden"
         disabled={loading}

@@ -3,6 +3,9 @@
 
 @custom-variant dark (&:where(.dark, .dark *));
 
+/* Declare overrides layer AFTER Tailwind's layers — highest priority in the layer stack */
+@layer overrides;
+
 :root {
   /* --- Light mode defaults --- */
   --background: #ffffff;
@@ -59,7 +62,8 @@ html:not(.dark) {
   --glass-border: rgba(0, 0, 0, 0.06);
   --glass-border-strong: rgba(0, 0, 0, 0.10);
 
-  /* Muted text readable on white */
+  /* Muted token — overrides the @theme inline hardcoded value */
+  --muted: #6b7280;
   --color-muted: #6b7280;
 }
 
@@ -90,26 +94,47 @@ html:not(.dark) .panel-solid {
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06) !important;
 }
 
-/* Fix invisible white/near-white text on light backgrounds */
-html:not(.dark) [class*="text-white"] {
-  color: #111827 !important;
-}
-html:not(.dark) [class*="text-slate-1"],
-html:not(.dark) [class*="text-slate-2"],
-html:not(.dark) [class*="text-slate-3"] {
-  color: #374151 !important;
-}
+/* ── Light mode: fix invisible text (in @layer overrides = beats Tailwind utilities) ── */
+@layer overrides {
+  /* 1. text-white / text-white/opacity variants → near-black */
+  html:not(.dark) [class*="text-white"] {
+    color: #111827;
+  }
 
-/* Preserve white text on colored/gradient backgrounds */
-html:not(.dark) [class*="bg-gradient"][class*="text-white"],
-html:not(.dark) [class*="bg-gradient"] [class*="text-white"],
-html:not(.dark) [class*="bg-primary"][class*="text-white"],
-html:not(.dark) [class*="bg-primary"] [class*="text-white"],
-html:not(.dark) [class*="bg-coral"][class*="text-white"],
-html:not(.dark) [class*="bg-coral"] [class*="text-white"],
-html:not(.dark) [class*="bg-\[#22c55e\]"][class*="text-white"],
-html:not(.dark) [class*="bg-\[#22c55e\]"] [class*="text-white"] {
-  color: white !important;
+  /* 2. text-slate-100 through text-slate-500 → readable grays */
+  html:not(.dark) [class*="text-slate-1"],
+  html:not(.dark) [class*="text-slate-2"],
+  html:not(.dark) [class*="text-slate-3"] {
+    color: #374151;
+  }
+  html:not(.dark) [class*="text-slate-4"],
+  html:not(.dark) [class*="text-slate-5"] {
+    color: #6b7280;
+  }
+
+  /* 3. text-muted utility — hardcoded in @theme inline, override directly */
+  html:not(.dark) .text-muted {
+    color: #6b7280;
+  }
+
+  /* 4. Preserve white text on colored backgrounds */
+  html:not(.dark) [class*="bg-gradient"] [class*="text-white"],
+  html:not(.dark) [class*="bg-primary"] [class*="text-white"],
+  html:not(.dark) [class*="bg-green"] [class*="text-white"],
+  html:not(.dark) [class*="bg-\[#22c55e\]"] [class*="text-white"],
+  html:not(.dark) [class*="bg-coral"] [class*="text-white"] {
+    color: white;
+  }
+
+  /* 5. Preserve white text on elements that ARE the colored button */
+  html:not(.dark) .btn-primary,
+  html:not(.dark) .btn-primary *,
+  html:not(.dark) [class*="bg-gradient"][class*="text-white"],
+  html:not(.dark) [class*="bg-primary"][class*="text-white"],
+  html:not(.dark) [class*="bg-green"][class*="text-white"],
+  html:not(.dark) [class*="bg-\[#22c55e\]"][class*="text-white"] {
+    color: white;
+  }
 }
 
 :root {
@@ -151,6 +176,9 @@ html:not(.dark) [class*="bg-\[#22c55e\]"] [class*="text-white"] {
   /* Secondary: Slate */
   --secondary: #64748B;
   --secondary-2: #475569;
+
+  /* Muted default (dark mode) */
+  --muted: #8B8DA3;
 
   /* Status colors */
   --error: #F43F5E;
@@ -200,7 +228,7 @@ html:not(.dark) [class*="bg-\[#22c55e\]"] [class*="text-white"] {
   --color-warning: var(--warning);
   --color-info: var(--info);
 
-  --color-muted: #8B8DA3;
+  --color-muted: var(--muted, #8B8DA3);
   --color-primary-lighter: #C4B5FD;
 
   --font-sans: var(--font-inter);

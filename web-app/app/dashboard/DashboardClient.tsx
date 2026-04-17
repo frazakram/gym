@@ -1052,12 +1052,9 @@ export default function DashboardPage() {
       setEquipmentError('')
 
       const photoPromises = files.map(async (file) => {
-        const compressedFile = await compressImage(file).catch(err => {
-          console.warn('Compression failed, using original:', err)
-          return file
-        })
+        const compressedFile = await compressImage(file)
         return {
-          id: crypto.randomUUID(),
+          id: crypto.randomUUID?.() ?? Math.random().toString(36).slice(2),
           base64: await fileToBase64(compressedFile),
           content_type: compressedFile.type,
           size_bytes: compressedFile.size,
@@ -1089,7 +1086,8 @@ export default function DashboardPage() {
         }),
       });
     } catch (error) {
-      setEquipmentError('Failed to analyze gym equipment. Please try again.')
+      const msg = error instanceof Error ? error.message : 'Failed to analyze gym equipment. Please try again.'
+      setEquipmentError(msg)
       console.error('Equipment analysis error:', error)
     } finally {
       setAnalyzingEquipment(false)
@@ -1136,12 +1134,9 @@ export default function DashboardPage() {
       setBodyError('')
 
       const photoPromises = files.map(async (file) => {
-        const compressedFile = await compressImage(file).catch(err => {
-          console.warn('Compression failed, using original:', err)
-          return file
-        })
+        const compressedFile = await compressImage(file)
         return {
-          id: crypto.randomUUID(),
+          id: crypto.randomUUID?.() ?? Math.random().toString(36).slice(2),
           base64: await fileToBase64(compressedFile),
           content_type: compressedFile.type,
           size_bytes: compressedFile.size,
@@ -1180,7 +1175,8 @@ export default function DashboardPage() {
       });
 
     } catch (error) {
-      setBodyError('Failed to analyze body composition. Please try again.')
+      const msg = error instanceof Error ? error.message : 'Failed to analyze body composition. Please try again.'
+      setBodyError(msg)
       console.error('Body analysis error:', error)
     } finally {
       setAnalyzingBody(false)
