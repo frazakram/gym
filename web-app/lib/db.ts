@@ -2,6 +2,7 @@ import { Pool } from '@neondatabase/serverless';
 import bcrypt from 'bcryptjs';
 import { User, Profile } from '@/types';
 import { unstable_cache, revalidateTag } from 'next/cache';
+import { encryptDet, encryptRnd, decrypt } from '@/lib/fieldEncryption';
 
 function isPostgresUrl(value: string): boolean {
   const v = value.trim();
@@ -442,13 +443,16 @@ export async function initializeDatabase() {
 export async function createUser(username: string, password: string): Promise<User | null> {
   try {
     const hashedPassword = await bcrypt.hash(password, 10);
+    const encUsername = encryptDet(username);
     const result = await pool.query<User>(
       `INSERT INTO users (username, password_hash)
        VALUES ($1, $2)
        RETURNING id, username, password_hash, created_at`,
-      [username, hashedPassword]
+      [encUsername, hashedPassword]
     );
-    return result.rows[0] || null;
+    const row = result.rows[0];
+    if (row) row.username = username; // return plaintext to caller
+    return row || null;
   } catch (error: unknown) {
     const maybePgError = error as { code?: string } | null;
     if (maybePgError?.code === '23505') return null; // Username exists
@@ -463,10 +467,22 @@ export async function createUser(username: string, password: string): Promise<Us
 
 export async function authenticateUser(username: string, password: string): Promise<number | null> {
   try {
-    const result = await pool.query<User>(
+    const encUsername = encryptDet(username);
+    let result = await pool.query<User>(
       'SELECT id, password_hash FROM users WHERE username = $1',
-      [username]
+      [encUsername]
     );
+
+    // Fallback for legacy plaintext rows — migrate them to encrypted on success
+    if (result.rows.length === 0) {
+      result = await pool.query<User>(
+        'SELECT id, password_hash FROM users WHERE username = $1',
+        [username]
+      );
+      if (result.rows.length > 0) {
+        await pool.query('UPDATE users SET username = $1 WHERE id = $2', [encUsername, result.rows[0].id]).catch(() => {});
+      }
+    }
 
     if (result.rows.length === 0) {
       if (allowMockAuth()) {
@@ -498,8 +514,19 @@ export async function authenticateUser(username: string, password: string): Prom
 
 export async function getUserIdByUsername(username: string): Promise<number | null> {
   try {
-    const result = await pool.query<User>('SELECT id FROM users WHERE username = $1', [username]);
-    return result.rows?.[0]?.id ?? null;
+    const encUsername = encryptDet(username);
+    let result = await pool.query<User>('SELECT id FROM users WHERE username = $1', [encUsername]);
+
+    // Fallback for legacy plaintext rows — migrate on success
+    if (!result.rows[0]) {
+      const ptResult = await pool.query<User>('SELECT id FROM users WHERE username = $1', [username]);
+      if (ptResult.rows[0]) {
+        await pool.query('UPDATE users SET username = $1 WHERE id = $2', [encUsername, ptResult.rows[0].id]).catch(() => {});
+      }
+      return ptResult.rows?.[0]?.id ?? null;
+    }
+
+    return result.rows[0].id;
   } catch (error) {
     if (allowMockAuth()) {
       console.warn("getUserIdByUsername DB failed, using mock auth:", error);
@@ -516,10 +543,11 @@ export async function getUser(userId: number): Promise<Pick<User, 'id' | 'userna
       'SELECT id, username FROM users WHERE id = $1',
       [userId]
     );
-    return result.rows[0] || null;
+    const row = result.rows[0] || null;
+    if (row) row.username = decrypt(row.username);
+    return row;
   } catch (error) {
     if (allowMockAuth()) {
-      // Mock fallback
       if (userId === MOCK_USER_ID) return { id: MOCK_USER_ID, username: MOCK_USER.username };
       return null;
     }
@@ -540,7 +568,9 @@ const getProfileCached = unstable_cache(
         'SELECT * FROM profiles WHERE user_id = $1',
         [userId]
       );
-      return result.rows[0] || null;
+      const profile = result.rows[0] || null;
+      if (profile?.name) profile.name = decrypt(profile.name);
+      return profile;
     } catch (error) {
       console.error("getProfile DB failed:", error);
       throw error;
@@ -668,7 +698,7 @@ export async function saveProfile(
           protein_powder_amount || null,
 
           specific_food_preferences?.trim() ? specific_food_preferences.trim() : null,
-          name?.trim() ? name.trim() : null,
+          name?.trim() ? encryptRnd(name.trim()) : null,
           gym_photos || null,
           gym_equipment_analysis || null,
           body_photos || null,
@@ -708,7 +738,7 @@ export async function saveProfile(
           budget || null,
           protein_powder_amount || null,
           specific_food_preferences?.trim() ? specific_food_preferences.trim() : null,
-          name?.trim() ? name.trim() : null,
+          name?.trim() ? encryptRnd(name.trim()) : null,
           gym_photos || null,
           gym_equipment_analysis || null,
           body_photos || null,
