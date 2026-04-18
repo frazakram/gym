@@ -9,6 +9,7 @@ interface AnimData {
   words: string[];
   stats: { value: string; label: string }[];
   greeting: string;
+  tagline: string;
 }
 
 function getWeekNumber(): number {
@@ -40,6 +41,7 @@ function resolveAnimData(): AnimData {
         { value: '₹1/mo', label: 'TO START' },
         { value: '5 MIN', label: 'SETUP TIME' },
       ],
+      tagline: 'AI-powered workouts and diet plans personalized to your body and goals.',
     };
   }
 
@@ -53,10 +55,10 @@ function resolveAnimData(): AnimData {
         { value: lastCalories + ' kcal', label: 'LAST SESSION' },
         { value: 'Week ' + lastWeek, label: 'LAST WEEK' },
       ],
+      tagline: 'Your last session stats are saved. Ready to beat them?',
     };
   }
 
-  // returning after time away
   const days = lastLoginDate ? daysSince(lastLoginDate) : 0;
   let words: string[];
   if (days < 2) {
@@ -64,7 +66,7 @@ function resolveAnimData(): AnimData {
   } else if (days < 7) {
     words = ['BACK AT IT', 'PICK UP WHERE YOU LEFT', 'NEVER LATE', 'KEEP PUSHING'];
   } else {
-    words = ['COMEBACK TIME', 'RESET. REBUILD.', 'START AGAIN', 'IT\'S NOT TOO LATE'];
+    words = ['COMEBACK TIME', 'RESET. REBUILD.', 'START AGAIN', "IT'S NOT TOO LATE"];
   }
 
   return {
@@ -76,8 +78,15 @@ function resolveAnimData(): AnimData {
       { value: bestStreak + ' days', label: 'BEST STREAK' },
       { value: 'Week ' + getWeekNumber(), label: 'CURRENT WEEK' },
     ],
+    tagline: 'Every rep counts. Your progress is waiting.',
   };
 }
+
+const ACCENT: Record<AnimState, string> = {
+  new: '#60a5fa',
+  loggedOut: '#4ade80',
+  returning: '#fb923c',
+};
 
 export default function LoginAnimation() {
   const [data, setData] = useState<AnimData | null>(null);
@@ -90,7 +99,6 @@ export default function LoginAnimation() {
     setData(resolveAnimData());
   }, []);
 
-  // Typewriter effect
   useEffect(() => {
     if (!data) return;
     const word = data.words[wordIdx];
@@ -124,52 +132,47 @@ export default function LoginAnimation() {
 
   if (!data) return null;
 
-  const accentColor =
-    data.state === 'new'
-      ? 'text-blue-400'
-      : data.state === 'loggedOut'
-      ? 'text-green-400'
-      : 'text-orange-400';
-
-  const barColor =
-    data.state === 'new'
-      ? 'bg-blue-500'
-      : data.state === 'loggedOut'
-      ? 'bg-green-500'
-      : 'bg-orange-500';
+  const accent = ACCENT[data.state];
 
   return (
-    <div className="flex flex-col justify-center h-full px-8 py-12 select-none">
-      {/* Greeting + typewriter */}
-      <div className="mb-10">
-        <p className="text-sm font-semibold tracking-[0.25em] text-gray-400 dark:text-gray-500 mb-2 uppercase">
+    <>
+      <style>{`
+        @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
+        .login-cursor { animation: blink 1s step-end infinite; }
+      `}</style>
+
+      <div
+        style={{ padding: '48px', height: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'center', userSelect: 'none' }}
+      >
+        {/* Greeting label */}
+        <p style={{ fontSize: '11px', letterSpacing: '4px', color: 'rgba(255,255,255,0.4)', marginBottom: '12px', textTransform: 'uppercase' }}>
           {data.greeting}
         </p>
-        <div className="text-4xl md:text-5xl font-black tracking-tight text-gray-900 dark:text-white leading-tight min-h-[3.5rem]">
-          <span className={accentColor}>{displayed}</span>
-          <span className="animate-pulse ml-0.5 opacity-70">|</span>
+
+        {/* Typewriter text */}
+        <div style={{ fontSize: '52px', fontWeight: 700, color: 'white', letterSpacing: '-1px', minHeight: '72px', lineHeight: 1.1 }}>
+          {displayed}
+          <span className="login-cursor" style={{ color: '#7c3aed', marginLeft: '2px' }}>|</span>
         </div>
+
+        {/* Purple underline */}
+        <div style={{ width: '48px', height: '2px', background: '#7c3aed', margin: '16px 0 32px 0', borderRadius: '1px' }} />
+
+        {/* Stats row */}
+        <div style={{ display: 'flex', gap: '32px', alignItems: 'flex-end' }}>
+          {data.stats.map((s, i) => (
+            <div key={i} style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+              <span style={{ fontSize: '28px', fontWeight: 700, color: accent, lineHeight: 1 }}>{s.value}</span>
+              <span style={{ fontSize: '10px', textTransform: 'uppercase', letterSpacing: '2px', color: 'rgba(255,255,255,0.4)' }}>{s.label}</span>
+            </div>
+          ))}
+        </div>
+
+        {/* Bottom tagline */}
+        <p style={{ marginTop: 'auto', paddingTop: '48px', fontSize: '12px', color: 'rgba(255,255,255,0.3)', lineHeight: 1.6, maxWidth: '320px' }}>
+          {data.tagline}
+        </p>
       </div>
-
-      {/* Divider */}
-      <div className={`h-0.5 w-12 ${barColor} rounded-full mb-10`} />
-
-      {/* Stats row */}
-      <div className="flex gap-8">
-        {data.stats.map((s, i) => (
-          <div key={i} className="flex flex-col gap-1">
-            <span className={`text-2xl font-bold tabular-nums ${accentColor}`}>{s.value}</span>
-            <span className="text-xs tracking-widest text-gray-400 dark:text-gray-500 uppercase">{s.label}</span>
-          </div>
-        ))}
-      </div>
-
-      {/* State-specific tagline */}
-      <p className="mt-10 text-sm text-gray-500 dark:text-gray-400 max-w-xs leading-relaxed">
-        {data.state === 'new' && 'AI-powered workouts and diet plans personalized to your body and goals.'}
-        {data.state === 'loggedOut' && 'Your last session stats are saved. Ready to beat them?'}
-        {data.state === 'returning' && 'Every rep counts. Your progress is waiting.'}
-      </p>
-    </div>
+    </>
   );
 }

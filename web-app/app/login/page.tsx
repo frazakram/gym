@@ -4,7 +4,6 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
 import { BrandLogo } from '@/components/BrandLogo'
-import { LoginMascot } from '@/components/LoginMascot'
 import LoginAnimation from '@/components/LoginAnimation'
 import { storeSessionIndicator } from '@/lib/useSessionPersistence'
 import { Mail, Lock } from 'lucide-react'
@@ -104,35 +103,9 @@ export default function LoginPage() {
 
   return (
     <div className="min-h-screen flex flex-col lg:flex-row items-stretch overflow-hidden">
-      {/* Left Side - Interactive Mascot Characters (desktop: half-width panel, mobile: compact header) */}
-      <div className="relative bg-navy-0 lg:w-1/2 lg:border-r border-purple-500/20">
-        {/* Background effects - purple radial gradients */}
-        <div className="absolute inset-0 bg-[#0e0e1a]" />
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(139,92,246,0.25),transparent_70%)]" />
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_80%_20%,rgba(139,92,246,0.3),transparent_50%)]" />
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_80%,rgba(109,40,217,0.2),transparent_50%)]" />
-
-        {/* Mascot Container */}
-        <motion.div
-          initial={{ y: -200, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          transition={{ type: 'spring', stiffness: 120, damping: 15, delay: 0 }}
-          className="relative z-10 w-full h-full flex flex-col items-center justify-center p-8 lg:p-8"
-        >
-          <div className="w-48 h-48 lg:w-full lg:max-w-lg lg:aspect-square lg:scale-110">
-            <LoginMascot isPasswordFocused={passwordFocused} isLoginFailed={isLoginFailed} />
-          </div>
-          <div className="mt-4 lg:mt-8 text-center">
-            <h2 className="text-xl lg:text-3xl font-bold text-white mb-1 lg:mb-2 tracking-tight font-display">Join the Movement</h2>
-            <p className="text-sm lg:text-base text-slate-400 max-w-sm mx-auto">
-              Your personal AI fitness companion waiting to help you achieve your goals.
-            </p>
-          </div>
-          {/* Context-aware animation panel — only shown on desktop */}
-          <div className="hidden lg:block w-full mt-6">
-            <LoginAnimation />
-          </div>
-        </motion.div>
+      {/* Left Side - LoginAnimation panel (desktop only) */}
+      <div className="hidden lg:flex lg:w-1/2 flex-col" style={{ background: '#080c14', minHeight: '100vh' }}>
+        <LoginAnimation />
       </div>
 
       {/* Right Side - Dark Glass Login Form */}
