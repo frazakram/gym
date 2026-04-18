@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
 import { BrandLogo } from '@/components/BrandLogo'
 import LoginAnimation from '@/components/LoginAnimation'
+import { ThemeToggle } from '@/components/ThemeToggle'
 import { storeSessionIndicator } from '@/lib/useSessionPersistence'
 import { Mail, Lock } from 'lucide-react'
 
@@ -102,7 +103,8 @@ export default function LoginPage() {
   const baseDelay = 0.2
 
   return (
-    <div className="min-h-screen flex flex-col lg:flex-row items-stretch overflow-hidden">
+    <div className="relative min-h-screen flex flex-col lg:flex-row items-stretch overflow-hidden">
+      <ThemeToggle />
       {/* Left Side - LoginAnimation panel (desktop only) */}
       <div className="hidden lg:flex lg:w-1/2 flex-col" style={{ background: '#080c14', minHeight: '100vh' }}>
         <LoginAnimation />
