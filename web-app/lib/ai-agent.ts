@@ -267,7 +267,7 @@ ${input.notes && input.notes.trim()
 
     // @ts-ignore - LangChain types might be strict about message content structure but this is valid for Anthropic
     const response = await structuredModel.invoke(messages);
-    return postProcessRoutine(response as WeeklyRoutine);
+    return await postProcessRoutine(response as WeeklyRoutine);
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : String(err);
     const isOpenAIProvider = input.model_provider !== 'Anthropic';
@@ -289,7 +289,7 @@ ${input.notes && input.notes.trim()
       { role: "system", content: systemPromptContent },
       { role: "user", content: userContext }
     ]);
-    return postProcessRoutine(fallbackResponse as WeeklyRoutine);
+    return await postProcessRoutine(fallbackResponse as WeeklyRoutine);
   }
 
   // Removed try/catch to allow error propagation to the API route

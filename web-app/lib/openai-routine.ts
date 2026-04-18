@@ -387,7 +387,7 @@ export async function generateRoutineOpenAI(
 
       const parsed = coerceJsonObject(content);
       const validated = WeeklyRoutineSchema.parse(parsed);
-      return postProcessRoutine(validated as WeeklyRoutine);
+      return await postProcessRoutine(validated as WeeklyRoutine);
     } catch (err: unknown) {
       lastErr = err;
       if (attempt >= maxAttempts || !isRetryableNetworkError(err)) break;
