@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
 import { BrandLogo } from '@/components/BrandLogo'
 import { LoginMascot } from '@/components/LoginMascot'
+import LoginAnimation from '@/components/LoginAnimation'
 import { storeSessionIndicator } from '@/lib/useSessionPersistence'
 import { Mail, Lock } from 'lucide-react'
 
@@ -75,6 +76,16 @@ export default function LoginPage() {
       // Store session indicator in localStorage for Android persistence
       storeSessionIndicator()
 
+      // LoginAnimation state tracking
+      localStorage.setItem('hasAccount', 'true')
+      localStorage.setItem('lastLoginDate', new Date().toISOString())
+      localStorage.setItem('justLoggedOut', 'false')
+      // Save stats from auth response if present (populated on logout; ?? '' preserves existing value)
+      if (data.streak != null) localStorage.setItem('lastStreak', String(data.streak))
+      if (data.calories != null) localStorage.setItem('lastCalories', String(data.calories))
+      if (data.currentWeek != null) localStorage.setItem('lastWeek', String(data.currentWeek))
+      if (data.bestStreak != null) localStorage.setItem('bestStreak', String(data.bestStreak))
+
       if (isLogin) {
         router.replace('/dashboard')
       } else {
@@ -116,6 +127,10 @@ export default function LoginPage() {
             <p className="text-sm lg:text-base text-slate-400 max-w-sm mx-auto">
               Your personal AI fitness companion waiting to help you achieve your goals.
             </p>
+          </div>
+          {/* Context-aware animation panel — only shown on desktop */}
+          <div className="hidden lg:block w-full mt-6">
+            <LoginAnimation />
           </div>
         </motion.div>
       </div>

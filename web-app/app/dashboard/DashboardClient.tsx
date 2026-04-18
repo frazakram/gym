@@ -972,6 +972,13 @@ export default function DashboardPage() {
   }
 
   const handleLogout = async () => {
+    // Save stats for LoginAnimation State 2 BEFORE clearing session
+    localStorage.setItem('justLoggedOut', 'true')
+    if (streakData) {
+      localStorage.setItem('lastStreak', String(streakData.current))
+      localStorage.setItem('bestStreak', String(streakData.longest))
+    }
+    localStorage.setItem('lastWeek', String(currentWeekNumber))
     // Clear localStorage session indicator
     clearSessionIndicator()
     await csrfFetch('/api/auth/logout', { method: 'POST' })
