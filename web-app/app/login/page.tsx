@@ -123,7 +123,7 @@ export default function LoginPage() {
             <div className="flex justify-center mb-4">
               <BrandLogo size={72} className="rounded-3xl" />
             </div>
-            <h1 className="text-4xl font-semibold tracking-tight bg-gradient-to-r from-purple-400 via-violet-300 to-cyan-300 bg-clip-text text-transparent mb-2 font-display">
+            <h1 className="text-4xl font-semibold tracking-tight bg-gradient-to-r from-primary-light via-primary to-brand-cyan bg-clip-text text-transparent mb-2 font-display">
               Gym Bro
             </h1>
             <p className="text-sm text-slate-300/80">
@@ -131,7 +131,7 @@ export default function LoginPage() {
             </p>
           </motion.div>
 
-          <div className="glass glow-ring rounded-2xl p-6 sm:p-8 border border-purple-500/20">
+          <div className="glass glow-ring rounded-2xl p-6 sm:p-8 border border-primary/20">
             {/* Login / Register Toggle Tabs */}
             <motion.div {...staggerItem(baseDelay)} className="flex mb-6 glass-soft rounded-xl p-1">
               <button
@@ -141,7 +141,7 @@ export default function LoginPage() {
                 }}
                 className={`flex-1 py-2 rounded-md font-medium transition-all ${
                   isLogin
-                    ? 'bg-gradient-to-r from-purple-600 to-violet-500 text-white shadow-lg shadow-purple-500/25'
+                    ? 'bg-gradient-to-r from-primary to-primary-dark text-white shadow-lg shadow-primary/25'
                     : 'text-slate-300/70 hover:text-white'
                 }`}
               >
@@ -154,7 +154,7 @@ export default function LoginPage() {
                 }}
                 className={`flex-1 py-2 rounded-md font-medium transition-all ${
                   !isLogin
-                    ? 'bg-gradient-to-r from-purple-600 to-violet-500 text-white shadow-lg shadow-purple-500/25'
+                    ? 'bg-gradient-to-r from-primary to-primary-dark text-white shadow-lg shadow-primary/25'
                     : 'text-slate-300/70 hover:text-white'
                 }`}
               >
@@ -172,7 +172,7 @@ export default function LoginPage() {
                         setError('')
                         window.location.href = '/api/auth/google/start?returnTo=/dashboard'
                       }}
-                      className="w-full flex items-center justify-center gap-3 py-3 rounded-xl bg-white text-slate-900 font-semibold hover:bg-slate-100 transition shadow-lg shadow-purple-500/10"
+                      className="w-full flex items-center justify-center gap-3 py-3 rounded-xl bg-white text-slate-900 font-semibold hover:bg-slate-100 transition shadow-lg shadow-primary/10"
                     >
                       <svg width="18" height="18" viewBox="0 0 48 48" aria-hidden="true">
                         <path
@@ -220,7 +220,7 @@ export default function LoginPage() {
                       if (isLoginFailed) setIsLoginFailed(false)
                     }}
                     required
-                    className="w-full pl-10 pr-4 py-3 glass-soft rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500/60 text-white placeholder:text-slate-300/50 transition border border-transparent focus:border-purple-500/30"
+                    className="w-full pl-10 pr-4 py-3 glass-soft rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/60 text-white placeholder:text-slate-300/50 transition border border-transparent focus:border-primary/30"
                     placeholder="Enter your email or username"
                     autoComplete="username"
                   />
@@ -234,7 +234,7 @@ export default function LoginPage() {
                   </label>
                   <button
                     type="button"
-                    className="text-xs text-purple-300/70 hover:text-purple-200 transition"
+                    className="text-xs text-primary-light hover:text-white transition"
                     onClick={() => setError('')}
                   >
                     Forgot password?
@@ -254,7 +254,7 @@ export default function LoginPage() {
                     onFocus={() => setPasswordFocused(true)}
                     onBlur={() => setPasswordFocused(false)}
                     required
-                    className="w-full pl-10 pr-4 py-3 glass-soft rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500/60 text-white placeholder:text-slate-300/50 transition border border-transparent focus:border-purple-500/30"
+                    className="w-full pl-10 pr-4 py-3 glass-soft rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/60 text-white placeholder:text-slate-300/50 transition border border-transparent focus:border-primary/30"
                     placeholder="Enter your password"
                     autoComplete={isLogin ? 'current-password' : 'new-password'}
                   />
@@ -283,7 +283,7 @@ export default function LoginPage() {
                 <button
                   type="submit"
                   disabled={loading}
-                  className="w-full bg-gradient-to-r from-purple-600 to-violet-500 hover:from-purple-700 hover:to-violet-600 text-white font-semibold py-3 rounded-xl transition-all transform hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none shadow-lg shadow-purple-500/20"
+                  className="w-full bg-gradient-to-r from-primary to-primary-dark hover:brightness-110 text-white font-semibold py-3 rounded-xl transition-all transform hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none shadow-lg shadow-primary/25"
                 >
                   {loading ? 'Processing...' : isLogin ? 'Sign In' : 'Create Account'}
                 </button>
@@ -298,7 +298,7 @@ export default function LoginPage() {
                     Don&apos;t have an account?{' '}
                     <button
                       type="button"
-                      className="text-purple-300 hover:text-purple-200 transition font-medium"
+                      className="text-primary-light hover:text-white transition font-medium"
                       onClick={() => {
                         setIsLogin(false)
                         setError('')
@@ -312,7 +312,7 @@ export default function LoginPage() {
                     Already have an account?{' '}
                     <button
                       type="button"
-                      className="text-purple-300 hover:text-purple-200 transition font-medium"
+                      className="text-primary-light hover:text-white transition font-medium"
                       onClick={() => {
                         setIsLogin(true)
                         setError('')

@@ -463,7 +463,7 @@ export function AnalyticsView({ premiumStatus, onUpgrade }: AnalyticsViewProps) 
               'Streaks and consistency calendar',
               'Most skipped exercises',
             ].map((t) => (
-              <div key={t} className="glass-soft rounded-xl p-3 text-sm text-slate-200/85 border border-primary/10">
+              <div key={t} className="glass-soft rounded-xl p-3 text-sm text-white border border-primary/10 flex items-center gap-2.5">
                 {t}
               </div>
             ))}
@@ -472,7 +472,7 @@ export function AnalyticsView({ premiumStatus, onUpgrade }: AnalyticsViewProps) 
           <div className="mt-6 flex flex-col sm:flex-row gap-3">
             <button
               onClick={onUpgrade}
-              className="px-5 py-3 rounded-2xl font-semibold text-sm bg-gradient-to-r from-amber-400 to-orange-500 text-slate-900 shadow-lg shadow-amber-500/20 hover:shadow-amber-500/30 transition"
+              className="px-5 py-3 rounded-2xl font-semibold text-sm bg-gradient-to-r from-primary via-primary-dark to-brand-cyan text-white shadow-lg shadow-primary/25 hover:brightness-110 transition"
             >
               Upgrade for ₹1/month
             </button>
@@ -632,9 +632,9 @@ export function AnalyticsView({ premiumStatus, onUpgrade }: AnalyticsViewProps) 
               <>
                 <button
                   onClick={onUpgrade}
-                  className="px-3.5 py-2 rounded-2xl text-xs font-semibold bg-gradient-to-r from-amber-400 to-orange-500 text-slate-950 shadow-lg shadow-amber-500/20 hover:shadow-amber-500/30 transition"
+                  className="px-3.5 py-2 rounded-2xl text-xs font-semibold bg-gradient-to-r from-primary to-brand-cyan text-white shadow-lg shadow-primary/25 hover:brightness-110 transition"
                 >
-                  🚀 Upgrade now
+                  Upgrade now
                 </button>
                 <span className="px-2.5 py-1 rounded-full text-xs font-semibold bg-cyan-400/10 text-cyan-200 border border-cyan-400/20">
                   Trial Active
@@ -730,8 +730,8 @@ export function AnalyticsView({ premiumStatus, onUpgrade }: AnalyticsViewProps) 
                   onClick={() => setTrendMode(m)}
                   className={`px-3 py-1.5 rounded-full text-xs font-semibold border transition ${
                     trendMode === m
-                      ? 'bg-primary/12 border-primary/25 text-primary-lighter'
-                      : 'bg-white/5 border-primary/10 text-slate-200/80 hover:bg-white/10'
+                      ? 'bg-primary/12 border-primary/25 text-white'
+                      : 'bg-white/5 border-primary/10 text-muted hover:bg-white/10 hover:text-white'
                   }`}
                 >
                   {m === 'daily' ? 'Daily' : m === 'weekly' ? 'Weekly' : 'Monthly'}
@@ -766,8 +766,8 @@ export function AnalyticsView({ premiumStatus, onUpgrade }: AnalyticsViewProps) 
                   onClick={() => setCalendarMode('weeks')}
                   className={`px-3 py-1.5 rounded-full text-xs font-semibold border transition ${
                     calendarMode === 'weeks'
-                      ? 'bg-primary/12 border-primary/25 text-primary-lighter'
-                      : 'bg-white/5 border-primary/10 text-slate-200/80 hover:bg-white/10'
+                      ? 'bg-primary/12 border-primary/25 text-white'
+                      : 'bg-white/5 border-primary/10 text-muted hover:bg-white/10 hover:text-white'
                   }`}
                 >
                   12 weeks
@@ -776,8 +776,8 @@ export function AnalyticsView({ premiumStatus, onUpgrade }: AnalyticsViewProps) 
                   onClick={() => setCalendarMode('month')}
                   className={`px-3 py-1.5 rounded-full text-xs font-semibold border transition ${
                     calendarMode === 'month'
-                      ? 'bg-primary/12 border-primary/25 text-primary-lighter'
-                      : 'bg-white/5 border-primary/10 text-slate-200/80 hover:bg-white/10'
+                      ? 'bg-primary/12 border-primary/25 text-white'
+                      : 'bg-white/5 border-primary/10 text-muted hover:bg-white/10 hover:text-white'
                   }`}
                 >
                   Month
@@ -802,7 +802,7 @@ export function AnalyticsView({ premiumStatus, onUpgrade }: AnalyticsViewProps) 
                           className={`px-3 py-1.5 rounded-full text-xs font-semibold border transition ${
                             activeMonth === m
                               ? 'bg-white/10 border-white/15 text-white'
-                              : 'bg-white/5 border-primary/10 text-slate-200/80 hover:bg-white/10'
+                              : 'bg-white/5 border-primary/10 text-muted hover:bg-white/10 hover:text-white'
                           }`}
                         >
                           {m}
@@ -835,7 +835,7 @@ export function AnalyticsView({ premiumStatus, onUpgrade }: AnalyticsViewProps) 
                 {historyThumbs.map((w) => (
                   <div
                     key={w.key}
-                    className="rounded-2xl border border-primary/10 bg-white/5 hover:bg-white/7 transition p-3 flex items-center gap-3"
+                    className="rounded-2xl border border-primary/10 bg-white/5 hover:bg-white/10 transition p-3 flex items-center gap-3"
                     title={`${w.date} · ${w.dayName} · ${pctText(w.completion)}`}
                   >
                     <div className="relative shrink-0" data-muscle-popover="root">

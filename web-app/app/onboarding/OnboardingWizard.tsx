@@ -220,7 +220,7 @@ export default function OnboardingWizard({ isReset = false }: { isReset?: boolea
                 }`}
               />
               <span className={`text-xs font-medium transition-colors duration-300 ${
-                i <= step ? 'text-primary-lighter' : 'text-muted'
+                i <= step ? 'text-white' : 'text-muted'
               }`}>
                 {label}
               </span>
@@ -297,7 +297,7 @@ export default function OnboardingWizard({ isReset = false }: { isReset?: boolea
                               : 'border-primary/10 bg-white/5 hover:bg-primary/8'
                           }`}
                         >
-                          <span className={`text-sm font-medium ${level === l.value ? 'text-primary-lighter' : 'text-slate-300'}`}>
+                          <span className={`text-sm font-medium ${level === l.value ? 'text-white' : 'text-slate-300'}`}>
                             {l.label}
                           </span>
                           <span className="text-xs text-muted">{l.desc}</span>
@@ -417,8 +417,8 @@ export default function OnboardingWizard({ isReset = false }: { isReset?: boolea
                 {/* Friendly tip */}
                 <motion.div custom={1} variants={fadeUp} initial="hidden" animate="visible">
                   <div className="flex items-start gap-3 px-4 py-3 rounded-xl bg-primary/8 border border-primary/15">
-                    <Sparkles className="w-4 h-4 text-primary-light mt-0.5 shrink-0" />
-                    <p className="text-xs text-primary-lighter/80 leading-relaxed">
+                    <Sparkles className="w-4 h-4 text-white mt-0.5 shrink-0" />
+                    <p className="text-xs text-white/80 leading-relaxed">
                       Don&apos;t worry about being exact — you can always fine-tune these later in your profile.
                     </p>
                   </div>
@@ -454,7 +454,7 @@ export default function OnboardingWizard({ isReset = false }: { isReset?: boolea
                           }`}
                         >
                           <span className={`text-sm font-medium ${
-                            tenure === t.value ? 'text-primary-lighter' : 'text-slate-300'
+                            tenure === t.value ? 'text-white' : 'text-slate-300'
                           }`}>
                             {t.label}
                           </span>

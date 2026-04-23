@@ -151,7 +151,7 @@ export function ExerciseCard({
           <div>
             <button
               onClick={() => setIsExpanded(!isExpanded)}
-              className="w-full flex items-center justify-between text-sm font-semibold text-slate-100 mb-2 hover:text-primary-light transition"
+              className="w-full flex items-center justify-between text-sm font-semibold text-slate-100 mb-2 hover:text-white transition"
             >
               <span>Tutorial Points</span>
               <ChevronDown className={`w-4 h-4 transition-transform ${isExpanded ? 'rotate-180' : ''}`} />

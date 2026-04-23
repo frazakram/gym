@@ -336,7 +336,7 @@ export function Sidebar({
                               }}
                               className={`flex-1 px-3 py-2 rounded-lg text-xs font-semibold border transition-all ${
                                 aiSettings.modelProvider === p
-                                  ? 'bg-primary/15 border-primary/40 text-primary-lighter'
+                                  ? 'bg-primary/15 border-primary/40 text-white'
                                   : 'bg-white/5 border-white/10 text-gray-600 dark:text-slate-300 hover:bg-white/10'
                               }`}
                             >
@@ -394,7 +394,7 @@ export function Sidebar({
                         className={`w-full flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-xs font-semibold transition-all ${
                           keySaved
                             ? 'bg-emerald-500/15 border border-emerald-500/30 text-emerald-300'
-                            : 'bg-primary/15 border border-primary/30 text-primary-lighter hover:bg-primary/25'
+                            : 'bg-primary/15 border border-primary/30 text-white hover:bg-primary/25'
                         }`}
                       >
                         {keySaved ? (

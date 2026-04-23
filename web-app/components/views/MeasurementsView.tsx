@@ -60,7 +60,7 @@ function TrendChart({ data, label, unit, color }: { data: { date: string; value:
   return (
     <div className="space-y-2">
       <div className="flex items-center justify-between">
-        <span className="text-xs font-medium text-primary-lighter">{label}</span>
+        <span className="text-xs font-medium text-white">{label}</span>
         <div className="flex items-center gap-1.5">
           <span className="text-sm font-bold text-white">{last.toFixed(1)} {unit}</span>
           {diff !== 0 && (
@@ -373,7 +373,7 @@ export function MeasurementsView() {
                 >
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 flex-wrap">
-                      <span className="text-xs font-medium text-primary-lighter">{m.measured_at}</span>
+                      <span className="text-xs font-medium text-white">{m.measured_at}</span>
                       {m.weight != null && (
                         <span className="text-xs text-white/80">{m.weight} kg</span>
                       )}

@@ -524,7 +524,7 @@ export function ProfileView({
                 <p className="text-xs font-medium text-primary">Detected Equipment</p>
                 <div className="flex flex-wrap gap-1.5">
                   {equipmentAnalysis.equipment_detected?.map((item, i) => (
-                    <span key={i} className="text-xs px-2 py-0.5 rounded-full bg-primary/15 text-primary-lighter">
+                    <span key={i} className="text-xs px-2 py-0.5 rounded-full bg-primary/15 text-white">
                       {item}
                     </span>
                   ))}
@@ -598,7 +598,7 @@ export function ProfileView({
                     <p className="text-xs text-muted mb-1">Focus Areas:</p>
                     <div className="flex flex-wrap gap-1.5">
                       {bodyAnalysis.focus_areas.map((area, i) => (
-                        <span key={i} className="text-xs px-2 py-0.5 rounded-full bg-primary/15 text-primary-lighter">
+                        <span key={i} className="text-xs px-2 py-0.5 rounded-full bg-primary/15 text-white">
                           {area}
                         </span>
                       ))}
@@ -814,7 +814,7 @@ export function ProfileView({
 
       <Link
         href="/onboarding?reset=true"
-        className="w-full py-3 px-4 rounded-2xl bg-primary/12 hover:bg-primary/20 text-primary-lighter flex items-center justify-center gap-2 text-sm font-medium transition border border-primary/20 ui-focus-ring mb-3"
+        className="w-full py-3 px-4 rounded-2xl bg-primary/12 hover:bg-primary/20 text-white flex items-center justify-center gap-2 text-sm font-medium transition border border-primary/20 ui-focus-ring mb-3"
       >
         <Settings className="w-4 h-4" />
         Quick Re-setup (Wizard)

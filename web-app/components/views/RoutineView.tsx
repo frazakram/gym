@@ -17,13 +17,13 @@ import { RestDayCard } from '../ui/RestDayCard'
 // Map workout day titles to visual accent colors
 function getDayTypeColors(dayName: string): { pill: string; border: string } {
   const n = dayName.toLowerCase()
-  if (n.includes('push'))       return { pill: 'bg-primary/15 border-primary/30 text-primary-lighter', border: 'border-primary/25' }
-  if (n.includes('pull'))       return { pill: 'bg-brand-cyan/12 border-brand-cyan/30 text-brand-cyan-light', border: 'border-brand-cyan/20' }
-  if (n.includes('leg'))        return { pill: 'bg-emerald-500/12 border-emerald-500/25 text-emerald-300', border: 'border-emerald-500/15' }
-  if (n.includes('full') || n.includes('total')) return { pill: 'bg-amber-400/12 border-amber-400/25 text-amber-300', border: 'border-amber-400/15' }
-  if (n.includes('rest') || n.includes('recov')) return { pill: 'bg-white/5 border-white/8 text-muted', border: 'border-white/8' }
-  if (n.includes('cardio') || n.includes('hiit')) return { pill: 'bg-coral/12 border-coral/25 text-coral-light', border: 'border-coral/15' }
-  return { pill: 'bg-primary/10 border-primary/20 text-primary-lighter', border: 'border-primary/15' }
+  if (n.includes('push'))       return { pill: 'bg-primary/20 border-primary/40 text-white font-semibold', border: 'border-primary/25' }
+  if (n.includes('pull'))       return { pill: 'bg-brand-cyan/20 border-brand-cyan/40 text-white font-semibold', border: 'border-brand-cyan/20' }
+  if (n.includes('leg'))        return { pill: 'bg-emerald-500/20 border-emerald-500/40 text-white font-semibold', border: 'border-emerald-500/15' }
+  if (n.includes('full') || n.includes('total')) return { pill: 'bg-amber-400/20 border-amber-400/40 text-white font-semibold', border: 'border-amber-400/15' }
+  if (n.includes('rest') || n.includes('recov')) return { pill: 'bg-white/8 border-white/15 text-muted font-semibold', border: 'border-white/8' }
+  if (n.includes('cardio') || n.includes('hiit')) return { pill: 'bg-coral/20 border-coral/40 text-white font-semibold', border: 'border-coral/15' }
+  return { pill: 'bg-primary/15 border-primary/30 text-white font-semibold', border: 'border-primary/15' }
 }
 
 const stagger = {
@@ -165,7 +165,7 @@ export function RoutineView({
                     key={index}
                     className="flex items-start gap-3 bg-white/5 border border-primary/10 rounded-2xl px-3 py-3 hover:bg-white/8 transition-colors"
                   >
-                    <span className="mt-0.5 flex-shrink-0 w-6 h-6 rounded-full bg-primary/20 border border-primary/30 flex items-center justify-center text-[10px] font-semibold text-primary-lighter">
+                    <span className="mt-0.5 flex-shrink-0 w-6 h-6 rounded-full bg-primary/20 border border-primary/40 flex items-center justify-center text-[10px] font-bold text-white">
                       {index + 1}
                     </span>
                     <div className="min-w-0 flex-1">
@@ -176,18 +176,18 @@ export function RoutineView({
                     <div className="shrink-0 flex flex-col items-end gap-1 text-xs text-slate-200/80">
                       <div className="flex items-center gap-1.5">
                         {typeof meta.sets === 'number' ? (
-                          <span className="inline-flex items-center rounded-full bg-white/5 border border-primary/10 px-2 py-0.5">
+                          <span className="inline-flex items-center rounded-full bg-primary/15 border border-primary/30 text-white font-medium px-2 py-0.5">
                             {meta.sets} sets
                           </span>
                         ) : null}
                         {typeof meta.reps === 'number' ? (
-                          <span className="inline-flex items-center rounded-full bg-white/5 border border-primary/10 px-2 py-0.5">
+                          <span className="inline-flex items-center rounded-full bg-brand-cyan/15 border border-brand-cyan/30 text-white font-medium px-2 py-0.5">
                             {meta.reps} reps
                           </span>
                         ) : null}
                       </div>
                       {typeof meta.restSeconds === 'number' ? (
-                        <span className="inline-flex items-center rounded-full bg-emerald-400/10 border border-emerald-400/20 px-2 py-0.5 text-emerald-100">
+                        <span className="inline-flex items-center rounded-full bg-emerald-500/15 border border-emerald-500/30 px-2 py-0.5 text-white font-medium">
                           Rest {meta.restSeconds}s
                         </span>
                       ) : null}

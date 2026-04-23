@@ -230,7 +230,7 @@ export function WorkoutView({
                 transition={{ delay: 0.4 }}
               >
                 Great job finishing today&apos;s workout
-                {elapsed > 0 && <span className="ml-1 text-primary-lighter">· {formatTime(elapsed)}</span>}
+                {elapsed > 0 && <span className="ml-1 text-white">· {formatTime(elapsed)}</span>}
               </motion.p>
             </div>
           </motion.div>

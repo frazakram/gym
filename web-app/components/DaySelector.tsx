@@ -28,8 +28,8 @@ export function DaySelector({ selectedDay, onDayChange, daysInRoutine = 7 }: Day
                 relative px-4 py-2.5 rounded-xl min-w-[60px] font-semibold text-sm
                 transition-all duration-200
                 ${isSelected
-                  ? 'bg-primary/14 border border-primary/25 text-primary-lighter shadow-[0_12px_34px_rgba(139,92,246,0.14)]'
-                  : 'glass-soft border border-primary/10 text-slate-300 hover:text-white hover:bg-primary/8'
+                  ? 'bg-primary/20 border border-primary/40 text-white font-bold shadow-[0_12px_34px_rgba(139,92,246,0.14)]'
+                  : 'glass-soft border border-primary/20 text-white hover:bg-primary/12'
                 }
                 ui-focus-ring
               `}

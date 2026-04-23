@@ -42,7 +42,7 @@ export default function LandingPage() {
       >
         <BrandLogo size={72} className="mb-4" />
         <h1 className="text-3xl font-bold text-gray-900 dark:text-white tracking-tight font-display">
-          Gym<span className="text-[#22c55e]">Bro</span>
+          Gym<span className="bg-gradient-to-r from-primary to-brand-cyan bg-clip-text text-transparent">Bro</span>
         </h1>
         <p className="mt-2 text-sm text-gray-500 dark:text-white/50 text-center max-w-[280px]">
           Build a routine, eat better, and actually stick to it this time
@@ -62,7 +62,7 @@ export default function LandingPage() {
 
           {/* Step 1 */}
           <div className="relative flex gap-4 pb-7">
-            <div className="shrink-0 w-7 h-7 rounded-full bg-[#22c55e] flex items-center justify-center z-10">
+            <div className="shrink-0 w-7 h-7 rounded-full bg-primary flex items-center justify-center z-10 shadow-[0_0_12px_rgba(139,92,246,0.4)]">
               <span className="text-white text-xs font-bold">1</span>
             </div>
             <div className="pt-0.5">
@@ -77,7 +77,7 @@ export default function LandingPage() {
 
           {/* Step 2 */}
           <div className="relative flex gap-4 pb-7">
-            <div className="shrink-0 w-7 h-7 rounded-full bg-[#22c55e] flex items-center justify-center z-10">
+            <div className="shrink-0 w-7 h-7 rounded-full bg-primary flex items-center justify-center z-10 shadow-[0_0_12px_rgba(139,92,246,0.4)]">
               <span className="text-white text-xs font-bold">2</span>
             </div>
             <div className="pt-0.5">
@@ -92,7 +92,7 @@ export default function LandingPage() {
 
           {/* Step 3 */}
           <div className="relative flex gap-4">
-            <div className="shrink-0 w-7 h-7 rounded-full bg-[#22c55e] flex items-center justify-center z-10">
+            <div className="shrink-0 w-7 h-7 rounded-full bg-primary flex items-center justify-center z-10 shadow-[0_0_12px_rgba(139,92,246,0.4)]">
               <span className="text-white text-xs font-bold">3</span>
             </div>
             <div className="pt-0.5">
@@ -116,7 +116,7 @@ export default function LandingPage() {
       >
         <button
           onClick={() => router.push('/demo')}
-          className="w-full rounded-xl bg-[#22c55e] px-6 py-3.5 text-sm font-semibold text-white shadow-sm hover:bg-[#16a34a] transition-all active:scale-[0.98]"
+          className="w-full rounded-xl bg-gradient-to-r from-primary via-primary-dark to-brand-cyan px-6 py-3.5 text-sm font-semibold text-white shadow-sm hover:brightness-110 transition-all active:scale-[0.98]"
         >
           Try it for free
         </button>

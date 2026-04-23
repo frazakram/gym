@@ -130,7 +130,7 @@ export function HomeView({
             </p>
           </div>
         </div>
-        <div className="shrink-0 glass-soft rounded-full px-3 py-1.5 text-xs text-primary-light border border-primary/20">
+        <div className="shrink-0 glass-soft rounded-full px-3 py-1.5 text-xs text-white border border-primary/20">
           Week {currentWeekNumber}
         </div>
       </motion.div>
