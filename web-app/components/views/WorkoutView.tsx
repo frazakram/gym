@@ -1,6 +1,7 @@
 'use client'
 
 import { motion, AnimatePresence } from 'framer-motion'
+import { useEffect, useRef, useState } from 'react'
 import { WeeklyRoutine } from '@/types'
 import { ExerciseCard } from '../ExerciseCard'
 import { SwipeableExerciseWrapper } from '../ui/SwipeableExercise'
@@ -71,6 +72,22 @@ export function WorkoutView({
   const isRestDay = totalCount === 0
   const restDone = Boolean(dayCompletions.get(selectedDayIndex))
   const allComplete = completedCount === totalCount && totalCount > 0
+  
+  // Elapsed timer — starts on first exercise toggle
+  const [elapsed, setElapsed] = useState(0)
+  const [timerStarted, setTimerStarted] = useState(false)
+  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
+
+  useEffect(() => {
+    if (!timerStarted || allComplete) return
+    intervalRef.current = setInterval(() => setElapsed(s => s + 1), 1000)
+    return () => { if (intervalRef.current) clearInterval(intervalRef.current) }
+  }, [timerStarted, allComplete])
+
+  const formatTime = (s: number) => {
+    const m = Math.floor(s / 60), sec = s % 60
+    return `${String(m).padStart(2, '0')}:${String(sec).padStart(2, '0')}`
+  }
 
   return (
     <div className="pb-24">
@@ -162,7 +179,10 @@ export function WorkoutView({
                       exerciseIndex={exerciseIndex}
                       routineId={currentRoutineId}
                       isCompleted={isCompleted}
-                      onToggle={(completed) => onToggleExercise(selectedDayIndex, exerciseIndex, completed)}
+                      onToggle={(completed) => {
+                        if (!timerStarted) setTimerStarted(true)
+                        onToggleExercise(selectedDayIndex, exerciseIndex, completed)
+                      }}
                       onEnsureRoutineSaved={onEnsureRoutineSaved}
                     />
                   </SwipeableExerciseWrapper>
@@ -210,6 +230,7 @@ export function WorkoutView({
                 transition={{ delay: 0.4 }}
               >
                 Great job finishing today&apos;s workout
+                {elapsed > 0 && <span className="ml-1 text-primary-lighter">· {formatTime(elapsed)}</span>}
               </motion.p>
             </div>
           </motion.div>

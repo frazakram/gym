@@ -531,7 +531,12 @@ export function CoachView({
                       ) : null
                     })()}
                   </div>
-                  <div className="shrink-0 text-xs text-slate-200/80 glass-soft px-2.5 py-1 rounded-full border border-primary/10">
+                  <div className={`shrink-0 text-xs px-2.5 py-1 rounded-full border font-medium ${
+                      b.status === 'confirmed' ? 'bg-emerald-500/15 border-emerald-500/25 text-emerald-300' :
+                      b.status === 'pending'   ? 'bg-amber-400/15 border-amber-400/25 text-amber-300' :
+                      b.status === 'cancelled' ? 'bg-red-500/12 border-red-500/20 text-red-300' :
+                      'glass-soft border-primary/10 text-slate-200/80'
+                    }`}>
                     {b.status}
                   </div>
                 </div>

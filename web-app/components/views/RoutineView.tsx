@@ -14,6 +14,18 @@ import { parseSetsReps } from '@/lib/setsReps'
 import { ExerciseListSkeleton } from '../ui/SkeletonLoader'
 import { RestDayCard } from '../ui/RestDayCard'
 
+// Map workout day titles to visual accent colors
+function getDayTypeColors(dayName: string): { pill: string; border: string } {
+  const n = dayName.toLowerCase()
+  if (n.includes('push'))       return { pill: 'bg-primary/15 border-primary/30 text-primary-lighter', border: 'border-primary/25' }
+  if (n.includes('pull'))       return { pill: 'bg-brand-cyan/12 border-brand-cyan/30 text-brand-cyan-light', border: 'border-brand-cyan/20' }
+  if (n.includes('leg'))        return { pill: 'bg-emerald-500/12 border-emerald-500/25 text-emerald-300', border: 'border-emerald-500/15' }
+  if (n.includes('full') || n.includes('total')) return { pill: 'bg-amber-400/12 border-amber-400/25 text-amber-300', border: 'border-amber-400/15' }
+  if (n.includes('rest') || n.includes('recov')) return { pill: 'bg-white/5 border-white/8 text-muted', border: 'border-white/8' }
+  if (n.includes('cardio') || n.includes('hiit')) return { pill: 'bg-coral/12 border-coral/25 text-coral-light', border: 'border-coral/15' }
+  return { pill: 'bg-primary/10 border-primary/20 text-primary-lighter', border: 'border-primary/15' }
+}
+
 const stagger = {
   hidden: {},
   visible: { transition: { staggerChildren: 0.06, delayChildren: 0.1 } },
@@ -94,11 +106,18 @@ export function RoutineView({
       <motion.div variants={stagger} initial="hidden" animate="visible">
       {/* Header */}
       <motion.div variants={fadeUp} className="px-4 pt-4 pb-3">
-        <h1 className="text-[18px] font-semibold tracking-tight text-white mb-0.5 font-display">
-          {currentDay?.day || 'Select a Day'}
-        </h1>
+        <div className="flex items-center gap-2 flex-wrap">
+          <h1 className="text-[18px] font-semibold tracking-tight text-white mb-0.5 font-display">
+            {currentDay?.day || 'Select a Day'}
+          </h1>
+          {currentDay?.day && (
+            <span className={`text-xs px-2.5 py-0.5 rounded-full border font-medium ${getDayTypeColors(currentDay.day).pill}`}>
+              {isRestDay ? 'Rest' : currentDay.day.split(' ').slice(-1)[0]}
+            </span>
+          )}
+        </div>
         <p className="text-xs text-muted">
-          {isRestDay ? 'Rest & Recovery' : `${currentDay?.exercises?.length || 0} exercises`}
+          {isRestDay ? 'Rest & Recovery' : `${currentDay?.exercises?.length || 0} exercises · est. ${estimatedMinutes} min`}
         </p>
       </motion.div>
 
@@ -144,9 +163,12 @@ export function RoutineView({
                 return (
                   <div
                     key={index}
-                    className="flex items-start justify-between gap-3 bg-white/5 border border-primary/10 rounded-2xl px-3.5 py-3"
+                    className="flex items-start gap-3 bg-white/5 border border-primary/10 rounded-2xl px-3 py-3 hover:bg-white/8 transition-colors"
                   >
-                    <div className="min-w-0">
+                    <span className="mt-0.5 flex-shrink-0 w-6 h-6 rounded-full bg-primary/20 border border-primary/30 flex items-center justify-center text-[10px] font-semibold text-primary-lighter">
+                      {index + 1}
+                    </span>
+                    <div className="min-w-0 flex-1">
                       <p className="text-sm font-medium text-white/90 truncate">{exercise.name}</p>
                       <p className="mt-0.5 text-xs text-muted truncate">{exercise.sets_reps}</p>
                     </div>

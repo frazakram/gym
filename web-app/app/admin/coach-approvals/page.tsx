@@ -119,7 +119,15 @@ export default function AdminCoachApprovalsPage() {
     <div className="min-h-screen bg-transparent">
       <div className="max-w-screen-md mx-auto pb-24 px-4 pt-6 space-y-4">
         <GlassCard className="p-4">
-          <SectionHeader title="Admin" subtitle="Approve or reject coach signups" />
+          <SectionHeader
+            title="Admin · Coach Approvals"
+            subtitle="Approve or reject coach signups"
+            right={
+              <span className="text-xs bg-red-500/15 border border-red-500/20 text-red-300 px-2.5 py-1 rounded-full font-medium">
+                Admin
+              </span>
+            }
+          />
           <div className="mt-3 flex flex-col sm:flex-row gap-2">
             <select
               value={statusFilter}
@@ -167,77 +175,80 @@ export default function AdminCoachApprovalsPage() {
             ) : (
               <div className="mt-3 space-y-2">
                 {rows.map((r) => (
-                  <div key={r.id} className="rounded-xl border border-white/10 bg-white/5 p-3">
-                    <div className="flex items-start justify-between gap-3">
-                      <div className="min-w-0">
-                        <p className="text-sm font-semibold text-white">
-                          Coach #{r.id}{' '}
-                          <span className="text-slate-300/70 font-normal">
-                            • user {r.user_id}
-                            {r.username ? ` (${r.username})` : ''}
+                  <div key={r.id} className="rounded-2xl border border-primary/15 bg-white/5 p-4 space-y-3">
+                    {/* Row header */}
+                    <div className="flex items-start gap-3">
+                      <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary to-brand-cyan flex items-center justify-center text-white font-bold text-sm shrink-0">
+                        {(r.profile?.display_name ?? r.username ?? 'C').charAt(0).toUpperCase()}
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <p className="text-sm font-semibold text-white">
+                            {r.profile?.display_name ?? r.username ?? `Coach #${r.id}`}
+                          </p>
+                          <span className={`text-[10px] px-2 py-0.5 rounded-full border font-semibold ${
+                            r.status === 'approved' ? 'bg-emerald-500/15 border-emerald-500/25 text-emerald-300' :
+                            r.status === 'rejected' ? 'bg-red-500/12 border-red-500/20 text-red-300' :
+                            'bg-amber-400/15 border-amber-400/25 text-amber-300'
+                          }`}>
+                            {r.status}
                           </span>
+                        </div>
+                        <p className="text-xs text-muted mt-0.5">
+                          {r.profile?.experience_years != null ? `${r.profile.experience_years}y exp · ` : ''}
+                          user {r.user_id}{r.username ? ` (${r.username})` : ''}
                         </p>
-                        <p className="text-xs text-slate-300/70 mt-1">
-                          Status: <span className="text-slate-200">{r.status}</span>
-                        </p>
+                      </div>
+                    </div>
 
-                        {r.profile ? (
-                          <div className="mt-2 text-xs text-slate-200/80 space-y-1">
-                            <div>
-                              <span className="text-slate-300/70">Name:</span> {r.profile.display_name}
-                            </div>
-                            <div>
-                              <span className="text-slate-300/70">Experience:</span>{' '}
-                              {r.profile.experience_years != null ? `${r.profile.experience_years} years` : '—'}
-                            </div>
-                            <div>
-                              <span className="text-slate-300/70">Email:</span> {r.profile.email || '—'}{' '}
-                              <span className="text-slate-300/70">Phone:</span> {r.profile.phone || '—'}
-                            </div>
-                            {r.profile.certifications ? (
-                              <div>
-                                <span className="text-slate-300/70">Certifications:</span> {r.profile.certifications}
-                              </div>
-                            ) : null}
-                            {r.profile.bio ? (
-                              <div className="text-slate-200/80 whitespace-pre-wrap">
-                                <span className="text-slate-300/70">Bio:</span> {r.profile.bio}
-                              </div>
-                            ) : null}
+                    {/* Profile details */}
+                    {r.profile ? (
+                      <div className="rounded-xl bg-white/3 border border-white/6 p-3 space-y-1.5 text-xs">
+                        {r.profile.email || r.profile.phone ? (
+                          <div className="flex gap-4 flex-wrap">
+                            {r.profile.email && <span><span className="text-muted">Email:</span> <span className="text-slate-200">{r.profile.email}</span></span>}
+                            {r.profile.phone && <span><span className="text-muted">Phone:</span> <span className="text-slate-200">{r.profile.phone}</span></span>}
                           </div>
-                        ) : (
-                          <div className="mt-2 text-xs text-slate-300/70">No profile attached.</div>
+                        ) : null}
+                        {r.profile.certifications && (
+                          <div><span className="text-muted">Cert:</span> <span className="text-slate-200">{r.profile.certifications}</span></div>
+                        )}
+                        {r.profile.bio && (
+                          <p className="text-slate-200/80 mt-1 line-clamp-3">{r.profile.bio}</p>
                         )}
                       </div>
+                    ) : (
+                      <p className="text-xs text-muted">No profile attached.</p>
+                    )}
 
-                      <div className="shrink-0 flex flex-col items-end gap-2 w-56">
-                        <select
-                          value={r.status}
-                          onChange={(e) => void setStatus(r.id, e.target.value as any)}
-                          className="px-3 py-2 glass-soft rounded-xl text-white ui-focus-ring border border-white/10 bg-transparent text-xs w-full"
-                        >
-                          {STATUS.map((s) => (
-                            <option key={s} value={s} className="bg-slate-900">
-                              {s}
-                            </option>
-                          ))}
-                        </select>
-                        <textarea
-                          value={notesDraft[r.id] ?? r.admin_notes ?? ''}
-                          onChange={(e) => setNotesDraft((prev) => ({ ...prev, [r.id]: e.target.value }))}
-                          placeholder="Admin notes (optional)"
-                          rows={3}
-                          className="w-full rounded-xl bg-slate-900/60 border border-white/10 px-3 py-2 text-xs text-white outline-none focus:ring-2 focus:ring-cyan-400/30 resize-none"
-                        />
-                        <AnimatedButton
-                          type="button"
-                          variant="secondary"
-                          fullWidth
-                          onClick={() => void setStatus(r.id, r.status)}
-                        >
-                          Save
-                        </AnimatedButton>
-                      </div>
+                    {/* Admin notes + quick action */}
+                    <textarea
+                      value={notesDraft[r.id] ?? r.admin_notes ?? ''}
+                      onChange={(e) => setNotesDraft((prev) => ({ ...prev, [r.id]: e.target.value }))}
+                      placeholder="Admin notes (optional)"
+                      rows={2}
+                      className="w-full rounded-xl bg-slate-900/60 border border-white/10 px-3 py-2 text-xs text-white outline-none focus:ring-2 focus:ring-primary/30 resize-none"
+                    />
+                    <div className="flex gap-2">
+                      <AnimatedButton
+                        type="button"
+                        variant="primary"
+                        fullWidth
+                        onClick={() => void setStatus(r.id, 'approved')}
+                        disabled={r.status === 'approved'}
+                      >
+                        Approve
+                      </AnimatedButton>
+                      <AnimatedButton
+                        type="button"
+                        variant="ghost"
+                        fullWidth
+                        onClick={() => void setStatus(r.id, 'rejected')}
+                        disabled={r.status === 'rejected'}
+                        className="!border-red-500/20 !text-red-300 hover:!bg-red-500/10"
+                      >
+                        Reject
+                      </AnimatedButton>
                     </div>
                   </div>
                 ))}
