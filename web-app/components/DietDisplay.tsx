@@ -72,7 +72,7 @@ export const DietDisplay: React.FC<DietDisplayProps> = ({ diet }) => {
                   <div className="flex items-center justify-between gap-3">
                     <div className="min-w-0">
                       <div className="flex items-center gap-2">
-                        <p className={`text-sm font-semibold truncate ${isToday ? 'text-primary-lighter' : 'text-white'}`}>
+                        <p className={`text-sm font-semibold truncate ${isToday ? 'text-primary-dark dark:text-primary-lighter' : 'text-gray-800 dark:text-white'}`}>
                           {displayDay}
                         </p>
                         {isToday && (
