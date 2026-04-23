@@ -11,11 +11,11 @@
   --background: #ffffff;
   --foreground: #111827;
 
-  /* Feature icon accent colors (light mode: all green) */
-  --feature-color-1: #22c55e;
-  --feature-color-2: #22c55e;
-  --feature-color-3: #22c55e;
-  --feature-color-4: #22c55e;
+  /* Feature icon accent colors (light mode: brand palette) */
+  --feature-color-1: #7C3AED;
+  --feature-color-2: #10B981;
+  --feature-color-3: #F59E0B;
+  --feature-color-4: #06B6D4;
 }
 
 .dark {
@@ -50,11 +50,11 @@ html:not(.dark) {
   --navy-2: #f3f4f6;
   --navy-3: #e5e7eb;
 
-  /* Primary → green */
-  --primary: #22c55e;
-  --primary-light: #4ade80;
-  --primary-dark: #16a34a;
-  --primary-glow: rgba(34, 197, 94, 0.2);
+  /* Primary → keep purple in light mode too */
+  --primary: #7C3AED;
+  --primary-light: #8B5CF6;
+  --primary-dark: #6D28D9;
+  --primary-glow: rgba(124, 58, 237, 0.2);
 
   /* Light glass surfaces */
   --glass: rgba(255, 255, 255, 0.98);
@@ -121,7 +121,8 @@ html:not(.dark) .panel-solid {
   html:not(.dark) [class*="bg-gradient"] [class*="text-white"],
   html:not(.dark) [class*="bg-primary"] [class*="text-white"],
   html:not(.dark) [class*="bg-green"] [class*="text-white"],
-  html:not(.dark) [class*="bg-\[#22c55e\]"] [class*="text-white"],
+  html:not(.dark) [class*="bg-purple"] [class*="text-white"],
+  html:not(.dark) [class*="bg-violet"] [class*="text-white"],
   html:not(.dark) [class*="bg-coral"] [class*="text-white"] {
     color: white;
   }
@@ -132,7 +133,8 @@ html:not(.dark) .panel-solid {
   html:not(.dark) [class*="bg-gradient"][class*="text-white"],
   html:not(.dark) [class*="bg-primary"][class*="text-white"],
   html:not(.dark) [class*="bg-green"][class*="text-white"],
-  html:not(.dark) [class*="bg-\[#22c55e\]"][class*="text-white"] {
+  html:not(.dark) [class*="bg-purple"][class*="text-white"],
+  html:not(.dark) [class*="bg-violet"][class*="text-white"] {
     color: white;
   }
 }
