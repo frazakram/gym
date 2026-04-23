@@ -118,10 +118,17 @@ export default function LoginAnimation() {
   const [wordIdx, setWordIdx] = useState(0);
   const [displayed, setDisplayed] = useState('');
   const [typing, setTyping] = useState(true);
+  const [isDark, setIsDark] = useState(true);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   useEffect(() => {
     setData(resolveAnimData());
+    const root = document.documentElement;
+    const sync = () => setIsDark(root.classList.contains('dark'));
+    sync();
+    const obs = new MutationObserver(sync);
+    obs.observe(root, { attributes: true, attributeFilter: ['class'] });
+    return () => obs.disconnect();
   }, []);
 
   useEffect(() => {
@@ -159,37 +166,55 @@ export default function LoginAnimation() {
 
   const showPersonalLine = data.state !== 'new' && (data.streak || data.week);
 
+  const labelColor = isDark ? 'rgba(255,255,255,0.4)' : 'rgba(30,41,59,0.55)';
+  const headlineColor = isDark ? 'white' : '#0f172a';
+  const streakColor = isDark ? 'rgba(255,255,255,0.35)' : 'rgba(30,41,59,0.5)';
+  const pillTitleColor = isDark ? 'white' : '#0f172a';
+  const pillSubtitleColor = isDark ? 'rgba(255,255,255,0.4)' : 'rgba(30,41,59,0.6)';
+
   return (
     <>
       <style>{`
         @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
         .login-cursor { animation: blink 1s step-end infinite; }
         @keyframes pillIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
-        .login-pill { animation: pillIn 0.4s ease both; }
+        .login-pill {
+          animation: pillIn 0.4s ease both;
+          transition: transform 0.25s ease, box-shadow 0.25s ease, background 0.25s ease;
+        }
+        .login-pill:hover {
+          transform: translateY(-2px);
+          box-shadow: 0 10px 28px rgba(124, 58, 237, 0.18);
+        }
         .login-pill:nth-child(1) { animation-delay: 0.05s; }
         .login-pill:nth-child(2) { animation-delay: 0.15s; }
         .login-pill:nth-child(3) { animation-delay: 0.25s; }
+        @keyframes underlineGrow {
+          from { width: 0; opacity: 0; }
+          to { width: 48px; opacity: 1; }
+        }
+        .login-underline { animation: underlineGrow 0.7s ease 0.2s both; }
       `}</style>
 
       <div style={{ padding: '48px', height: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'center', userSelect: 'none' }}>
 
         {/* Greeting label */}
-        <p style={{ fontSize: '11px', letterSpacing: '4px', color: 'rgba(255,255,255,0.4)', marginBottom: '12px', textTransform: 'uppercase' }}>
+        <p style={{ fontSize: '11px', letterSpacing: '4px', color: labelColor, marginBottom: '12px', textTransform: 'uppercase' }}>
           {data.greeting}
         </p>
 
         {/* Typewriter */}
-        <div style={{ fontSize: '52px', fontWeight: 700, color: 'white', letterSpacing: '-1px', minHeight: '72px', lineHeight: 1.1 }}>
+        <div style={{ fontSize: '52px', fontWeight: 700, color: headlineColor, letterSpacing: '-1px', minHeight: '72px', lineHeight: 1.1 }}>
           {displayed}
           <span className="login-cursor" style={{ color: '#7c3aed', marginLeft: '2px' }}>|</span>
         </div>
 
         {/* Purple underline */}
-        <div style={{ width: '48px', height: '2px', background: '#7c3aed', margin: '16px 0 28px 0', borderRadius: '1px' }} />
+        <div className="login-underline" style={{ height: '2px', background: '#7c3aed', margin: '16px 0 28px 0', borderRadius: '1px' }} />
 
         {/* Personalized streak line for returning users */}
         {showPersonalLine && (
-          <p style={{ fontSize: '11px', letterSpacing: '2px', color: 'rgba(255,255,255,0.35)', marginBottom: '20px', textTransform: 'uppercase' }}>
+          <p style={{ fontSize: '11px', letterSpacing: '2px', color: streakColor, marginBottom: '20px', textTransform: 'uppercase' }}>
             {data.streak ? `${data.streak}-day streak` : ''}
             {data.streak && data.week ? '  ·  ' : ''}
             {data.week ? `Week ${data.week}` : ''}
@@ -208,8 +233,8 @@ export default function LoginAnimation() {
                 gap: '12px',
                 padding: '12px 16px',
                 borderRadius: '10px',
-                background: `${pill.accent}14`,
-                border: `0.5px solid ${pill.accent}33`,
+                background: isDark ? `${pill.accent}14` : `${pill.accent}1f`,
+                border: `0.5px solid ${pill.accent}${isDark ? '33' : '55'}`,
               }}
             >
               {/* Icon box */}
@@ -218,7 +243,7 @@ export default function LoginAnimation() {
                 height: '32px',
                 minWidth: '32px',
                 borderRadius: '8px',
-                background: `${pill.accent}28`,
+                background: isDark ? `${pill.accent}28` : pill.accent,
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
@@ -228,10 +253,10 @@ export default function LoginAnimation() {
 
               {/* Text */}
               <div style={{ display: 'flex', flexDirection: 'column', gap: '3px' }}>
-                <span style={{ fontSize: '13px', fontWeight: 600, color: 'white', lineHeight: 1.3 }}>
+                <span style={{ fontSize: '13px', fontWeight: 600, color: pillTitleColor, lineHeight: 1.3 }}>
                   {pill.title}
                 </span>
-                <span style={{ fontSize: '11px', color: 'rgba(255,255,255,0.4)', lineHeight: 1.5 }}>
+                <span style={{ fontSize: '11px', color: pillSubtitleColor, lineHeight: 1.5 }}>
                   {pill.subtitle}
                 </span>
               </div>

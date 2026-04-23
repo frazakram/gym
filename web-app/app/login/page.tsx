@@ -106,8 +106,13 @@ export default function LoginPage() {
     <div className="relative min-h-screen flex flex-col lg:flex-row items-stretch overflow-hidden">
       <ThemeToggle />
       {/* Left Side - LoginAnimation panel (desktop only) */}
-      <div className="hidden lg:flex lg:w-1/2 flex-col" style={{ background: '#080c14', minHeight: '100vh' }}>
-        <LoginAnimation />
+      <div className="login-left-panel hidden lg:flex lg:w-1/2 flex-col relative overflow-hidden">
+        <div className="login-left-orb login-left-orb--one" aria-hidden="true" />
+        <div className="login-left-orb login-left-orb--two" aria-hidden="true" />
+        <div className="login-left-orb login-left-orb--three" aria-hidden="true" />
+        <div className="relative z-10 flex-1 flex flex-col">
+          <LoginAnimation />
+        </div>
       </div>
 
       {/* Right Side - Dark Glass Login Form */}

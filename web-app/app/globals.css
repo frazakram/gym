@@ -139,6 +139,86 @@ html:not(.dark) .panel-solid {
   }
 }
 
+/* ─── Login page: animated left panel (theme-aware) ─── */
+.login-left-panel {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #0a0e1a 0%, #121427 35%, #1a1630 70%, #0d1425 100%);
+  background-size: 220% 220%;
+  animation: loginPanelShift 18s ease-in-out infinite;
+}
+html:not(.dark) .login-left-panel {
+  background: linear-gradient(135deg, #ede9fe 0%, #f5f3ff 35%, #e0e7ff 70%, #eef2ff 100%);
+  background-size: 220% 220%;
+  animation: loginPanelShift 18s ease-in-out infinite;
+}
+@keyframes loginPanelShift {
+  0%, 100% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+}
+
+/* Floating orbs */
+.login-left-orb {
+  position: absolute;
+  border-radius: 9999px;
+  filter: blur(70px);
+  opacity: 0.55;
+  pointer-events: none;
+  will-change: transform;
+}
+.login-left-orb--one {
+  width: 360px; height: 360px;
+  top: -80px; left: -80px;
+  background: radial-gradient(circle, #7c3aed 0%, transparent 70%);
+  animation: loginOrbFloatA 14s ease-in-out infinite;
+}
+.login-left-orb--two {
+  width: 300px; height: 300px;
+  bottom: -60px; right: -60px;
+  background: radial-gradient(circle, #22d3ee 0%, transparent 70%);
+  animation: loginOrbFloatB 16s ease-in-out infinite;
+}
+.login-left-orb--three {
+  width: 260px; height: 260px;
+  top: 45%; left: 40%;
+  background: radial-gradient(circle, #f472b6 0%, transparent 70%);
+  opacity: 0.35;
+  animation: loginOrbFloatC 20s ease-in-out infinite;
+}
+html:not(.dark) .login-left-orb {
+  opacity: 0.45;
+}
+html:not(.dark) .login-left-orb--one {
+  background: radial-gradient(circle, #a78bfa 0%, transparent 70%);
+}
+html:not(.dark) .login-left-orb--two {
+  background: radial-gradient(circle, #67e8f9 0%, transparent 70%);
+}
+html:not(.dark) .login-left-orb--three {
+  background: radial-gradient(circle, #fbcfe8 0%, transparent 70%);
+  opacity: 0.55;
+}
+@keyframes loginOrbFloatA {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  50% { transform: translate(40px, 60px) scale(1.1); }
+}
+@keyframes loginOrbFloatB {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  50% { transform: translate(-50px, -40px) scale(1.15); }
+}
+@keyframes loginOrbFloatC {
+  0%, 33%, 66%, 100% { transform: translate(0, 0) scale(1); }
+  16% { transform: translate(-30px, 20px) scale(1.05); }
+  50% { transform: translate(30px, -30px) scale(0.95); }
+  83% { transform: translate(-20px, -20px) scale(1.08); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .login-left-panel,
+  .login-left-orb {
+    animation: none !important;
+  }
+}
+
 :root {
   /* --- Brand tokens: Neon Edge (theme-neutral constants) --- */
 
