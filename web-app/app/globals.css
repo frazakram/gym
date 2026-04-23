@@ -143,73 +143,52 @@ html:not(.dark) .panel-solid {
 .login-left-panel {
   min-height: 100vh;
   background: linear-gradient(135deg, #0a0e1a 0%, #121427 35%, #1a1630 70%, #0d1425 100%);
-  background-size: 220% 220%;
-  animation: loginPanelShift 18s ease-in-out infinite;
 }
 html:not(.dark) .login-left-panel {
-  background: linear-gradient(135deg, #ede9fe 0%, #f5f3ff 35%, #e0e7ff 70%, #eef2ff 100%);
-  background-size: 220% 220%;
-  animation: loginPanelShift 18s ease-in-out infinite;
-}
-@keyframes loginPanelShift {
-  0%, 100% { background-position: 0% 50%; }
-  50% { background-position: 100% 50%; }
+  background: linear-gradient(135deg, #ede9fe 0%, #f5f3ff 40%, #e0e7ff 75%, #eef2ff 100%);
 }
 
-/* Floating orbs */
+/* Floating orbs — uses opacity-only animation (no GPU compositing, no blur) */
 .login-left-orb {
   position: absolute;
   border-radius: 9999px;
-  filter: blur(70px);
-  opacity: 0.55;
   pointer-events: none;
-  will-change: transform;
+  contain: strict;
 }
 .login-left-orb--one {
-  width: 360px; height: 360px;
-  top: -80px; left: -80px;
-  background: radial-gradient(circle, #7c3aed 0%, transparent 70%);
-  animation: loginOrbFloatA 14s ease-in-out infinite;
+  width: 340px; height: 340px;
+  top: -60px; left: -60px;
+  background: radial-gradient(circle at 40% 40%, rgba(124,58,237,0.55) 0%, transparent 65%);
+  animation: loginOrbPulseA 12s ease-in-out infinite;
 }
 .login-left-orb--two {
-  width: 300px; height: 300px;
-  bottom: -60px; right: -60px;
-  background: radial-gradient(circle, #22d3ee 0%, transparent 70%);
-  animation: loginOrbFloatB 16s ease-in-out infinite;
+  width: 280px; height: 280px;
+  bottom: -40px; right: -40px;
+  background: radial-gradient(circle at 60% 60%, rgba(34,211,238,0.45) 0%, transparent 65%);
+  animation: loginOrbPulseB 15s ease-in-out infinite;
 }
 .login-left-orb--three {
-  width: 260px; height: 260px;
-  top: 45%; left: 40%;
-  background: radial-gradient(circle, #f472b6 0%, transparent 70%);
-  opacity: 0.35;
-  animation: loginOrbFloatC 20s ease-in-out infinite;
-}
-html:not(.dark) .login-left-orb {
-  opacity: 0.45;
+  width: 240px; height: 240px;
+  top: 40%; left: 35%;
+  background: radial-gradient(circle at 50% 50%, rgba(244,114,182,0.35) 0%, transparent 65%);
+  animation: loginOrbPulseA 18s ease-in-out infinite reverse;
 }
 html:not(.dark) .login-left-orb--one {
-  background: radial-gradient(circle, #a78bfa 0%, transparent 70%);
+  background: radial-gradient(circle at 40% 40%, rgba(167,139,250,0.5) 0%, transparent 65%);
 }
 html:not(.dark) .login-left-orb--two {
-  background: radial-gradient(circle, #67e8f9 0%, transparent 70%);
+  background: radial-gradient(circle at 60% 60%, rgba(103,232,249,0.4) 0%, transparent 65%);
 }
 html:not(.dark) .login-left-orb--three {
-  background: radial-gradient(circle, #fbcfe8 0%, transparent 70%);
-  opacity: 0.55;
+  background: radial-gradient(circle at 50% 50%, rgba(251,207,232,0.55) 0%, transparent 65%);
 }
-@keyframes loginOrbFloatA {
-  0%, 100% { transform: translate(0, 0) scale(1); }
-  50% { transform: translate(40px, 60px) scale(1.1); }
+@keyframes loginOrbPulseA {
+  0%, 100% { opacity: 0.7; }
+  50% { opacity: 0.35; }
 }
-@keyframes loginOrbFloatB {
-  0%, 100% { transform: translate(0, 0) scale(1); }
-  50% { transform: translate(-50px, -40px) scale(1.15); }
-}
-@keyframes loginOrbFloatC {
-  0%, 33%, 66%, 100% { transform: translate(0, 0) scale(1); }
-  16% { transform: translate(-30px, 20px) scale(1.05); }
-  50% { transform: translate(30px, -30px) scale(0.95); }
-  83% { transform: translate(-20px, -20px) scale(1.08); }
+@keyframes loginOrbPulseB {
+  0%, 100% { opacity: 0.5; }
+  50% { opacity: 0.85; }
 }
 
 @media (prefers-reduced-motion: reduce) {
