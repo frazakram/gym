@@ -45,7 +45,7 @@ export default function RootLayout({
       </head>
       <body className={`min-h-screen text-gray-900 dark:text-slate-100 ${inter.variable} ${jakarta.variable}`}>
         <ServiceWorkerRegistration />
-        <div className="app-shell">
+        <div className="app-shell" style={{ overflow: 'visible' }}>
           <div className="app-bg" />
           <div className="app-atmos" />
           <div className="app-content">{children}</div>

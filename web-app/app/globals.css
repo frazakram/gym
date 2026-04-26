@@ -127,6 +127,11 @@ html:not(.dark) .panel-solid {
     color: white;
   }
 
+  /* 5a. Always-dark landing sections (CTA, footer) — preserve white text */
+  html:not(.dark) .landing-dark [class*="text-white"] {
+    color: white;
+  }
+
   /* 5. Preserve white text on elements that ARE the colored button */
   html:not(.dark) .btn-primary,
   html:not(.dark) .btn-primary *,
@@ -134,7 +139,9 @@ html:not(.dark) .panel-solid {
   html:not(.dark) [class*="bg-primary"][class*="text-white"],
   html:not(.dark) [class*="bg-green"][class*="text-white"],
   html:not(.dark) [class*="bg-purple"][class*="text-white"],
-  html:not(.dark) [class*="bg-violet"][class*="text-white"] {
+  html:not(.dark) [class*="bg-violet"][class*="text-white"],
+  html:not(.dark) [class*="bg-gray-9"][class*="text-white"],
+  html:not(.dark) [class*="bg-gray-8"][class*="text-white"] {
     color: white;
   }
 }
@@ -611,7 +618,12 @@ body {
 
 @keyframes float {
   0%, 100% { transform: translateY(0px); }
-  50% { transform: translateY(-10px); }
+  50% { transform: translateY(-16px); }
+}
+
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(24px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
 @keyframes confetti-fall {
@@ -643,7 +655,8 @@ body {
 .animate-pulse-glow { animation: pulse-glow 2s ease-in-out infinite; }
 .skeleton-shimmer { animation: shimmer 2s infinite linear; }
 .animate-ripple { animation: ripple 0.6s ease-out; }
-.animate-float { animation: float 3s ease-in-out infinite; }
+.animate-float { animation: float 4s ease-in-out infinite; }
+.animate-fade-in-up { animation: fadeInUp 0.7s ease forwards; }
 
 .duration-200 { animation-duration: 0.2s; }
 
