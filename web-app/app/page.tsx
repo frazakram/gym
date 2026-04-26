@@ -126,7 +126,7 @@ export default function LandingPage() {
                     }}
                   />
                   <Link
-                    href="https://finalgym.vercel.app/"
+                    href="/demo"
                     className="relative z-10 bg-white dark:bg-[#080c14] text-gray-700 dark:text-white rounded-full px-8 py-4 text-base hover:bg-gray-50 dark:hover:bg-[#0d1117] transition-colors"
                   >
                     Explore free →
@@ -140,7 +140,7 @@ export default function LandingPage() {
               <p className="text-xs text-gray-400 dark:text-gray-500">
                 Curious?{' '}
                 <a
-                  href="https://finalgym.vercel.app/"
+                  href="/demo"
                   className="underline hover:text-gray-600 dark:hover:text-gray-300"
                 >
                   Explore without signing up →
