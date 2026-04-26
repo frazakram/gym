@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect } from 'react'
+import { useEffect, useRef } from 'react'
 import Link from 'next/link'
 import { ThemeToggle } from '@/components/ThemeToggle'
 
@@ -25,6 +25,47 @@ export default function LandingPage() {
       { threshold: 0.12 }
     )
     els.forEach((el) => observer.observe(el))
+    return () => observer.disconnect()
+  }, [])
+
+  useEffect(() => {
+    const easeOutQuart = (t: number) => 1 - Math.pow(1 - t, 4)
+    const els = document.querySelectorAll<HTMLElement>('[data-count]')
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach((entry) => {
+        if (!entry.isIntersecting) return
+        const el = entry.target as HTMLElement
+        const target = parseFloat(el.dataset.count!)
+        const decimals = parseInt(el.dataset.decimals ?? '0')
+        const suffix = el.dataset.suffix ?? ''
+        const duration = 1200
+        const start = performance.now()
+        const tick = (now: number) => {
+          const progress = Math.min((now - start) / duration, 1)
+          const val = target * easeOutQuart(progress)
+          el.textContent = (decimals ? val.toFixed(decimals) : Math.floor(val).toLocaleString('en-IN')) + suffix
+          if (progress < 1) requestAnimationFrame(tick)
+        }
+        requestAnimationFrame(tick)
+        observer.unobserve(el)
+      })
+    }, { threshold: 0.5 })
+    els.forEach((el) => observer.observe(el))
+    return () => observer.disconnect()
+  }, [])
+
+  useEffect(() => {
+    const bars = document.querySelectorAll<HTMLElement>('.bar-fill')
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach((entry) => {
+        if (!entry.isIntersecting) return
+        const el = entry.target as HTMLElement
+        el.style.setProperty('--bar-target', el.dataset.bar + '%')
+        requestAnimationFrame(() => requestAnimationFrame(() => el.classList.add('filled')))
+        observer.unobserve(el)
+      })
+    }, { threshold: 0.4 })
+    bars.forEach((el) => observer.observe(el))
     return () => observer.disconnect()
   }, [])
 
@@ -85,19 +126,19 @@ export default function LandingPage() {
 
             {/* Left: text */}
             <div className="flex flex-col gap-6">
-              <span className="inline-flex items-center gap-2 bg-purple-50 dark:bg-purple-900/20 text-purple-700 dark:text-purple-300 rounded-full px-3 py-1 text-xs font-medium w-fit">
+              <span className="inline-flex items-center gap-2 bg-purple-50 dark:bg-purple-900/20 text-purple-700 dark:text-purple-300 rounded-full px-3 py-1 text-xs font-medium w-fit hero-fade hero-fade-0">
                 🇮🇳 Made for Indian athletes
               </span>
 
-              <h1 className="text-4xl sm:text-5xl lg:text-7xl font-black tracking-tight leading-[1.05] text-gray-900 dark:text-white">
+              <h1 className="text-4xl sm:text-5xl lg:text-7xl font-black tracking-tight leading-[1.05] text-gray-900 dark:text-white hero-fade hero-fade-1">
                 The fitness app that actually knows what you eat.
               </h1>
 
-              <p className="mt-6 text-lg text-gray-500 dark:text-gray-400 max-w-xl">
+              <p className="mt-6 text-lg text-gray-500 dark:text-gray-400 max-w-xl hero-fade hero-fade-2">
                 GymBro builds your workouts around your gym and your meals around your kitchen — then gets smarter every week you show up.
               </p>
 
-              <div className="flex flex-wrap gap-2">
+              <div className="flex flex-wrap gap-2 hero-fade hero-fade-2">
                 {['✓ No generic meal plans', '✓ Adapts weekly', '✓ Free to start'].map((item) => (
                   <span
                     key={item}
@@ -108,7 +149,7 @@ export default function LandingPage() {
                 ))}
               </div>
 
-              <div className="mt-8 flex flex-wrap gap-3">
+              <div className="mt-8 flex flex-wrap gap-3 hero-fade hero-fade-3">
                 {/* Start for free — rotating conic-gradient border */}
                 <div className="relative inline-flex rounded-full p-[2px] overflow-hidden">
                   <span
@@ -160,16 +201,16 @@ export default function LandingPage() {
             </div>
 
             {/* Right: phone mockup — dark image in dark mode, light image in light mode */}
-            <div className="flex items-center justify-center lg:scale-[1.3]">
+            <div className="flex items-center justify-center lg:scale-[1.3] hero-fade hero-fade-4">
               <img
                 src="/app-dark.png"
                 alt="GymBro app dark mode"
-                className="hidden dark:block w-full max-w-[260px] lg:max-w-none drop-shadow-2xl"
+                className="hidden dark:block w-full max-w-[260px] lg:max-w-none drop-shadow-2xl phone-float"
               />
               <img
                 src="/app-light.png"
                 alt="GymBro app light mode"
-                className="block dark:hidden w-full max-w-[260px] lg:max-w-none drop-shadow-2xl"
+                className="block dark:hidden w-full max-w-[260px] lg:max-w-none drop-shadow-2xl phone-float"
               />
             </div>
 
@@ -177,31 +218,33 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* ── SOCIAL PROOF STRIP ── */}
-      <section className="transition-colors duration-300 bg-gray-50 dark:bg-[#0d1117] border-y border-gray-100 dark:border-white/5">
-        <div className="mx-auto max-w-7xl px-6 md:px-16 lg:px-24 py-16">
-          <div className="grid grid-cols-2 sm:grid-cols-4 text-center divide-y-2 sm:divide-y-0 sm:divide-x-2 divide-gray-100 dark:divide-white/10 max-w-5xl mx-auto">
-            <div className="px-8 py-8 sm:py-0">
-              <p className="text-4xl font-black text-gray-900 dark:text-white">10,000+</p>
-              <p className="text-sm text-gray-400 mt-1">workout plans generated</p>
-            </div>
-            <div className="px-8 py-8 sm:py-0">
-              <p className="text-4xl font-black text-gray-900 dark:text-white">Week 1</p>
-              <p className="text-sm text-gray-400 mt-1">when users see first results</p>
-            </div>
-            <div className="px-8 py-8 sm:py-0">
-              <div className="flex items-baseline justify-center gap-2">
-                <p className="text-4xl font-black text-gray-900 dark:text-white">₹49/mo</p>
-                <p className="text-base font-medium text-gray-400 line-through">₹299</p>
+      {/* ── STATS STRIP ── */}
+      <section className="transition-colors duration-300 bg-gray-50 dark:bg-[#0d1117] border-y border-gray-200 dark:border-white/5">
+        <div className="mx-auto max-w-7xl px-6 md:px-16 lg:px-24 py-12">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-px bg-gray-200 dark:bg-white/10 rounded-2xl overflow-hidden">
+            <div className="bg-white dark:bg-[#111827] px-8 py-10 flex flex-col items-center text-center gap-2">
+              <div className="flex items-baseline gap-1">
+                <span data-count="10000" data-suffix="+" className="text-4xl font-black text-[#7c3aed]">10,000+</span>
               </div>
-              <p className="text-sm text-gray-400 mt-1">Less than a protein bar</p>
+              <span className="text-sm text-gray-500 dark:text-gray-400 leading-snug max-w-[120px]">Workout plans generated</span>
             </div>
-            <div className="px-8 py-8 sm:py-0">
-              <div className="flex items-baseline justify-center gap-1">
-                <p className="text-4xl font-black text-gray-900 dark:text-white">4.9</p>
-                <p className="text-2xl font-black text-amber-400">★</p>
+            <div className="bg-white dark:bg-[#111827] px-8 py-10 flex flex-col items-center text-center gap-2">
+              <span className="text-4xl font-black text-[#22c55e]">Week 1</span>
+              <span className="text-sm text-gray-500 dark:text-gray-400 leading-snug max-w-[120px]">When users see first results</span>
+            </div>
+            <div className="bg-white dark:bg-[#111827] px-8 py-10 flex flex-col items-center text-center gap-2">
+              <div className="flex items-baseline gap-2">
+                <span className="text-4xl font-black text-[#7c3aed]">₹49/mo</span>
+                <span className="text-sm font-medium text-gray-400 line-through">₹299</span>
               </div>
-              <p className="text-sm text-gray-400 mt-1">avg. app rating</p>
+              <span className="text-sm text-gray-500 dark:text-gray-400 leading-snug max-w-[120px]">Less than a protein bar</span>
+            </div>
+            <div className="bg-white dark:bg-[#111827] px-8 py-10 flex flex-col items-center text-center gap-2">
+              <div className="flex items-baseline gap-1">
+                <span data-count="4.9" data-decimals="1" className="text-4xl font-black text-amber-400">4.9</span>
+                <span className="text-2xl font-black text-amber-400"> ★</span>
+              </div>
+              <span className="text-sm text-gray-500 dark:text-gray-400 leading-snug max-w-[120px]">Average app rating</span>
             </div>
           </div>
         </div>
@@ -268,7 +311,7 @@ export default function LandingPage() {
               <div className="mt-6">
                 <p className="text-xs text-gray-400 mb-2">41% week done</p>
                 <div className="h-2 w-full rounded-full bg-gray-100 dark:bg-white/10">
-                  <div className="h-full rounded-full bg-[#7c3aed]" style={{ width: '41%' }} />
+                  <div className="h-full rounded-full bg-[#7c3aed] bar-fill" data-bar="41" />
                 </div>
               </div>
             </div>
@@ -331,7 +374,7 @@ export default function LandingPage() {
               <div className="mt-4">
                 <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">147g protein today</p>
                 <div className="h-2 w-full rounded-full bg-gray-100 dark:bg-white/10">
-                  <div className="h-full rounded-full bg-[#22c55e]" style={{ width: '73%' }} />
+                  <div className="h-full rounded-full bg-[#22c55e] bar-fill" data-bar="73" />
                 </div>
               </div>
             </div>
@@ -391,13 +434,20 @@ export default function LandingPage() {
               <div className="mt-6">
                 <p className="text-xs text-gray-400 mb-2">41% this week</p>
                 <div className="h-2 w-full rounded-full bg-gray-100 dark:bg-white/10">
-                  <div className="h-full rounded-full bg-[#7c3aed]" style={{ width: '41%' }} />
+                  <div className="h-full rounded-full bg-[#7c3aed] bar-fill" data-bar="41" />
                 </div>
               </div>
             </div>
           </div>
         </div>
       </section>
+
+      {/* ── DIVIDER ── */}
+      <div className="bg-white dark:bg-[#080c14] pt-16">
+        <div className="mx-auto max-w-7xl px-6 md:px-16 lg:px-24">
+          <hr className="border-gray-200 dark:border-white/10" />
+        </div>
+      </div>
 
       {/* ── HOW IT WORKS ── */}
       <section id="how-it-works" className="transition-colors duration-300 bg-gray-50 dark:bg-[#0d1117]">
@@ -427,8 +477,8 @@ export default function LandingPage() {
                 title: 'Log, improve, repeat',
                 body: 'Every session you log teaches the AI. Week 2 is smarter than week 1. Week 4 is smarter than week 2.',
               },
-            ].map(({ num, title, body }) => (
-              <div key={num}>
+            ].map(({ num, title, body }, i) => (
+              <div key={num} className={`reveal reveal-d${i + 1}`}>
                 <p className="text-8xl font-black text-gray-100 dark:text-white/5 leading-none select-none">
                   {num}
                 </p>
@@ -500,7 +550,7 @@ export default function LandingPage() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto">
 
             {/* Free tier */}
-            <div className="rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#111827] p-8 reveal reveal-d1">
+            <div className="rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#111827] p-8 reveal reveal-d1 price-card">
               <p className="text-2xl font-black text-gray-900 dark:text-white">Free</p>
               <p className="text-4xl font-black text-gray-900 dark:text-white mt-2">
                 ₹0{' '}
@@ -528,7 +578,7 @@ export default function LandingPage() {
             </div>
 
             {/* Premium tier — bg-violet-600 so the CSS exception keeps text-white visible in light mode */}
-            <div className="rounded-2xl border-2 border-[#7c3aed] bg-violet-600 text-white p-8 relative reveal reveal-d2">
+            <div className="rounded-2xl border-[1.5px] border-[#7c3aed] bg-violet-600 text-white p-8 relative reveal reveal-d2 price-card price-card-featured">
               <div className="flex items-center gap-2 flex-wrap">
                 <p className="text-2xl font-black text-white">Premium</p>
                 <span className="bg-white/20 text-white text-xs rounded-full px-3 py-1">Most popular</span>
@@ -569,7 +619,7 @@ export default function LandingPage() {
       <section className="landing-dark transition-colors duration-300 bg-[#080c14] text-center">
         <div className="mx-auto max-w-7xl px-6 md:px-16 lg:px-24 py-20 lg:py-28">
           <h2 className="text-5xl md:text-6xl font-black text-white leading-tight max-w-2xl mx-auto">
-            Your Week 1 plan<br />is ready.
+            Your Week 1 plan<br />is 2 minutes away.
           </h2>
           <p className="text-gray-400 text-lg mt-4">
             Takes 2 minutes to generate. Free to start.

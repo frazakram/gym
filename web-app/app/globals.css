@@ -329,7 +329,6 @@ body {
 .app-shell {
   position: relative;
   min-height: 100vh;
-  overflow: hidden;
   isolation: isolate;
 }
 
@@ -695,6 +694,51 @@ body {
 .stagger-6 { animation-delay: 0.3s; }
 .stagger-7 { animation-delay: 0.35s; }
 .stagger-8 { animation-delay: 0.4s; }
+
+/* ── Phone float ── */
+@keyframes phoneFloat {
+  0%, 100% { transform: translateY(0); }
+  50%       { transform: translateY(-10px); }
+}
+.phone-float {
+  animation: phoneFloat 4s ease-in-out infinite;
+}
+
+/* ── Hero entrance ── */
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(22px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.hero-fade {
+  opacity: 0;
+  animation: fadeUp 0.5s cubic-bezier(.22,.68,0,1.2) forwards;
+}
+.hero-fade-0 { animation-delay: 0ms; }
+.hero-fade-1 { animation-delay: 120ms; }
+.hero-fade-2 { animation-delay: 240ms; }
+.hero-fade-3 { animation-delay: 360ms; }
+.hero-fade-4 { animation-delay: 460ms; }
+
+/* ── Progress bar fill ── */
+.bar-fill {
+  width: 0% !important;
+  transition: width 1s cubic-bezier(.22,.68,0,1.2);
+}
+.bar-fill.filled {
+  width: var(--bar-target) !important;
+}
+
+/* ── Pricing card hover ── */
+.price-card {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+.price-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 32px rgba(0,0,0,0.10);
+}
+.price-card-featured:hover {
+  box-shadow: 0 12px 32px rgba(124,58,237,0.35);
+}
 
 /* ── Scroll reveal ── */
 .reveal {
