@@ -73,9 +73,9 @@ export default function ExplorePage() {
             </p>
           </div>
           <div>
-            <h3 className="text-base font-bold text-gray-900 dark:text-white mb-1">Starts at ₹1/month.</h3>
+            <h3 className="text-base font-bold text-gray-900 dark:text-white mb-1">Starts at ₹49/month.</h3>
             <p className="text-sm text-gray-500 dark:text-white/60 leading-relaxed">
-              Free to use for workouts and diet plans. Unlock analytics and coach booking for ₹1/month.
+              Free to use for workouts and diet plans. Unlock analytics and coach booking for ₹49/month.
             </p>
           </div>
         </div>

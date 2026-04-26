@@ -1,5 +1,6 @@
 'use client'
 
+import { useEffect } from 'react'
 import Link from 'next/link'
 import { ThemeToggle } from '@/components/ThemeToggle'
 
@@ -17,6 +18,16 @@ function CheckIcon({ color = 'purple' }: { color?: 'purple' | 'green' | 'amber' 
 }
 
 export default function LandingPage() {
+  useEffect(() => {
+    const els = document.querySelectorAll('.reveal')
+    const observer = new IntersectionObserver(
+      (entries) => entries.forEach((e) => { if (e.isIntersecting) { e.target.classList.add('visible'); observer.unobserve(e.target) } }),
+      { threshold: 0.12 }
+    )
+    els.forEach((el) => observer.observe(el))
+    return () => observer.disconnect()
+  }, [])
+
   return (
     <div className="w-full bg-white dark:bg-[#080c14] transition-colors duration-300">
 
@@ -169,18 +180,28 @@ export default function LandingPage() {
       {/* ── SOCIAL PROOF STRIP ── */}
       <section className="transition-colors duration-300 bg-gray-50 dark:bg-[#0d1117] border-y border-gray-100 dark:border-white/5">
         <div className="mx-auto max-w-7xl px-6 md:px-16 lg:px-24 py-16">
-          <div className="grid grid-cols-1 sm:grid-cols-3 text-center divide-y sm:divide-y-0 sm:divide-x divide-gray-200 dark:divide-white/10 max-w-3xl mx-auto">
-            <div className="px-8 py-6 sm:py-0">
+          <div className="grid grid-cols-2 sm:grid-cols-4 text-center divide-y-2 sm:divide-y-0 sm:divide-x-2 divide-gray-100 dark:divide-white/10 max-w-5xl mx-auto">
+            <div className="px-8 py-8 sm:py-0">
               <p className="text-4xl font-black text-gray-900 dark:text-white">10,000+</p>
               <p className="text-sm text-gray-400 mt-1">workout plans generated</p>
             </div>
-            <div className="px-8 py-6 sm:py-0">
+            <div className="px-8 py-8 sm:py-0">
               <p className="text-4xl font-black text-gray-900 dark:text-white">Week 1</p>
               <p className="text-sm text-gray-400 mt-1">when users see first results</p>
             </div>
-            <div className="px-8 py-6 sm:py-0">
-              <p className="text-4xl font-black text-gray-900 dark:text-white">₹1/mo</p>
-              <p className="text-sm text-gray-400 mt-1">to unlock everything</p>
+            <div className="px-8 py-8 sm:py-0">
+              <div className="flex items-baseline justify-center gap-2">
+                <p className="text-4xl font-black text-gray-900 dark:text-white">₹49/mo</p>
+                <p className="text-base font-medium text-gray-400 line-through">₹299</p>
+              </div>
+              <p className="text-sm text-gray-400 mt-1">Less than a protein bar</p>
+            </div>
+            <div className="px-8 py-8 sm:py-0">
+              <div className="flex items-baseline justify-center gap-1">
+                <p className="text-4xl font-black text-gray-900 dark:text-white">4.9</p>
+                <p className="text-2xl font-black text-amber-400">★</p>
+              </div>
+              <p className="text-sm text-gray-400 mt-1">avg. app rating</p>
             </div>
           </div>
         </div>
@@ -191,7 +212,7 @@ export default function LandingPage() {
         <div className="mx-auto max-w-7xl px-6 md:px-16 lg:px-24 py-20 lg:py-28">
 
           {/* Section header */}
-          <div className="text-center mb-16">
+          <div className="text-center mb-16 reveal">
             <p className="text-xs font-bold tracking-[0.2em] text-[#7c3aed] uppercase mb-4">
               What makes it different
             </p>
@@ -202,7 +223,7 @@ export default function LandingPage() {
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 items-center">
             {/* Text */}
-            <div>
+            <div className="reveal reveal-d1">
               <p className="text-xs font-bold tracking-[0.2em] text-[#7c3aed] uppercase">
                 Workouts
               </p>
@@ -227,7 +248,7 @@ export default function LandingPage() {
               </div>
             </div>
             {/* Visual */}
-            <div className="rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#111827] p-6 shadow-sm">
+            <div className="rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#111827] p-6 shadow-sm reveal reveal-d2">
               <div className="flex justify-between items-center mb-3">
                 <span className="font-bold text-sm text-gray-900 dark:text-white">Pull Day — Week 3</span>
                 <span className="text-xs text-gray-400">6 exercises</span>
@@ -264,7 +285,7 @@ export default function LandingPage() {
           */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 items-center lg:[&>*:first-child]:order-2">
             {/* Text — first in DOM, goes RIGHT on desktop */}
-            <div>
+            <div className="reveal reveal-d1">
               <p className="text-xs font-bold tracking-[0.2em] text-[#7c3aed] uppercase">
                 Nutrition
               </p>
@@ -289,7 +310,7 @@ export default function LandingPage() {
               </div>
             </div>
             {/* Visual — second in DOM, goes LEFT on desktop */}
-            <div className="rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#111827] p-6 shadow-sm">
+            <div className="rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#111827] p-6 shadow-sm reveal reveal-d2">
               <div className="flex justify-between items-center mb-3">
                 <span className="font-bold text-sm text-gray-900 dark:text-white">Today&apos;s meals</span>
                 <span className="text-xs text-[#7c3aed] font-semibold">2490 kcal</span>
@@ -323,7 +344,7 @@ export default function LandingPage() {
         <div className="mx-auto max-w-7xl px-6 md:px-16 lg:px-24 py-20 lg:py-28">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 items-center">
             {/* Text */}
-            <div>
+            <div className="reveal reveal-d1">
               <p className="text-xs font-bold tracking-[0.2em] text-[#7c3aed] uppercase">
                 Progress
               </p>
@@ -348,7 +369,7 @@ export default function LandingPage() {
               </div>
             </div>
             {/* Visual */}
-            <div className="rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#111827] p-6 shadow-sm">
+            <div className="rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#111827] p-6 shadow-sm reveal reveal-d2">
               <p className="text-2xl font-black text-gray-900 dark:text-white">🔥 5 day streak</p>
               <p className="text-sm text-gray-400 mt-1">Best: 12 days</p>
               <div className="flex gap-2 flex-wrap mt-6">
@@ -419,10 +440,58 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* ── PRICING ── */}
-      <section id="pricing" className="transition-colors duration-300 bg-white dark:bg-[#080c14]">
+      {/* ── TESTIMONIALS ── */}
+      <section className="transition-colors duration-300 bg-white dark:bg-[#080c14]">
         <div className="mx-auto max-w-7xl px-6 md:px-16 lg:px-24 py-20 lg:py-28">
-          <div className="text-center mb-12">
+          <div className="text-center mb-14 reveal">
+            <p className="text-xs font-bold tracking-[0.2em] text-[#7c3aed] uppercase mb-4">
+              Real users · Real results
+            </p>
+            <h2 className="text-4xl md:text-5xl font-black text-gray-900 dark:text-white">
+              Don&apos;t take our word for it.
+            </h2>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {[
+              {
+                quote: "Finally an app that doesn't tell me to eat grilled chicken every day. Rajma Chawal hitting my macros is wild.",
+                name: 'Arjun S.',
+                meta: 'Delhi · Lost 8kg',
+                delay: 'reveal-d1',
+              },
+              {
+                quote: 'The workout adapts when I skip sessions. No guilt, just a smarter plan next week. Game changer.',
+                name: 'Kavya R.',
+                meta: 'Bangalore · 3 months in',
+                delay: 'reveal-d2',
+              },
+              {
+                quote: '₹49/month is insane value. I was paying ₹2,000/month for a generic diet plan before this.',
+                name: 'Rahul M.',
+                meta: 'Mumbai · Premium user',
+                delay: 'reveal-d3',
+              },
+            ].map(({ quote, name, meta, delay }) => (
+              <div
+                key={name}
+                className={`rounded-2xl border border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-[#111827] p-7 flex flex-col gap-4 reveal ${delay}`}
+              >
+                <div className="flex gap-0.5 text-amber-400 text-sm">★★★★★</div>
+                <p className="text-gray-700 dark:text-gray-300 text-sm leading-relaxed flex-1">&ldquo;{quote}&rdquo;</p>
+                <div>
+                  <p className="text-sm font-bold text-gray-900 dark:text-white">{name}</p>
+                  <p className="text-xs text-gray-400 mt-0.5">{meta}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ── PRICING ── */}
+      <section id="pricing" className="transition-colors duration-300 bg-gray-50 dark:bg-[#0d1117]">
+        <div className="mx-auto max-w-7xl px-6 md:px-16 lg:px-24 py-20 lg:py-28">
+          <div className="text-center mb-12 reveal">
             <h2 className="text-4xl font-black text-gray-900 dark:text-white">Simple pricing.</h2>
             <p className="text-gray-500 dark:text-gray-400 mt-3">
               Start free. Upgrade when you&apos;re ready.
@@ -431,7 +500,7 @@ export default function LandingPage() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto">
 
             {/* Free tier */}
-            <div className="rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#111827] p-8">
+            <div className="rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#111827] p-8 reveal reveal-d1">
               <p className="text-2xl font-black text-gray-900 dark:text-white">Free</p>
               <p className="text-4xl font-black text-gray-900 dark:text-white mt-2">
                 ₹0{' '}
@@ -459,15 +528,18 @@ export default function LandingPage() {
             </div>
 
             {/* Premium tier — bg-violet-600 so the CSS exception keeps text-white visible in light mode */}
-            <div className="rounded-2xl border-2 border-[#7c3aed] bg-violet-600 text-white p-8 relative">
+            <div className="rounded-2xl border-2 border-[#7c3aed] bg-violet-600 text-white p-8 relative reveal reveal-d2">
               <div className="flex items-center gap-2 flex-wrap">
                 <p className="text-2xl font-black text-white">Premium</p>
                 <span className="bg-white/20 text-white text-xs rounded-full px-3 py-1">Most popular</span>
               </div>
-              <p className="text-4xl font-black text-white mt-2">
-                ₹1{' '}
-                <span className="text-lg font-normal text-white/80">/ month</span>
-              </p>
+              <div className="flex items-baseline gap-3 mt-2 flex-wrap">
+                <p className="text-4xl font-black text-white">
+                  ₹49{' '}
+                  <span className="text-lg font-normal text-white/80">/ month</span>
+                </p>
+                <span className="text-lg font-medium text-white/50 line-through">₹299/mo</span>
+              </div>
               <p className="text-sm text-white/80 mt-1">Less than a protein bar.</p>
               <div className="flex flex-col gap-3 mt-6">
                 {[
@@ -486,7 +558,7 @@ export default function LandingPage() {
                 href="/login"
                 className="bg-white text-[#7c3aed] hover:bg-gray-100 rounded-full h-11 px-6 font-semibold w-full mt-8 flex items-center justify-center transition-colors"
               >
-                Start for ₹1
+                Start for ₹49
               </Link>
             </div>
           </div>
@@ -497,16 +569,16 @@ export default function LandingPage() {
       <section className="landing-dark transition-colors duration-300 bg-[#080c14] text-center">
         <div className="mx-auto max-w-7xl px-6 md:px-16 lg:px-24 py-20 lg:py-28">
           <h2 className="text-5xl md:text-6xl font-black text-white leading-tight max-w-2xl mx-auto">
-            Show up once.<br />See why it works.
+            Your Week 1 plan<br />is ready.
           </h2>
           <p className="text-gray-400 text-lg mt-4">
-            Free to start. No gym required for day one.
+            Takes 2 minutes to generate. Free to start.
           </p>
           <Link
             href="/login"
             className="inline-block mt-10 bg-[#7c3aed] hover:bg-[#6d28d9] text-white rounded-full px-12 py-5 text-lg font-semibold shadow-lg shadow-purple-500/30 transition-colors"
           >
-            Create your free account
+            Build my plan →
           </Link>
           <div className="mt-4">
             <Link

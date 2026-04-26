@@ -474,7 +474,7 @@ export function AnalyticsView({ premiumStatus, onUpgrade }: AnalyticsViewProps) 
               onClick={onUpgrade}
               className="px-5 py-3 rounded-2xl font-semibold text-sm bg-gradient-to-r from-primary via-primary-dark to-brand-cyan text-white shadow-lg shadow-primary/25 hover:brightness-110 transition"
             >
-              Upgrade for ₹1/month
+              Upgrade for ₹49/month
             </button>
             <div className="text-xs text-muted self-center">
               Status: {premiumStatus.status ?? 'not subscribed'}
@@ -549,9 +549,9 @@ export function AnalyticsView({ premiumStatus, onUpgrade }: AnalyticsViewProps) 
 
   const monthOptions = useMemo(() => {
     const months = new Set<string>()
-    ;(data?.calendar ?? []).forEach((d) => {
-      if (d?.date) months.add(d.date.slice(0, 7))
-    })
+      ; (data?.calendar ?? []).forEach((d) => {
+        if (d?.date) months.add(d.date.slice(0, 7))
+      })
     return [...months].sort()
   }, [data])
 
@@ -728,11 +728,10 @@ export function AnalyticsView({ premiumStatus, onUpgrade }: AnalyticsViewProps) 
                 <button
                   key={m}
                   onClick={() => setTrendMode(m)}
-                  className={`px-3 py-1.5 rounded-full text-xs font-semibold border transition ${
-                    trendMode === m
+                  className={`px-3 py-1.5 rounded-full text-xs font-semibold border transition ${trendMode === m
                       ? 'bg-primary/12 border-primary/25 text-white'
                       : 'bg-white/5 border-primary/10 text-muted hover:bg-white/10 hover:text-white'
-                  }`}
+                    }`}
                 >
                   {m === 'daily' ? 'Daily' : m === 'weekly' ? 'Weekly' : 'Monthly'}
                 </button>
@@ -764,21 +763,19 @@ export function AnalyticsView({ premiumStatus, onUpgrade }: AnalyticsViewProps) 
                 <div className="text-xs text-muted hidden sm:block">Darker = higher completion</div>
                 <button
                   onClick={() => setCalendarMode('weeks')}
-                  className={`px-3 py-1.5 rounded-full text-xs font-semibold border transition ${
-                    calendarMode === 'weeks'
+                  className={`px-3 py-1.5 rounded-full text-xs font-semibold border transition ${calendarMode === 'weeks'
                       ? 'bg-primary/12 border-primary/25 text-white'
                       : 'bg-white/5 border-primary/10 text-muted hover:bg-white/10 hover:text-white'
-                  }`}
+                    }`}
                 >
                   12 weeks
                 </button>
                 <button
                   onClick={() => setCalendarMode('month')}
-                  className={`px-3 py-1.5 rounded-full text-xs font-semibold border transition ${
-                    calendarMode === 'month'
+                  className={`px-3 py-1.5 rounded-full text-xs font-semibold border transition ${calendarMode === 'month'
                       ? 'bg-primary/12 border-primary/25 text-white'
                       : 'bg-white/5 border-primary/10 text-muted hover:bg-white/10 hover:text-white'
-                  }`}
+                    }`}
                 >
                   Month
                 </button>
@@ -799,11 +796,10 @@ export function AnalyticsView({ premiumStatus, onUpgrade }: AnalyticsViewProps) 
                         <button
                           key={m}
                           onClick={() => setActiveMonth(m)}
-                          className={`px-3 py-1.5 rounded-full text-xs font-semibold border transition ${
-                            activeMonth === m
+                          className={`px-3 py-1.5 rounded-full text-xs font-semibold border transition ${activeMonth === m
                               ? 'bg-white/10 border-white/15 text-white'
                               : 'bg-white/5 border-primary/10 text-muted hover:bg-white/10 hover:text-white'
-                          }`}
+                            }`}
                         >
                           {m}
                         </button>

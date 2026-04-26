@@ -29,13 +29,13 @@ Authorized redirect URIs in Google Cloud:
 - **Local dev**: create `gym/web-app/.env.local`
 - **Vercel**: Project → Settings → Environment Variables
 
-### 3.1) Razorpay (Premium subscriptions: ₹1/month)
+### 3.1) Razorpay (Premium subscriptions: ₹49/month)
 
 To enable Premium Analytics payments, set:
 
 - `RAZORPAY_KEY_ID`
 - `RAZORPAY_KEY_SECRET`
-- `RAZORPAY_PLAN_ID_ANALYTICS_MONTHLY` (create a ₹1/month plan in Razorpay dashboard, then paste its `plan_...` id)
+- `RAZORPAY_PLAN_ID_ANALYTICS_MONTHLY` (create a ₹49/month plan in Razorpay dashboard, then paste its `plan_...` id)
 - `RAZORPAY_WEBHOOK_SECRET` (from Razorpay webhook settings)
 
 Webhook URL to configure in Razorpay:

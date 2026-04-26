@@ -105,7 +105,7 @@ export function UpgradeModal({ open, status, onClose, onUnlocked, showToast }: U
         key: data.keyId,
         subscription_id: data.subscriptionId,
         name: 'GymBro AI',
-        description: 'Pro Analytics (₹1/month)',
+        description: 'Pro Analytics (₹49/month)',
         theme: { color: 'var(--gold)' },
         // Try to force UPI if available for this subscription/account
         config: {
@@ -163,7 +163,7 @@ export function UpgradeModal({ open, status, onClose, onUnlocked, showToast }: U
               </div>
               <h3 className="text-xl font-bold text-white mt-3">{headline}</h3>
               <p className="text-sm text-muted mt-2">
-                Subscribe for <span className="text-white font-semibold">₹1/month</span> to unlock Analytics Pro.
+                Subscribe for <span className="text-white font-semibold">₹49/month</span> to unlock Analytics Pro.
               </p>
             </div>
             <button
@@ -197,11 +197,11 @@ export function UpgradeModal({ open, status, onClose, onUnlocked, showToast }: U
               onClick={handlePay}
               disabled={loading || polling}
               className={`px-5 py-3 rounded-2xl font-semibold text-sm shadow-lg transition active:scale-[0.99] ${loading || polling
-                  ? 'bg-slate-700 text-slate-200 cursor-wait'
-                  : 'bg-gradient-to-r from-gold to-gold-light text-slate-900 shadow-[0_0_25px_rgba(245,158,11,0.3)] hover:shadow-[0_0_35px_rgba(245,158,11,0.4)]'
+                ? 'bg-slate-700 text-slate-200 cursor-wait'
+                : 'bg-gradient-to-r from-gold to-gold-light text-slate-900 shadow-[0_0_25px_rgba(245,158,11,0.3)] hover:shadow-[0_0_35px_rgba(245,158,11,0.4)]'
                 }`}
             >
-              {polling ? 'Activating…' : loading ? 'Opening payment…' : 'Pay ₹1/month'}
+              {polling ? 'Activating…' : loading ? 'Opening payment…' : 'Pay ₹49/month'}
             </button>
             <button
               onClick={canClose ? onClose : undefined}
