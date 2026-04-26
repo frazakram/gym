@@ -22,7 +22,7 @@ export default function LandingPage() {
 
       {/* ── NAVBAR ── */}
       <nav className="sticky top-0 z-50 bg-white/90 dark:bg-[#080c14]/90 backdrop-blur-md border-b border-gray-100 dark:border-white/5 transition-colors duration-300">
-        <div className="max-w-7xl mx-auto px-8 pr-16 h-16 flex items-center justify-between">
+        <div className="max-w-7xl mx-auto px-8 h-16 flex items-center justify-between">
           <Link href="/" className="flex items-center gap-2">
             <img src="/logo.png" alt="GymBro" className="w-8 h-8 rounded-lg" />
             <span className="font-bold text-lg text-gray-900 dark:text-white transition-colors duration-300">GymBro</span>
@@ -49,7 +49,7 @@ export default function LandingPage() {
             </button>
           </div>
 
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-3">
             <Link
               href="/login"
               className="text-sm text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors duration-300"
@@ -62,9 +62,9 @@ export default function LandingPage() {
             >
               Get started
             </Link>
+            <ThemeToggle className="relative" />
           </div>
         </div>
-        <ThemeToggle />
       </nav>
 
       {/* ── HERO ── */}
@@ -98,18 +98,40 @@ export default function LandingPage() {
               </div>
 
               <div className="mt-8 flex flex-wrap gap-3">
-                <Link
-                  href="/login"
-                  className="bg-violet-600 hover:bg-violet-700 text-white rounded-full px-8 py-4 text-base font-semibold shadow-lg shadow-purple-500/25 transition-colors"
-                >
-                  Start for free
-                </Link>
-                <Link
-                  href="https://finalgym.vercel.app/"
-                  className="border border-gray-200 dark:border-white/20 text-gray-700 dark:text-white rounded-full px-8 py-4 text-base hover:bg-gray-50 dark:hover:bg-white/5 transition-colors"
-                >
-                  Explore free →
-                </Link>
+                {/* Start for free — rotating conic-gradient border */}
+                <div className="relative inline-flex rounded-full p-[2px] overflow-hidden">
+                  <span
+                    className="pointer-events-none absolute"
+                    style={{
+                      inset: '-50%',
+                      background: 'conic-gradient(from 0deg, transparent 0%, #7c3aed 25%, #a78bfa 45%, transparent 65%)',
+                      animation: 'orbit 3s linear infinite',
+                    }}
+                  />
+                  <Link
+                    href="/login"
+                    className="relative z-10 bg-violet-600 hover:bg-violet-700 text-white rounded-full px-8 py-4 text-base font-semibold shadow-lg shadow-purple-500/25 transition-colors"
+                  >
+                    Start for free
+                  </Link>
+                </div>
+                {/* Explore free — slower subtle conic-gradient border */}
+                <div className="relative inline-flex rounded-full p-[2px] overflow-hidden">
+                  <span
+                    className="pointer-events-none absolute"
+                    style={{
+                      inset: '-50%',
+                      background: 'conic-gradient(from 0deg, transparent 0%, rgba(139,92,246,0.5) 25%, rgba(167,139,250,0.35) 45%, transparent 65%)',
+                      animation: 'orbit 4s linear infinite',
+                    }}
+                  />
+                  <Link
+                    href="https://finalgym.vercel.app/"
+                    className="relative z-10 bg-white dark:bg-[#080c14] text-gray-700 dark:text-white rounded-full px-8 py-4 text-base hover:bg-gray-50 dark:hover:bg-[#0d1117] transition-colors"
+                  >
+                    Explore free →
+                  </Link>
+                </div>
               </div>
 
               <p className="text-xs text-gray-400 dark:text-gray-500">
@@ -127,16 +149,16 @@ export default function LandingPage() {
             </div>
 
             {/* Right: phone mockup — dark image in dark mode, light image in light mode */}
-            <div className="flex items-center justify-center">
+            <div className="flex items-center justify-center lg:scale-[1.3]">
               <img
                 src="/app-dark.png"
                 alt="GymBro app dark mode"
-                className="hidden dark:block w-full max-w-sm drop-shadow-2xl"
+                className="hidden dark:block w-full max-w-[260px] lg:max-w-none drop-shadow-2xl"
               />
               <img
                 src="/app-light.png"
                 alt="GymBro app light mode"
-                className="block dark:hidden w-full max-w-sm drop-shadow-2xl"
+                className="block dark:hidden w-full max-w-[260px] lg:max-w-none drop-shadow-2xl"
               />
             </div>
 
@@ -147,16 +169,16 @@ export default function LandingPage() {
       {/* ── SOCIAL PROOF STRIP ── */}
       <section className="transition-colors duration-300 bg-gray-50 dark:bg-[#0d1117] border-y border-gray-100 dark:border-white/5">
         <div className="mx-auto max-w-7xl px-6 md:px-16 lg:px-24 py-16">
-          <div className="grid grid-cols-3 text-center divide-x divide-gray-200 dark:divide-white/10 max-w-3xl mx-auto">
-            <div className="px-8">
+          <div className="grid grid-cols-1 sm:grid-cols-3 text-center divide-y sm:divide-y-0 sm:divide-x divide-gray-200 dark:divide-white/10 max-w-3xl mx-auto">
+            <div className="px-8 py-6 sm:py-0">
               <p className="text-4xl font-black text-gray-900 dark:text-white">10,000+</p>
               <p className="text-sm text-gray-400 mt-1">workout plans generated</p>
             </div>
-            <div className="px-8">
+            <div className="px-8 py-6 sm:py-0">
               <p className="text-4xl font-black text-gray-900 dark:text-white">Week 1</p>
               <p className="text-sm text-gray-400 mt-1">when users see first results</p>
             </div>
-            <div className="px-8">
+            <div className="px-8 py-6 sm:py-0">
               <p className="text-4xl font-black text-gray-900 dark:text-white">₹1/mo</p>
               <p className="text-sm text-gray-400 mt-1">to unlock everything</p>
             </div>
