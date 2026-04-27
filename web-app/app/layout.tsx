@@ -1,4 +1,4 @@
-import type { Metadata } from 'next'
+import type { Metadata, Viewport } from 'next'
 import { Inter, Plus_Jakarta_Sans } from 'next/font/google'
 import './globals.css'
 import { ServiceWorkerRegistration } from '@/components/ServiceWorkerRegistration'
@@ -19,18 +19,19 @@ export const metadata: Metadata = {
   title: 'Gym Bro - AI - Powered Gym Routine Generator',
   description: 'Generate personalized weekly workout plans with AI',
   manifest: '/manifest.json',
-  themeColor: 'var(--primary)',
-  viewport: {
-    width: 'device-width',
-    initialScale: 1,
-    maximumScale: 1,
-    userScalable: false,
-  },
   appleWebApp: {
     capable: true,
     statusBarStyle: 'black-translucent',
     title: 'Gym Bro',
   },
+}
+
+export const viewport: Viewport = {
+  themeColor: '#7c3aed',
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
 }
 
 export default function RootLayout({

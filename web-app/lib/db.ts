@@ -423,6 +423,82 @@ export async function initializeDatabase() {
         `CREATE INDEX IF NOT EXISTS idx_body_measurements_user_date ON body_measurements (user_id, measured_at DESC);`
       );
 
+      // Nationality + region (for community auto-assignment)
+      await client.query(`ALTER TABLE profiles ADD COLUMN IF NOT EXISTS nationality VARCHAR(8);`);
+      await client.query(`ALTER TABLE profiles ADD COLUMN IF NOT EXISTS region VARCHAR(16);`);
+
+      // ============= XP SYSTEM =============
+      await client.query(`
+        CREATE TABLE IF NOT EXISTS user_xp (
+          user_id INTEGER PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
+          total_xp BIGINT NOT NULL DEFAULT 0,
+          last_streak_date DATE,
+          last_streak_value INTEGER NOT NULL DEFAULT 0,
+          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+          updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        );
+      `);
+
+      await client.query(`
+        CREATE TABLE IF NOT EXISTS xp_events (
+          id SERIAL PRIMARY KEY,
+          user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+          event_type VARCHAR(64) NOT NULL,
+          points INTEGER NOT NULL,
+          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        );
+      `);
+      await client.query(`CREATE INDEX IF NOT EXISTS idx_xp_events_user_created ON xp_events (user_id, created_at DESC);`);
+
+      // ============= COMMUNITIES =============
+      await client.query(`
+        CREATE TABLE IF NOT EXISTS communities (
+          id SERIAL PRIMARY KEY,
+          name TEXT NOT NULL,
+          description TEXT,
+          type VARCHAR(16) NOT NULL DEFAULT 'custom',
+          region VARCHAR(16),
+          join_code VARCHAR(16) UNIQUE,
+          created_by INTEGER REFERENCES users(id) ON DELETE SET NULL,
+          member_count INTEGER NOT NULL DEFAULT 0,
+          member_cap INTEGER,
+          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        );
+      `);
+      await client.query(`CREATE INDEX IF NOT EXISTS idx_communities_type_region ON communities (type, region);`);
+      await client.query(`CREATE UNIQUE INDEX IF NOT EXISTS idx_communities_region_unique ON communities (region) WHERE type = 'worldwide';`);
+
+      // user_id PK enforces "one community per user"
+      await client.query(`
+        CREATE TABLE IF NOT EXISTS community_members (
+          user_id INTEGER PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
+          community_id INTEGER NOT NULL REFERENCES communities(id) ON DELETE CASCADE,
+          joined_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        );
+      `);
+      await client.query(`CREATE INDEX IF NOT EXISTS idx_community_members_community ON community_members (community_id);`);
+
+      await client.query(`
+        CREATE TABLE IF NOT EXISTS community_leave_log (
+          id SERIAL PRIMARY KEY,
+          user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+          community_id INTEGER REFERENCES communities(id) ON DELETE SET NULL,
+          left_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        );
+      `);
+      await client.query(`CREATE INDEX IF NOT EXISTS idx_community_leave_user ON community_leave_log (user_id, left_at DESC);`);
+
+      // Seed worldwide regional communities (idempotent)
+      await client.query(`
+        INSERT INTO communities (name, description, type, region, member_cap)
+        VALUES
+          ('Worldwide — APAC', 'Asia-Pacific region community', 'worldwide', 'APAC', NULL),
+          ('Worldwide — EMEA', 'Europe, Middle East & Africa community', 'worldwide', 'EMEA', NULL),
+          ('Worldwide — NA', 'North America community', 'worldwide', 'NA', NULL),
+          ('Worldwide — LATAM', 'Latin America community', 'worldwide', 'LATAM', NULL)
+        ON CONFLICT DO NOTHING;
+      `);
+
       console.log('Database initialized successfully');
       isInitialized = true;
     } finally {
@@ -515,7 +591,7 @@ export async function authenticateUser(username: string, password: string): Prom
 export async function getUserIdByUsername(username: string): Promise<number | null> {
   try {
     const encUsername = encryptDet(username);
-    let result = await pool.query<User>('SELECT id FROM users WHERE username = $1', [encUsername]);
+    const result = await pool.query<User>('SELECT id FROM users WHERE username = $1', [encUsername]);
 
     // Fallback for legacy plaintext rows — migrate on success
     if (!result.rows[0]) {
@@ -2623,4 +2699,466 @@ export async function listAssignedCoachBookings(coachId: number, limit = 50): Pr
     user_phone: r.user_phone ?? null,
     created_at: r.created_at instanceof Date ? r.created_at : new Date(String(r.created_at)),
   }));
+}
+
+// ============= NATIONALITY / REGION =============
+
+const COUNTRY_TO_REGION: Record<string, 'APAC' | 'EMEA' | 'NA' | 'LATAM'> = {
+  // APAC
+  IN: 'APAC', CN: 'APAC', JP: 'APAC', KR: 'APAC', TH: 'APAC', VN: 'APAC',
+  ID: 'APAC', MY: 'APAC', SG: 'APAC', PH: 'APAC', AU: 'APAC', NZ: 'APAC',
+  PK: 'APAC', BD: 'APAC', LK: 'APAC', NP: 'APAC', TW: 'APAC', HK: 'APAC',
+  // NA
+  US: 'NA', CA: 'NA', MX: 'NA',
+  // LATAM
+  BR: 'LATAM', AR: 'LATAM', CO: 'LATAM', CL: 'LATAM', PE: 'LATAM',
+  VE: 'LATAM', EC: 'LATAM', UY: 'LATAM', PY: 'LATAM', BO: 'LATAM',
+  // EMEA
+  GB: 'EMEA', DE: 'EMEA', FR: 'EMEA', IT: 'EMEA', ES: 'EMEA', NL: 'EMEA',
+  SE: 'EMEA', NO: 'EMEA', DK: 'EMEA', FI: 'EMEA', IE: 'EMEA', PT: 'EMEA',
+  PL: 'EMEA', CH: 'EMEA', AT: 'EMEA', BE: 'EMEA', GR: 'EMEA', CZ: 'EMEA',
+  RU: 'EMEA', UA: 'EMEA', TR: 'EMEA', SA: 'EMEA', AE: 'EMEA', IL: 'EMEA',
+  EG: 'EMEA', ZA: 'EMEA', NG: 'EMEA', KE: 'EMEA', MA: 'EMEA',
+};
+
+export function countryToRegion(countryCode: string | null | undefined): 'APAC' | 'EMEA' | 'NA' | 'LATAM' | null {
+  if (!countryCode) return null;
+  const code = countryCode.toUpperCase();
+  return COUNTRY_TO_REGION[code] ?? 'EMEA';
+}
+
+export async function saveNationality(
+  userId: number,
+  nationality: string | null,
+  region: 'APAC' | 'EMEA' | 'NA' | 'LATAM' | null
+): Promise<void> {
+  if (allowMockAuth() && userId === MOCK_USER_ID) return;
+  try {
+    await pool.query(
+      `UPDATE profiles SET nationality = $2, region = $3, updated_at = CURRENT_TIMESTAMP WHERE user_id = $1`,
+      [userId, nationality, region]
+    );
+    revalidateTag('user-profile', undefined as any);
+  } catch (error) {
+    console.error("saveNationality failed:", error);
+  }
+}
+
+// ============= XP SYSTEM =============
+
+export const XP_VALUES = {
+  EXERCISE: 50,
+  DAY_COMPLETE: 500,
+  STREAK_DAY: 100,
+  STREAK_7: 1000,
+  STREAK_30: 5000,
+  STREAK_100: 25000,
+} as const;
+
+export type UserXp = {
+  total_xp: number;
+  last_streak_date: string | null;
+  last_streak_value: number;
+};
+
+async function ensureUserXp(userId: number): Promise<void> {
+  await pool.query(
+    `INSERT INTO user_xp (user_id) VALUES ($1) ON CONFLICT (user_id) DO NOTHING`,
+    [userId]
+  );
+}
+
+export async function getUserXp(userId: number): Promise<UserXp> {
+  if (allowMockAuth() && userId === MOCK_USER_ID) {
+    return { total_xp: 0, last_streak_date: null, last_streak_value: 0 };
+  }
+  try {
+    const res = await pool.query<{ total_xp: string; last_streak_date: Date | string | null; last_streak_value: number }>(
+      `SELECT total_xp, last_streak_date, last_streak_value FROM user_xp WHERE user_id = $1`,
+      [userId]
+    );
+    if (res.rows.length === 0) return { total_xp: 0, last_streak_date: null, last_streak_value: 0 };
+    const row = res.rows[0];
+    return {
+      total_xp: Number(row.total_xp || 0),
+      last_streak_date: row.last_streak_date ? String(row.last_streak_date).slice(0, 10) : null,
+      last_streak_value: Number(row.last_streak_value || 0),
+    };
+  } catch (error) {
+    console.error("getUserXp failed:", error);
+    return { total_xp: 0, last_streak_date: null, last_streak_value: 0 };
+  }
+}
+
+export async function awardXp(userId: number, eventType: string, points: number): Promise<void> {
+  if (!Number.isFinite(points) || points <= 0) return;
+  if (allowMockAuth() && userId === MOCK_USER_ID) return;
+  try {
+    await ensureUserXp(userId);
+    await pool.query(
+      `UPDATE user_xp SET total_xp = total_xp + $2, updated_at = CURRENT_TIMESTAMP WHERE user_id = $1`,
+      [userId, points]
+    );
+    await pool.query(
+      `INSERT INTO xp_events (user_id, event_type, points) VALUES ($1, $2, $3)`,
+      [userId, eventType, points]
+    );
+  } catch (error) {
+    console.error(`awardXp failed (user=${userId}, event=${eventType}):`, error);
+  }
+}
+
+export async function awardStreakXpIfFirstToday(userId: number): Promise<void> {
+  if (allowMockAuth() && userId === MOCK_USER_ID) return;
+  try {
+    await ensureUserXp(userId);
+    const today = new Date().toISOString().slice(0, 10);
+    const xp = await getUserXp(userId);
+    if (xp.last_streak_date === today) return;
+
+    const streak = await getStreak(userId);
+    const current = streak.current;
+    if (current <= 0) return;
+
+    await awardXp(userId, 'streak_day', XP_VALUES.STREAK_DAY);
+
+    const prev = xp.last_streak_value;
+    if (prev < 7 && current >= 7) await awardXp(userId, 'streak_milestone_7', XP_VALUES.STREAK_7);
+    if (prev < 30 && current >= 30) await awardXp(userId, 'streak_milestone_30', XP_VALUES.STREAK_30);
+    if (prev < 100 && current >= 100) await awardXp(userId, 'streak_milestone_100', XP_VALUES.STREAK_100);
+
+    await pool.query(
+      `UPDATE user_xp SET last_streak_date = $2, last_streak_value = $3, updated_at = CURRENT_TIMESTAMP WHERE user_id = $1`,
+      [userId, today, current]
+    );
+  } catch (error) {
+    console.error("awardStreakXpIfFirstToday failed:", error);
+  }
+}
+
+// ============= COMMUNITIES =============
+
+export type CommunityType = 'custom' | 'worldwide';
+export type Region = 'APAC' | 'EMEA' | 'NA' | 'LATAM';
+
+export type Community = {
+  id: number;
+  name: string;
+  description: string | null;
+  type: CommunityType;
+  region: Region | null;
+  join_code: string | null;
+  created_by: number | null;
+  member_count: number;
+  member_cap: number | null;
+  created_at: string;
+};
+
+export type CommunityMember = {
+  user_id: number;
+  username: string;
+  total_xp: number;
+  current_streak: number;
+  nationality: string | null;
+  joined_at: string;
+};
+
+const REJOIN_COOLDOWN_HOURS = 6;
+const CUSTOM_COMMUNITY_CAP = 100;
+
+function generateJoinCode(): string {
+  const alphabet = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789';
+  let code = '';
+  for (let i = 0; i < 8; i++) code += alphabet[Math.floor(Math.random() * alphabet.length)];
+  return code;
+}
+
+function rowToCommunity(r: any): Community {
+  return {
+    id: Number(r.id),
+    name: String(r.name),
+    description: r.description ?? null,
+    type: r.type as CommunityType,
+    region: r.region ?? null,
+    join_code: r.join_code ?? null,
+    created_by: r.created_by != null ? Number(r.created_by) : null,
+    member_count: Number(r.member_count || 0),
+    member_cap: r.member_cap != null ? Number(r.member_cap) : null,
+    created_at: r.created_at instanceof Date ? r.created_at.toISOString() : String(r.created_at),
+  };
+}
+
+export async function getMyCommunity(userId: number): Promise<Community | null> {
+  try {
+    const res = await pool.query(
+      `SELECT c.* FROM community_members m JOIN communities c ON c.id = m.community_id WHERE m.user_id = $1`,
+      [userId]
+    );
+    if (res.rows.length === 0) return null;
+    return rowToCommunity(res.rows[0]);
+  } catch (error) {
+    console.error("getMyCommunity failed:", error);
+    return null;
+  }
+}
+
+export async function getCommunityById(communityId: number): Promise<Community | null> {
+  try {
+    const res = await pool.query(`SELECT * FROM communities WHERE id = $1`, [communityId]);
+    if (res.rows.length === 0) return null;
+    return rowToCommunity(res.rows[0]);
+  } catch (error) {
+    console.error("getCommunityById failed:", error);
+    return null;
+  }
+}
+
+export async function getCommunityByJoinCode(code: string): Promise<Community | null> {
+  try {
+    const res = await pool.query(`SELECT * FROM communities WHERE join_code = $1`, [code.toUpperCase()]);
+    if (res.rows.length === 0) return null;
+    return rowToCommunity(res.rows[0]);
+  } catch (error) {
+    console.error("getCommunityByJoinCode failed:", error);
+    return null;
+  }
+}
+
+export async function listWorldwideCommunities(): Promise<Community[]> {
+  try {
+    const res = await pool.query(
+      `SELECT * FROM communities WHERE type = 'worldwide' ORDER BY region ASC`
+    );
+    return res.rows.map(rowToCommunity);
+  } catch (error) {
+    console.error("listWorldwideCommunities failed:", error);
+    return [];
+  }
+}
+
+export async function joinCommunity(
+  userId: number,
+  communityId: number
+): Promise<null | 'already_in_community' | 'cooldown' | 'community_full' | 'not_found' | 'error'> {
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+
+    const existing = await client.query(`SELECT community_id FROM community_members WHERE user_id = $1`, [userId]);
+    if (existing.rows.length > 0) {
+      await client.query('ROLLBACK');
+      return 'already_in_community';
+    }
+
+    const cooldown = await client.query(
+      `SELECT 1 FROM community_leave_log
+       WHERE user_id = $1 AND left_at > NOW() - INTERVAL '${REJOIN_COOLDOWN_HOURS} hours'
+       LIMIT 1`,
+      [userId]
+    );
+    if (cooldown.rows.length > 0) {
+      await client.query('ROLLBACK');
+      return 'cooldown';
+    }
+
+    const c = await client.query(
+      `SELECT id, member_count, member_cap FROM communities WHERE id = $1 FOR UPDATE`,
+      [communityId]
+    );
+    if (c.rows.length === 0) {
+      await client.query('ROLLBACK');
+      return 'not_found';
+    }
+    const row = c.rows[0];
+    const cap = row.member_cap != null ? Number(row.member_cap) : null;
+    if (cap != null && Number(row.member_count) >= cap) {
+      await client.query('ROLLBACK');
+      return 'community_full';
+    }
+
+    await client.query(
+      `INSERT INTO community_members (user_id, community_id) VALUES ($1, $2)`,
+      [userId, communityId]
+    );
+    await client.query(
+      `UPDATE communities SET member_count = member_count + 1 WHERE id = $1`,
+      [communityId]
+    );
+    await client.query('COMMIT');
+    return null;
+  } catch (error) {
+    await client.query('ROLLBACK').catch(() => {});
+    console.error("joinCommunity failed:", error);
+    return 'error';
+  } finally {
+    client.release();
+  }
+}
+
+export async function leaveCommunity(userId: number): Promise<boolean> {
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+    const existing = await client.query(
+      `SELECT community_id FROM community_members WHERE user_id = $1`,
+      [userId]
+    );
+    if (existing.rows.length === 0) {
+      await client.query('ROLLBACK');
+      return false;
+    }
+    const cid = Number(existing.rows[0].community_id);
+    await client.query(`DELETE FROM community_members WHERE user_id = $1`, [userId]);
+    await client.query(
+      `UPDATE communities SET member_count = GREATEST(member_count - 1, 0) WHERE id = $1`,
+      [cid]
+    );
+    await client.query(
+      `INSERT INTO community_leave_log (user_id, community_id) VALUES ($1, $2)`,
+      [userId, cid]
+    );
+    await client.query('COMMIT');
+    return true;
+  } catch (error) {
+    await client.query('ROLLBACK').catch(() => {});
+    console.error("leaveCommunity failed:", error);
+    return false;
+  } finally {
+    client.release();
+  }
+}
+
+export async function createCustomCommunity(
+  userId: number,
+  name: string,
+  description?: string | null
+): Promise<{ community: Community | null; error?: 'already_in_community' | 'cooldown' | 'error' }> {
+  const trimmedName = name.trim();
+  const trimmedDesc = description?.trim() || null;
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+
+    const existing = await client.query(`SELECT 1 FROM community_members WHERE user_id = $1`, [userId]);
+    if (existing.rows.length > 0) {
+      await client.query('ROLLBACK');
+      return { community: null, error: 'already_in_community' };
+    }
+
+    const cooldown = await client.query(
+      `SELECT 1 FROM community_leave_log
+       WHERE user_id = $1 AND left_at > NOW() - INTERVAL '${REJOIN_COOLDOWN_HOURS} hours'
+       LIMIT 1`,
+      [userId]
+    );
+    if (cooldown.rows.length > 0) {
+      await client.query('ROLLBACK');
+      return { community: null, error: 'cooldown' };
+    }
+
+    let joinCode = '';
+    for (let i = 0; i < 6; i++) {
+      const candidate = generateJoinCode();
+      const dupe = await client.query(`SELECT 1 FROM communities WHERE join_code = $1`, [candidate]);
+      if (dupe.rows.length === 0) { joinCode = candidate; break; }
+    }
+    if (!joinCode) {
+      await client.query('ROLLBACK');
+      return { community: null, error: 'error' };
+    }
+
+    const insertRes = await client.query(
+      `INSERT INTO communities (name, description, type, join_code, created_by, member_count, member_cap)
+       VALUES ($1, $2, 'custom', $3, $4, 1, $5) RETURNING *`,
+      [trimmedName, trimmedDesc, joinCode, userId, CUSTOM_COMMUNITY_CAP]
+    );
+    const community = rowToCommunity(insertRes.rows[0]);
+
+    await client.query(
+      `INSERT INTO community_members (user_id, community_id) VALUES ($1, $2)`,
+      [userId, community.id]
+    );
+
+    await client.query('COMMIT');
+    return { community };
+  } catch (error) {
+    await client.query('ROLLBACK').catch(() => {});
+    console.error("createCustomCommunity failed:", error);
+    return { community: null, error: 'error' };
+  } finally {
+    client.release();
+  }
+}
+
+export async function getCommunityLeaderboard(
+  communityId: number,
+  limit: number = 100
+): Promise<CommunityMember[]> {
+  try {
+    const res = await pool.query(
+      `SELECT
+         m.user_id,
+         u.username,
+         COALESCE(x.total_xp, 0) AS total_xp,
+         COALESCE(x.last_streak_value, 0) AS current_streak,
+         p.nationality,
+         m.joined_at
+       FROM community_members m
+       JOIN users u ON u.id = m.user_id
+       LEFT JOIN user_xp x ON x.user_id = m.user_id
+       LEFT JOIN profiles p ON p.user_id = m.user_id
+       WHERE m.community_id = $1
+       ORDER BY total_xp DESC, m.joined_at ASC
+       LIMIT $2`,
+      [communityId, Math.max(1, Math.min(500, limit))]
+    );
+    return res.rows.map((r: any) => ({
+      user_id: Number(r.user_id),
+      username: decrypt(String(r.username)),
+      total_xp: Number(r.total_xp || 0),
+      current_streak: Number(r.current_streak || 0),
+      nationality: r.nationality ?? null,
+      joined_at: r.joined_at instanceof Date ? r.joined_at.toISOString() : String(r.joined_at),
+    }));
+  } catch (error) {
+    console.error("getCommunityLeaderboard failed:", error);
+    return [];
+  }
+}
+
+export async function getRejoinCooldownExpiry(userId: number): Promise<string | null> {
+  try {
+    const res = await pool.query<{ left_at: Date | string }>(
+      `SELECT left_at FROM community_leave_log
+       WHERE user_id = $1 AND left_at > NOW() - INTERVAL '${REJOIN_COOLDOWN_HOURS} hours'
+       ORDER BY left_at DESC LIMIT 1`,
+      [userId]
+    );
+    if (res.rows.length === 0) return null;
+    const left = res.rows[0].left_at instanceof Date ? res.rows[0].left_at : new Date(String(res.rows[0].left_at));
+    const expiry = new Date(left.getTime() + REJOIN_COOLDOWN_HOURS * 3600 * 1000);
+    return expiry.toISOString();
+  } catch (error) {
+    console.error("getRejoinCooldownExpiry failed:", error);
+    return null;
+  }
+}
+
+export async function getOrCreateRegionalCommunityId(region: Region): Promise<number | null> {
+  try {
+    const res = await pool.query(
+      `SELECT id FROM communities WHERE type = 'worldwide' AND region = $1 LIMIT 1`,
+      [region]
+    );
+    if (res.rows.length > 0) return Number(res.rows[0].id);
+    const created = await pool.query(
+      `INSERT INTO communities (name, description, type, region, member_cap)
+       VALUES ($1, $2, 'worldwide', $3, NULL) RETURNING id`,
+      [`Worldwide — ${region}`, `${region} region community`, region]
+    );
+    return Number(created.rows[0].id);
+  } catch (error) {
+    console.error("getOrCreateRegionalCommunityId failed:", error);
+    return null;
+  }
 }

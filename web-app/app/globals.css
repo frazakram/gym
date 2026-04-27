@@ -1,270 +1,84 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
 @import "tailwindcss";
 
 @custom-variant dark (&:where(.dark, .dark *));
 
-/* Declare overrides layer AFTER Tailwind's layers — highest priority in the layer stack */
 @layer overrides;
 
+/* ─────────────────────────────────────────────────────────────
+   TOKENS
+   ───────────────────────────────────────────────────────────── */
 :root {
-  /* --- Light mode defaults --- */
   --background: #ffffff;
   --foreground: #111827;
 
-  /* Feature icon accent colors (light mode: brand palette) */
   --feature-color-1: #7C3AED;
   --feature-color-2: #10B981;
   --feature-color-3: #F59E0B;
   --feature-color-4: #06B6D4;
-}
 
-.dark {
-  /* --- Dark mode: restore original Neon Edge scheme --- */
-  --background: #0A0A14;
-  --foreground: #F1F5F9;
-
-  /* Feature icon accent colors (dark mode: original palette) */
-  --feature-color-1: #8B5CF6;
-  --feature-color-2: #6EE7B7;
-  --feature-color-3: #FCD34D;
-  --feature-color-4: #22D3EE;
-}
-
-/* Show aurora background layers only in dark mode */
-.app-bg,
-.app-atmos {
-  display: none;
-}
-.dark .app-bg,
-.dark .app-atmos {
-  display: block;
-}
-
-/* ─── Light mode overrides ─── */
-html:not(.dark) {
-  background: #f1f5f9;
-
-  /* Remap navy → light grays so bg-navy-* utilities go light */
-  --navy-0: #ffffff;
-  --navy-1: #f9fafb;
-  --navy-2: #f3f4f6;
-  --navy-3: #e5e7eb;
-
-  /* Primary → keep purple in light mode too */
-  --primary: #7C3AED;
-  --primary-light: #8B5CF6;
-  --primary-dark: #6D28D9;
-  --primary-glow: rgba(124, 58, 237, 0.2);
-
-  /* Light glass surfaces */
-  --glass: rgba(255, 255, 255, 0.98);
-  --glass-soft: rgba(249, 250, 251, 0.95);
-  --glass-border: rgba(0, 0, 0, 0.06);
-  --glass-border-strong: rgba(0, 0, 0, 0.10);
-
-  /* Muted token — overrides the @theme inline hardcoded value */
-  --muted: #6b7280;
-  --color-muted: #6b7280;
-}
-
-/* Override glass CSS classes in light mode */
-html:not(.dark) .glass {
-  background: rgba(255, 255, 255, 0.98) !important;
-  border: 1px solid rgba(0, 0, 0, 0.08) !important;
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06) !important;
-  backdrop-filter: none !important;
-  -webkit-backdrop-filter: none !important;
-}
-html:not(.dark) .glass-soft {
-  background: rgba(249, 250, 251, 0.95) !important;
-  border: 1px solid rgba(0, 0, 0, 0.06) !important;
-  backdrop-filter: none !important;
-  -webkit-backdrop-filter: none !important;
-}
-html:not(.dark) .glass-menu {
-  background: rgba(255, 255, 255, 0.99) !important;
-  border: 1px solid rgba(0, 0, 0, 0.08) !important;
-  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.12) !important;
-  backdrop-filter: none !important;
-  -webkit-backdrop-filter: none !important;
-}
-html:not(.dark) .panel-solid {
-  background: rgba(255, 255, 255, 1) !important;
-  border: 1px solid rgba(0, 0, 0, 0.08) !important;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06) !important;
-}
-
-/* ── Light mode: fix invisible text (in @layer overrides = beats Tailwind utilities) ── */
-@layer overrides {
-  /* 1. text-white / text-white/opacity variants → near-black */
-  html:not(.dark) [class*="text-white"] {
-    color: #111827;
-  }
-
-  /* 2. text-slate-100 through text-slate-500 → readable grays */
-  html:not(.dark) [class*="text-slate-1"],
-  html:not(.dark) [class*="text-slate-2"],
-  html:not(.dark) [class*="text-slate-3"] {
-    color: #374151;
-  }
-  html:not(.dark) [class*="text-slate-4"],
-  html:not(.dark) [class*="text-slate-5"] {
-    color: #6b7280;
-  }
-
-  /* 3. text-muted utility — hardcoded in @theme inline, override directly */
-  html:not(.dark) .text-muted {
-    color: #6b7280;
-  }
-
-  /* 4. Preserve white text on colored backgrounds */
-  html:not(.dark) [class*="bg-gradient"] [class*="text-white"],
-  html:not(.dark) [class*="bg-primary"] [class*="text-white"],
-  html:not(.dark) [class*="bg-green"] [class*="text-white"],
-  html:not(.dark) [class*="bg-purple"] [class*="text-white"],
-  html:not(.dark) [class*="bg-violet"] [class*="text-white"],
-  html:not(.dark) [class*="bg-coral"] [class*="text-white"] {
-    color: white;
-  }
-
-  /* 5a. Always-dark landing sections (CTA, footer) — preserve white text */
-  html:not(.dark) .landing-dark [class*="text-white"] {
-    color: white;
-  }
-
-  /* 5. Preserve white text on elements that ARE the colored button */
-  html:not(.dark) .btn-primary,
-  html:not(.dark) .btn-primary *,
-  html:not(.dark) [class*="bg-gradient"][class*="text-white"],
-  html:not(.dark) [class*="bg-primary"][class*="text-white"],
-  html:not(.dark) [class*="bg-green"][class*="text-white"],
-  html:not(.dark) [class*="bg-purple"][class*="text-white"],
-  html:not(.dark) [class*="bg-violet"][class*="text-white"],
-  html:not(.dark) [class*="bg-gray-9"][class*="text-white"],
-  html:not(.dark) [class*="bg-gray-8"][class*="text-white"] {
-    color: white;
-  }
-}
-
-/* ─── Login page: animated left panel (theme-aware) ─── */
-.login-left-panel {
-  min-height: 100vh;
-  background: linear-gradient(135deg, #0a0e1a 0%, #121427 35%, #1a1630 70%, #0d1425 100%);
-}
-html:not(.dark) .login-left-panel {
-  background: linear-gradient(135deg, #ede9fe 0%, #f5f3ff 40%, #e0e7ff 75%, #eef2ff 100%);
-}
-
-/* Floating orbs — uses opacity-only animation (no GPU compositing, no blur) */
-.login-left-orb {
-  position: absolute;
-  border-radius: 9999px;
-  pointer-events: none;
-  contain: strict;
-}
-.login-left-orb--one {
-  width: 340px; height: 340px;
-  top: -60px; left: -60px;
-  background: radial-gradient(circle at 40% 40%, rgba(124,58,237,0.55) 0%, transparent 65%);
-  animation: loginOrbPulseA 12s ease-in-out infinite;
-}
-.login-left-orb--two {
-  width: 280px; height: 280px;
-  bottom: -40px; right: -40px;
-  background: radial-gradient(circle at 60% 60%, rgba(34,211,238,0.45) 0%, transparent 65%);
-  animation: loginOrbPulseB 15s ease-in-out infinite;
-}
-.login-left-orb--three {
-  width: 240px; height: 240px;
-  top: 40%; left: 35%;
-  background: radial-gradient(circle at 50% 50%, rgba(244,114,182,0.35) 0%, transparent 65%);
-  animation: loginOrbPulseA 18s ease-in-out infinite reverse;
-}
-html:not(.dark) .login-left-orb--one {
-  background: radial-gradient(circle at 40% 40%, rgba(167,139,250,0.5) 0%, transparent 65%);
-}
-html:not(.dark) .login-left-orb--two {
-  background: radial-gradient(circle at 60% 60%, rgba(103,232,249,0.4) 0%, transparent 65%);
-}
-html:not(.dark) .login-left-orb--three {
-  background: radial-gradient(circle at 50% 50%, rgba(251,207,232,0.55) 0%, transparent 65%);
-}
-@keyframes loginOrbPulseA {
-  0%, 100% { opacity: 0.7; }
-  50% { opacity: 0.35; }
-}
-@keyframes loginOrbPulseB {
-  0%, 100% { opacity: 0.5; }
-  50% { opacity: 0.85; }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .login-left-panel,
-  .login-left-orb {
-    animation: none !important;
-  }
-}
-
-:root {
-  /* --- Brand tokens: Neon Edge (theme-neutral constants) --- */
-
-  /* Deep Space base */
+  /* Brand tokens */
   --navy-0: #0A0A14;
   --navy-1: #12121E;
   --navy-2: #1A1A2E;
   --navy-3: #16162A;
 
-  /* Primary action: Violet/Purple */
-  --primary: #8B5CF6;
-  --primary-light: #A78BFA;
-  --primary-dark: #7C3AED;
-  --primary-glow: rgba(139, 92, 246, 0.35);
+  --primary: #7C3AED;
+  --primary-light: #8B5CF6;
+  --primary-dark: #6D28D9;
+  --primary-glow: rgba(124, 58, 237, 0.35);
 
-  /* Secondary accent: Cyan */
   --cyan: #22D3EE;
   --cyan-light: #67E8F9;
   --cyan-dark: #06B6D4;
   --cyan-glow: rgba(34, 211, 238, 0.3);
 
-  /* Warm Coral (CTA / energy) */
   --coral: #FF6F61;
   --coral-light: #FF8A7A;
   --coral-dark: #E55A4F;
 
-  /* Premium accent: Gold */
   --gold: #F59E0B;
   --gold-light: #FBBF24;
   --gold-dark: #D97706;
 
-  /* Success: Emerald */
   --accent: #10B981;
   --accent-2: #34D399;
   --accent-ink: #041212;
 
-  /* Secondary: Slate */
   --secondary: #64748B;
   --secondary-2: #475569;
 
-  /* Muted default (dark mode) */
-  --muted: #8B8DA3;
+  --muted: #6B7280;
 
-  /* Status colors */
   --error: #F43F5E;
   --warning: #F59E0B;
   --info: #0EA5E9;
 
-  /* Surfaces — deep space glass */
   --glass: rgba(18, 18, 30, 0.72);
   --glass-soft: rgba(18, 18, 30, 0.5);
   --glass-border: rgba(139, 92, 246, 0.12);
   --glass-border-strong: rgba(139, 92, 246, 0.2);
 }
 
+.dark {
+  --background: #080c14;
+  --foreground: #F1F5F9;
+
+  --feature-color-1: #8B5CF6;
+  --feature-color-2: #6EE7B7;
+  --feature-color-3: #FCD34D;
+  --feature-color-4: #22D3EE;
+
+  --muted: #8B8DA3;
+}
+
+/* ─────────────────────────────────────────────────────────────
+   THEME MAPPING
+   ───────────────────────────────────────────────────────────── */
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
 
-  /* Brand colors — use instead of hardcoded hex */
   --color-navy-0: var(--navy-0);
   --color-navy-1: var(--navy-1);
   --color-navy-2: var(--navy-2);
@@ -296,28 +110,41 @@ html:not(.dark) .login-left-orb--three {
   --color-warning: var(--warning);
   --color-info: var(--info);
 
-  --color-muted: var(--muted, #8B8DA3);
+  --color-muted: var(--muted);
   --color-primary-lighter: #C4B5FD;
 
-  --font-sans: var(--font-inter);
+  --font-sans: 'Inter', var(--font-inter), ui-sans-serif, system-ui, sans-serif;
   --font-display: var(--font-display);
   --font-mono: var(--font-geist-mono);
 }
 
+/* ─────────────────────────────────────────────────────────────
+   BASE
+   ───────────────────────────────────────────────────────────── */
+html:not(.dark) {
+  background: #ffffff;
+}
+
 body {
   color: var(--foreground);
-  font-family: 'Inter', var(--font-inter), ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial,
-    "Apple Color Emoji", "Segoe UI Emoji";
-  background: transparent;
+  font-family: 'Inter', var(--font-inter), ui-sans-serif, system-ui, -apple-system,
+    Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji";
+  background: var(--background);
   line-height: 1.6;
+  transition: background-color 0.3s ease, color 0.3s ease;
 }
 
 p {
   line-height: 1.6;
 }
 
-h1, h2, h3, h4, h5, h6 {
-  font-family: var(--font-display), 'Inter', var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-family: 'Inter', var(--font-inter), ui-sans-serif, system-ui, sans-serif;
 }
 
 html,
@@ -325,10 +152,33 @@ body {
   height: 100%;
 }
 
-/* --- App background: deep space + neon aurora --- */
+/* ─────────────────────────────────────────────────────────────
+   SCOPED LIGHT-MODE OVERRIDE
+   Only flip text-white inside the login panel — never on landing.
+   ───────────────────────────────────────────────────────────── */
+@layer overrides {
+  html:not(.dark) .login-left-panel [class*="text-white"]:not([class*="bg-"]) {
+    color: #111827;
+  }
+}
+
+/* ─────────────────────────────────────────────────────────────
+   APP SHELL — aurora background (dark mode, opt-in via .app-shell)
+   ───────────────────────────────────────────────────────────── */
+.app-bg,
+.app-atmos {
+  display: none;
+}
+
+.dark .app-shell .app-bg,
+.dark .app-shell .app-atmos {
+  display: block;
+}
+
 .app-shell {
   position: relative;
   min-height: 100vh;
+  overflow: hidden;
   isolation: isolate;
 }
 
@@ -372,7 +222,6 @@ body {
   animation: auroraShift 18s ease-in-out infinite alternate;
 }
 
-/* --- Atmospheric layer --- */
 .app-atmos {
   position: fixed;
   inset: 0;
@@ -406,13 +255,137 @@ body {
   mask-image: radial-gradient(circle at 50% 40%, rgba(0, 0, 0, 1), rgba(0, 0, 0, 0) 65%);
 }
 
-@keyframes smokeDrift {
-  0% { transform: translate3d(-2%, -1%, 0) scale(1.02); }
-  50% { transform: translate3d(2%, 1%, 0) scale(1.04); }
-  100% { transform: translate3d(3%, -2%, 0) scale(1.06); }
+@keyframes auroraShift {
+  0% {
+    transform: translate3d(-2%, -1%, 0) rotate(-2deg);
+  }
+
+  50% {
+    transform: translate3d(2%, 1%, 0) rotate(1deg);
+  }
+
+  100% {
+    transform: translate3d(4%, -2%, 0) rotate(3deg);
+  }
 }
 
-/* --- Glass primitives --- */
+@keyframes smokeDrift {
+  0% {
+    transform: translate3d(-2%, -1%, 0) scale(1.02);
+  }
+
+  50% {
+    transform: translate3d(2%, 1%, 0) scale(1.04);
+  }
+
+  100% {
+    transform: translate3d(3%, -2%, 0) scale(1.06);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .app-bg::after {
+    animation: none;
+  }
+
+  .app-atmos {
+    animation: none;
+  }
+}
+
+/* ─────────────────────────────────────────────────────────────
+   LOGIN PAGE — animated panel + orbs
+   ───────────────────────────────────────────────────────────── */
+.login-left-panel {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #0a0e1a 0%, #121427 35%, #1a1630 70%, #0d1425 100%);
+}
+
+html:not(.dark) .login-left-panel {
+  background: linear-gradient(135deg, #ede9fe 0%, #f5f3ff 40%, #e0e7ff 75%, #eef2ff 100%);
+}
+
+.login-left-orb {
+  position: absolute;
+  border-radius: 9999px;
+  pointer-events: none;
+  contain: strict;
+}
+
+.login-left-orb--one {
+  width: 340px;
+  height: 340px;
+  top: -60px;
+  left: -60px;
+  background: radial-gradient(circle at 40% 40%, rgba(124, 58, 237, 0.55) 0%, transparent 65%);
+  animation: loginOrbPulseA 12s ease-in-out infinite;
+}
+
+.login-left-orb--two {
+  width: 280px;
+  height: 280px;
+  bottom: -40px;
+  right: -40px;
+  background: radial-gradient(circle at 60% 60%, rgba(34, 211, 238, 0.45) 0%, transparent 65%);
+  animation: loginOrbPulseB 15s ease-in-out infinite;
+}
+
+.login-left-orb--three {
+  width: 240px;
+  height: 240px;
+  top: 40%;
+  left: 35%;
+  background: radial-gradient(circle at 50% 50%, rgba(244, 114, 182, 0.35) 0%, transparent 65%);
+  animation: loginOrbPulseA 18s ease-in-out infinite reverse;
+}
+
+html:not(.dark) .login-left-orb--one {
+  background: radial-gradient(circle at 40% 40%, rgba(167, 139, 250, 0.5) 0%, transparent 65%);
+}
+
+html:not(.dark) .login-left-orb--two {
+  background: radial-gradient(circle at 60% 60%, rgba(103, 232, 249, 0.4) 0%, transparent 65%);
+}
+
+html:not(.dark) .login-left-orb--three {
+  background: radial-gradient(circle at 50% 50%, rgba(251, 207, 232, 0.55) 0%, transparent 65%);
+}
+
+@keyframes loginOrbPulseA {
+
+  0%,
+  100% {
+    opacity: 0.7;
+  }
+
+  50% {
+    opacity: 0.35;
+  }
+}
+
+@keyframes loginOrbPulseB {
+
+  0%,
+  100% {
+    opacity: 0.5;
+  }
+
+  50% {
+    opacity: 0.85;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+
+  .login-left-panel,
+  .login-left-orb {
+    animation: none !important;
+  }
+}
+
+/* ─────────────────────────────────────────────────────────────
+   GLASS PRIMITIVES (dark-mode app surfaces)
+   ───────────────────────────────────────────────────────────── */
 .glass {
   background: var(--glass);
   border: 1px solid var(--glass-border-strong);
@@ -446,8 +419,36 @@ body {
   box-shadow:
     0 18px 55px rgba(0, 0, 0, 0.65),
     inset 0 1px 0 rgba(139, 92, 246, 0.06);
-  backdrop-filter: none;
-  -webkit-backdrop-filter: none;
+}
+
+/* Light-mode glass overrides */
+html:not(.dark) .glass {
+  background: rgba(255, 255, 255, 0.98) !important;
+  border: 1px solid rgba(0, 0, 0, 0.08) !important;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06) !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+html:not(.dark) .glass-soft {
+  background: rgba(249, 250, 251, 0.95) !important;
+  border: 1px solid rgba(0, 0, 0, 0.06) !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+html:not(.dark) .glass-menu {
+  background: rgba(255, 255, 255, 0.99) !important;
+  border: 1px solid rgba(0, 0, 0, 0.08) !important;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.12) !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+html:not(.dark) .panel-solid {
+  background: rgba(255, 255, 255, 1) !important;
+  border: 1px solid rgba(0, 0, 0, 0.08) !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06) !important;
 }
 
 .glow-ring {
@@ -457,18 +458,9 @@ body {
     0 0 40px rgba(139, 92, 246, 0.12);
 }
 
-@keyframes auroraShift {
-  0% { transform: translate3d(-2%, -1%, 0) rotate(-2deg); }
-  50% { transform: translate3d(2%, 1%, 0) rotate(1deg); }
-  100% { transform: translate3d(4%, -2%, 0) rotate(3deg); }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .app-bg::after { animation: none; }
-  .app-atmos { animation: none; }
-}
-
-/* --- Buttons --- */
+/* ─────────────────────────────────────────────────────────────
+   BUTTONS
+   ───────────────────────────────────────────────────────────── */
 .gradient-button {
   background: linear-gradient(135deg, var(--primary), var(--cyan));
   box-shadow: 0 12px 34px rgba(139, 92, 246, 0.25);
@@ -495,16 +487,22 @@ body {
   color: rgba(241, 245, 249, 0.92);
 }
 
-/* --- Design system helpers --- */
-.ui-card { border-radius: 16px; }
-.ui-chip { border-radius: 999px; }
+/* ─────────────────────────────────────────────────────────────
+   DESIGN SYSTEM HELPERS
+   ───────────────────────────────────────────────────────────── */
+.ui-card {
+  border-radius: 16px;
+}
+
+.ui-chip {
+  border-radius: 999px;
+}
 
 .ui-focus-ring:focus-visible {
   outline: none;
   box-shadow: 0 0 0 4px rgba(139, 92, 246, 0.3);
 }
 
-/* Gradient border hover effect */
 .gradient-border-hover {
   position: relative;
   overflow: hidden;
@@ -531,7 +529,6 @@ body {
   background: linear-gradient(135deg, var(--primary), var(--cyan), var(--primary-light));
 }
 
-/* Hide scrollbar but keep functionality */
 .scrollbar-hide {
   -ms-overflow-style: none;
   scrollbar-width: none;
@@ -541,69 +538,140 @@ body {
   display: none;
 }
 
-/* Safe area for bottom navigation on mobile devices */
 .safe-area-bottom {
   padding-bottom: env(safe-area-inset-bottom);
 }
 
-/* Mobile touch optimization */
 @media (hover: none) and (pointer: coarse) {
-  button, a {
+
+  button,
+  a {
     min-height: 44px;
     min-width: 44px;
   }
 }
 
-/* --- Animation keyframes --- */
+/* ─────────────────────────────────────────────────────────────
+   ANIMATIONS
+   ───────────────────────────────────────────────────────────── */
 @keyframes fade-in {
-  from { opacity: 0; }
-  to { opacity: 1; }
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
 }
 
 @keyframes zoom-in-95 {
-  from { transform: scale(0.95); opacity: 0; }
-  to { transform: scale(1); opacity: 1; }
+  from {
+    transform: scale(0.95);
+    opacity: 0;
+  }
+
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
 }
 
 @keyframes bounce-slow {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-10px); }
+
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+
+  50% {
+    transform: translateY(-10px);
+  }
 }
 
 @keyframes slide-in-up {
-  from { transform: translateY(100%); opacity: 0; }
-  to { transform: translateY(0); opacity: 1; }
+  from {
+    transform: translateY(100%);
+    opacity: 0;
+  }
+
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
 }
 
 @keyframes slide-out-down {
-  from { transform: translateY(0); opacity: 1; }
-  to { transform: translateY(100%); opacity: 0; }
+  from {
+    transform: translateY(0);
+    opacity: 1;
+  }
+
+  to {
+    transform: translateY(100%);
+    opacity: 0;
+  }
 }
 
 @keyframes slide-in-from-top {
-  from { transform: translateY(-100%); opacity: 0; }
-  to { transform: translateY(0); opacity: 1; }
+  from {
+    transform: translateY(-100%);
+    opacity: 0;
+  }
+
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
 }
 
 @keyframes slide-out-to-top {
-  from { transform: translateY(0); opacity: 1; }
-  to { transform: translateY(-100%); opacity: 0; }
+  from {
+    transform: translateY(0);
+    opacity: 1;
+  }
+
+  to {
+    transform: translateY(-100%);
+    opacity: 0;
+  }
 }
 
 @keyframes scale-bounce {
-  0% { transform: scale(0.9); opacity: 0; }
-  50% { transform: scale(1.02); }
-  100% { transform: scale(1); opacity: 1; }
+  0% {
+    transform: scale(0.9);
+    opacity: 0;
+  }
+
+  50% {
+    transform: scale(1.02);
+  }
+
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
 }
 
 @keyframes pulse-glow {
-  0%, 100% { box-shadow: 0 0 20px rgba(139, 92, 246, 0.3); }
-  50% { box-shadow: 0 0 35px rgba(139, 92, 246, 0.5); }
+
+  0%,
+  100% {
+    box-shadow: 0 0 20px rgba(139, 92, 246, 0.3);
+  }
+
+  50% {
+    box-shadow: 0 0 35px rgba(139, 92, 246, 0.5);
+  }
 }
 
 @keyframes shimmer {
-  0% { background-position: -200% 0; }
-  100% { background-position: 200% 0; }
+  0% {
+    background-position: -200% 0;
+  }
+
+  100% {
+    background-position: 200% 0;
+  }
 }
 
 @keyframes ripple {
@@ -616,62 +684,124 @@ body {
 }
 
 @keyframes float {
-  0%, 100% { transform: translateY(0px); }
-  50% { transform: translateY(-16px); }
-}
 
-@keyframes orbit {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
-}
+  0%,
+  100% {
+    transform: translateY(0px);
+  }
 
-@keyframes orbit-reverse {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(-360deg); }
+  50% {
+    transform: translateY(-16px);
+  }
 }
 
 @keyframes fadeInUp {
-  from { opacity: 0; transform: translateY(24px); }
-  to { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(24px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 @keyframes confetti-fall {
-  0% { transform: translateY(-100vh) rotate(0deg); opacity: 1; }
-  100% { transform: translateY(100vh) rotate(720deg); opacity: 0; }
+  0% {
+    transform: translateY(-100vh) rotate(0deg);
+    opacity: 1;
+  }
+
+  100% {
+    transform: translateY(100vh) rotate(720deg);
+    opacity: 0;
+  }
 }
 
 @keyframes celebration-burst {
-  0% { transform: scale(0); opacity: 1; }
-  50% { transform: scale(1.2); opacity: 0.8; }
-  100% { transform: scale(1.5); opacity: 0; }
+  0% {
+    transform: scale(0);
+    opacity: 1;
+  }
+
+  50% {
+    transform: scale(1.2);
+    opacity: 0.8;
+  }
+
+  100% {
+    transform: scale(1.5);
+    opacity: 0;
+  }
 }
 
-/* --- Animation utilities --- */
 .animate-in {
   animation-duration: 0.2s;
   animation-timing-function: ease-out;
   animation-fill-mode: both;
 }
 
-.fade-in { animation-name: fade-in; }
-.zoom-in-95 { animation-name: zoom-in-95; }
-.animate-bounce-slow { animation: bounce-slow 2s ease-in-out infinite; }
-.animate-slide-in-up { animation: slide-in-up 0.3s ease-out; }
-.animate-slide-out-down { animation: slide-out-down 0.3s ease-in; }
-.animate-slide-in-from-top { animation: slide-in-from-top 0.35s cubic-bezier(0.16, 1, 0.3, 1); }
-.animate-slide-out-to-top { animation: slide-out-to-top 0.25s ease-in forwards; }
-.animate-scale-bounce { animation: scale-bounce 0.35s cubic-bezier(0.16, 1, 0.3, 1); }
-.animate-pulse-glow { animation: pulse-glow 2s ease-in-out infinite; }
-.skeleton-shimmer { animation: shimmer 2s infinite linear; }
-.animate-ripple { animation: ripple 0.6s ease-out; }
-.animate-float { animation: float 4s ease-in-out infinite; }
-.animate-fade-in-up { animation: fadeInUp 0.7s ease forwards; }
+.fade-in {
+  animation-name: fade-in;
+}
 
-.duration-200 { animation-duration: 0.2s; }
+.zoom-in-95 {
+  animation-name: zoom-in-95;
+}
 
-.view-transition { animation: fade-in 0.3s ease-out; }
+.animate-bounce-slow {
+  animation: bounce-slow 2s ease-in-out infinite;
+}
 
-/* Hover micro-interactions */
+.animate-slide-in-up {
+  animation: slide-in-up 0.3s ease-out;
+}
+
+.animate-slide-out-down {
+  animation: slide-out-down 0.3s ease-in;
+}
+
+.animate-slide-in-from-top {
+  animation: slide-in-from-top 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.animate-slide-out-to-top {
+  animation: slide-out-to-top 0.25s ease-in forwards;
+}
+
+.animate-scale-bounce {
+  animation: scale-bounce 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.animate-pulse-glow {
+  animation: pulse-glow 2s ease-in-out infinite;
+}
+
+.skeleton-shimmer {
+  animation: shimmer 2s infinite linear;
+}
+
+.animate-ripple {
+  animation: ripple 0.6s ease-out;
+}
+
+.animate-float {
+  animation: float 4s ease-in-out infinite;
+}
+
+.animate-fade-in-up {
+  animation: fadeInUp 0.7s ease forwards;
+}
+
+.duration-200 {
+  animation-duration: 0.2s;
+}
+
+.view-transition {
+  animation: fade-in 0.3s ease-out;
+}
+
 .hover-lift {
   transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
@@ -685,71 +815,34 @@ body {
   box-shadow: 0 0 20px rgba(139, 92, 246, 0.25);
 }
 
-/* Stagger animation delays */
-.stagger-1 { animation-delay: 0.05s; }
-.stagger-2 { animation-delay: 0.1s; }
-.stagger-3 { animation-delay: 0.15s; }
-.stagger-4 { animation-delay: 0.2s; }
-.stagger-5 { animation-delay: 0.25s; }
-.stagger-6 { animation-delay: 0.3s; }
-.stagger-7 { animation-delay: 0.35s; }
-.stagger-8 { animation-delay: 0.4s; }
-
-/* ── Phone float ── */
-@keyframes phoneFloat {
-  0%, 100% { transform: translateY(0); }
-  50%       { transform: translateY(-10px); }
-}
-.phone-float {
-  animation: phoneFloat 4s ease-in-out infinite;
+.stagger-1 {
+  animation-delay: 0.05s;
 }
 
-/* ── Hero entrance ── */
-@keyframes fadeUp {
-  from { opacity: 0; transform: translateY(22px); }
-  to   { opacity: 1; transform: translateY(0); }
-}
-.hero-fade {
-  opacity: 0;
-  animation: fadeUp 0.5s cubic-bezier(.22,.68,0,1.2) forwards;
-}
-.hero-fade-0 { animation-delay: 0ms; }
-.hero-fade-1 { animation-delay: 120ms; }
-.hero-fade-2 { animation-delay: 240ms; }
-.hero-fade-3 { animation-delay: 360ms; }
-.hero-fade-4 { animation-delay: 460ms; }
-
-/* ── Progress bar fill ── */
-.bar-fill {
-  width: 0% !important;
-  transition: width 1s cubic-bezier(.22,.68,0,1.2);
-}
-.bar-fill.filled {
-  width: var(--bar-target) !important;
+.stagger-2 {
+  animation-delay: 0.1s;
 }
 
-/* ── Pricing card hover ── */
-.price-card {
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
-}
-.price-card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 12px 32px rgba(0,0,0,0.10);
-}
-.price-card-featured:hover {
-  box-shadow: 0 12px 32px rgba(124,58,237,0.35);
+.stagger-3 {
+  animation-delay: 0.15s;
 }
 
-/* ── Scroll reveal ── */
-.reveal {
-  opacity: 0;
-  transform: translateY(28px);
-  transition: opacity 0.55s ease, transform 0.55s ease;
+.stagger-4 {
+  animation-delay: 0.2s;
 }
-.reveal.visible {
-  opacity: 1;
-  transform: translateY(0);
+
+.stagger-5 {
+  animation-delay: 0.25s;
 }
-.reveal-d1 { transition-delay: 100ms; }
-.reveal-d2 { transition-delay: 200ms; }
-.reveal-d3 { transition-delay: 300ms; }
+
+.stagger-6 {
+  animation-delay: 0.3s;
+}
+
+.stagger-7 {
+  animation-delay: 0.35s;
+}
+
+.stagger-8 {
+  animation-delay: 0.4s;
+}

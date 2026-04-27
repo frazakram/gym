@@ -81,6 +81,23 @@ export const ProfileUpdateSchema = z.object({
   gym_equipment_analysis: z.any().optional().nullable(),
   body_photos: z.any().optional().nullable(),
   body_composition_analysis: z.any().optional().nullable(),
+  nationality: z.string().length(2).regex(/^[A-Z]{2}$/, "Country must be a 2-letter ISO code").optional().nullable(),
+  region: z.enum(["APAC", "EMEA", "NA", "LATAM"]).optional().nullable(),
+});
+
+// ============= COMMUNITY SCHEMAS =============
+
+export const CommunityCreateSchema = z.object({
+  name: z.string().min(3, "Name must be at least 3 characters").max(80, "Name must be at most 80 characters"),
+  description: z.string().max(500).optional().nullable(),
+});
+
+export const CommunityJoinByCodeSchema = z.object({
+  code: z.string().min(4).max(16).regex(/^[A-Z0-9-]+$/i, "Invalid join code"),
+});
+
+export const CommunityJoinByIdSchema = z.object({
+  community_id: z.coerce.number().int().positive(),
 });
 
 // ============= ROUTINE SCHEMAS =============

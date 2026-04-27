@@ -1,16 +1,23 @@
 'use client'
 
 import { motion } from 'framer-motion'
-import { Flame, Trophy } from 'lucide-react'
+import { Flame, Trophy, Star } from 'lucide-react'
 
 interface StreakBannerProps {
   current: number
   longest: number
   lastWorkoutDate: string | null
+  totalXp?: number
 }
 
-export function StreakBanner({ current, longest, lastWorkoutDate }: StreakBannerProps) {
-  if (current === 0 && longest === 0) return null
+function fmtXp(n: number): string {
+  if (n >= 1_000_000) return (n / 1_000_000).toFixed(1) + 'M'
+  if (n >= 1_000) return (n / 1_000).toFixed(1) + 'K'
+  return String(n)
+}
+
+export function StreakBanner({ current, longest, lastWorkoutDate, totalXp }: StreakBannerProps) {
+  if (current === 0 && longest === 0 && !totalXp) return null
 
   const isHot = current >= 7
   const isOnFire = current >= 14
@@ -105,6 +112,15 @@ export function StreakBanner({ current, longest, lastWorkoutDate }: StreakBanner
             {message}
           </p>
         </div>
+
+        {/* XP badge */}
+        {typeof totalXp === 'number' && totalXp > 0 && (
+          <div className="flex flex-col items-center gap-0.5 px-3 py-1.5 rounded-xl bg-amber-500/10 border border-amber-500/25">
+            <Star className="w-3.5 h-3.5 text-amber-300" />
+            <span className="text-xs font-bold text-white">{fmtXp(totalXp)}</span>
+            <span className="text-xs text-muted">XP</span>
+          </div>
+        )}
 
         {/* Best streak badge */}
         {longest > 0 && (

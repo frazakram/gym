@@ -3,213 +3,225 @@
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
-  Home,
-  Calendar,
-  ClipboardCheck,
-  User,
-  Plus,
-  BarChart3,
-  Utensils,
-  MessageCircle,
-  Ruler,
+  Home, Calendar, ClipboardCheck, User, Plus,
+  BarChart3, Utensils, MessageCircle, Ruler, Users,
 } from 'lucide-react'
 
+type View = 'home' | 'routine' | 'workout' | 'profile' | 'diet' | 'analytics' | 'coach' | 'measurements' | 'communities'
+
 interface BottomNavProps {
-  activeView: 'home' | 'routine' | 'workout' | 'profile' | 'diet' | 'analytics' | 'coach' | 'measurements'
-  onViewChange: (view: 'home' | 'routine' | 'workout' | 'profile' | 'diet' | 'analytics' | 'coach' | 'measurements') => void
+  activeView: View
+  onViewChange: (view: View) => void
 }
 
-/* ─── Arc geometry ─── */
-const R       = 120          // arc radius in px
-const SZ      = 48           // icon circle diameter
-const HALF    = SZ / 2
+type FloatItem = {
+  id: View
+  label: string
+  emoji: string
+  icon: React.ComponentType<{ className?: string }>
+  color: string       // accent for icon
+  topPct: number      // viewport % from top
+  leftPct: number     // viewport % from left
+  bobDur: number      // seconds for the gentle bob loop
+  bobOffset: number   // px range for the bob
+}
 
-// 4 items spread evenly across a 120° arc (from 150° down to 30°)
-const ITEMS = [
-  { id: 'analytics'    as const, label: 'Analytics', icon: BarChart3,     color: 'var(--primary-light)', bg: 'rgba(139,92,246,0.20)', border: 'rgba(139,92,246,0.40)', angle: 150 },
-  { id: 'diet'         as const, label: 'Diet',      icon: Utensils,      color: '#6EE7B7', bg: 'rgba(16,185,129,0.20)', border: 'rgba(16,185,129,0.40)', angle: 110 },
-  { id: 'coach'        as const, label: 'Coach',     icon: MessageCircle, color: '#FCD34D', bg: 'rgba(245,158,11,0.20)', border: 'rgba(245,158,11,0.40)', angle: 70  },
-  { id: 'measurements' as const, label: 'Body',      icon: Ruler,         color: 'var(--cyan-light)', bg: 'rgba(34,211,238,0.20)', border: 'rgba(34,211,238,0.40)', angle: 30  },
+// Hand-placed constellation: symmetric quincunx (4 corners + 1 center)
+// Order tuned so they arrive in a visually pleasing sequence:
+// center → upper-left → upper-right → lower-left → lower-right
+const FLOAT_ITEMS: FloatItem[] = [
+  { id: 'communities',  label: 'Community', emoji: '🌍', icon: Users,         color: '#F472B6', topPct: 40, leftPct: 50, bobDur: 6.0, bobOffset: 8 },
+  { id: 'analytics',    label: 'Analytics', emoji: '📊', icon: BarChart3,     color: '#A78BFA', topPct: 20, leftPct: 25, bobDur: 5.2, bobOffset: 7 },
+  { id: 'diet',         label: 'Diet',      emoji: '🍽️', icon: Utensils,      color: '#34D399', topPct: 20, leftPct: 75, bobDur: 4.6, bobOffset: 6 },
+  { id: 'measurements', label: 'Body',      emoji: '📏', icon: Ruler,         color: '#67E8F9', topPct: 62, leftPct: 25, bobDur: 4.8, bobOffset: 6 },
+  { id: 'coach',        label: 'Coach',     emoji: '💬', icon: MessageCircle, color: '#FBBF24', topPct: 62, leftPct: 75, bobDur: 5.4, bobOffset: 7 },
 ]
-
-function arc(deg: number) {
-  const r = (deg * Math.PI) / 180
-  return { x: Math.cos(r) * R, y: -Math.sin(r) * R }   // y negative = up
-}
 
 export function BottomNav({ activeView, onViewChange }: BottomNavProps) {
   const [open, setOpen] = useState(false)
+  const pick = (id: View) => { onViewChange(id); setOpen(false) }
 
-  const pick = (id: typeof activeView) => { onViewChange(id); setOpen(false) }
-
-  type NI = { id: 'home'|'routine'|'workout'|'profile'; label: string; icon: React.ComponentType<{className?:string}> }
+  type NI = { id: 'home' | 'routine' | 'workout' | 'profile'; label: string; icon: React.ComponentType<{ className?: string }> }
 
   const Tab = ({ item, isActive }: { item: NI; isActive: boolean }) => {
     const Icon = item.icon
     return (
-      <button onClick={() => pick(item.id)}
-        className="relative flex flex-col items-center justify-center gap-0.5 px-3 py-2 rounded-xl transition-all duration-200 min-w-[56px]">
+      <button
+        onClick={() => pick(item.id)}
+        className="relative flex flex-col items-center justify-center gap-0.5 px-3 py-2 rounded-xl transition-all duration-200 min-w-[56px]"
+      >
         {isActive && (
-          <motion.div layoutId="nav-pill"
+          <motion.div
+            layoutId="nav-pill"
             className="absolute -top-0.5 w-6 h-[3px] rounded-full bg-primary shadow-[0_0_8px_rgba(139,92,246,0.6)]"
-            transition={{ type:'spring', stiffness:400, damping:30 }} />
+            transition={{ type: 'spring', stiffness: 400, damping: 30 }}
+          />
         )}
         <div className={isActive ? 'text-primary drop-shadow-[0_0_8px_rgba(139,92,246,0.6)]' : 'text-gray-500 dark:text-slate-400'}>
           <Icon className="w-5 h-5" />
         </div>
         <AnimatePresence>
           {isActive && (
-            <motion.span initial={{opacity:0,height:0}} animate={{opacity:1,height:'auto'}} exit={{opacity:0,height:0}}
-              className="text-xs font-medium text-primary">{item.label}</motion.span>
+            <motion.span
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: 'auto' }}
+              exit={{ opacity: 0, height: 0 }}
+              className="text-xs font-medium text-primary"
+            >
+              {item.label}
+            </motion.span>
           )}
         </AnimatePresence>
       </button>
     )
   }
 
-  /* The arc origin sits at the center of the FAB.
-     Nav bar height ≈ 56 px, bar has pb-2 (8 px) below it.
-     FAB is lifted -mt-6 (24 px) above bar top → center ≈ 56/2+8 = 36px from viewport bottom + 24-28 ≈ 60px.
-     We'll use bottom:68 so the arc radiates from ~center of FAB. */
-  const ORIGIN_BOTTOM = 68
+  const FloatingIcon = ({ item, index }: { item: FloatItem; index: number }) => {
+    const Icon = item.icon
+    const isActive = activeView === item.id
+
+    return (
+      <motion.button
+        onClick={() => pick(item.id)}
+        // Mount/unmount: each icon rises from the FAB with a spin, lands with a soft overshoot
+        initial={{ opacity: 0, scale: 0.2, y: 140, rotate: -45 }}
+        animate={{ opacity: 1, scale: 1, y: 0, rotate: 0 }}
+        exit={{
+          opacity: 0,
+          scale: 0.2,
+          y: 80,
+          rotate: 30,
+          transition: { duration: 0.22, ease: 'easeIn', delay: (FLOAT_ITEMS.length - 1 - index) * 0.05 },
+        }}
+        transition={{
+          type: 'spring',
+          stiffness: 240,
+          damping: 16,
+          mass: 0.9,
+          delay: 0.15 + index * 0.18,
+        }}
+        whileHover={{ scale: 1.12 }}
+        whileTap={{ scale: 0.92 }}
+        className="absolute pointer-events-auto select-none"
+        style={{
+          top: `${item.topPct}%`,
+          left: `${item.leftPct}%`,
+          transform: 'translate(-50%, -50%)',
+        }}
+      >
+        {/* Idle bob */}
+        <motion.div
+          animate={{ y: [-item.bobOffset, item.bobOffset, -item.bobOffset] }}
+          transition={{ duration: item.bobDur, repeat: Infinity, ease: 'easeInOut', delay: index * 0.3 }}
+          className="flex flex-col items-center gap-1"
+        >
+          {/* Emoji */}
+          <span
+            className="text-[34px] leading-none"
+            style={{ filter: 'drop-shadow(0 4px 10px rgba(0,0,0,0.45))' }}
+          >
+            {item.emoji}
+          </span>
+
+          {/* Lucide icon (small, accent-colored, beneath emoji) */}
+          <span
+            style={{
+              color: item.color,
+              filter: `drop-shadow(0 0 8px ${item.color}88)`,
+            }}
+          >
+            <Icon className="w-5 h-5" />
+          </span>
+
+          {/* Label */}
+          <span
+            className="text-[12.5px] font-semibold tracking-wide text-white whitespace-nowrap"
+            style={{
+              textShadow: '0 2px 8px rgba(0,0,0,0.7), 0 0 1px rgba(0,0,0,0.6)',
+            }}
+          >
+            {item.label}
+          </span>
+
+          {/* Active indicator: tiny dot under the label */}
+          {isActive && (
+            <motion.div
+              layoutId="float-active"
+              className="w-1.5 h-1.5 rounded-full mt-0.5"
+              style={{ background: item.color, boxShadow: `0 0 8px ${item.color}` }}
+            />
+          )}
+        </motion.div>
+      </motion.button>
+    )
+  }
 
   return (
     <>
-      {/* ── Backdrop ── */}
+      {/* Backdrop */}
       <AnimatePresence>
         {open && (
-          <motion.div key="bd"
-            initial={{opacity:0}} animate={{opacity:1}} exit={{opacity:0}}
-            transition={{duration:0.25}}
-            className="fixed inset-0 bg-black/70 backdrop-blur-lg"
-            style={{zIndex:40}}
-            onClick={() => setOpen(false)} />
+          <motion.div
+            key="bd"
+            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            transition={{ duration: 0.3 }}
+            className="fixed inset-0 bg-black/55 backdrop-blur-xl"
+            style={{ zIndex: 40 }}
+            onClick={() => setOpen(false)}
+          />
         )}
       </AnimatePresence>
 
-      {/* ── Arc fan-out ── */}
+      {/* Floating icon constellation */}
       <AnimatePresence>
         {open && (
-          <div className="fixed pointer-events-none"
-            style={{ zIndex:51, bottom: ORIGIN_BOTTOM, left:'50%', width:0, height:0 }}>
-
-            {/* Dashed semicircle guide */}
-            <motion.svg
-              width={R*2+60} height={R+40}
-              viewBox={`${-R-30} ${-R-30} ${R*2+60} ${R+40}`}
-              fill="none"
-              className="absolute pointer-events-none"
-              style={{ bottom: -20, left: '50%', transform:'translateX(-50%)' }}
-              initial={{opacity:0}} animate={{opacity:0.6}} exit={{opacity:0}} transition={{duration:0.35}}>
-              <motion.path
-                d={`M ${arc(155).x} ${arc(155).y} A ${R} ${R} 0 0 1 ${arc(25).x} ${arc(25).y}`}
-                stroke="url(#arcGrad)" strokeWidth="1" strokeDasharray="4 6"
-                initial={{pathLength:0}} animate={{pathLength:1}} transition={{duration:0.5, ease:'easeOut'}} />
-              <defs>
-                <linearGradient id="arcGrad" x1="0%" y1="0%" x2="100%" y2="0%">
-                  <stop offset="0%" stopColor="rgba(139,92,246,0.25)" />
-                  <stop offset="50%" stopColor="rgba(34,211,238,0.2)" />
-                  <stop offset="100%" stopColor="rgba(139,92,246,0.25)" />
-                </linearGradient>
-              </defs>
-            </motion.svg>
-
-            {/* ── Individual arc items ── */}
-            {ITEMS.map((item, i) => {
-              const pos = arc(item.angle)
-              const Icon = item.icon
-              const active = activeView === item.id
-              return (
-                <motion.div key={item.id}
-                  className="absolute pointer-events-auto"
-                  style={{ left:0, top:0 }}
-                  initial={{ x: -HALF, y: -HALF, scale:0, opacity:0 }}
-                  animate={{ x: pos.x - HALF, y: pos.y - HALF, scale:1, opacity:1 }}
-                  exit={{   x: -HALF, y: -HALF, scale:0, opacity:0,
-                            transition:{ delay:(ITEMS.length-1-i)*0.04, duration:0.18 }}}
-                  transition={{ delay: i*0.065, type:'spring', stiffness:400, damping:22 }}>
-
-                  {/* Label above icon */}
-                  <motion.span
-                    initial={{opacity:0, y:4}} animate={{opacity:1, y:0}}
-                    transition={{delay: i*0.065+0.22, duration:0.18}}
-                    className="absolute left-1/2 -translate-x-1/2 whitespace-nowrap text-xs font-bold tracking-wide px-2 py-0.5 rounded-md backdrop-blur-sm pointer-events-none"
-                    style={{ bottom: SZ + 6, color:item.color, background:item.bg, border:`1px solid ${item.border}` }}>
-                    {item.label}
-                  </motion.span>
-
-                  {/* Circle button */}
-                  <motion.button onClick={() => pick(item.id)}
-                    whileHover={{scale:1.15}} whileTap={{scale:0.88}}
-                    className="relative flex items-center justify-center rounded-full backdrop-blur-xl"
-                    style={{
-                      width: SZ, height: SZ,
-                      background: item.bg,
-                      border: `1.5px solid ${item.border}`,
-                      boxShadow: `0 0 20px ${item.bg}, 0 0 8px ${item.border}, 0 4px 14px rgba(0,0,0,0.3)`,
-                    }}>
-                    {active && (
-                      <motion.div className="absolute inset-[-3px] rounded-full"
-                        style={{border:`2px solid ${item.color}`, boxShadow:`0 0 12px ${item.border}`}}
-                        initial={{scale:0.8,opacity:0}} animate={{scale:1,opacity:1}} />
-                    )}
-                    <Icon style={{color:item.color, width:20, height:20}} />
-                  </motion.button>
-                </motion.div>
-              )
-            })}
+          <div
+            key="float"
+            className="fixed inset-0 pointer-events-none max-w-md mx-auto"
+            style={{ zIndex: 51 }}
+          >
+            {FLOAT_ITEMS.map((item, i) => (
+              <FloatingIcon key={item.id} item={item} index={i} />
+            ))}
           </div>
         )}
       </AnimatePresence>
 
-      {/* ── Bottom Nav Bar ── */}
-      <nav className="fixed bottom-0 left-0 right-0 safe-area-bottom" style={{zIndex:50}}>
+      {/* Bottom nav bar */}
+      <nav className="fixed bottom-0 left-0 right-0 safe-area-bottom" style={{ zIndex: 50 }}>
         <div className="max-w-md mx-auto px-4 pb-2">
           <div className="flex items-center justify-between bg-navy-0/95 backdrop-blur-xl rounded-2xl border border-primary/15 shadow-[0_8px_32px_rgba(0,0,0,0.4)] px-2 py-1">
 
-            {/* Left tabs */}
             <div className="flex items-center">
-              {([{id:'home' as const,label:'Home',icon:Home},{id:'routine' as const,label:'Routine',icon:Calendar}] as NI[])
-                .map(t=><Tab key={t.id} item={t} isActive={activeView===t.id}/>)}
+              {([
+                { id: 'home' as const, label: 'Home', icon: Home },
+                { id: 'routine' as const, label: 'Routine', icon: Calendar },
+              ] as NI[]).map(t => <Tab key={t.id} item={t} isActive={activeView === t.id} />)}
             </div>
 
-            {/* ── FAB ── */}
-            <div className="relative -mt-6">
-              <AnimatePresence>
-                {open && (
-                  <>
-                    <motion.div key="r1"
-                      initial={{scale:1,opacity:0.4}} animate={{scale:2.4,opacity:0}} exit={{opacity:0}}
-                      transition={{duration:0.9,ease:'easeOut',repeat:Infinity,repeatDelay:0.5}}
-                      className="absolute inset-0 rounded-full"
-                      style={{background:'radial-gradient(circle, rgba(139,92,246,0.3), transparent 70%)'}} />
-                    <motion.div key="r2"
-                      initial={{scale:1,opacity:0.25}} animate={{scale:1.8,opacity:0}} exit={{opacity:0}}
-                      transition={{duration:0.7,ease:'easeOut',repeat:Infinity,repeatDelay:0.7,delay:0.25}}
-                      className="absolute inset-0 rounded-full bg-brand-cyan/20" />
-                  </>
-                )}
-              </AnimatePresence>
-
+            {/* FAB */}
+            <div className="relative -mt-6" style={{ zIndex: 52 }}>
               <motion.button
-                onClick={() => setOpen(v=>!v)}
-                whileTap={{scale:0.82}}
-                animate={{ scale: open?1.15:1, rotate: open?45:0 }}
-                transition={{type:'spring',stiffness:500,damping:24}}
-                className="relative flex items-center justify-center w-14 h-14 rounded-full bg-gradient-to-br from-primary via-primary-dark to-brand-cyan transition-shadow duration-300"
+                onClick={() => setOpen(v => !v)}
+                whileTap={{ scale: 0.84 }}
+                animate={{ scale: open ? 1.1 : 1, rotate: open ? 45 : 0 }}
+                transition={{ type: 'spring', stiffness: 500, damping: 26 }}
+                className="flex items-center justify-center w-14 h-14 rounded-full bg-gradient-to-br from-primary via-primary-dark to-brand-cyan"
                 style={{
                   boxShadow: open
-                    ? '0 0 32px rgba(139,92,246,0.6), 0 0 64px rgba(34,211,238,0.25)'
+                    ? '0 0 0 6px rgba(139,92,246,0.18), 0 0 32px rgba(139,92,246,0.55)'
                     : '0 4px 24px rgba(139,92,246,0.4), 0 0 40px rgba(34,211,238,0.1)',
-                }}>
+                }}
+              >
                 <Plus className="w-7 h-7 text-white" strokeWidth={2.5} />
               </motion.button>
             </div>
 
-            {/* Right tabs */}
             <div className="flex items-center">
-              {([{id:'workout' as const,label:'Workout',icon:ClipboardCheck},{id:'profile' as const,label:'Profile',icon:User}] as NI[])
-                .map(t=><Tab key={t.id} item={t} isActive={activeView===t.id}/>)}
+              {([
+                { id: 'workout' as const, label: 'Workout', icon: ClipboardCheck },
+                { id: 'profile' as const, label: 'Profile', icon: User },
+              ] as NI[]).map(t => <Tab key={t.id} item={t} isActive={activeView === t.id} />)}
             </div>
           </div>
         </div>

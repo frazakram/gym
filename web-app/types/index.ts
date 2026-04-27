@@ -37,6 +37,9 @@ export interface Profile {
     // Body Photos (NEW)
     body_photos?: BodyPhoto[];
     body_composition_analysis?: BodyCompositionAnalysis;
+    // Nationality / Region (for community auto-assignment)
+    nationality?: string;  // ISO 3166-1 alpha-2 country code (e.g. 'IN', 'US')
+    region?: 'APAC' | 'EMEA' | 'NA' | 'LATAM';
 }
 
 export interface GymPhoto {

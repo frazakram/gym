@@ -3,7 +3,7 @@
 import { useMemo, useState } from 'react'
 import Link from 'next/link'
 import { motion } from 'framer-motion'
-import { LogOut, ChevronRight, Settings, Camera, Dumbbell, CheckCircle, AlertCircle } from 'lucide-react'
+import { LogOut, ChevronRight, Settings, Camera, Dumbbell, CheckCircle, AlertCircle, Globe } from 'lucide-react'
 import { Profile, GymPhoto, GymEquipmentAnalysis, BodyPhoto, BodyCompositionAnalysis } from '@/types'
 import { GlassCard } from '../ui/GlassCard'
 import { SectionHeader } from '../ui/SectionHeader'
@@ -12,6 +12,29 @@ import { AnimatedButton, IconButton } from '../ui/AnimatedButton'
 import { Collapsible } from '../ui/Collapsible'
 import { UserAvatar } from '../ui/UserAvatar'
 import { ImageUploadCard } from '../ui/ImageUploadCard'
+
+const COUNTRIES = [
+  { code: 'IN', name: 'India', flag: '🇮🇳' }, { code: 'US', name: 'United States', flag: '🇺🇸' },
+  { code: 'GB', name: 'United Kingdom', flag: '🇬🇧' }, { code: 'CA', name: 'Canada', flag: '🇨🇦' },
+  { code: 'AU', name: 'Australia', flag: '🇦🇺' }, { code: 'DE', name: 'Germany', flag: '🇩🇪' },
+  { code: 'FR', name: 'France', flag: '🇫🇷' }, { code: 'JP', name: 'Japan', flag: '🇯🇵' },
+  { code: 'BR', name: 'Brazil', flag: '🇧🇷' }, { code: 'MX', name: 'Mexico', flag: '🇲🇽' },
+  { code: 'CN', name: 'China', flag: '🇨🇳' }, { code: 'KR', name: 'South Korea', flag: '🇰🇷' },
+  { code: 'TH', name: 'Thailand', flag: '🇹🇭' }, { code: 'SG', name: 'Singapore', flag: '🇸🇬' },
+  { code: 'AE', name: 'UAE', flag: '🇦🇪' }, { code: 'SA', name: 'Saudi Arabia', flag: '🇸🇦' },
+  { code: 'PK', name: 'Pakistan', flag: '🇵🇰' }, { code: 'BD', name: 'Bangladesh', flag: '🇧🇩' },
+  { code: 'ID', name: 'Indonesia', flag: '🇮🇩' }, { code: 'PH', name: 'Philippines', flag: '🇵🇭' },
+  { code: 'VN', name: 'Vietnam', flag: '🇻🇳' }, { code: 'MY', name: 'Malaysia', flag: '🇲🇾' },
+  { code: 'NZ', name: 'New Zealand', flag: '🇳🇿' }, { code: 'IT', name: 'Italy', flag: '🇮🇹' },
+  { code: 'ES', name: 'Spain', flag: '🇪🇸' }, { code: 'NL', name: 'Netherlands', flag: '🇳🇱' },
+  { code: 'SE', name: 'Sweden', flag: '🇸🇪' }, { code: 'NO', name: 'Norway', flag: '🇳🇴' },
+  { code: 'PL', name: 'Poland', flag: '🇵🇱' }, { code: 'TR', name: 'Turkey', flag: '🇹🇷' },
+  { code: 'EG', name: 'Egypt', flag: '🇪🇬' }, { code: 'ZA', name: 'South Africa', flag: '🇿🇦' },
+  { code: 'NG', name: 'Nigeria', flag: '🇳🇬' }, { code: 'AR', name: 'Argentina', flag: '🇦🇷' },
+  { code: 'CO', name: 'Colombia', flag: '🇨🇴' }, { code: 'CL', name: 'Chile', flag: '🇨🇱' },
+  { code: 'IL', name: 'Israel', flag: '🇮🇱' }, { code: 'IE', name: 'Ireland', flag: '🇮🇪' },
+  { code: 'CH', name: 'Switzerland', flag: '🇨🇭' }, { code: 'RU', name: 'Russia', flag: '🇷🇺' },
+]
 
 const stagger = {
   hidden: {},
@@ -52,6 +75,7 @@ interface ProfileViewProps {
   allergies: string[]
   cookingLevel: string
   budget: string
+  nationality: string
   resolvedHeightCm: number | null
   // Gym Photos
   gymPhotos?: GymPhoto[]
@@ -104,6 +128,7 @@ export function ProfileView({
   allergies,
   cookingLevel,
   budget,
+  nationality,
   resolvedHeightCm,
   gymPhotos = [],
   equipmentAnalysis,
@@ -286,6 +311,46 @@ export function ProfileView({
               ))}
             </div>
           </div>
+        </div>
+      </GlassCard>
+      </motion.div>
+
+      {/* Location / Nationality */}
+      <motion.div variants={fadeUp}>
+      <GlassCard className="p-4">
+        <SectionHeader
+          title="Location"
+          subtitle="Sets your region for community leaderboards"
+          right={<Globe className="w-4 h-4 text-primary-light" />}
+        />
+        <div className="mt-4">
+          {nationality && (() => {
+            const c = COUNTRIES.find(x => x.code === nationality)
+            return c ? (
+              <div className="flex items-center gap-2 mb-3 px-3 py-2 rounded-xl bg-primary/10 border border-primary/20">
+                <span className="text-2xl">{c.flag}</span>
+                <div>
+                  <p className="text-sm font-semibold text-white">{c.name}</p>
+                  <p className="text-xs text-muted">Current country</p>
+                </div>
+              </div>
+            ) : null
+          })()}
+          <select
+            value={nationality}
+            onChange={(e) => onUpdateField('nationality', e.target.value)}
+            className="w-full px-4 py-3 glass-soft rounded-2xl text-white bg-transparent border border-primary/10 ui-focus-ring appearance-none"
+          >
+            <option value="">Select your country</option>
+            {COUNTRIES.map((c) => (
+              <option key={c.code} value={c.code}>
+                {c.flag} {c.name}
+              </option>
+            ))}
+          </select>
+          <p className="mt-2 text-xs text-muted">
+            Saved with your profile. Used to auto-join your regional community.
+          </p>
         </div>
       </GlassCard>
       </motion.div>

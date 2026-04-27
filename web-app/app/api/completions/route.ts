@@ -1,6 +1,6 @@
 import { withCors } from "@/lib/corsMiddleware";
 import { NextRequest, NextResponse } from 'next/server';
-import { getCompletionStats, initializeDatabase, toggleExerciseCompletion } from '@/lib/db';
+import { getCompletionStats, initializeDatabase, toggleExerciseCompletion, awardXp, awardStreakXpIfFirstToday, XP_VALUES } from '@/lib/db';
 import { getSession } from '@/lib/auth';
 import { redisIncr } from '@/lib/redis';
 import { ExerciseCompletionSchema, safeParseWithError } from '@/lib/validations';
@@ -45,6 +45,12 @@ export async function POST(req: NextRequest) {
         { error: 'Failed to update completion status (Access Denied or Error)' },
         { status: 403 } // 403 Forbidden is more appropriate if it was an ownership issue
       ));
+    }
+
+    // Award XP only when toggled to completed (not when un-checking)
+    if (parsed.data.completed === true) {
+      await awardXp(session.userId, 'exercise_completed', XP_VALUES.EXERCISE);
+      await awardStreakXpIfFirstToday(session.userId);
     }
 
     // Invalidate derived analytics cache for ALL `days=` values (best-effort).
