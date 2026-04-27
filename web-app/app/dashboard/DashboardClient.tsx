@@ -27,6 +27,16 @@ import { Menu } from 'lucide-react'
 import { toast } from 'sonner'
 import { AnimatePresence, motion } from 'framer-motion'
 
+function countryToRegionClient(code: string): 'APAC' | 'EMEA' | 'NA' | 'LATAM' {
+  const APAC = ['IN','CN','JP','KR','TH','VN','ID','MY','SG','PH','AU','NZ','PK','BD']
+  const NA = ['US','CA','MX']
+  const LATAM = ['BR','AR','CO','CL','PE','VE','EC','UY','PY','BO']
+  if (APAC.includes(code)) return 'APAC'
+  if (NA.includes(code)) return 'NA'
+  if (LATAM.includes(code)) return 'LATAM'
+  return 'EMEA'
+}
+
 const VIEW_QUOTE_CATEGORY: Record<string, QuoteCategory> = {
   home: 'general',
   routine: 'workout',
@@ -143,6 +153,7 @@ export default function DashboardPage() {
   const [allergies, setAllergies] = useState<string[]>([])
   const [cookingLevel, setCookingLevel] = useState<string>('Moderate')
   const [budget, setBudget] = useState<string>('Standard')
+  const [nationality, setNationality] = useState<string>('')
   // Gym Equipment State (NEW)
   const [gymPhotos, setGymPhotos] = useState<any[]>([])
   const [equipmentAnalysis, setEquipmentAnalysis] = useState<any>(null)
@@ -238,6 +249,7 @@ export default function DashboardPage() {
         setAllergies(data.profile.allergies || [])
         setCookingLevel(data.profile.cooking_level ?? 'Moderate')
         setBudget(data.profile.budget ?? 'Standard')
+        setNationality(data.profile.nationality ?? '')
         setGymPhotos(data.profile.gym_photos || [])
         setEquipmentAnalysis(data.profile.gym_equipment_analysis || null)
         setBodyPhotos(data.profile.body_photos || [])
@@ -953,7 +965,9 @@ export default function DashboardPage() {
           specific_food_preferences: specificFoodPreferences,
           cooking_level: cookingLevel,
           budget: budget,
-          name: name
+          name: name,
+          nationality: nationality || undefined,
+          region: nationality ? countryToRegionClient(nationality) : undefined,
         }),
       });
 
@@ -1040,6 +1054,7 @@ export default function DashboardPage() {
       case 'allergies': setAllergies(value); break
       case 'cookingLevel': setCookingLevel(value); break
       case 'budget': setBudget(value); break
+      case 'nationality': setNationality(value); break
       case 'name': setName(value); break
       case 'gymPhotos': setGymPhotos(value); break
       case 'gymEquipmentAnalysis': setEquipmentAnalysis(value); break
@@ -1519,6 +1534,7 @@ export default function DashboardPage() {
                 allergies={allergies}
                 cookingLevel={cookingLevel}
                 budget={budget}
+                nationality={nationality}
                 gymPhotos={gymPhotos}
                 equipmentAnalysis={equipmentAnalysis}
                 onGymPhotoUpload={handleGymPhotoUpload}

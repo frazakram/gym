@@ -12,7 +12,9 @@
       "Bash(xargs grep:*)",
       "Bash(grep -r \"canvas\\\\|toBlob\\\\|drawImage\\\\|HEIC\\\\|heic\\\\|imageformat\" /c/Users/RagaAI_User/Desktop/gymm_main/gym/web-app --include=*.ts --include=*.tsx -n)",
       "Bash(grep -r \"EXIF\\\\|exif\\\\|orientation\\\\|rotate\" /c/Users/RagaAI_User/Desktop/gymm_main/gym/web-app --include=*.ts --include=*.tsx -n)",
-      "Bash(node *)"
+      "Bash(node *)",
+      "Bash(npx tsc *)",
+      "Bash(grep -n \"sql\\\\`\\\\|export async function getProfile\\\\|sql\\(\" lib/db.ts)"
     ]
   },
   "disabledMcpjsonServers": [

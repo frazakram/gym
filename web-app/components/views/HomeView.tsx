@@ -13,7 +13,8 @@ import { UserAvatar } from '../ui/UserAvatar'
 import { StreakBanner } from '../ui/StreakBanner'
 import { RestDayCard } from '../ui/RestDayCard'
 import { QuoteLoader } from '../ui/QuoteLoader'
-import { ArrowRight, Timer, Percent, MessageCircle, ChevronRight, Flame, Drumstick, CalendarPlus } from 'lucide-react'
+import { ArrowRight, Timer, Percent, MessageCircle, ChevronRight, Flame, Drumstick, CalendarPlus, MapPin } from 'lucide-react'
+import { useLocation } from '@/hooks/useLocation'
 
 const stagger = {
   hidden: {},
@@ -65,6 +66,7 @@ export function HomeView({
   onStartNewWeek,
 }: HomeViewProps) {
   const [manageOpen, setManageOpen] = useState(false)
+  const { city: detectedCity, location: detectedLocation, loading: locationLoading } = useLocation({ autoSave: true })
 
   const getGreeting = () => {
     const hour = new Date().getHours()
@@ -128,6 +130,22 @@ export function HomeView({
             <p className="mt-1 text-xs text-muted">
               {profile?.goal || 'General fitness'} &bull; {profile?.level || 'Beginner'}
             </p>
+            {detectedLocation?.source !== 'denied' && (
+              <div className="mt-1.5">
+                {locationLoading ? (
+                  <div className="inline-flex h-5 w-24 animate-pulse rounded-full bg-white/5 border border-white/10" />
+                ) : detectedCity ? (
+                  <span
+                    className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-medium
+                               bg-white/5 text-white/80 border border-white/10
+                               dark:bg-[#0d1117] dark:text-white/70 dark:border-white/10"
+                  >
+                    <MapPin className="w-3 h-3 text-primary-light" />
+                    {detectedCity}
+                  </span>
+                ) : null}
+              </div>
+            )}
           </div>
         </div>
         <div className="shrink-0 glass-soft rounded-full px-3 py-1.5 text-xs text-white border border-primary/20">
