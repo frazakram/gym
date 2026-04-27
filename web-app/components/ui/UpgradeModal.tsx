@@ -1,6 +1,7 @@
 'use client'
 
 import { useMemo, useState } from 'react'
+import { csrfFetch } from '@/lib/useCsrf'
 import { PremiumStatus } from '@/types'
 
 type RazorpayCheckout = {
@@ -87,7 +88,7 @@ export function UpgradeModal({ open, status, onClose, onUnlocked, showToast }: U
   const handlePay = async () => {
     setLoading(true)
     try {
-      const res = await fetch('/api/billing/subscription/create', {
+      const res = await csrfFetch('/api/billing/subscription/create', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ product: 'analytics_pro', billing: 'monthly' }),
@@ -107,26 +108,8 @@ export function UpgradeModal({ open, status, onClose, onUnlocked, showToast }: U
         name: 'GymBro AI',
         description: 'Pro Analytics (₹49/month)',
         theme: { color: 'var(--gold)' },
-        // Try to force UPI if available for this subscription/account
-        config: {
-          display: {
-            blocks: {
-              methods: {
-                name: 'Payment Methods',
-                instruments: [
-                  { method: 'upi' },
-                  { method: 'card' }
-                ],
-              },
-            },
-            sequence: ['block.methods'],
-            preferences: {
-              show_default_blocks: true,
-            },
-          },
-        },
         prefill: {
-          name: '', // User can fill or we can pull from profile
+          name: '',
           email: '',
           contact: ''
         },
