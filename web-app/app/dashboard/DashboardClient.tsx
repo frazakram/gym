@@ -646,7 +646,7 @@ export default function DashboardPage() {
         })
 
       if (!res.ok) {
-        let errText = await res.text().catch(() => '');
+        const errText = await res.text().catch(() => '');
         throw new Error(`Failed to save routine to DB: ${res.status} ${errText}`);
       }
 

@@ -591,7 +591,7 @@ export async function authenticateUser(username: string, password: string): Prom
 export async function getUserIdByUsername(username: string): Promise<number | null> {
   try {
     const encUsername = encryptDet(username);
-    let result = await pool.query<User>('SELECT id FROM users WHERE username = $1', [encUsername]);
+    const result = await pool.query<User>('SELECT id FROM users WHERE username = $1', [encUsername]);
 
     // Fallback for legacy plaintext rows — migrate on success
     if (!result.rows[0]) {
