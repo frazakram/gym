@@ -1,7 +1,7 @@
 import { withCors } from "@/lib/corsMiddleware";
 import { NextResponse } from "next/server";
 import { getSession } from "@/lib/auth";
-import { getStreak } from "@/lib/db";
+import { getStreak, getUserXp, initializeDatabase } from "@/lib/db";
 
 export async function GET() {
   try {
@@ -9,8 +9,12 @@ export async function GET() {
     if (!session) {
       return withCors(NextResponse.json({ error: "Unauthorized" }, { status: 401 }));
     }
-    const streak = await getStreak(session.userId);
-    return withCors(NextResponse.json(streak));
+    await initializeDatabase();
+    const [streak, xp] = await Promise.all([
+      getStreak(session.userId),
+      getUserXp(session.userId),
+    ]);
+    return withCors(NextResponse.json({ ...streak, total_xp: xp.total_xp }));
   } catch {
     return withCors(NextResponse.json(
       { error: "Failed to fetch streak" },

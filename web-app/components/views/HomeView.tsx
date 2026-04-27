@@ -32,7 +32,7 @@ interface HomeViewProps {
   exerciseCompletions: Map<string, boolean>
   dayCompletions: Map<number, boolean>
   heatmapData?: Array<{ date: string; value: number }>
-  streakData?: { current: number; longest: number; last_workout_date: string | null } | null
+  streakData?: { current: number; longest: number; last_workout_date: string | null; total_xp?: number } | null
   currentWeekNumber: number
   onNavigateToWorkout: (dayIndex?: number) => void
   onNavigateToCoach: () => void
@@ -136,12 +136,13 @@ export function HomeView({
       </motion.div>
 
       {/* Streak flame banner */}
-      {streakData && (streakData.current > 0 || streakData.longest > 0) && (
+      {streakData && (streakData.current > 0 || streakData.longest > 0 || (streakData.total_xp ?? 0) > 0) && (
         <motion.div variants={fadeUp}>
           <StreakBanner
             current={streakData.current}
             longest={streakData.longest}
             lastWorkoutDate={streakData.last_workout_date}
+            totalXp={streakData.total_xp}
           />
         </motion.div>
       )}

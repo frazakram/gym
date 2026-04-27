@@ -12,11 +12,12 @@ import {
   Utensils,
   MessageCircle,
   Ruler,
+  Users,
 } from 'lucide-react'
 
 interface BottomNavProps {
-  activeView: 'home' | 'routine' | 'workout' | 'profile' | 'diet' | 'analytics' | 'coach' | 'measurements'
-  onViewChange: (view: 'home' | 'routine' | 'workout' | 'profile' | 'diet' | 'analytics' | 'coach' | 'measurements') => void
+  activeView: 'home' | 'routine' | 'workout' | 'profile' | 'diet' | 'analytics' | 'coach' | 'measurements' | 'communities'
+  onViewChange: (view: 'home' | 'routine' | 'workout' | 'profile' | 'diet' | 'analytics' | 'coach' | 'measurements' | 'communities') => void
 }
 
 /* ─── Arc geometry ─── */
@@ -24,11 +25,12 @@ const R       = 120          // arc radius in px
 const SZ      = 48           // icon circle diameter
 const HALF    = SZ / 2
 
-// 4 items spread evenly across a 120° arc (from 150° down to 30°)
+// 5 items spread evenly across a 120° arc (from 150° down to 30°)
 const ITEMS = [
   { id: 'analytics'    as const, label: 'Analytics', icon: BarChart3,     color: 'var(--primary-light)', bg: 'rgba(139,92,246,0.20)', border: 'rgba(139,92,246,0.40)', angle: 150 },
-  { id: 'diet'         as const, label: 'Diet',      icon: Utensils,      color: '#6EE7B7', bg: 'rgba(16,185,129,0.20)', border: 'rgba(16,185,129,0.40)', angle: 110 },
-  { id: 'coach'        as const, label: 'Coach',     icon: MessageCircle, color: '#FCD34D', bg: 'rgba(245,158,11,0.20)', border: 'rgba(245,158,11,0.40)', angle: 70  },
+  { id: 'diet'         as const, label: 'Diet',      icon: Utensils,      color: '#6EE7B7', bg: 'rgba(16,185,129,0.20)', border: 'rgba(16,185,129,0.40)', angle: 120 },
+  { id: 'communities'  as const, label: 'Community', icon: Users,         color: '#F472B6', bg: 'rgba(236,72,153,0.20)', border: 'rgba(236,72,153,0.40)', angle: 90  },
+  { id: 'coach'        as const, label: 'Coach',     icon: MessageCircle, color: '#FCD34D', bg: 'rgba(245,158,11,0.20)', border: 'rgba(245,158,11,0.40)', angle: 60  },
   { id: 'measurements' as const, label: 'Body',      icon: Ruler,         color: 'var(--cyan-light)', bg: 'rgba(34,211,238,0.20)', border: 'rgba(34,211,238,0.40)', angle: 30  },
 ]
 

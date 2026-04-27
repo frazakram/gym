@@ -1,6 +1,6 @@
 import { withCors } from "@/lib/corsMiddleware";
 import { NextRequest, NextResponse } from 'next/server';
-import { getProfile, initializeDatabase, saveProfile } from '@/lib/db';
+import { getProfile, initializeDatabase, saveProfile, saveNationality, countryToRegion } from '@/lib/db';
 import { getSession } from '@/lib/auth';
 import { ProfileUpdateSchema, safeParseWithError } from '@/lib/validations';
 import { requireCsrf } from '@/lib/csrf';
@@ -93,6 +93,13 @@ export async function PUT(request: NextRequest) {
       nullToUndefined(data.body_photos),
       nullToUndefined(data.body_composition_analysis)
     );
+
+    // Persist nationality + region (separate update so we don't bloat saveProfile signature)
+    if (data.nationality !== undefined || data.region !== undefined) {
+      const nat = data.nationality ? data.nationality.toUpperCase() : null;
+      const region = data.region ?? (nat ? countryToRegion(nat) : null);
+      await saveNationality(session.userId, nat, region);
+    }
 
     return withCors(NextResponse.json({ profile }, { status: 200 }));
   } catch (error) {

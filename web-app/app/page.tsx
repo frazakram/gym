@@ -1,14 +1,13 @@
 'use client'
 
-import { useEffect, useRef } from 'react'
 import Link from 'next/link'
 import { ThemeToggle } from '@/components/ThemeToggle'
 
 function CheckIcon({ color = 'purple' }: { color?: 'purple' | 'green' | 'amber' }) {
   const styles = {
     purple: 'bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400',
-    green:  'bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400',
-    amber:  'bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400',
+    green: 'bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400',
+    amber: 'bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400',
   }
   return (
     <span className={`w-5 h-5 rounded-full flex items-center justify-center text-xs flex-shrink-0 ${styles[color]}`}>
@@ -18,63 +17,12 @@ function CheckIcon({ color = 'purple' }: { color?: 'purple' | 'green' | 'amber' 
 }
 
 export default function LandingPage() {
-  useEffect(() => {
-    const els = document.querySelectorAll('.reveal')
-    const observer = new IntersectionObserver(
-      (entries) => entries.forEach((e) => { if (e.isIntersecting) { e.target.classList.add('visible'); observer.unobserve(e.target) } }),
-      { threshold: 0.12 }
-    )
-    els.forEach((el) => observer.observe(el))
-    return () => observer.disconnect()
-  }, [])
-
-  useEffect(() => {
-    const easeOutQuart = (t: number) => 1 - Math.pow(1 - t, 4)
-    const els = document.querySelectorAll<HTMLElement>('[data-count]')
-    const observer = new IntersectionObserver((entries) => {
-      entries.forEach((entry) => {
-        if (!entry.isIntersecting) return
-        const el = entry.target as HTMLElement
-        const target = parseFloat(el.dataset.count!)
-        const decimals = parseInt(el.dataset.decimals ?? '0')
-        const suffix = el.dataset.suffix ?? ''
-        const duration = 1200
-        const start = performance.now()
-        const tick = (now: number) => {
-          const progress = Math.min((now - start) / duration, 1)
-          const val = target * easeOutQuart(progress)
-          el.textContent = (decimals ? val.toFixed(decimals) : Math.floor(val).toLocaleString('en-IN')) + suffix
-          if (progress < 1) requestAnimationFrame(tick)
-        }
-        requestAnimationFrame(tick)
-        observer.unobserve(el)
-      })
-    }, { threshold: 0.5 })
-    els.forEach((el) => observer.observe(el))
-    return () => observer.disconnect()
-  }, [])
-
-  useEffect(() => {
-    const bars = document.querySelectorAll<HTMLElement>('.bar-fill')
-    const observer = new IntersectionObserver((entries) => {
-      entries.forEach((entry) => {
-        if (!entry.isIntersecting) return
-        const el = entry.target as HTMLElement
-        el.style.setProperty('--bar-target', el.dataset.bar + '%')
-        requestAnimationFrame(() => requestAnimationFrame(() => el.classList.add('filled')))
-        observer.unobserve(el)
-      })
-    }, { threshold: 0.4 })
-    bars.forEach((el) => observer.observe(el))
-    return () => observer.disconnect()
-  }, [])
-
   return (
     <div className="w-full bg-white dark:bg-[#080c14] transition-colors duration-300">
 
       {/* ── NAVBAR ── */}
       <nav className="sticky top-0 z-50 bg-white/90 dark:bg-[#080c14]/90 backdrop-blur-md border-b border-gray-100 dark:border-white/5 transition-colors duration-300">
-        <div className="max-w-7xl mx-auto px-8 h-16 flex items-center justify-between">
+        <div className="max-w-7xl mx-auto px-8 pr-16 h-16 flex items-center justify-between">
           <Link href="/" className="flex items-center gap-2">
             <img src="/logo.png" alt="GymBro" className="w-8 h-8 rounded-lg" />
             <span className="font-bold text-lg text-gray-900 dark:text-white transition-colors duration-300">GymBro</span>
@@ -101,7 +49,7 @@ export default function LandingPage() {
             </button>
           </div>
 
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-4">
             <Link
               href="/login"
               className="text-sm text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors duration-300"
@@ -114,9 +62,9 @@ export default function LandingPage() {
             >
               Get started
             </Link>
-            <ThemeToggle className="relative" />
           </div>
         </div>
+        <ThemeToggle />
       </nav>
 
       {/* ── HERO ── */}
@@ -126,19 +74,19 @@ export default function LandingPage() {
 
             {/* Left: text */}
             <div className="flex flex-col gap-6">
-              <span className="inline-flex items-center gap-2 bg-purple-50 dark:bg-purple-900/20 text-purple-700 dark:text-purple-300 rounded-full px-3 py-1 text-xs font-medium w-fit hero-fade hero-fade-0">
+              <span className="inline-flex items-center gap-2 bg-purple-50 dark:bg-purple-900/20 text-purple-700 dark:text-purple-300 rounded-full px-3 py-1 text-xs font-medium w-fit">
                 🇮🇳 Made for Indian athletes
               </span>
 
-              <h1 className="text-4xl sm:text-5xl lg:text-7xl font-black tracking-tight leading-[1.05] text-gray-900 dark:text-white hero-fade hero-fade-1">
+              <h1 className="text-4xl sm:text-5xl lg:text-7xl font-black tracking-tight leading-[1.05] text-gray-900 dark:text-white">
                 The fitness app that actually knows what you eat.
               </h1>
 
-              <p className="mt-6 text-lg text-gray-500 dark:text-gray-400 max-w-xl hero-fade hero-fade-2">
+              <p className="mt-6 text-lg text-gray-500 dark:text-gray-400 max-w-xl">
                 GymBro builds your workouts around your gym and your meals around your kitchen — then gets smarter every week you show up.
               </p>
 
-              <div className="flex flex-wrap gap-2 hero-fade hero-fade-2">
+              <div className="flex flex-wrap gap-2">
                 {['✓ No generic meal plans', '✓ Adapts weekly', '✓ Free to start'].map((item) => (
                   <span
                     key={item}
@@ -149,7 +97,7 @@ export default function LandingPage() {
                 ))}
               </div>
 
-              <div className="mt-8 flex flex-wrap gap-3 hero-fade hero-fade-3">
+              <div className="mt-8 flex flex-wrap gap-3">
                 {/* Start for free — rotating conic-gradient border */}
                 <div className="relative inline-flex rounded-full p-[2px] overflow-hidden">
                   <span
@@ -178,7 +126,7 @@ export default function LandingPage() {
                     }}
                   />
                   <Link
-                    href="/demo"
+                    href="https://finalgym.vercel.app/"
                     className="relative z-10 bg-white dark:bg-[#080c14] text-gray-700 dark:text-white rounded-full px-8 py-4 text-base hover:bg-gray-50 dark:hover:bg-[#0d1117] transition-colors"
                   >
                     Explore free →
@@ -192,7 +140,7 @@ export default function LandingPage() {
               <p className="text-xs text-gray-400 dark:text-gray-500">
                 Curious?{' '}
                 <a
-                  href="/demo"
+                  href="https://finalgym.vercel.app/"
                   className="underline hover:text-gray-600 dark:hover:text-gray-300"
                 >
                   Explore without signing up →
@@ -201,16 +149,16 @@ export default function LandingPage() {
             </div>
 
             {/* Right: phone mockup — dark image in dark mode, light image in light mode */}
-            <div className="flex items-center justify-center lg:scale-[1.3] hero-fade hero-fade-4">
+            <div className="flex items-center justify-center scale-[1.5] lg:scale-[1.5]">
               <img
                 src="/app-dark.png"
                 alt="GymBro app dark mode"
-                className="hidden dark:block w-full max-w-[260px] lg:max-w-none drop-shadow-2xl phone-float"
+                className="hidden dark:block w-full drop-shadow-2xl"
               />
               <img
                 src="/app-light.png"
                 alt="GymBro app light mode"
-                className="block dark:hidden w-full max-w-[260px] lg:max-w-none drop-shadow-2xl phone-float"
+                className="block dark:hidden w-full drop-shadow-2xl"
               />
             </div>
 
@@ -218,33 +166,21 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* ── STATS STRIP ── */}
-      <section className="transition-colors duration-300 bg-gray-50 dark:bg-[#0d1117] border-y border-gray-200 dark:border-white/5">
-        <div className="mx-auto max-w-7xl px-6 md:px-16 lg:px-24 py-12">
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-px bg-gray-200 dark:bg-white/10 rounded-2xl overflow-hidden">
-            <div className="bg-white dark:bg-[#111827] px-8 py-10 flex flex-col items-center text-center gap-2">
-              <div className="flex items-baseline gap-1">
-                <span data-count="10000" data-suffix="+" className="text-4xl font-black text-[#7c3aed]">10,000+</span>
-              </div>
-              <span className="text-sm text-gray-500 dark:text-gray-400 leading-snug max-w-[120px]">Workout plans generated</span>
+      {/* ── SOCIAL PROOF STRIP ── */}
+      <section className="transition-colors duration-300 bg-gray-50 dark:bg-[#0d1117] border-y border-gray-100 dark:border-white/5">
+        <div className="mx-auto max-w-7xl px-6 md:px-16 lg:px-24 py-16">
+          <div className="grid grid-cols-3 text-center divide-x divide-gray-200 dark:divide-white/10 max-w-3xl mx-auto">
+            <div className="px-8">
+              <p className="text-4xl font-black text-gray-900 dark:text-white">10,000+</p>
+              <p className="text-sm text-gray-400 mt-1">workout plans generated</p>
             </div>
-            <div className="bg-white dark:bg-[#111827] px-8 py-10 flex flex-col items-center text-center gap-2">
-              <span className="text-4xl font-black text-[#22c55e]">Week 1</span>
-              <span className="text-sm text-gray-500 dark:text-gray-400 leading-snug max-w-[120px]">When users see first results</span>
+            <div className="px-8">
+              <p className="text-4xl font-black text-gray-900 dark:text-white">Week 1</p>
+              <p className="text-sm text-gray-400 mt-1">when users see first results</p>
             </div>
-            <div className="bg-white dark:bg-[#111827] px-8 py-10 flex flex-col items-center text-center gap-2">
-              <div className="flex items-baseline gap-2">
-                <span className="text-4xl font-black text-[#7c3aed]">₹49/mo</span>
-                <span className="text-sm font-medium text-gray-400 line-through">₹299</span>
-              </div>
-              <span className="text-sm text-gray-500 dark:text-gray-400 leading-snug max-w-[120px]">Less than a protein bar</span>
-            </div>
-            <div className="bg-white dark:bg-[#111827] px-8 py-10 flex flex-col items-center text-center gap-2">
-              <div className="flex items-baseline gap-1">
-                <span data-count="4.9" data-decimals="1" className="text-4xl font-black text-amber-400">4.9</span>
-                <span className="text-2xl font-black text-amber-400"> ★</span>
-              </div>
-              <span className="text-sm text-gray-500 dark:text-gray-400 leading-snug max-w-[120px]">Average app rating</span>
+            <div className="px-8">
+              <p className="text-4xl font-black text-gray-900 dark:text-white">₹49/mo</p>
+              <p className="text-sm text-gray-400 mt-1">to unlock everything</p>
             </div>
           </div>
         </div>
@@ -255,7 +191,7 @@ export default function LandingPage() {
         <div className="mx-auto max-w-7xl px-6 md:px-16 lg:px-24 py-20 lg:py-28">
 
           {/* Section header */}
-          <div className="text-center mb-16 reveal">
+          <div className="text-center mb-16">
             <p className="text-xs font-bold tracking-[0.2em] text-[#7c3aed] uppercase mb-4">
               What makes it different
             </p>
@@ -266,7 +202,7 @@ export default function LandingPage() {
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 items-center">
             {/* Text */}
-            <div className="reveal reveal-d1">
+            <div>
               <p className="text-xs font-bold tracking-[0.2em] text-[#7c3aed] uppercase">
                 Workouts
               </p>
@@ -291,7 +227,7 @@ export default function LandingPage() {
               </div>
             </div>
             {/* Visual */}
-            <div className="rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#111827] p-6 shadow-sm reveal reveal-d2">
+            <div className="rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#111827] p-6 shadow-sm">
               <div className="flex justify-between items-center mb-3">
                 <span className="font-bold text-sm text-gray-900 dark:text-white">Pull Day — Week 3</span>
                 <span className="text-xs text-gray-400">6 exercises</span>
@@ -299,8 +235,8 @@ export default function LandingPage() {
               <div className="flex flex-col gap-2">
                 {[
                   ['Lat Pulldown', '4 sets × 10 reps'],
-                  ['Cable Row',    '4 sets × 12 reps'],
-                  ['Face Pull',    '3 sets × 15 reps'],
+                  ['Cable Row', '4 sets × 12 reps'],
+                  ['Face Pull', '3 sets × 15 reps'],
                 ].map(([name, sets]) => (
                   <div key={name} className="flex items-center justify-between p-4 rounded-xl bg-gray-50 dark:bg-[#1a2234]">
                     <span className="text-sm font-semibold text-gray-900 dark:text-white">{name}</span>
@@ -311,7 +247,7 @@ export default function LandingPage() {
               <div className="mt-6">
                 <p className="text-xs text-gray-400 mb-2">41% week done</p>
                 <div className="h-2 w-full rounded-full bg-gray-100 dark:bg-white/10">
-                  <div className="h-full rounded-full bg-[#7c3aed] bar-fill" data-bar="41" />
+                  <div className="h-full rounded-full bg-[#7c3aed]" style={{ width: '41%' }} />
                 </div>
               </div>
             </div>
@@ -328,7 +264,7 @@ export default function LandingPage() {
           */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 items-center lg:[&>*:first-child]:order-2">
             {/* Text — first in DOM, goes RIGHT on desktop */}
-            <div className="reveal reveal-d1">
+            <div>
               <p className="text-xs font-bold tracking-[0.2em] text-[#7c3aed] uppercase">
                 Nutrition
               </p>
@@ -353,7 +289,7 @@ export default function LandingPage() {
               </div>
             </div>
             {/* Visual — second in DOM, goes LEFT on desktop */}
-            <div className="rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#111827] p-6 shadow-sm reveal reveal-d2">
+            <div className="rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#111827] p-6 shadow-sm">
               <div className="flex justify-between items-center mb-3">
                 <span className="font-bold text-sm text-gray-900 dark:text-white">Today&apos;s meals</span>
                 <span className="text-xs text-[#7c3aed] font-semibold">2490 kcal</span>
@@ -361,9 +297,9 @@ export default function LandingPage() {
               <div className="flex flex-col gap-2">
                 {[
                   ['Breakfast · Egg Bhurji & Toast', '480 kcal'],
-                  ['Lunch · Rajma Chawal',            '620 kcal'],
-                  ['Snack · Banana + Peanut Butter',  '210 kcal'],
-                  ['Dinner · Dal Roti',               '580 kcal'],
+                  ['Lunch · Rajma Chawal', '620 kcal'],
+                  ['Snack · Banana + Peanut Butter', '210 kcal'],
+                  ['Dinner · Dal Roti', '580 kcal'],
                 ].map(([meal, cal]) => (
                   <div key={meal} className="flex items-center justify-between p-4 rounded-xl bg-gray-50 dark:bg-[#1a2234]">
                     <span className="text-sm text-gray-700 dark:text-gray-300">{meal}</span>
@@ -374,7 +310,7 @@ export default function LandingPage() {
               <div className="mt-4">
                 <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">147g protein today</p>
                 <div className="h-2 w-full rounded-full bg-gray-100 dark:bg-white/10">
-                  <div className="h-full rounded-full bg-[#22c55e] bar-fill" data-bar="73" />
+                  <div className="h-full rounded-full bg-[#22c55e]" style={{ width: '73%' }} />
                 </div>
               </div>
             </div>
@@ -387,7 +323,7 @@ export default function LandingPage() {
         <div className="mx-auto max-w-7xl px-6 md:px-16 lg:px-24 py-20 lg:py-28">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 items-center">
             {/* Text */}
-            <div className="reveal reveal-d1">
+            <div>
               <p className="text-xs font-bold tracking-[0.2em] text-[#7c3aed] uppercase">
                 Progress
               </p>
@@ -412,18 +348,17 @@ export default function LandingPage() {
               </div>
             </div>
             {/* Visual */}
-            <div className="rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#111827] p-6 shadow-sm reveal reveal-d2">
+            <div className="rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#111827] p-6 shadow-sm">
               <p className="text-2xl font-black text-gray-900 dark:text-white">🔥 5 day streak</p>
               <p className="text-sm text-gray-400 mt-1">Best: 12 days</p>
               <div className="flex gap-2 flex-wrap mt-6">
                 {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map((day, i) => (
                   <div key={day} className="flex flex-col items-center gap-1">
                     <div
-                      className={`h-10 w-10 rounded-full flex items-center justify-center text-sm font-semibold ${
-                        i < 5
-                          ? 'bg-violet-600 text-white'
-                          : 'bg-gray-100 text-gray-400 dark:bg-[#1a2234] dark:text-gray-500'
-                      }`}
+                      className={`h-10 w-10 rounded-full flex items-center justify-center text-sm font-semibold ${i < 5
+                        ? 'bg-violet-600 text-white'
+                        : 'bg-gray-100 text-gray-400 dark:bg-[#1a2234] dark:text-gray-500'
+                        }`}
                     >
                       {day[0]}
                     </div>
@@ -434,20 +369,13 @@ export default function LandingPage() {
               <div className="mt-6">
                 <p className="text-xs text-gray-400 mb-2">41% this week</p>
                 <div className="h-2 w-full rounded-full bg-gray-100 dark:bg-white/10">
-                  <div className="h-full rounded-full bg-[#7c3aed] bar-fill" data-bar="41" />
+                  <div className="h-full rounded-full bg-[#7c3aed]" style={{ width: '41%' }} />
                 </div>
               </div>
             </div>
           </div>
         </div>
       </section>
-
-      {/* ── DIVIDER ── */}
-      <div className="bg-white dark:bg-[#080c14] pt-16">
-        <div className="mx-auto max-w-7xl px-6 md:px-16 lg:px-24">
-          <hr className="border-gray-200 dark:border-white/10" />
-        </div>
-      </div>
 
       {/* ── HOW IT WORKS ── */}
       <section id="how-it-works" className="transition-colors duration-300 bg-gray-50 dark:bg-[#0d1117]">
@@ -477,8 +405,8 @@ export default function LandingPage() {
                 title: 'Log, improve, repeat',
                 body: 'Every session you log teaches the AI. Week 2 is smarter than week 1. Week 4 is smarter than week 2.',
               },
-            ].map(({ num, title, body }, i) => (
-              <div key={num} className={`reveal reveal-d${i + 1}`}>
+            ].map(({ num, title, body }) => (
+              <div key={num}>
                 <p className="text-8xl font-black text-gray-100 dark:text-white/5 leading-none select-none">
                   {num}
                 </p>
@@ -490,58 +418,10 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* ── TESTIMONIALS ── */}
-      <section className="transition-colors duration-300 bg-white dark:bg-[#080c14]">
-        <div className="mx-auto max-w-7xl px-6 md:px-16 lg:px-24 py-20 lg:py-28">
-          <div className="text-center mb-14 reveal">
-            <p className="text-xs font-bold tracking-[0.2em] text-[#7c3aed] uppercase mb-4">
-              Real users · Real results
-            </p>
-            <h2 className="text-4xl md:text-5xl font-black text-gray-900 dark:text-white">
-              Don&apos;t take our word for it.
-            </h2>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {[
-              {
-                quote: "Finally an app that doesn't tell me to eat grilled chicken every day. Rajma Chawal hitting my macros is wild.",
-                name: 'Arjun S.',
-                meta: 'Delhi · Lost 8kg',
-                delay: 'reveal-d1',
-              },
-              {
-                quote: 'The workout adapts when I skip sessions. No guilt, just a smarter plan next week. Game changer.',
-                name: 'Kavya R.',
-                meta: 'Bangalore · 3 months in',
-                delay: 'reveal-d2',
-              },
-              {
-                quote: '₹49/month is insane value. I was paying ₹2,000/month for a generic diet plan before this.',
-                name: 'Rahul M.',
-                meta: 'Mumbai · Premium user',
-                delay: 'reveal-d3',
-              },
-            ].map(({ quote, name, meta, delay }) => (
-              <div
-                key={name}
-                className={`rounded-2xl border border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-[#111827] p-7 flex flex-col gap-4 reveal ${delay}`}
-              >
-                <div className="flex gap-0.5 text-amber-400 text-sm">★★★★★</div>
-                <p className="text-gray-700 dark:text-gray-300 text-sm leading-relaxed flex-1">&ldquo;{quote}&rdquo;</p>
-                <div>
-                  <p className="text-sm font-bold text-gray-900 dark:text-white">{name}</p>
-                  <p className="text-xs text-gray-400 mt-0.5">{meta}</p>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
       {/* ── PRICING ── */}
-      <section id="pricing" className="transition-colors duration-300 bg-gray-50 dark:bg-[#0d1117]">
+      <section id="pricing" className="transition-colors duration-300 bg-white dark:bg-[#080c14]">
         <div className="mx-auto max-w-7xl px-6 md:px-16 lg:px-24 py-20 lg:py-28">
-          <div className="text-center mb-12 reveal">
+          <div className="text-center mb-12">
             <h2 className="text-4xl font-black text-gray-900 dark:text-white">Simple pricing.</h2>
             <p className="text-gray-500 dark:text-gray-400 mt-3">
               Start free. Upgrade when you&apos;re ready.
@@ -550,7 +430,7 @@ export default function LandingPage() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto">
 
             {/* Free tier */}
-            <div className="rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#111827] p-8 reveal reveal-d1 price-card">
+            <div className="rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#111827] p-8">
               <p className="text-2xl font-black text-gray-900 dark:text-white">Free</p>
               <p className="text-4xl font-black text-gray-900 dark:text-white mt-2">
                 ₹0{' '}
@@ -578,18 +458,15 @@ export default function LandingPage() {
             </div>
 
             {/* Premium tier — bg-violet-600 so the CSS exception keeps text-white visible in light mode */}
-            <div className="rounded-2xl border-[1.5px] border-[#7c3aed] bg-violet-600 text-white p-8 relative reveal reveal-d2 price-card price-card-featured">
+            <div className="rounded-2xl border-2 border-[#7c3aed] bg-violet-600 text-white p-8 relative">
               <div className="flex items-center gap-2 flex-wrap">
                 <p className="text-2xl font-black text-white">Premium</p>
                 <span className="bg-white/20 text-white text-xs rounded-full px-3 py-1">Most popular</span>
               </div>
-              <div className="flex items-baseline gap-3 mt-2 flex-wrap">
-                <p className="text-4xl font-black text-white">
-                  ₹49{' '}
-                  <span className="text-lg font-normal text-white/80">/ month</span>
-                </p>
-                <span className="text-lg font-medium text-white/50 line-through">₹299/mo</span>
-              </div>
+              <p className="text-4xl font-black text-white mt-2">
+                ₹49{' '}
+                <span className="text-lg font-normal text-white/80">/ month</span>
+              </p>
               <p className="text-sm text-white/80 mt-1">Less than a protein bar.</p>
               <div className="flex flex-col gap-3 mt-6">
                 {[
@@ -619,16 +496,16 @@ export default function LandingPage() {
       <section className="landing-dark transition-colors duration-300 bg-[#080c14] text-center">
         <div className="mx-auto max-w-7xl px-6 md:px-16 lg:px-24 py-20 lg:py-28">
           <h2 className="text-5xl md:text-6xl font-black text-white leading-tight max-w-2xl mx-auto">
-            Your Week 1 plan<br />is 2 minutes away.
+            Show up once.<br />See why it works.
           </h2>
           <p className="text-gray-400 text-lg mt-4">
-            Takes 2 minutes to generate. Free to start.
+            Free to start. No gym required for day one.
           </p>
           <Link
             href="/login"
             className="inline-block mt-10 bg-[#7c3aed] hover:bg-[#6d28d9] text-white rounded-full px-12 py-5 text-lg font-semibold shadow-lg shadow-purple-500/30 transition-colors"
           >
-            Build my plan →
+            Create your free account
           </Link>
           <div className="mt-4">
             <Link

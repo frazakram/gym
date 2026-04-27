@@ -1,9 +1,9 @@
 'use client'
 
-import { useState, useMemo, useCallback } from 'react'
+import { useState, useMemo, useCallback, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
-import { ArrowRight, ArrowLeft, Dumbbell, Target, User, Ruler, Sparkles, Clock, Calendar } from 'lucide-react'
+import { ArrowRight, ArrowLeft, Dumbbell, Target, User, Ruler, Sparkles, Clock, Calendar, Globe, MapPin } from 'lucide-react'
 import { Profile } from '@/types'
 import { GlassCard } from '@/components/ui/GlassCard'
 import { Chip } from '@/components/ui/Chip'
@@ -46,6 +46,60 @@ const tenureOptions = [
 ]
 
 const sessionOptions = [30, 45, 60, 90, 120]
+
+// Curated country list with ISO codes + flag emojis (covers ~95% of users)
+const COUNTRIES: { code: string; name: string; flag: string }[] = [
+  { code: 'IN', name: 'India', flag: '🇮🇳' },
+  { code: 'US', name: 'United States', flag: '🇺🇸' },
+  { code: 'GB', name: 'United Kingdom', flag: '🇬🇧' },
+  { code: 'CA', name: 'Canada', flag: '🇨🇦' },
+  { code: 'AU', name: 'Australia', flag: '🇦🇺' },
+  { code: 'DE', name: 'Germany', flag: '🇩🇪' },
+  { code: 'FR', name: 'France', flag: '🇫🇷' },
+  { code: 'JP', name: 'Japan', flag: '🇯🇵' },
+  { code: 'BR', name: 'Brazil', flag: '🇧🇷' },
+  { code: 'MX', name: 'Mexico', flag: '🇲🇽' },
+  { code: 'CN', name: 'China', flag: '🇨🇳' },
+  { code: 'KR', name: 'South Korea', flag: '🇰🇷' },
+  { code: 'TH', name: 'Thailand', flag: '🇹🇭' },
+  { code: 'SG', name: 'Singapore', flag: '🇸🇬' },
+  { code: 'AE', name: 'UAE', flag: '🇦🇪' },
+  { code: 'SA', name: 'Saudi Arabia', flag: '🇸🇦' },
+  { code: 'PK', name: 'Pakistan', flag: '🇵🇰' },
+  { code: 'BD', name: 'Bangladesh', flag: '🇧🇩' },
+  { code: 'ID', name: 'Indonesia', flag: '🇮🇩' },
+  { code: 'PH', name: 'Philippines', flag: '🇵🇭' },
+  { code: 'VN', name: 'Vietnam', flag: '🇻🇳' },
+  { code: 'MY', name: 'Malaysia', flag: '🇲🇾' },
+  { code: 'NZ', name: 'New Zealand', flag: '🇳🇿' },
+  { code: 'IT', name: 'Italy', flag: '🇮🇹' },
+  { code: 'ES', name: 'Spain', flag: '🇪🇸' },
+  { code: 'NL', name: 'Netherlands', flag: '🇳🇱' },
+  { code: 'SE', name: 'Sweden', flag: '🇸🇪' },
+  { code: 'NO', name: 'Norway', flag: '🇳🇴' },
+  { code: 'PL', name: 'Poland', flag: '🇵🇱' },
+  { code: 'TR', name: 'Turkey', flag: '🇹🇷' },
+  { code: 'EG', name: 'Egypt', flag: '🇪🇬' },
+  { code: 'ZA', name: 'South Africa', flag: '🇿🇦' },
+  { code: 'NG', name: 'Nigeria', flag: '🇳🇬' },
+  { code: 'AR', name: 'Argentina', flag: '🇦🇷' },
+  { code: 'CO', name: 'Colombia', flag: '🇨🇴' },
+  { code: 'CL', name: 'Chile', flag: '🇨🇱' },
+  { code: 'IL', name: 'Israel', flag: '🇮🇱' },
+  { code: 'IE', name: 'Ireland', flag: '🇮🇪' },
+  { code: 'CH', name: 'Switzerland', flag: '🇨🇭' },
+  { code: 'RU', name: 'Russia', flag: '🇷🇺' },
+]
+
+function countryToRegionClient(code: string): 'APAC' | 'EMEA' | 'NA' | 'LATAM' {
+  const APAC = ['IN','CN','JP','KR','TH','VN','ID','MY','SG','PH','AU','NZ','PK','BD','LK','NP','TW','HK']
+  const NA = ['US','CA','MX']
+  const LATAM = ['BR','AR','CO','CL','PE','VE','EC','UY','PY','BO']
+  if (APAC.includes(code)) return 'APAC'
+  if (NA.includes(code)) return 'NA'
+  if (LATAM.includes(code)) return 'LATAM'
+  return 'EMEA'
+}
 
 /* ------------------------------------------------------------------ */
 /*  Animation variants                                                 */
@@ -105,6 +159,41 @@ export default function OnboardingWizard({ isReset = false }: { isReset?: boolea
   const [tenure, setTenure] = useState('Just starting')
   const [sessionDuration, setSessionDuration] = useState(60)
 
+  // Screen 4 — Your Location (nationality + region for community auto-assignment)
+  const [nationality, setNationality] = useState<string>('')
+  const [detecting, setDetecting] = useState(false)
+  const [detectError, setDetectError] = useState('')
+
+  // Auto-detect on entering step 3 (only first time)
+  useEffect(() => {
+    if (step !== 3 || nationality || detecting) return
+    if (typeof navigator === 'undefined' || !navigator.geolocation) return
+    setDetecting(true)
+    setDetectError('')
+    navigator.geolocation.getCurrentPosition(
+      async (pos) => {
+        try {
+          const r = await fetch(
+            `https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${pos.coords.latitude}&longitude=${pos.coords.longitude}&localityLanguage=en`
+          )
+          const data = await r.json()
+          const code = String(data?.countryCode || '').toUpperCase()
+          if (code && /^[A-Z]{2}$/.test(code)) setNationality(code)
+          else setDetectError('Could not auto-detect — please pick your country')
+        } catch {
+          setDetectError('Could not auto-detect — please pick your country')
+        } finally {
+          setDetecting(false)
+        }
+      },
+      () => {
+        setDetecting(false)
+        setDetectError('Location permission denied — please pick manually')
+      },
+      { timeout: 8000, maximumAge: 60_000 }
+    )
+  }, [step, nationality, detecting])
+
   /* ---------- validation ---------- */
   const canProceed = useMemo(() => {
     switch (step) {
@@ -117,14 +206,16 @@ export default function OnboardingWizard({ isReset = false }: { isReset?: boolea
           && Number(height) >= 100 && Number(height) <= 250
       case 2:
         return !!tenure
+      case 3:
+        return !!nationality && /^[A-Z]{2}$/.test(nationality)
       default:
         return false
     }
-  }, [step, goal, level, gender, age, weight, height, tenure])
+  }, [step, goal, level, gender, age, weight, height, tenure, nationality])
 
   /* ---------- navigation ---------- */
   const goNext = useCallback(() => {
-    if (step < 2) {
+    if (step < 3) {
       setDirection(1)
       setStep(s => s + 1)
     }
@@ -162,6 +253,8 @@ export default function OnboardingWizard({ isReset = false }: { isReset?: boolea
           protein_powder: 'No',
           cooking_level: 'Moderate',
           budget: 'Standard',
+          nationality: nationality || null,
+          region: nationality ? countryToRegionClient(nationality) : null,
         }),
       })
 
@@ -179,7 +272,7 @@ export default function OnboardingWizard({ isReset = false }: { isReset?: boolea
   }
 
   /* ---------- step labels ---------- */
-  const steps = ['Your Goal', 'Your Body', 'Your Experience']
+  const steps = ['Your Goal', 'Your Body', 'Your Experience', 'Your Location']
 
   /* ================================================================ */
   /*  RENDER                                                           */
@@ -506,6 +599,75 @@ export default function OnboardingWizard({ isReset = false }: { isReset?: boolea
                 </AnimatePresence>
               </div>
             )}
+
+            {/* ============ STEP 3: Your Location ============ */}
+            {step === 3 && (
+              <div className="space-y-5">
+                <motion.div custom={0} variants={fadeUp} initial="hidden" animate="visible">
+                  <GlassCard className="p-5">
+                    <div className="flex items-center gap-2 mb-4">
+                      <div className="p-2 rounded-xl bg-primary/15 border border-primary/20">
+                        <Globe className="w-4 h-4 text-primary-light" />
+                      </div>
+                      <div>
+                        <p className="text-sm font-semibold text-white">Where are you based?</p>
+                        <p className="text-xs text-muted">We&apos;ll auto-add you to a worldwide community</p>
+                      </div>
+                    </div>
+
+                    {detecting && (
+                      <div className="flex items-center gap-2 text-sm text-muted mb-3">
+                        <MapPin className="w-4 h-4 animate-pulse" />
+                        Detecting your location…
+                      </div>
+                    )}
+                    {detectError && (
+                      <div className="text-xs text-amber-300 mb-3">{detectError}</div>
+                    )}
+                    {nationality && (() => {
+                      const c = COUNTRIES.find(x => x.code === nationality)
+                      return c ? (
+                        <div className="flex items-center gap-2 px-3 py-2 mb-3 rounded-xl bg-primary/10 border border-primary/30">
+                          <span className="text-2xl">{c.flag}</span>
+                          <span className="text-sm font-medium text-white">{c.name}</span>
+                          <span className="ml-auto text-xs text-muted">{countryToRegionClient(c.code)}</span>
+                        </div>
+                      ) : null
+                    })()}
+
+                    <label htmlFor="country-select" className="block text-xs text-muted mb-1">
+                      {nationality ? 'Change country' : 'Select your country'}
+                    </label>
+                    <select
+                      id="country-select"
+                      value={nationality}
+                      onChange={(e) => setNationality(e.target.value)}
+                      className="w-full px-3 py-3 rounded-xl bg-white/5 border border-primary/20 text-white text-sm focus:outline-none focus:border-primary/50"
+                    >
+                      <option value="">— Choose a country —</option>
+                      {COUNTRIES.map((c) => (
+                        <option key={c.code} value={c.code} className="bg-slate-900">
+                          {c.flag} {c.name}
+                        </option>
+                      ))}
+                    </select>
+                  </GlassCard>
+                </motion.div>
+
+                <AnimatePresence>
+                  {error && (
+                    <motion.div
+                      initial={{ opacity: 0, height: 0 }}
+                      animate={{ opacity: 1, height: 'auto' }}
+                      exit={{ opacity: 0, height: 0 }}
+                      className="rounded-xl border border-red-500/40 bg-red-500/10 px-4 py-3 text-red-200 text-sm"
+                    >
+                      {error}
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+            )}
           </motion.div>
         </AnimatePresence>
       </div>
@@ -531,7 +693,7 @@ export default function OnboardingWizard({ isReset = false }: { isReset?: boolea
         )}
 
         <div className="flex-1">
-          {step < 2 ? (
+          {step < 3 ? (
             <AnimatedButton
               type="button"
               variant="primary"

@@ -1,7 +1,7 @@
 import { withCors } from "@/lib/corsMiddleware";
 import { NextRequest, NextResponse } from "next/server";
 import { getSession } from "@/lib/auth";
-import { getDayCompletions, initializeDatabase, toggleDayCompletion } from "@/lib/db";
+import { getDayCompletions, initializeDatabase, toggleDayCompletion, awardXp, awardStreakXpIfFirstToday, XP_VALUES } from "@/lib/db";
 import { redisIncr } from "@/lib/redis";
 import { DayCompletionSchema, safeParseWithError } from "@/lib/validations";
 import { requireCsrf } from "@/lib/csrf";
@@ -53,6 +53,11 @@ export async function POST(req: NextRequest) {
   const ok = await toggleDayCompletion(session.userId, routineId, dayIndex, completed);
   if (!ok) {
     return withCors(NextResponse.json({ error: "Failed to update rest-day completion" }, { status: 403 }));
+  }
+
+  if (completed === true) {
+    await awardXp(session.userId, 'day_completed', XP_VALUES.DAY_COMPLETE);
+    await awardStreakXpIfFirstToday(session.userId);
   }
 
   // Invalidate derived analytics cache for ALL `days=` values (best-effort).
