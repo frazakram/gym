@@ -7,7 +7,7 @@ import { GlassCard } from '../ui/GlassCard'
 import { SectionHeader } from '../ui/SectionHeader'
 import { AnimatedButton } from '../ui/AnimatedButton'
 import { csrfFetch } from '@/lib/useCsrf'
-import { toast } from 'sonner'
+import { toastError, toastSuccess } from '@/lib/toast'
 
 interface Measurement {
   id: number
@@ -117,9 +117,11 @@ export function MeasurementsView() {
       if (res.ok) {
         const data = await res.json()
         setMeasurements(data.measurements || [])
+      } else {
+        toastError("Couldn't load measurements. Please try again.")
       }
-    } catch (err) {
-      console.error('Error fetching measurements:', err)
+    } catch {
+      toastError("Couldn't load measurements. Check your connection.")
     } finally {
       setLoading(false)
     }
@@ -147,17 +149,17 @@ export function MeasurementsView() {
       })
 
       if (res.ok) {
-        toast.success('Measurement saved!')
+        toastSuccess('Measurement saved!')
         setShowForm(false)
         setWeight(''); setWaist(''); setChest(''); setArms(''); setHips(''); setNotes('')
         setMeasuredAt(new Date().toISOString().slice(0, 10))
         fetchMeasurements()
       } else {
         const data = await res.json()
-        toast.error(data.error || 'Failed to save')
+        toastError(data.error || 'Failed to save')
       }
     } catch {
-      toast.error('Failed to save measurement')
+      toastError('Failed to save measurement')
     } finally {
       setSaving(false)
     }
@@ -167,11 +169,13 @@ export function MeasurementsView() {
     try {
       const res = await csrfFetch(`/api/measurements?id=${id}`, { method: 'DELETE' })
       if (res.ok) {
-        toast.success('Measurement deleted')
+        toastSuccess('Measurement deleted')
         setMeasurements((prev) => prev.filter((m) => m.id !== id))
+      } else {
+        toastError("Couldn't delete measurement. Please try again.")
       }
     } catch {
-      toast.error('Failed to delete')
+      toastError('Failed to delete')
     }
   }
 

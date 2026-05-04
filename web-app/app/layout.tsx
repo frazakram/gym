@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from 'next'
 import { Inter, Plus_Jakarta_Sans } from 'next/font/google'
 import './globals.css'
 import { ServiceWorkerRegistration } from '@/components/ServiceWorkerRegistration'
+import { ToastProvider } from '@/components/ui/ToastProvider'
 
 const inter = Inter({
   subsets: ['latin'],
@@ -51,6 +52,7 @@ export default function RootLayout({
           <div className="app-atmos" />
           <div className="app-content">{children}</div>
         </div>
+        <ToastProvider />
       </body>
     </html>
   )

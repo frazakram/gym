@@ -11,12 +11,13 @@ export async function GET(req: NextRequest) {
 
   const { searchParams } = new URL(req.url);
   const limit = Math.max(1, Math.min(100, Number(searchParams.get("limit") ?? 50) || 50));
+  const offset = Math.max(0, Number(searchParams.get("offset") ?? 0) || 0);
 
   await initializeDatabase();
   const coachId = await getApprovedCoachIdByUserId(session.userId);
   if (!coachId) return withCors(NextResponse.json({ error: "Not a coach (or not approved)" }, { status: 403 }));
 
-  const bookings = await listAssignedCoachBookings(coachId, limit);
+  const bookings = await listAssignedCoachBookings(coachId, limit, offset);
 
   // Privacy enforcement: share user email/phone only when booking is confirmed.
   const out = bookings.map((b) => ({
@@ -32,5 +33,5 @@ export async function GET(req: NextRequest) {
     created_at: b.created_at.toISOString(),
   }));
 
-  return withCors(NextResponse.json({ bookings: out }, { status: 200 }));
+  return withCors(NextResponse.json({ bookings: out, limit, offset }, { status: 200 }));
 }

@@ -8,15 +8,20 @@ import { CommunityCreateSchema, safeParseWithError } from "@/lib/validations";
 export const runtime = "nodejs";
 
 // GET — list worldwide communities (so user can browse regions)
-export async function GET() {
+export async function GET(req: NextRequest) {
   try {
     const session = await getSession();
     if (!session) {
       return withCors(NextResponse.json({ error: "Unauthorized" }, { status: 401 }));
     }
     await initializeDatabase();
-    const worldwide = await listWorldwideCommunities();
-    return withCors(NextResponse.json({ worldwide }));
+
+    const { searchParams } = new URL(req.url);
+    const limit = Math.max(1, Math.min(200, Number(searchParams.get("limit") ?? 50) || 50));
+    const offset = Math.max(0, Number(searchParams.get("offset") ?? 0) || 0);
+
+    const worldwide = await listWorldwideCommunities(limit, offset);
+    return withCors(NextResponse.json({ worldwide, limit, offset }));
   } catch (error) {
     console.error("GET /api/communities failed:", error);
     return withCors(NextResponse.json({ error: "Failed to list communities" }, { status: 500 }));

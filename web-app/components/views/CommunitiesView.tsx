@@ -98,6 +98,11 @@ export function CommunitiesView({ currentUserId }: CommunitiesViewProps) {
 
   useEffect(() => { loadMine() }, [loadMine])
 
+  const safeApiError = (data: unknown, fallback: string): string => {
+    const e = (data as { error?: unknown })?.error
+    return typeof e === 'string' && e.length > 0 && e.length < 200 ? e : fallback
+  }
+
   const handleJoinByCode = async () => {
     if (!joinCode.trim()) return
     setBusy(true); setError('')
@@ -108,12 +113,15 @@ export function CommunitiesView({ currentUserId }: CommunitiesViewProps) {
         body: JSON.stringify({ code: joinCode.trim().toUpperCase() }),
       })
       const data = await res.json().catch(() => ({}))
-      if (!res.ok) throw new Error(data?.error || 'Failed to join')
+      if (!res.ok) {
+        setError(safeApiError(data, 'Could not join community. Please try again.'))
+        return
+      }
       setShowJoinModal(false); setJoinCode('')
       setSuccess('Joined community!')
       await loadMine()
-    } catch (e) {
-      setError(e instanceof Error ? e.message : 'Failed to join')
+    } catch {
+      setError('Could not join community. Check your connection.')
     } finally {
       setBusy(false)
     }
@@ -128,11 +136,14 @@ export function CommunitiesView({ currentUserId }: CommunitiesViewProps) {
         body: JSON.stringify({ worldwide: true }),
       })
       const data = await res.json().catch(() => ({}))
-      if (!res.ok) throw new Error(data?.error || 'Failed to join')
+      if (!res.ok) {
+        setError(safeApiError(data, 'Could not join regional community. Please try again.'))
+        return
+      }
       setSuccess('Joined regional community!')
       await loadMine()
-    } catch (e) {
-      setError(e instanceof Error ? e.message : 'Failed to join')
+    } catch {
+      setError('Could not join regional community. Check your connection.')
     } finally {
       setBusy(false)
     }
@@ -151,12 +162,15 @@ export function CommunitiesView({ currentUserId }: CommunitiesViewProps) {
         body: JSON.stringify({ name: createName.trim(), description: createDesc.trim() || null }),
       })
       const data = await res.json().catch(() => ({}))
-      if (!res.ok) throw new Error(data?.error || 'Failed to create')
+      if (!res.ok) {
+        setError(safeApiError(data, 'Could not create community. Please try again.'))
+        return
+      }
       setShowCreateModal(false); setCreateName(''); setCreateDesc('')
       setSuccess('Community created!')
       await loadMine()
-    } catch (e) {
-      setError(e instanceof Error ? e.message : 'Failed to create')
+    } catch {
+      setError('Could not create community. Check your connection.')
     } finally {
       setBusy(false)
     }
@@ -168,11 +182,14 @@ export function CommunitiesView({ currentUserId }: CommunitiesViewProps) {
     try {
       const res = await csrfFetch('/api/communities/leave', { method: 'POST' })
       const data = await res.json().catch(() => ({}))
-      if (!res.ok) throw new Error(data?.error || 'Failed to leave')
+      if (!res.ok) {
+        setError(safeApiError(data, 'Could not leave community. Please try again.'))
+        return
+      }
       setSuccess('Left community')
       await loadMine()
-    } catch (e) {
-      setError(e instanceof Error ? e.message : 'Failed to leave')
+    } catch {
+      setError('Could not leave community. Check your connection.')
     } finally {
       setBusy(false)
     }

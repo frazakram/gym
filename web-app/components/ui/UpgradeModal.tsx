@@ -3,6 +3,7 @@
 import { useMemo, useState } from 'react'
 import { csrfFetch } from '@/lib/useCsrf'
 import { PremiumStatus } from '@/types'
+import { toastSuccess, toastInfo, toastWarning, toastPayment } from '@/lib/toast'
 
 type RazorpayCheckout = {
   open: () => void
@@ -48,10 +49,9 @@ interface UpgradeModalProps {
   status: PremiumStatus | null
   onClose: () => void
   onUnlocked: (status: PremiumStatus) => void
-  showToast: (message: string, type: 'success' | 'error' | 'info' | 'warning') => void
 }
 
-export function UpgradeModal({ open, status, onClose, onUnlocked, showToast }: UpgradeModalProps) {
+export function UpgradeModal({ open, status, onClose, onUnlocked }: UpgradeModalProps) {
   const [loading, setLoading] = useState(false)
   const [polling, setPolling] = useState(false)
 
@@ -72,14 +72,14 @@ export function UpgradeModal({ open, status, onClose, onUnlocked, showToast }: U
         if (res.ok) {
           const next = (await res.json()) as PremiumStatus
           if (next.premium) {
-            showToast('Pro unlocked! Analytics is now available.', 'success')
+            toastSuccess('Pro unlocked!', 'Analytics is now available.')
             onUnlocked(next)
             return
           }
         }
         await sleep(2000)
       }
-      showToast('Payment received, but activation is taking longer. Please wait a bit and retry.', 'warning')
+      toastWarning('Activation taking longer', 'Payment received. Please wait a bit and retry.')
     } finally {
       setPolling(false)
     }
@@ -119,15 +119,19 @@ export function UpgradeModal({ open, status, onClose, onUnlocked, showToast }: U
           },
         },
         handler: () => {
-          showToast('Payment initiated. Unlocking Pro…', 'info')
+          toastInfo('Payment initiated', 'Unlocking Pro…')
           startPollingUntilUnlocked()
         },
       })
 
       rz.open()
     } catch (e: unknown) {
-      const msg = e instanceof Error ? e.message : String(e)
-      showToast(msg, 'error')
+      const msg = e instanceof Error && e.message.length < 200 ? e.message : 'Please try again or use a different method.'
+      toastPayment(
+        'Payment failed',
+        msg,
+        { label: 'Try again', onClick: handlePay }
+      )
     } finally {
       setLoading(false)
     }

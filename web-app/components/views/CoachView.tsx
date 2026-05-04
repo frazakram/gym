@@ -119,11 +119,13 @@ export function CoachView({
         onUpgrade()
         return
       }
-      if (!res.ok) throw new Error(data?.error || 'Failed to load coach')
+      if (!res.ok) {
+        showToast("Couldn't load coach details. Please try again.", 'error')
+        return
+      }
       setCoach(data.coach as Coach)
-    } catch (e: unknown) {
-      const msg = e instanceof Error ? e.message : String(e)
-      showToast(msg, 'error')
+    } catch {
+      showToast("Couldn't load coach details. Check your connection.", 'error')
     } finally {
       setLoadingCoach(false)
     }
@@ -133,14 +135,17 @@ export function CoachView({
     try {
       const res = await fetch('/api/coaches?limit=50', { cache: 'no-store' })
       const data = await res.json().catch(() => ({}))
-      if (!res.ok) return
+      if (!res.ok) {
+        showToast("Couldn't load coaches list.", 'error')
+        return
+      }
       const list = (data.coaches || []) as CoachPublic[]
       setCoaches(list)
       if (list.length > 0 && selectedCoachId == null) {
         setSelectedCoachId(list[0]!.coach_id)
       }
     } catch {
-      // ignore
+      showToast("Couldn't load coaches list. Check your connection.", 'error')
     }
   }
 
@@ -149,11 +154,13 @@ export function CoachView({
     try {
       const res = await fetch('/api/coach/bookings?limit=10', { cache: 'no-store' })
       const data = await res.json().catch(() => ({}))
-      if (!res.ok) throw new Error(data?.error || 'Failed to load bookings')
+      if (!res.ok) {
+        showToast("Couldn't load bookings. Please try again.", 'error')
+        return
+      }
       setBookings((data.bookings || []) as CoachBooking[])
-    } catch (e: unknown) {
-      const msg = e instanceof Error ? e.message : String(e)
-      showToast(msg, 'error')
+    } catch {
+      showToast("Couldn't load bookings. Check your connection.", 'error')
     } finally {
       setLoadingBookings(false)
     }
@@ -194,15 +201,20 @@ export function CoachView({
         await fetchBookings()
         return
       }
-      if (!res.ok) throw new Error(data?.error || 'Failed to create booking')
+      if (!res.ok) {
+        const msg = typeof data?.error === 'string' && data.error.length < 200
+          ? data.error
+          : 'Could not submit booking. Please try again.'
+        showToast(msg, 'error')
+        return
+      }
 
       showToast('Booking request submitted. Coach has been notified by email.', 'success')
       setPreferredAt('')
       setMessage('')
       await fetchBookings()
-    } catch (e: unknown) {
-      const msg = e instanceof Error ? e.message : String(e)
-      showToast(msg, 'error')
+    } catch {
+      showToast('Could not submit booking. Check your connection.', 'error')
     } finally {
       setSubmitting(false)
     }
@@ -217,12 +229,17 @@ export function CoachView({
         body: JSON.stringify({ action: 'cancel' }),
       })
       const data = await res.json().catch(() => ({}))
-      if (!res.ok) throw new Error(data?.error || 'Failed to cancel booking')
+      if (!res.ok) {
+        const msg = typeof data?.error === 'string' && data.error.length < 200
+          ? data.error
+          : 'Could not cancel booking. Please try again.'
+        showToast(msg, 'error')
+        return
+      }
       showToast('Booking cancelled.', 'success')
       await fetchBookings()
-    } catch (e: unknown) {
-      const msg = e instanceof Error ? e.message : String(e)
-      showToast(msg, 'error')
+    } catch {
+      showToast('Could not cancel booking. Check your connection.', 'error')
     } finally {
       setMutatingBookingId(null)
     }
@@ -235,12 +252,17 @@ export function CoachView({
     try {
       const res = await fetch(`/api/coach/bookings/${id}`, { method: 'DELETE' })
       const data = await res.json().catch(() => ({}))
-      if (!res.ok) throw new Error(data?.error || 'Failed to delete booking')
+      if (!res.ok) {
+        const msg = typeof data?.error === 'string' && data.error.length < 200
+          ? data.error
+          : 'Could not delete booking. Please try again.'
+        showToast(msg, 'error')
+        return
+      }
       showToast('Booking deleted.', 'success')
       await fetchBookings()
-    } catch (e: unknown) {
-      const msg = e instanceof Error ? e.message : String(e)
-      showToast(msg, 'error')
+    } catch {
+      showToast('Could not delete booking. Check your connection.', 'error')
     } finally {
       setMutatingBookingId(null)
     }

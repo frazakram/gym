@@ -1664,16 +1664,17 @@ export interface BodyMeasurement {
   created_at: string;
 }
 
-export async function getBodyMeasurements(userId: number, limit = 90): Promise<BodyMeasurement[]> {
+export async function getBodyMeasurements(userId: number, limit = 90, offset = 0): Promise<BodyMeasurement[]> {
   try {
-    // use module-level pool
+    const lim = Math.max(1, Math.min(500, Math.floor(limit)));
+    const off = Math.max(0, Math.floor(offset));
     const res = await pool.query<BodyMeasurement>(
       `SELECT id, user_id, measured_at::text, weight, waist, chest, arms, hips, notes, created_at
        FROM body_measurements
        WHERE user_id = $1
        ORDER BY measured_at DESC
-       LIMIT $2`,
-      [userId, limit]
+       LIMIT $2 OFFSET $3`,
+      [userId, lim, off]
     );
     return res.rows.map((r) => ({
       ...r,
@@ -2664,7 +2665,7 @@ export async function setCoachApplicationStatusAdmin(input: {
   return (res.rowCount ?? 0) > 0;
 }
 
-export async function listAssignedCoachBookings(coachId: number, limit = 50): Promise<Array<{
+export async function listAssignedCoachBookings(coachId: number, limit = 50, offset = 0): Promise<Array<{
   id: number;
   coach_id: number;
   coach_name: string;
@@ -2679,13 +2680,14 @@ export async function listAssignedCoachBookings(coachId: number, limit = 50): Pr
   const cid = Math.floor(Number(coachId));
   if (!Number.isFinite(cid) || cid <= 0) return [];
   const lim = Math.max(1, Math.min(100, Math.floor(limit)));
+  const off = Math.max(0, Math.floor(offset));
   const res = await pool.query<any>(
     `SELECT id, coach_id, coach_name, status, preferred_at, message, user_name, user_email, user_phone, created_at
      FROM coach_bookings
      WHERE coach_id = $1
      ORDER BY created_at DESC
-     LIMIT $2`,
-    [cid, lim]
+     LIMIT $2 OFFSET $3`,
+    [cid, lim, off]
   );
   return res.rows.map((r: any) => ({
     id: Number(r.id),
@@ -2924,10 +2926,13 @@ export async function getCommunityByJoinCode(code: string): Promise<Community | 
   }
 }
 
-export async function listWorldwideCommunities(): Promise<Community[]> {
+export async function listWorldwideCommunities(limit = 50, offset = 0): Promise<Community[]> {
   try {
+    const lim = Math.max(1, Math.min(200, Math.floor(limit)));
+    const off = Math.max(0, Math.floor(offset));
     const res = await pool.query(
-      `SELECT * FROM communities WHERE type = 'worldwide' ORDER BY region ASC`
+      `SELECT * FROM communities WHERE type = 'worldwide' ORDER BY region ASC LIMIT $1 OFFSET $2`,
+      [lim, off]
     );
     return res.rows.map(rowToCommunity);
   } catch (error) {
@@ -3092,9 +3097,12 @@ export async function createCustomCommunity(
 
 export async function getCommunityLeaderboard(
   communityId: number,
-  limit: number = 100
+  limit: number = 100,
+  offset: number = 0
 ): Promise<CommunityMember[]> {
   try {
+    const lim = Math.max(1, Math.min(500, Math.floor(limit)));
+    const off = Math.max(0, Math.floor(offset));
     const res = await pool.query(
       `SELECT
          m.user_id,
@@ -3109,8 +3117,8 @@ export async function getCommunityLeaderboard(
        LEFT JOIN profiles p ON p.user_id = m.user_id
        WHERE m.community_id = $1
        ORDER BY total_xp DESC, m.joined_at ASC
-       LIMIT $2`,
-      [communityId, Math.max(1, Math.min(500, limit))]
+       LIMIT $2 OFFSET $3`,
+      [communityId, lim, off]
     );
     return res.rows.map((r: any) => ({
       user_id: Number(r.user_id),
