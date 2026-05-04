@@ -14,7 +14,8 @@ import { CoachView } from '@/components/views/CoachView'
 import { MeasurementsView } from '@/components/views/MeasurementsView'
 import { CommunitiesView } from '@/components/views/CommunitiesView'
 import { Sidebar } from '@/components/Sidebar'
-import { ToastContainer, ToastType } from '@/components/ui/Toast'
+import { ToastType } from '@/components/ui/Toast'
+import { toastSuccess, toastError, toastInfo, toastWarning } from '@/lib/toast'
 import { ConfirmModal } from '@/components/ui/ConfirmModal'
 import { UpgradeModal } from '@/components/ui/UpgradeModal'
 import { compressImage } from '@/lib/image-utils'
@@ -24,7 +25,6 @@ import { csrfFetch } from '@/lib/useCsrf'
 import { TabQuote } from '@/components/ui/TabQuote'
 import { type QuoteCategory } from '@/lib/quotes'
 import { Menu } from 'lucide-react'
-import { toast } from 'sonner'
 import { AnimatePresence, motion } from 'framer-motion'
 
 function countryToRegionClient(code: string): 'APAC' | 'EMEA' | 'NA' | 'LATAM' {
@@ -83,17 +83,11 @@ export default function DashboardPage() {
   // Toast notifications
   const showToast = (message: string, type: ToastType) => {
     switch (type) {
-      case 'success':
-        toast.success(message)
-        break
-      case 'error':
-        toast.error(message)
-        break
-      case 'info':
-        toast.info(message)
-        break
-      default:
-        toast(message)
+      case 'success': toastSuccess(message); break
+      case 'error':   toastError(message);   break
+      case 'info':    toastInfo(message);    break
+      case 'warning': toastWarning(message); break
+      default:        toastInfo(message)
     }
   }
 
@@ -1587,9 +1581,6 @@ export default function DashboardPage() {
       {/* Bottom Navigation — hide when sidebar is open */}
       {!isSidebarOpen && <BottomNav activeView={activeView} onViewChange={handleViewChange} />}
 
-      {/* Toast Notifications - Top Center */}
-      <ToastContainer />
-
       {/* Confirm Modal */}
       <ConfirmModal
         open={!!modalConfig}
@@ -1616,7 +1607,6 @@ export default function DashboardPage() {
           setUpgradeOpen(false)
           setActiveView('analytics')
         }}
-        showToast={showToast}
       />
     </div>
   )

@@ -7,6 +7,7 @@ import { BrandLogo } from '@/components/BrandLogo'
 import LoginAnimation from '@/components/LoginAnimation'
 import { ThemeToggle } from '@/components/ThemeToggle'
 import { storeSessionIndicator } from '@/lib/useSessionPersistence'
+import { toastError } from '@/lib/toast'
 import { Mail, Lock } from 'lucide-react'
 
 const staggerItem = (delay: number) => ({
@@ -67,7 +68,10 @@ export default function LoginPage() {
       const data = await response.json()
 
       if (!response.ok) {
-        setError(data.error || 'Something went wrong')
+        const msg = typeof data?.error === 'string' && data.error.length < 200
+          ? data.error
+          : 'Something went wrong. Please try again.'
+        toastError(isLogin ? 'Login failed' : 'Registration failed', msg)
         setIsLoginFailed(true)
         setLoading(false)
         return
@@ -92,8 +96,8 @@ export default function LoginPage() {
         // New user — go straight to onboarding wizard
         router.replace('/onboarding')
       }
-    } catch (err) {
-      setError('Network error. Please try again.')
+    } catch {
+      toastError('Could not connect', 'Check your internet connection and try again.')
       setIsLoginFailed(true)
       setLoading(false)
     }
