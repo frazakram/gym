@@ -260,13 +260,19 @@ export default function OnboardingWizard({ isReset = false }: { isReset?: boolea
 
       if (!response.ok) {
         const data = await response.json().catch(() => null)
-        throw new Error(data?.error || 'Failed to save profile')
+        const apiErr = (data as { error?: unknown } | null)?.error
+        const msg = typeof apiErr === 'string' && apiErr.length > 0 && apiErr.length < 200
+          ? apiErr
+          : 'Could not save profile. Please try again.'
+        setError(msg)
+        setSaving(false)
+        return
       }
 
       // Profile saved — go to dashboard
       router.replace('/dashboard')
-    } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : String(err))
+    } catch {
+      setError('Could not save profile. Check your connection.')
       setSaving(false)
     }
   }

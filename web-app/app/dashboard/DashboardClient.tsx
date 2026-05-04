@@ -320,20 +320,22 @@ export default function DashboardPage() {
         const safeIdx = Math.min(dayIdx, routine.routine_json.days.length - 1)
         setSelectedDayIndex(safeIdx)
       }
-    } catch (err: unknown) {
-      console.error('Error fetching latest routine:', err)
+    } catch {
+      // Routine fetch is best-effort on mount; user can regenerate manually.
     }
   }, [])
 
   const fetchLatestDiet = useCallback(async () => {
     try {
       const res = await csrfFetch('/api/diet');
-      const data = await res.json();
+      if (!res.ok) return;
+      const data = await res.json().catch(() => ({}));
       if (data.diet) {
         setDietPlan(data.diet.diet_json);
       }
-    } catch (err) {
-      console.error('Error fetching latest diet:', err);
+    } catch {
+      // Diet is optional — don't surface a toast if it fails to load.
+      // User can manually regenerate.
     }
   }, []);
 
@@ -458,19 +460,25 @@ export default function DashboardPage() {
     if (view === 'analytics' || view === 'coach') {
       if (premiumStatus == null) {
         // Avoid showing the paywall incorrectly before we know trial/premium state.
-        void fetchPremiumStatus().then((s) => {
-          const eff: PremiumStatus = s ?? {
-            premium: false,
-            access: false,
-            trial_active: false,
-            trial_end: null,
-            status: null,
-            subscription_id: null,
-            current_end: null,
-          }
-          if (eff.access) trackViewChange(view)
-          else setUpgradeOpen(true)
-        })
+        void fetchPremiumStatus()
+          .then((s) => {
+            const eff: PremiumStatus = s ?? {
+              premium: false,
+              access: false,
+              trial_active: false,
+              trial_end: null,
+              status: null,
+              subscription_id: null,
+              current_end: null,
+            }
+            if (eff.access) trackViewChange(view)
+            else setUpgradeOpen(true)
+          })
+          .catch(() => {
+            // If premium status check fails, default to showing the upgrade modal
+            // so the user has a clear next step instead of a silent UI freeze.
+            setUpgradeOpen(true)
+          })
         return
       }
       if (effectivePremium.access) {
@@ -836,11 +844,17 @@ export default function DashboardPage() {
         setWeeksElapsed(0)
         await saveRoutineToDatabase(data.routine, targetWeekNumber, targetWeekStart)
 
-        // Auto-trigger diet generation if routine is new
-        handleGenerateDiet();
+        // Auto-trigger diet generation if routine is new (fire-and-forget, but logged).
+        void handleGenerateDiet().catch(() => {
+          // Diet generation is non-blocking — user can retry from the diet tab.
+        });
       }
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : String(err))
+      const raw = err instanceof Error ? err.message : ''
+      const safe = raw && raw.length > 0 && raw.length < 200 && !raw.toLowerCase().includes('fetch')
+        ? raw
+        : 'Could not generate routine. Please try again.'
+      setError(safe)
     } finally {
       setGenerating(false)
       setGenerationStage('')
@@ -936,11 +950,13 @@ export default function DashboardPage() {
     setError('')
     setSuccess('')
 
-    try {
-      if (age === '' || weight === '' || !tenure.trim() || resolvedHeightCm == null) {
-        throw new Error('Please fill Age, Weight, Height, and Training Duration.')
-      }
+    if (age === '' || weight === '' || !tenure.trim() || resolvedHeightCm == null) {
+      setError('Please fill Age, Weight, Height, and Training Duration.')
+      setLoading(false)
+      return
+    }
 
+    try {
       const response = await csrfFetch('/api/profile', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
@@ -973,15 +989,20 @@ export default function DashboardPage() {
 
       if (!response.ok) {
         const data = await response.json().catch(() => null)
-        throw new Error(data?.error || 'Failed to save profile')
+        const apiErr = (data as { error?: unknown } | null)?.error
+        const msg = typeof apiErr === 'string' && apiErr.length > 0 && apiErr.length < 200
+          ? apiErr
+          : 'Could not save profile. Please try again.'
+        setError(msg)
+        return
       }
 
       setSuccess('Profile saved successfully.')
       // Clear the generation hash so profile changes trigger new routine generation
       lastGenProfileRef.current = null
       await fetchProfile()
-    } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : String(err))
+    } catch {
+      setError('Could not save profile. Check your connection.')
     } finally {
       setLoading(false)
     }
@@ -997,7 +1018,12 @@ export default function DashboardPage() {
     localStorage.setItem('lastWeek', String(currentWeekNumber))
     // Clear localStorage session indicator
     clearSessionIndicator()
-    await csrfFetch('/api/auth/logout', { method: 'POST' })
+    try {
+      await csrfFetch('/api/auth/logout', { method: 'POST' })
+    } catch {
+      // Even if the server-side logout fails, we've cleared local state —
+      // proceed to the login screen so the user isn't stuck.
+    }
     router.push('/login')
   }
 

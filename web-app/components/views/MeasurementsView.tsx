@@ -117,9 +117,11 @@ export function MeasurementsView() {
       if (res.ok) {
         const data = await res.json()
         setMeasurements(data.measurements || [])
+      } else {
+        toast.error("Couldn't load measurements. Please try again.")
       }
-    } catch (err) {
-      console.error('Error fetching measurements:', err)
+    } catch {
+      toast.error("Couldn't load measurements. Check your connection.")
     } finally {
       setLoading(false)
     }
@@ -169,6 +171,8 @@ export function MeasurementsView() {
       if (res.ok) {
         toast.success('Measurement deleted')
         setMeasurements((prev) => prev.filter((m) => m.id !== id))
+      } else {
+        toast.error("Couldn't delete measurement. Please try again.")
       }
     } catch {
       toast.error('Failed to delete')

@@ -36,8 +36,12 @@ export async function GET(req: NextRequest, ctx: { params: Promise<{ id: string 
       }
     }
 
-    const members = await getCommunityLeaderboard(community.id, 100);
-    return withCors(NextResponse.json({ community, members }));
+    const { searchParams } = new URL(req.url);
+    const limit = Math.max(1, Math.min(500, Number(searchParams.get("limit") ?? 100) || 100));
+    const offset = Math.max(0, Number(searchParams.get("offset") ?? 0) || 0);
+
+    const members = await getCommunityLeaderboard(community.id, limit, offset);
+    return withCors(NextResponse.json({ community, members, limit, offset }));
   } catch (error) {
     console.error("GET /api/communities/[id] failed:", error);
     return withCors(NextResponse.json({ error: "Internal server error" }, { status: 500 }));

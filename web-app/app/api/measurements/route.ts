@@ -15,14 +15,19 @@ const AddMeasurementSchema = z.object({
   notes: z.string().max(500).optional(),
 });
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
     const session = await getSession();
     if (!session) return withCors(NextResponse.json({ error: "Unauthorized" }, { status: 401 }));
 
     await initializeDatabase();
-    const measurements = await getBodyMeasurements(session.userId);
-    return withCors(NextResponse.json({ measurements }));
+
+    const { searchParams } = new URL(request.url);
+    const limit = Math.max(1, Math.min(500, Number(searchParams.get("limit") ?? 90) || 90));
+    const offset = Math.max(0, Number(searchParams.get("offset") ?? 0) || 0);
+
+    const measurements = await getBodyMeasurements(session.userId, limit, offset);
+    return withCors(NextResponse.json({ measurements, limit, offset }));
   } catch {
     return withCors(NextResponse.json({ error: "Failed to fetch measurements" }, { status: 500 }));
   }
