@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { motion } from 'framer-motion'
+import { motion, type Variants } from 'framer-motion'
 import { Profile, WeeklyRoutine, WeeklyDiet } from '@/types'
 import { CircularProgress } from '../CircularProgress'
 import { NoRoutineEmptyState } from '../ui/EmptyState'
@@ -17,14 +17,14 @@ import { ArrowRight, Timer, Percent, MessageCircle, ChevronRight, Flame, Drumsti
 import { useLocation } from '@/hooks/useLocation'
 import { WeeklyBreakdownSheet, type DayBreakdown } from '../ui/WeeklyBreakdownSheet'
 
-const stagger = {
+const stagger: Variants = {
   hidden: {},
   visible: { transition: { staggerChildren: 0.08 } },
 }
 
-const fadeUp = {
+const fadeUp: Variants = {
   hidden: { opacity: 0, y: 16 },
-  visible: { opacity: 1, y: 0, transition: { duration: 0.4, ease: 'easeOut' as const } },
+  visible: { opacity: 1, y: 0, transition: { duration: 0.4, ease: 'easeOut' } },
 }
 
 interface HomeViewProps {
