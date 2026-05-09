@@ -38,7 +38,7 @@ interface HomeViewProps {
   currentWeekNumber: number
   onNavigateToWorkout: (dayIndex?: number) => void
   onNavigateToCoach: () => void
-  onGenerateRoutine: () => void
+  onGenerateRoutine: (restDays?: string[]) => void
   onGenerateNextWeek: () => void
   generating: boolean
   viewingHistory?: boolean

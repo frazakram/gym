@@ -913,8 +913,7 @@ export function hasSignificantProfileChange(oldProfile: any, newProfile: any): b
  */
 export async function hasGymPhotos(userId: number): Promise<boolean> {
   try {
-    const client = await getDbClient();
-    const res = await client.query(
+    const res = await pool.query(
       `SELECT 1 FROM profiles
        WHERE user_id = $1
          AND gym_photos IS NOT NULL
@@ -930,8 +929,7 @@ export async function hasGymPhotos(userId: number): Promise<boolean> {
 
 export async function hasBodyPhotos(userId: number): Promise<boolean> {
   try {
-    const client = await getDbClient();
-    const res = await client.query(
+    const res = await pool.query(
       `SELECT 1 FROM profiles
        WHERE user_id = $1
          AND body_photos IS NOT NULL
