@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
-  X, MapPin, Search, Loader2, Star, Dumbbell,
+  X, MapPin, Search, Loader2, Dumbbell,
   CheckCircle, Plus, ChevronRight, Sparkles,
 } from 'lucide-react'
 import { getUserLocation, LocationResult } from '@/lib/location'
@@ -31,6 +31,34 @@ const slideLeft = {
   exit: { x: -40, opacity: 0, transition: { duration: 0.15 } },
 }
 
+const EQUIPMENT_PRESETS: { category: string; items: string[] }[] = [
+  {
+    category: 'Free Weights',
+    items: ['Dumbbells', 'Barbell', 'EZ Bar', 'Kettlebells', 'Weight Plates'],
+  },
+  {
+    category: 'Machines',
+    items: ['Cable Machine', 'Lat Pulldown', 'Leg Press', 'Chest Press Machine', 'Smith Machine', 'Leg Curl Machine'],
+  },
+  {
+    category: 'Cardio',
+    items: ['Treadmill', 'Stationary Bike', 'Elliptical', 'Rowing Machine', 'Stair Climber'],
+  },
+  {
+    category: 'Benches & Racks',
+    items: ['Squat Rack', 'Flat Bench', 'Incline Bench', 'Power Rack', 'Preacher Curl Bench'],
+  },
+  {
+    category: 'Other',
+    items: ['Pull-up Bar', 'Dip Station', 'Resistance Bands', 'Battle Ropes', 'Medicine Ball', 'Foam Roller'],
+  },
+]
+
+const DEFAULT_SELECTED = new Set([
+  'Dumbbells', 'Barbell', 'Cable Machine', 'Flat Bench',
+  'Treadmill', 'Pull-up Bar', 'Squat Rack',
+])
+
 export function GymNearbySheet({ open, onClose, onGymSaved }: GymNearbySheetProps) {
   const [screen, setScreen] = useState<Screen>('search')
   const [query, setQuery] = useState('')
@@ -38,14 +66,11 @@ export function GymNearbySheet({ open, onClose, onGymSaved }: GymNearbySheetProp
   const [searching, setSearching] = useState(false)
   const [location, setLocation] = useState<LocationResult | null>(null)
 
-  // Confirm screen state
   const [selectedGym, setSelectedGym] = useState<GymResult | null>(null)
-  const [equipment, setEquipment] = useState<string[]>([])
-  const [disabledEquipment, setDisabledEquipment] = useState<Set<string>>(new Set())
-  const [newEquipment, setNewEquipment] = useState('')
-  const [scanning, setScanning] = useState(false)
+  const [selectedChips, setSelectedChips] = useState<Set<string>>(new Set(DEFAULT_SELECTED))
+  const [customInput, setCustomInput] = useState('')
+  const [customItems, setCustomItems] = useState<string[]>([])
   const [saving, setSaving] = useState(false)
-  const [noPhoto, setNoPhoto] = useState(false)
 
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
@@ -56,9 +81,9 @@ export function GymNearbySheet({ open, onClose, onGymSaved }: GymNearbySheetProp
     setQuery('')
     setResults([])
     setSelectedGym(null)
-    setEquipment([])
-    setDisabledEquipment(new Set())
-    setNoPhoto(false)
+    setSelectedChips(new Set(DEFAULT_SELECTED))
+    setCustomInput('')
+    setCustomItems([])
     setSearching(true)
 
     let cancelled = false
@@ -67,7 +92,6 @@ export function GymNearbySheet({ open, onClose, onGymSaved }: GymNearbySheetProp
         if (cancelled) return
         if (loc.source !== 'denied' && loc.source !== 'unavailable') {
           setLocation(loc)
-          // Auto-search using precise coordinates — no manual input needed
           try {
             const params = new URLSearchParams({ q: 'gym', lat: String(loc.lat), lng: String(loc.lng) })
             const res = await csrfFetch(`/api/gym/search?${params.toString()}`)
@@ -89,7 +113,6 @@ export function GymNearbySheet({ open, onClose, onGymSaved }: GymNearbySheetProp
     return () => { cancelled = true }
   }, [open])
 
-  // Debounced search
   const doSearch = useCallback(async (q: string) => {
     if (q.trim().length < 2) { setResults([]); return }
     setSearching(true)
@@ -118,39 +141,13 @@ export function GymNearbySheet({ open, onClose, onGymSaved }: GymNearbySheetProp
     debounceRef.current = setTimeout(() => doSearch(val), 500)
   }
 
-  // Select gym → scan equipment
-  const handleSelectGym = async (gym: GymResult) => {
+  const handleSelectGym = (gym: GymResult) => {
     setSelectedGym(gym)
-    if (!gym.imageUrl) {
-      setNoPhoto(true)
-      setEquipment([])
-      setScreen('confirm')
-      return
-    }
-    setNoPhoto(false)
-    setScanning(true)
     setScreen('confirm')
-    try {
-      const res = await csrfFetch('/api/gym/analyze', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ imageUrl: gym.imageUrl }),
-      })
-      if (res.ok) {
-        const data = await res.json()
-        setEquipment(data.analysis?.equipment_detected || [])
-      } else {
-        setEquipment([])
-      }
-    } catch {
-      setEquipment([])
-    } finally {
-      setScanning(false)
-    }
   }
 
-  const toggleEquipment = (item: string) => {
-    setDisabledEquipment((prev) => {
+  const toggleChip = (item: string) => {
+    setSelectedChips((prev) => {
       const next = new Set(prev)
       if (next.has(item)) next.delete(item)
       else next.add(item)
@@ -158,18 +155,23 @@ export function GymNearbySheet({ open, onClose, onGymSaved }: GymNearbySheetProp
     })
   }
 
-  const addManualEquipment = () => {
-    const trimmed = newEquipment.trim()
-    if (!trimmed || equipment.includes(trimmed)) return
-    setEquipment((prev) => [...prev, trimmed])
-    setNewEquipment('')
+  const addCustomItem = () => {
+    const trimmed = customInput.trim()
+    if (!trimmed) return
+    const alreadyPreset = EQUIPMENT_PRESETS.some((g) => g.items.includes(trimmed))
+    if (!alreadyPreset && !customItems.includes(trimmed)) {
+      setCustomItems((prev) => [...prev, trimmed])
+    }
+    setSelectedChips((prev) => new Set([...prev, trimmed]))
+    setCustomInput('')
   }
+
+  const totalSelected = selectedChips.size
 
   const handleSave = async () => {
     if (!selectedGym) return
     setSaving(true)
     try {
-      const finalEquipment = equipment.filter((e) => !disabledEquipment.has(e))
       await csrfFetch('/api/gym/save', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -177,7 +179,7 @@ export function GymNearbySheet({ open, onClose, onGymSaved }: GymNearbySheetProp
           gymName: selectedGym.name,
           placeId: selectedGym.placeId,
           imageUrl: selectedGym.imageUrl,
-          equipment: finalEquipment,
+          equipment: Array.from(selectedChips),
           location: selectedGym.address,
         }),
       })
@@ -284,7 +286,6 @@ export function GymNearbySheet({ open, onClose, onGymSaved }: GymNearbySheetProp
                 {/* ─── SCREEN 1: SEARCH ─── */}
                 {screen === 'search' && (
                   <motion.div key="search" {...slideLeft}>
-                    {/* Auto-detecting location */}
                     {searching && (
                       <div className="flex flex-col items-center gap-3 py-8">
                         <Loader2 className="w-7 h-7 text-primary-light animate-spin" />
@@ -293,7 +294,6 @@ export function GymNearbySheet({ open, onClose, onGymSaved }: GymNearbySheetProp
                       </div>
                     )}
 
-                    {/* Manual search fallback (shown after auto-search completes or location denied) */}
                     {!searching && (
                       <>
                         <p className="text-xs text-muted mb-3">
@@ -324,7 +324,6 @@ export function GymNearbySheet({ open, onClose, onGymSaved }: GymNearbySheetProp
                 {/* ─── SCREEN 2: RESULTS ─── */}
                 {screen === 'results' && (
                   <motion.div key="results" {...slideLeft}>
-                    {/* Search by name instead */}
                     <div className="relative mb-3">
                       <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-white/30" />
                       <input
@@ -347,28 +346,12 @@ export function GymNearbySheet({ open, onClose, onGymSaved }: GymNearbySheetProp
                           onClick={() => handleSelectGym(gym)}
                           className="w-full flex items-center gap-3 rounded-2xl bg-white/4 border border-white/6 px-3 py-3 hover:bg-white/8 active:scale-[0.98] transition-all text-left group"
                         >
-                          {/* Image or placeholder */}
-                          <div className="w-14 h-14 rounded-xl bg-white/8 border border-white/10 flex items-center justify-center shrink-0 overflow-hidden">
-                            {gym.imageUrl ? (
-                              <img
-                                src={gym.imageUrl}
-                                alt={gym.name}
-                                className="w-full h-full object-cover"
-                                loading="lazy"
-                              />
-                            ) : (
-                              <Dumbbell className="w-6 h-6 text-white/30" />
-                            )}
+                          <div className="w-14 h-14 rounded-xl bg-white/8 border border-white/10 flex items-center justify-center shrink-0">
+                            <Dumbbell className="w-6 h-6 text-white/30" />
                           </div>
                           <div className="flex-1 min-w-0">
                             <p className="text-sm font-semibold text-white truncate">{gym.name}</p>
                             <p className="text-xs text-muted truncate mt-0.5">{gym.address}</p>
-                            {gym.rating && (
-                              <div className="flex items-center gap-1 mt-1">
-                                <Star className="w-3 h-3 text-amber-400 fill-amber-400" />
-                                <span className="text-xs text-amber-300">{gym.rating}</span>
-                              </div>
-                            )}
                           </div>
                           <ChevronRight className="w-4 h-4 text-white/20 group-hover:text-white/40 shrink-0" />
                         </button>
@@ -380,7 +363,6 @@ export function GymNearbySheet({ open, onClose, onGymSaved }: GymNearbySheetProp
                 {/* ─── SCREEN 3: CONFIRM EQUIPMENT ─── */}
                 {screen === 'confirm' && selectedGym && (
                   <motion.div key="confirm" {...slideLeft}>
-                    {/* Back */}
                     <button
                       type="button"
                       onClick={() => setScreen('results')}
@@ -391,118 +373,152 @@ export function GymNearbySheet({ open, onClose, onGymSaved }: GymNearbySheetProp
 
                     {/* Gym info card */}
                     <div className="rounded-2xl bg-white/4 border border-white/8 p-3 mb-4 flex items-center gap-3">
-                      <div className="w-12 h-12 rounded-xl bg-white/8 border border-white/10 flex items-center justify-center shrink-0 overflow-hidden">
-                        {selectedGym.imageUrl ? (
-                          <img src={selectedGym.imageUrl} alt="" className="w-full h-full object-cover" loading="lazy" />
-                        ) : (
-                          <Dumbbell className="w-5 h-5 text-white/30" />
-                        )}
+                      <div className="w-10 h-10 rounded-xl bg-white/8 border border-white/10 flex items-center justify-center shrink-0">
+                        <Dumbbell className="w-4 h-4 text-white/30" />
                       </div>
                       <div className="min-w-0 flex-1">
                         <p className="text-sm font-semibold text-white truncate">{selectedGym.name}</p>
                         <p className="text-xs text-muted truncate">{selectedGym.address}</p>
                       </div>
-                      {!noPhoto && (
-                        <div className="flex items-center gap-1">
-                          <CheckCircle className="w-3.5 h-3.5 text-emerald-400" />
-                          <span className="text-[10px] text-emerald-300">Photo loaded</span>
+                    </div>
+
+                    {/* Instruction + count */}
+                    <div className="flex items-center justify-between mb-3">
+                      <p className="text-xs text-muted">Tap to select equipment at this gym</p>
+                      <span
+                        className="text-[11px] font-semibold px-2 py-0.5 rounded-full"
+                        style={{
+                          background: totalSelected > 0 ? 'rgba(124,58,237,0.2)' : 'rgba(255,255,255,0.06)',
+                          color: totalSelected > 0 ? '#c4b5fd' : 'rgba(148,163,184,0.6)',
+                          border: totalSelected > 0 ? '1px solid rgba(167,139,250,0.3)' : '1px solid rgba(255,255,255,0.08)',
+                        }}
+                      >
+                        {totalSelected} selected
+                      </span>
+                    </div>
+
+                    {/* Equipment preset chips grouped by category */}
+                    <div className="space-y-4 mb-4 max-h-[38vh] overflow-y-auto pr-1">
+                      {EQUIPMENT_PRESETS.map((group) => (
+                        <div key={group.category}>
+                          <p className="text-[10px] font-semibold text-white/40 uppercase tracking-widest mb-2">
+                            {group.category}
+                          </p>
+                          <div className="flex flex-wrap gap-1.5">
+                            {group.items.map((item) => {
+                              const active = selectedChips.has(item)
+                              return (
+                                <button
+                                  key={item}
+                                  type="button"
+                                  onClick={() => toggleChip(item)}
+                                  className="px-2.5 py-1.5 rounded-full text-xs font-medium transition-all active:scale-95"
+                                  style={
+                                    active
+                                      ? {
+                                          background: 'rgba(124,58,237,0.22)',
+                                          color: '#c4b5fd',
+                                          border: '1px solid rgba(167,139,250,0.45)',
+                                          boxShadow: '0 0 8px rgba(124,58,237,0.2)',
+                                        }
+                                      : {
+                                          background: 'rgba(255,255,255,0.04)',
+                                          color: 'rgba(148,163,184,0.7)',
+                                          border: '1px solid rgba(255,255,255,0.08)',
+                                        }
+                                  }
+                                >
+                                  {item}
+                                </button>
+                              )
+                            })}
+                          </div>
+                        </div>
+                      ))}
+
+                      {/* Custom items (added by user) */}
+                      {customItems.length > 0 && (
+                        <div>
+                          <p className="text-[10px] font-semibold text-white/40 uppercase tracking-widest mb-2">
+                            Custom
+                          </p>
+                          <div className="flex flex-wrap gap-1.5">
+                            {customItems.map((item) => {
+                              const active = selectedChips.has(item)
+                              return (
+                                <button
+                                  key={item}
+                                  type="button"
+                                  onClick={() => toggleChip(item)}
+                                  className="px-2.5 py-1.5 rounded-full text-xs font-medium transition-all active:scale-95"
+                                  style={
+                                    active
+                                      ? {
+                                          background: 'rgba(124,58,237,0.22)',
+                                          color: '#c4b5fd',
+                                          border: '1px solid rgba(167,139,250,0.45)',
+                                          boxShadow: '0 0 8px rgba(124,58,237,0.2)',
+                                        }
+                                      : {
+                                          background: 'rgba(255,255,255,0.04)',
+                                          color: 'rgba(148,163,184,0.7)',
+                                          border: '1px solid rgba(255,255,255,0.08)',
+                                        }
+                                  }
+                                >
+                                  {item}
+                                </button>
+                              )
+                            })}
+                          </div>
                         </div>
                       )}
                     </div>
 
-                    {/* Scanning state */}
-                    {scanning && (
-                      <div className="rounded-2xl bg-primary/10 border border-primary/20 px-4 py-4 mb-4 flex items-center gap-3">
-                        <Loader2 className="w-5 h-5 text-primary-light animate-spin shrink-0" />
-                        <div>
-                          <p className="text-sm font-medium text-white">Scanning equipment...</p>
-                          <p className="text-xs text-muted mt-0.5">AI is analyzing the gym photo</p>
-                        </div>
-                      </div>
-                    )}
+                    {/* Add custom equipment */}
+                    <div className="flex gap-2 mb-5">
+                      <input
+                        type="text"
+                        value={customInput}
+                        onChange={(e) => setCustomInput(e.target.value)}
+                        onKeyDown={(e) => e.key === 'Enter' && addCustomItem()}
+                        placeholder="Add custom equipment..."
+                        className="flex-1 px-3 py-2 rounded-xl bg-white/6 border border-white/10 text-xs text-white placeholder:text-white/30 focus:outline-none focus:border-primary/30"
+                      />
+                      <button
+                        type="button"
+                        onClick={addCustomItem}
+                        disabled={!customInput.trim()}
+                        className="px-3 py-2 rounded-xl bg-primary/15 border border-primary/25 text-xs font-medium text-primary-light disabled:opacity-30 hover:bg-primary/20 transition-colors"
+                      >
+                        <Plus className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
 
-                    {/* Equipment list */}
-                    {!scanning && (
-                      <>
-                        {noPhoto && (
-                          <p className="text-xs text-muted mb-3">
-                            No photo available — add equipment manually below
-                          </p>
+                    {/* Action buttons */}
+                    <div className="space-y-2">
+                      <button
+                        type="button"
+                        onClick={handleSave}
+                        disabled={saving || totalSelected === 0}
+                        className="w-full py-3 rounded-xl bg-primary hover:bg-primary/90 text-white font-semibold text-sm transition-all active:scale-[0.97] disabled:opacity-50 flex items-center justify-center gap-2"
+                      >
+                        {saving ? (
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                        ) : (
+                          <CheckCircle className="w-4 h-4" />
                         )}
-
-                        {equipment.length > 0 && (
-                          <div className="mb-4">
-                            <p className="text-xs text-muted font-medium mb-2">
-                              Detected equipment (tap to deselect):
-                            </p>
-                            <div className="flex flex-wrap gap-1.5">
-                              {equipment.map((item) => {
-                                const disabled = disabledEquipment.has(item)
-                                return (
-                                  <button
-                                    key={item}
-                                    type="button"
-                                    onClick={() => toggleEquipment(item)}
-                                    className={`px-2.5 py-1.5 rounded-full text-xs font-medium transition-all ${
-                                      disabled
-                                        ? 'bg-white/4 text-white/30 border border-white/6 line-through'
-                                        : 'bg-primary/15 text-primary-light border border-primary/25'
-                                    }`}
-                                  >
-                                    {item}
-                                  </button>
-                                )
-                              })}
-                            </div>
-                          </div>
-                        )}
-
-                        {/* Add manual equipment */}
-                        <div className="flex gap-2 mb-5">
-                          <input
-                            type="text"
-                            value={newEquipment}
-                            onChange={(e) => setNewEquipment(e.target.value)}
-                            onKeyDown={(e) => e.key === 'Enter' && addManualEquipment()}
-                            placeholder="Add equipment..."
-                            className="flex-1 px-3 py-2 rounded-xl bg-white/6 border border-white/10 text-xs text-white placeholder:text-white/30 focus:outline-none focus:border-primary/30"
-                          />
-                          <button
-                            type="button"
-                            onClick={addManualEquipment}
-                            disabled={!newEquipment.trim()}
-                            className="px-3 py-2 rounded-xl bg-primary/15 border border-primary/25 text-xs font-medium text-primary-light disabled:opacity-30 hover:bg-primary/20 transition-colors"
-                          >
-                            <Plus className="w-3.5 h-3.5" />
-                          </button>
-                        </div>
-
-                        {/* Action buttons */}
-                        <div className="space-y-2">
-                          <button
-                            type="button"
-                            onClick={handleSave}
-                            disabled={saving}
-                            className="w-full py-3 rounded-xl bg-primary hover:bg-primary/90 text-white font-semibold text-sm transition-all active:scale-[0.97] disabled:opacity-50 flex items-center justify-center gap-2"
-                          >
-                            {saving ? (
-                              <Loader2 className="w-4 h-4 animate-spin" />
-                            ) : (
-                              <CheckCircle className="w-4 h-4" />
-                            )}
-                            {saving ? 'Saving...' : 'Confirm & Save'}
-                          </button>
-                          <button
-                            type="button"
-                            onClick={handleSkip}
-                            disabled={saving}
-                            className="w-full py-2.5 rounded-xl bg-white/6 border border-white/10 text-white/60 text-xs font-medium hover:bg-white/10 transition-all disabled:opacity-50"
-                          >
-                            Skip for now
-                          </button>
-                        </div>
-                      </>
-                    )}
+                        {saving ? 'Saving...' : `Confirm & Save (${totalSelected})`}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={handleSkip}
+                        disabled={saving}
+                        className="w-full py-2.5 rounded-xl bg-white/6 border border-white/10 text-white/60 text-xs font-medium hover:bg-white/10 transition-all disabled:opacity-50"
+                      >
+                        Skip for now
+                      </button>
+                    </div>
                   </motion.div>
                 )}
 

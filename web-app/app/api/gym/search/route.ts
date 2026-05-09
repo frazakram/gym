@@ -10,32 +10,16 @@ interface GymSearchResult {
   placeId: string;
   name: string;
   address: string;
-  imageUrl: string | null;
-  rating: number | null;
+  imageUrl: null;
+  rating: null;
+  lat?: number;
+  lng?: number;
 }
 
-const MOCK_GYMS: GymSearchResult[] = [
-  {
-    placeId: "mock_1",
-    name: "Gold's Gym",
-    address: "Nearby — add GOOGLE_PLACES_API_KEY for real results",
-    imageUrl: null,
-    rating: null,
-  },
-  {
-    placeId: "mock_2",
-    name: "Anytime Fitness",
-    address: "Nearby — add GOOGLE_PLACES_API_KEY for real results",
-    imageUrl: null,
-    rating: null,
-  },
-  {
-    placeId: "mock_3",
-    name: "CrossFit Box",
-    address: "Nearby — add GOOGLE_PLACES_API_KEY for real results",
-    imageUrl: null,
-    rating: null,
-  },
+const FALLBACK_GYMS: GymSearchResult[] = [
+  { placeId: "mock-1", name: "Local Fitness Center", address: "Add location access for real gyms nearby", imageUrl: null, rating: null },
+  { placeId: "mock-2", name: "City Gym", address: "Add location access for real gyms nearby", imageUrl: null, rating: null },
+  { placeId: "mock-3", name: "Iron House Gym", address: "Add location access for real gyms nearby", imageUrl: null, rating: null },
 ];
 
 export async function GET(request: NextRequest) {
@@ -53,59 +37,60 @@ export async function GET(request: NextRequest) {
       return withCors(NextResponse.json({ error: parsed.error }, { status: 400 }));
     }
 
-    const { q, lat, lng } = parsed.data;
-    const apiKey = process.env.GOOGLE_PLACES_API_KEY;
+    const { lat, lng } = parsed.data;
 
-    // If no API key, return mock data for dev
-    if (!apiKey) {
-      const filtered = MOCK_GYMS.filter(
-        (g) => g.name.toLowerCase().includes(q.toLowerCase()) || q.length > 0
-      );
-      return withCors(NextResponse.json({ results: filtered.length > 0 ? filtered : MOCK_GYMS }));
+    // Need coordinates to query Overpass
+    if (lat == null || lng == null) {
+      return withCors(NextResponse.json({ results: FALLBACK_GYMS }));
     }
 
-    // Google Places Text Search
-    const searchUrl = new URL("https://maps.googleapis.com/maps/api/place/textsearch/json");
-    searchUrl.searchParams.set("query", q);
-    searchUrl.searchParams.set("type", "gym");
-    searchUrl.searchParams.set("key", apiKey);
-    if (lat != null && lng != null) {
-      searchUrl.searchParams.set("location", `${lat},${lng}`);
-      searchUrl.searchParams.set("radius", "10000");
-    }
+    // Overpass API query — 3 tag variants covering most gyms on OSM
+    const overpassQuery = `[out:json][timeout:10];(node["leisure"="fitness_centre"](around:5000,${lat},${lng});node["sport"="fitness"](around:5000,${lat},${lng});node["amenity"="gym"](around:5000,${lat},${lng}););out 15;`;
+    const url = `https://overpass-api.de/api/interpreter?data=${encodeURIComponent(overpassQuery)}`;
 
-    const res = await fetch(searchUrl.toString());
-    if (!res.ok) {
-      console.error("Google Places API error:", await res.text().catch(() => ""));
-      return withCors(NextResponse.json({ results: MOCK_GYMS }));
-    }
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 10000);
 
-    const data = (await res.json()) as {
-      results?: Array<{
-        place_id?: string;
-        name?: string;
-        formatted_address?: string;
-        rating?: number;
-        photos?: Array<{ photo_reference?: string }>;
-      }>;
-    };
+    try {
+      const res = await fetch(url, {
+        signal: controller.signal,
+        headers: { "User-Agent": "GymBro-App/1.0" },
+      });
+      clearTimeout(timer);
 
-    const results: GymSearchResult[] = (data.results || []).slice(0, 10).map((place) => {
-      const photoRef = place.photos?.[0]?.photo_reference;
-      const imageUrl = photoRef
-        ? `https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=${photoRef}&key=${apiKey}`
-        : null;
+      if (!res.ok) {
+        return withCors(NextResponse.json({ results: FALLBACK_GYMS }));
+      }
 
-      return {
-        placeId: place.place_id || "",
-        name: place.name || "",
-        address: place.formatted_address || "",
-        imageUrl,
-        rating: place.rating ?? null,
+      const data = (await res.json()) as {
+        elements?: Array<{
+          id?: number;
+          lat?: number;
+          lon?: number;
+          tags?: Record<string, string>;
+        }>;
       };
-    });
 
-    return withCors(NextResponse.json({ results }));
+      const results: GymSearchResult[] = (data.elements || [])
+        .filter((el) => el.tags?.name)
+        .slice(0, 15)
+        .map((el) => ({
+          placeId: String(el.id ?? Math.random()),
+          name: el.tags?.name ?? "Unnamed Gym",
+          address: [el.tags?.["addr:street"], el.tags?.["addr:city"]]
+            .filter(Boolean)
+            .join(", ") || "Address unavailable",
+          imageUrl: null,
+          rating: null,
+          lat: el.lat,
+          lng: el.lon,
+        }));
+
+      return withCors(NextResponse.json({ results: results.length > 0 ? results : FALLBACK_GYMS }));
+    } catch {
+      clearTimeout(timer);
+      return withCors(NextResponse.json({ results: FALLBACK_GYMS }));
+    }
   } catch (error) {
     console.error("GET /api/gym/search error:", error);
     return withCors(NextResponse.json({ error: "Internal server error" }, { status: 500 }));
