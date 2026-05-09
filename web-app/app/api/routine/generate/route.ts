@@ -105,6 +105,9 @@ export async function POST(request: NextRequest) {
       api_key,
       apiKey, // backward/alt client name
       stream,
+      restDays,
+      is_next_week,
+      week_number,
     } = body;
 
     const provider = model_provider;
@@ -134,6 +137,12 @@ export async function POST(request: NextRequest) {
         ? ftInToCm(height_ft, Math.max(0, Math.min(11.9, height_in)))
         : height;
 
+    // Fetch profile first — needed for restDays fallback + equipment/body analysis
+    const { getProfile } = await import('@/lib/db');
+    const userProfile = await getProfile(session.userId);
+    const equipmentAnalysis = userProfile?.gym_equipment_analysis || null;
+    const bodyAnalysis = userProfile?.body_composition_analysis || null;
+
     // Build historical context for progressive routines
     let historicalContextStr: string | undefined;
     try {
@@ -146,8 +155,28 @@ export async function POST(request: NextRequest) {
       // Continue without historical context
     }
 
+    // When generating next week, prepend a rich goal-specific progression directive
+    if (is_next_week) {
+      const prevWeek = (week_number ?? 1) - 1;
+      const nextWeek = week_number ?? 2;
+      const goalProgressionMap: Record<string, string> = {
+        'Fat loss':       'Keep exercise count the same or add one compound movement. Reduce rest periods by 5–10 s on circuits/supersets. Add or extend a cardio finisher (HIIT, bike sprints, rowing). Maintain or slightly increase weights — do NOT reduce load.',
+        'Muscle gain':    'Increase weight by 2.5–5 % on compound lifts. Add 1–2 reps to isolation work. Consider adding one extra set to a lagging muscle group. Push 1–2 reps closer to failure (RIR 1–2). Introduce a drop-set or rest-pause set on one exercise.',
+        'Strength':       'Add weight to all primary lifts (squat, bench, deadlift, OHP) — even 2.5 kg is progress. Keep rep schemes identical or reduce reps by 1 and add weight. Accessory work: increase load or add one rep.',
+        'Recomposition':  'Balanced increase: +2.5 % on compound lifts, +1 rep on isolation. Introduce supersets or giant sets to increase density. Alternate exercise variations for novel stimulus while keeping same muscle targets.',
+        'Endurance':      'Increase total work time by 5–10 %. Reduce rest between sets by 10–15 s. Add one circuit round or extend steady-state cardio segments by 5 min. Progressively move towards continuous effort rather than interval breaks.',
+        'General fitness':'Rotate at least two exercise variations for novel stimulus. Add 1 set to exercises the user performed well. Introduce one new movement pattern per session for variety and continued adaptation.',
+      };
+      const goalKey = goal as string;
+      const goalGuidance = goalProgressionMap[goalKey] ?? 'Apply moderate progressive overload: slightly increase weight or reps on key exercises and introduce one fresh movement variation per session.';
+
+      const nextWeekHeader = `\n\n${'━'.repeat(51)}\n🗓️  NEXT WEEK PROGRESSION DIRECTIVE — Week ${prevWeek} ➜ Week ${nextWeek}\n${'━'.repeat(51)}\n\nThis is a CONTINUATION routine, NOT a fresh start. You are building Week ${nextWeek} directly on top of Week ${prevWeek}.\n\nUSER GOAL: ${goal} (this must drive every progression decision below)\n\nGOAL-SPECIFIC PROGRESSION for "${goal}":\n→ ${goalGuidance}\n\nMANDATORY RULES:\n• Keep the SAME workout split structure as last week (e.g., Push/Pull/Legs) unless historical data shows a need to change.\n• Every training day must have AT LEAST ONE meaningful change from last week (weight ↑, reps ↑, sets ↑, harder variation, shorter rest).\n• Exercises the user excelled at → apply progressive overload (see above).\n• Exercises the user struggled with → keep or regress, add detailed form cues in tutorial_points.\n• Include the week number in day names: e.g., "Monday - Push (Chest, Shoulders, Triceps)".\n• Rest days stay on the same days as last week unless preferred_rest_days says otherwise.\n${'━'.repeat(51)}\n\n`;
+
+      historicalContextStr = nextWeekHeader + (historicalContextStr ?? '');
+    }
+
     // Helper to convert null to undefined (Zod nullable vs TypeScript optional)
-    const nullToUndefined = <T>(val: T | null | undefined): T | undefined => 
+    const nullToUndefined = <T>(val: T | null | undefined): T | undefined =>
       val === null ? undefined : val;
 
     const input = {
@@ -163,17 +192,19 @@ export async function POST(request: NextRequest) {
       session_duration: typeof session_duration === 'number' ? session_duration : undefined,
       notes: nullToUndefined(notes),
       model_provider,
-      apiKey: keyFromClient || undefined, // Passed from client (optional if server env has key)
+      apiKey: keyFromClient || undefined,
       model: typeof body.model === 'string' ? body.model : undefined,
+      // Use explicit request restDays first; fall back to profile's saved preference
+      restDays: restDays && restDays.length > 0
+        ? restDays
+        : (userProfile?.preferred_rest_days && userProfile.preferred_rest_days.length > 0
+            ? userProfile.preferred_rest_days
+            : undefined),
+      isNextWeek: is_next_week ?? false,
+      weekNumber: week_number,
     };
 
-    // Fetch equipment and body analysis upfront for both streaming and non-streaming modes
-    const { getProfile } = await import('@/lib/db');
-    const userProfile = await getProfile(session.userId);
-    const equipmentAnalysis = userProfile?.gym_equipment_analysis || null;
-    const bodyAnalysis = userProfile?.body_composition_analysis || null;
-
-    // Also use profile session_duration if not provided in request
+    // Use profile session_duration if not provided in request
     if (!input.session_duration && userProfile?.session_duration) {
       input.session_duration = userProfile.session_duration;
     }

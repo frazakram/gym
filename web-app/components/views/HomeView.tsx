@@ -13,8 +13,9 @@ import { UserAvatar } from '../ui/UserAvatar'
 import { StreakBanner } from '../ui/StreakBanner'
 import { RestDayCard } from '../ui/RestDayCard'
 import { QuoteLoader } from '../ui/QuoteLoader'
-import { ArrowRight, Timer, Percent, MessageCircle, ChevronRight, Flame, Drumstick, CalendarPlus, MapPin } from 'lucide-react'
+import { ArrowRight, Timer, Percent, MessageCircle, ChevronRight, Flame, Drumstick, CalendarPlus, MapPin, TrendingUp, ChevronDown } from 'lucide-react'
 import { useLocation } from '@/hooks/useLocation'
+import { WeeklyBreakdownSheet, type DayBreakdown } from '../ui/WeeklyBreakdownSheet'
 
 const stagger = {
   hidden: {},
@@ -66,6 +67,7 @@ export function HomeView({
   onStartNewWeek,
 }: HomeViewProps) {
   const [manageOpen, setManageOpen] = useState(false)
+  const [showBreakdown, setShowBreakdown] = useState(false)
   const { city: detectedCity, location: detectedLocation, loading: locationLoading } = useLocation({ autoSave: true })
 
   const getGreeting = () => {
@@ -106,6 +108,37 @@ export function HomeView({
   }
 
   const progress = calculateProgress()
+
+  // Build per-day breakdown for the sheet — derived from existing props, no extra fetch
+  const buildDayBreakdowns = (): DayBreakdown[] => {
+    if (!routine) return []
+    const SHORT: Record<string, string> = {
+      monday: 'Mon', tuesday: 'Tue', wednesday: 'Wed', thursday: 'Thu',
+      friday: 'Fri', saturday: 'Sat', sunday: 'Sun',
+    }
+    return routine.days.map((day, dIdx) => {
+      const isRestDay = (day.exercises?.length || 0) === 0
+      const firstWord = day.day.split(/[\s\-–]/)[0].toLowerCase()
+      const label = SHORT[firstWord] ?? day.day.slice(0, 3)
+
+      // Derive a cleaner display name: strip the week-number prefix if present
+      // e.g. "Monday - Push (Chest, Shoulders, Triceps)" → keep as-is
+      // but trim very long strings to ~40 chars
+      const fullName = day.day.length > 42 ? day.day.slice(0, 40) + '…' : day.day
+
+      if (isRestDay) {
+        const done = dayCompletions.get(dIdx) === true
+        return { label, fullName, completed: done ? 1 : 0, total: 1, isRestDay: true }
+      }
+
+      const total = day.exercises.length
+      let completed = 0
+      day.exercises.forEach((_, eIdx) => {
+        if (exerciseCompletions.get(`${dIdx}-${eIdx}`)) completed++
+      })
+      return { label, fullName, completed, total, isRestDay: false }
+    })
+  }
 
   return (
     <motion.div
@@ -283,13 +316,20 @@ export function HomeView({
       ) : routine ? (
         <motion.div variants={fadeUp}>
           <GlassCard className="p-4">
-            <div className="flex items-center justify-between mb-3">
-              <div>
+            <button
+              type="button"
+              onClick={() => setShowBreakdown(true)}
+              className="w-full flex items-center justify-between mb-3 hover:bg-white/4 active:bg-white/6 -mx-1 px-1 py-1 rounded-xl transition-colors group"
+            >
+              <div className="text-left">
                 <p className="text-sm font-semibold text-white">Weekly Progress</p>
-                <p className="text-xs text-muted mt-0.5">{progress.completed} of {progress.total} workouts this week</p>
+                <p className="text-xs text-muted mt-0.5 flex items-center gap-1">
+                  {progress.completed} of {progress.total} items this week
+                  <ChevronDown className="w-3 h-3 opacity-40 group-hover:opacity-70 transition-opacity" />
+                </p>
               </div>
               <CircularProgress percentage={progress.percentage} size={48} strokeWidth={4} />
-            </div>
+            </button>
             <div className="flex gap-1">
               {heatmapData.slice(-7).map((d, i) => {
                 const dayLabels = ['M', 'T', 'W', 'T', 'F', 'S', 'S']
@@ -310,6 +350,39 @@ export function HomeView({
           </GlassCard>
         </motion.div>
       ) : null}
+
+      {/* Generate Next Week banner — shown when 80%+ complete */}
+      {routine && !viewingHistory && !routineIsStale && progress.percentage >= 80 && (
+        <motion.div variants={fadeUp}>
+          <GlassCard className="p-4 bg-gradient-to-br from-violet-600/15 via-primary/10 to-brand-cyan/10 border-primary/30">
+            <div className="flex items-start gap-3">
+              <div className="w-10 h-10 rounded-xl bg-primary/20 flex items-center justify-center shrink-0">
+                <TrendingUp className="w-5 h-5 text-primary-light" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-semibold text-white">
+                  Great week! {progress.percentage}% done 🎉
+                </p>
+                <p className="text-xs text-muted mt-1">
+                  Ready to take it up a notch? Generate Week {currentWeekNumber + 1} with progressive overload tailored to your goal.
+                </p>
+                <div className="mt-3">
+                  <AnimatedButton
+                    onClick={onGenerateNextWeek}
+                    disabled={generating}
+                    loading={generating}
+                    variant="primary"
+                    fullWidth
+                    icon={<ArrowRight className="w-4 h-4" />}
+                  >
+                    {generating ? 'Generating...' : `Generate Week ${currentWeekNumber + 1}`}
+                  </AnimatedButton>
+                </div>
+              </div>
+            </div>
+          </GlassCard>
+        </motion.div>
+      )}
 
       {/* Personal coach */}
       <motion.div variants={fadeUp}>
@@ -393,6 +466,17 @@ export function HomeView({
           </GlassCard>
         </motion.div>
       ) : null}
+
+      {/* Weekly breakdown sheet — rendered outside card stack to avoid overflow clipping */}
+      <WeeklyBreakdownSheet
+        open={showBreakdown}
+        onClose={() => setShowBreakdown(false)}
+        weekNumber={currentWeekNumber}
+        days={buildDayBreakdowns()}
+        totalCompleted={progress.completed}
+        totalItems={progress.total}
+        percentage={progress.percentage}
+      />
     </motion.div>
   )
 }

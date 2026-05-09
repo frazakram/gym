@@ -26,6 +26,8 @@ import { TabQuote } from '@/components/ui/TabQuote'
 import { type QuoteCategory } from '@/lib/quotes'
 import { Menu } from 'lucide-react'
 import { AnimatePresence, motion } from 'framer-motion'
+import { usePullToRefresh } from '@/hooks/usePullToRefresh'
+import { PullToRefreshIndicator } from '@/components/ui/PullToRefreshIndicator'
 
 function countryToRegionClient(code: string): 'APAC' | 'EMEA' | 'NA' | 'LATAM' {
   const APAC = ['IN','CN','JP','KR','TH','VN','ID','MY','SG','PH','AU','NZ','PK','BD']
@@ -148,6 +150,7 @@ export default function DashboardPage() {
   const [cookingLevel, setCookingLevel] = useState<string>('Moderate')
   const [budget, setBudget] = useState<string>('Standard')
   const [nationality, setNationality] = useState<string>('')
+  const [preferredRestDays, setPreferredRestDays] = useState<string[]>([])
   // Gym Equipment State (NEW)
   const [gymPhotos, setGymPhotos] = useState<any[]>([])
   const [equipmentAnalysis, setEquipmentAnalysis] = useState<any>(null)
@@ -248,6 +251,7 @@ export default function DashboardPage() {
         setEquipmentAnalysis(data.profile.gym_equipment_analysis || null)
         setBodyPhotos(data.profile.body_photos || [])
         setBodyAnalysis(data.profile.body_composition_analysis || null)
+        setPreferredRestDays(data.profile.preferred_rest_days || [])
       }
     } catch (err: unknown) {
       console.error('Error fetching profile:', err)
@@ -664,7 +668,7 @@ export default function DashboardPage() {
     }
   }
 
-  const handleGenerateRoutine = async (isNextWeek: boolean = false) => {
+  const handleGenerateRoutine = async (isNextWeek: boolean = false, restDays?: string[]) => {
     if (!profile) {
       setError('Please complete your profile first.')
       return
@@ -687,17 +691,17 @@ export default function DashboardPage() {
         emoji: '🤔',
         onConfirm: () => {
           setModalConfig(null)
-          performGeneration(isNextWeek)
+          performGeneration(isNextWeek, restDays)
         },
         onCancel: () => setModalConfig(null)
       })
       return
     }
 
-    performGeneration(isNextWeek)
+    performGeneration(isNextWeek, restDays)
   }
 
-  const performGeneration = async (isNextWeek: boolean = false) => {
+  const performGeneration = async (isNextWeek: boolean = false, restDays?: string[]) => {
     if (!profile || resolvedHeightCm == null) return
 
     setGenerating(true)
@@ -737,6 +741,10 @@ export default function DashboardPage() {
           is_next_week: isNextWeek,
           week_number: targetWeekNumber,
           stream: true, // SSE streaming to avoid Vercel timeout
+          // Explicit modal selection > saved profile preference > AI decides
+          restDays: restDays && restDays.length > 0
+            ? restDays
+            : preferredRestDays.length > 0 ? preferredRestDays : undefined,
         }),
       })
 
@@ -837,11 +845,6 @@ export default function DashboardPage() {
         setRoutineIsStale(false)
         setWeeksElapsed(0)
         await saveRoutineToDatabase(data.routine, targetWeekNumber, targetWeekStart)
-
-        // Auto-trigger diet generation if routine is new (fire-and-forget, but logged).
-        void handleGenerateDiet().catch(() => {
-          // Diet generation is non-blocking — user can retry from the diet tab.
-        });
       }
     } catch (err: unknown) {
       const raw = err instanceof Error ? err.message : ''
@@ -978,6 +981,7 @@ export default function DashboardPage() {
           name: name,
           nationality: nationality || undefined,
           region: nationality ? countryToRegionClient(nationality) : undefined,
+          preferred_rest_days: preferredRestDays.length > 0 ? preferredRestDays : null,
         }),
       });
 
@@ -1075,6 +1079,7 @@ export default function DashboardPage() {
       case 'cookingLevel': setCookingLevel(value); break
       case 'budget': setBudget(value); break
       case 'nationality': setNationality(value); break
+      case 'preferredRestDays': setPreferredRestDays(value); break
       case 'name': setName(value); break
       case 'gymPhotos': setGymPhotos(value); break
       case 'gymEquipmentAnalysis': setEquipmentAnalysis(value); break
@@ -1381,6 +1386,36 @@ export default function DashboardPage() {
     }
   }
 
+  // Pull-to-refresh: re-fetch the active view's data
+  const handleRefresh = useCallback(async () => {
+    switch (activeView) {
+      case 'home':
+        await Promise.all([fetchLatestRoutine(), fetchHeatmapData(), fetchStreak()])
+        break
+      case 'routine':
+      case 'workout':
+        await fetchLatestRoutine()
+        break
+      case 'diet':
+        await fetchLatestDiet()
+        break
+      case 'profile':
+        await fetchProfile()
+        break
+      case 'analytics':
+        await fetchPremiumStatus()
+        break
+      default:
+        break
+    }
+  }, [activeView, fetchLatestRoutine, fetchHeatmapData, fetchStreak, fetchLatestDiet, fetchProfile, fetchPremiumStatus])
+
+  const { pullDistance, isRefreshing } = usePullToRefresh({
+    onRefresh: handleRefresh,
+    // Disable while an AI generation is running to avoid interrupting it
+    enabled: !generating && !generatingDiet,
+  })
+
   return (
     <div className="min-h-screen bg-transparent">
       {/* Offline status indicator */}
@@ -1403,6 +1438,12 @@ export default function DashboardPage() {
           onModelProviderChange: setUserModelProvider,
           onModelChange: setUserModel,
         }}
+      />
+
+      {/* Pull-to-refresh indicator — fixed, viewport-centered */}
+      <PullToRefreshIndicator
+        pullDistance={pullDistance}
+        isRefreshing={isRefreshing}
       />
 
       {/* Main Content Container */}
@@ -1450,7 +1491,7 @@ export default function DashboardPage() {
                   setActiveView('workout')
                 }}
                 onNavigateToCoach={() => handleViewChange('coach')}
-                onGenerateRoutine={() => handleGenerateRoutine(false)}
+                onGenerateRoutine={(restDays) => handleGenerateRoutine(false, restDays)}
                 onGenerateNextWeek={handleGenerateNextWeek}
                 generating={generating}
                 viewingHistory={viewingHistory}
@@ -1468,7 +1509,7 @@ export default function DashboardPage() {
                   setSelectedDayIndex(dayIndex)
                   setActiveView('workout')
                 }}
-                onGenerateRoutine={() => handleGenerateRoutine(false)}
+                onGenerateRoutine={(restDays) => handleGenerateRoutine(false, restDays)}
                 onGenerateNextWeek={handleGenerateNextWeek}
                 completionPercentage={calculateCompletionPercentage()}
                 currentWeekNumber={currentWeekNumber}
@@ -1480,6 +1521,7 @@ export default function DashboardPage() {
                 routineIsStale={routineIsStale}
                 weeksElapsed={weeksElapsed}
                 onStartNewWeek={handleStartNewWeek}
+                profileRestDays={preferredRestDays}
               />
             )}
 
@@ -1572,6 +1614,8 @@ export default function DashboardPage() {
                 onResetRoutines={handleResetRoutines}
                 onLogout={handleLogout}
                 loading={loading}
+                onNavigateToAnalytics={() => setActiveView('analytics')}
+                preferredRestDays={preferredRestDays}
               />
             )}
           </motion.div>

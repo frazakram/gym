@@ -1,7 +1,10 @@
 import { withCors } from "@/lib/corsMiddleware";
 import { NextRequest, NextResponse } from 'next/server';
 import { getSession } from '@/lib/auth';
+import { initializeDatabase, hasGymPhotos } from '@/lib/db';
 import type { GymEquipmentAnalysis } from '@/types';
+
+export const runtime = 'nodejs';
 
 const EQUIPMENT_DETECTION_PROMPT = `Analyze these gym photos and identify ALL visible exercise equipment with high precision.
 
@@ -43,6 +46,8 @@ export async function POST(request: NextRequest) {
     if (!session) {
       return withCors(NextResponse.json({ error: 'Unauthorized' }, { status: 401 }));
     }
+
+    await initializeDatabase();
 
     const { images, api_key } = await request.json();
 
@@ -145,7 +150,8 @@ export async function POST(request: NextRequest) {
       ));
     }
 
-    return withCors(NextResponse.json({ analysis }, { status: 200 }));
+    const hasExistingPhoto = await hasGymPhotos(session.userId);
+    return withCors(NextResponse.json({ analysis, hasExistingPhoto }, { status: 200 }));
   } catch (error) {
     console.error('Error analyzing gym equipment:', error);
     return withCors(NextResponse.json(

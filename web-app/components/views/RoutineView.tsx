@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { motion } from 'framer-motion'
-import { ArrowRight, Check, ChevronRight, Sprout, Timer } from 'lucide-react'
+import { ArrowRight, Check, ChevronRight, Sprout, Timer, Loader2 } from 'lucide-react'
 import { WeeklyRoutine, WeeklyDiet } from '@/types'
 import { DaySelector } from '../DaySelector'
 import { DietDisplay } from '@/components/DietDisplay'
@@ -13,6 +13,7 @@ import { Collapsible } from '../ui/Collapsible'
 import { parseSetsReps } from '@/lib/setsReps'
 import { ExerciseListSkeleton } from '../ui/SkeletonLoader'
 import { RestDayCard } from '../ui/RestDayCard'
+import { RestDayPickerModal } from '../ui/RestDayPickerModal'
 
 // Map workout day titles to visual accent colors
 function getDayTypeColors(dayName: string): { pill: string; border: string } {
@@ -40,7 +41,7 @@ interface RoutineViewProps {
   routine: WeeklyRoutine | null
   diet: WeeklyDiet | null
   onNavigateToWorkout: (dayIndex: number) => void
-  onGenerateRoutine: () => void
+  onGenerateRoutine: (restDays?: string[]) => void
   onGenerateNextWeek: () => void
   completionPercentage: number
   currentWeekNumber: number
@@ -52,6 +53,7 @@ interface RoutineViewProps {
   routineIsStale?: boolean
   weeksElapsed?: number
   onStartNewWeek?: () => void
+  profileRestDays?: string[]
 }
 
 export function RoutineView({
@@ -70,27 +72,45 @@ export function RoutineView({
   routineIsStale = false,
   weeksElapsed = 0,
   onStartNewWeek,
+  profileRestDays = [],
 }: RoutineViewProps) {
   const todayIndex = (new Date().getDay() + 6) % 7 // Mon=0
   const [selectedDay, setSelectedDay] = useState(todayIndex)
   const [manageOpen, setManageOpen] = useState(false)
   const [nutritionOpen, setNutritionOpen] = useState(false)
+  const [showRestDayPicker, setShowRestDayPicker] = useState(false)
+
+  function requestGenerate() {
+    setShowRestDayPicker(true)
+  }
 
   if (!routine) {
     return (
-      <div className="pb-24 px-4 py-6">
-        <div className="glass rounded-2xl p-8 text-center">
-          <h2 className="text-2xl font-bold text-white mb-3 font-display">No Routine Yet</h2>
-          <p className="text-muted mb-6">Generate your personalized workout routine to get started</p>
-          <button
-            onClick={onGenerateRoutine}
-            disabled={generating}
-            className="py-3 px-8 rounded-xl btn-primary text-white font-semibold disabled:opacity-50 ui-focus-ring"
-          >
-            {generating ? (generationStage || 'Generating...') : 'Generate Routine'}
-          </button>
+      <>
+        <div className="pb-24 px-4 py-6">
+          <div className="glass rounded-2xl p-8 text-center">
+            <h2 className="text-2xl font-bold text-white mb-3 font-display">No Routine Yet</h2>
+            <p className="text-muted mb-6">Generate your personalized workout routine to get started</p>
+            <button
+              onClick={requestGenerate}
+              disabled={generating}
+              className="inline-flex items-center gap-2 py-3 px-8 rounded-xl btn-primary text-white font-semibold disabled:opacity-50 ui-focus-ring"
+            >
+              {generating && <Loader2 className="w-4 h-4 animate-spin" />}
+              {generating ? (generationStage || 'Generating...') : 'Generate Workout Routine'}
+            </button>
+          </div>
         </div>
-      </div>
+        <RestDayPickerModal
+          open={showRestDayPicker}
+          onClose={() => setShowRestDayPicker(false)}
+          initialDays={profileRestDays}
+          onConfirm={(restDays) => {
+            setShowRestDayPicker(false)
+            onGenerateRoutine(restDays.length > 0 ? restDays : undefined)
+          }}
+        />
+      </>
     )
   }
 
@@ -280,7 +300,7 @@ export function RoutineView({
                 ) : null}
 
                 <AnimatedButton
-                  onClick={onGenerateRoutine}
+                  onClick={requestGenerate}
                   disabled={generating}
                   loading={generating}
                   variant="ghost"
@@ -320,6 +340,16 @@ export function RoutineView({
       )}
 
       </motion.div>
+
+      <RestDayPickerModal
+        open={showRestDayPicker}
+        onClose={() => setShowRestDayPicker(false)}
+        initialDays={profileRestDays}
+        onConfirm={(restDays) => {
+          setShowRestDayPicker(false)
+          onGenerateRoutine(restDays.length > 0 ? restDays : undefined)
+        }}
+      />
     </div>
   )
 }

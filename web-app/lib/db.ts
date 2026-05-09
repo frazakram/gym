@@ -427,6 +427,9 @@ export async function initializeDatabase() {
       await client.query(`ALTER TABLE profiles ADD COLUMN IF NOT EXISTS nationality VARCHAR(8);`);
       await client.query(`ALTER TABLE profiles ADD COLUMN IF NOT EXISTS region VARCHAR(16);`);
 
+      // Preferred rest days (user-configurable, max 2)
+      await client.query(`ALTER TABLE profiles ADD COLUMN IF NOT EXISTS preferred_rest_days TEXT[];`);
+
       // ============= XP SYSTEM =============
       await client.query(`
         CREATE TABLE IF NOT EXISTS user_xp (
@@ -696,7 +699,8 @@ export async function saveProfile(
   gym_photos?: any,
   gym_equipment_analysis?: any,
   body_photos?: any,
-  body_composition_analysis?: any
+  body_composition_analysis?: any,
+  preferred_rest_days?: string[]
 ): Promise<Profile | null> {
   // Safe cast since we handle string to strict union transition
   const validLevel = level as Profile['level'];
@@ -740,7 +744,7 @@ export async function saveProfile(
 
     if (existing) {
       const result = await pool.query<Profile>(
-        `UPDATE profiles 
+        `UPDATE profiles
          SET age = $2, weight = $3, height = $4, gender = $5,
              goal = $6, level = $7, tenure = $8, goal_weight = $9, notes = $10,
              goal_duration = $11, session_duration = $12,
@@ -748,6 +752,7 @@ export async function saveProfile(
              cooking_level = $18, budget = $19, protein_powder_amount = $20, specific_food_preferences = $21,
              name = $22, gym_photos = $23, gym_equipment_analysis = $24,
              body_photos = $25, body_composition_analysis = $26,
+             preferred_rest_days = $27,
              updated_at = CURRENT_TIMESTAMP
          WHERE user_id = $1
          RETURNING *`,
@@ -772,13 +777,13 @@ export async function saveProfile(
           cooking_level || null,
           budget || null,
           protein_powder_amount || null,
-
           specific_food_preferences?.trim() ? specific_food_preferences.trim() : null,
           name?.trim() ? encryptRnd(name.trim()) : null,
           gym_photos || null,
           gym_equipment_analysis || null,
           body_photos || null,
-          body_composition_analysis || null
+          body_composition_analysis || null,
+          preferred_rest_days && preferred_rest_days.length > 0 ? preferred_rest_days : null
         ]
       );
       revalidateTag('user-profile', undefined as any);
@@ -788,9 +793,9 @@ export async function saveProfile(
         `INSERT INTO profiles (
            user_id, age, weight, height, gender, goal, level, tenure, goal_weight, notes, goal_duration, session_duration,
            diet_type, cuisine, protein_powder, meals_per_day, allergies, cooking_level, budget, protein_powder_amount, specific_food_preferences, name,
-           gym_photos, gym_equipment_analysis, body_photos, body_composition_analysis
+           gym_photos, gym_equipment_analysis, body_photos, body_composition_analysis, preferred_rest_days
          )
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25, $26)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25, $26, $27)
          RETURNING *`,
         [
           userId,
@@ -818,7 +823,8 @@ export async function saveProfile(
           gym_photos || null,
           gym_equipment_analysis || null,
           body_photos || null,
-          body_composition_analysis || null
+          body_composition_analysis || null,
+          preferred_rest_days && preferred_rest_days.length > 0 ? preferred_rest_days : null
         ]
       );
       revalidateTag('user-profile', undefined as any);
@@ -900,6 +906,44 @@ export function hasSignificantProfileChange(oldProfile: any, newProfile: any): b
   return false;
 }
 
+
+/**
+ * Lightweight existence checks — returns true if the user has at least one
+ * gym/body photo stored (does NOT load the actual base64 data).
+ */
+export async function hasGymPhotos(userId: number): Promise<boolean> {
+  try {
+    const client = await getDbClient();
+    const res = await client.query(
+      `SELECT 1 FROM profiles
+       WHERE user_id = $1
+         AND gym_photos IS NOT NULL
+         AND jsonb_array_length(gym_photos) > 0
+       LIMIT 1`,
+      [userId],
+    );
+    return (res.rowCount ?? 0) > 0;
+  } catch {
+    return false;
+  }
+}
+
+export async function hasBodyPhotos(userId: number): Promise<boolean> {
+  try {
+    const client = await getDbClient();
+    const res = await client.query(
+      `SELECT 1 FROM profiles
+       WHERE user_id = $1
+         AND body_photos IS NOT NULL
+         AND jsonb_array_length(body_photos) > 0
+       LIMIT 1`,
+      [userId],
+    );
+    return (res.rowCount ?? 0) > 0;
+  } catch {
+    return false;
+  }
+}
 
 // ============= ROUTINE & PROGRESS TRACKING =============
 

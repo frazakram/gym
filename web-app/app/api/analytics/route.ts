@@ -14,19 +14,21 @@ export async function GET(req: NextRequest) {
   const daysRaw = searchParams.get("days");
   const days = Math.max(7, Math.min(365, Number(daysRaw ?? 90) || 90));
 
-  // Versioned cache key so any `days=` value can be invalidated globally for a user.
-  const verKey = `analytics_ver:${session.userId}`;
-  const ver = (await redisGetJson<number>(verKey)) ?? 0;
-  const cacheKey = `analytics:${session.userId}:${days}:v${ver}`;
-  const cached = await redisGetJson<unknown>(cacheKey);
-  if (cached) return withCors(NextResponse.json(cached, { status: 200 }));
-
+  // Bug #4 fix: premium check BEFORE cache lookup and DB query.
+  // A non-premium user must never receive cached analytics data.
   await initializeDatabase();
 
   const premium = await getPremiumStatus(session.userId);
   if (!premium.access) {
     return withCors(NextResponse.json({ error: "Analytics is a premium feature." }, { status: 403 }));
   }
+
+  // Versioned cache key so any `days=` value can be invalidated globally for a user.
+  const verKey = `analytics_ver:${session.userId}`;
+  const ver = (await redisGetJson<number>(verKey)) ?? 0;
+  const cacheKey = `analytics:${session.userId}:${days}:v${ver}`;
+  const cached = await redisGetJson<unknown>(cacheKey);
+  if (cached) return withCors(NextResponse.json(cached, { status: 200 }));
 
   const payload = await getUserAnalytics(session.userId, { rangeDays: days });
   // Short TTL is enough; analytics is derived from completions and can change frequently.

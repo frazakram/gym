@@ -1,16 +1,21 @@
 'use client'
 
 import { useState, useRef, DragEvent } from 'react'
-import type { GymPhoto } from '@/types'
+import { Camera, CheckCircle, Dumbbell, Upload, X, ImagePlus, AlertCircle } from 'lucide-react'
+import type { GymPhoto, BodyPhoto } from '@/types'
+
+type PhotoItem = GymPhoto | BodyPhoto
 
 interface ImageUploadCardProps {
-  images: GymPhoto[]
+  images: PhotoItem[]
   maxImages: number
   maxSizeMB: number
   onUpload: (files: File[]) => Promise<void>
   onDelete: (id: string) => void
   loading?: boolean
   error?: string
+  /** Controls which placeholder icon and copy to use */
+  variant?: 'gym' | 'body'
 }
 
 export function ImageUploadCard({
@@ -21,36 +26,32 @@ export function ImageUploadCard({
   onDelete,
   loading = false,
   error,
+  variant = 'gym',
 }: ImageUploadCardProps) {
   const [pendingFiles, setPendingFiles] = useState<File[]>([])
-  const [showImages, setShowImages] = useState(false)
   const [dragActive, setDragActive] = useState(false)
+  const [removing, setRemoving] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
+
+  const hasUploaded = images.length > 0
 
   const handleDrag = (e: DragEvent) => {
     e.preventDefault()
     e.stopPropagation()
-    if (e.type === 'dragenter' || e.type === 'dragover') {
-      setDragActive(true)
-    } else if (e.type === 'dragleave') {
-      setDragActive(false)
-    }
+    if (e.type === 'dragenter' || e.type === 'dragover') setDragActive(true)
+    else if (e.type === 'dragleave') setDragActive(false)
   }
 
-  const handleDrop = async (e: DragEvent) => {
+  const handleDrop = (e: DragEvent) => {
     e.preventDefault()
     e.stopPropagation()
     setDragActive(false)
-
-    const files = Array.from(e.dataTransfer.files)
-    handleFiles(files)
+    handleFiles(Array.from(e.dataTransfer.files))
   }
 
   const handleFileInput = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!e.target.files) return
-    const files = Array.from(e.target.files)
-    handleFiles(files)
-    // Reset the input so the same file can be selected again
+    handleFiles(Array.from(e.target.files))
     e.target.value = ''
   }
 
@@ -58,25 +59,17 @@ export function ImageUploadCard({
     const validTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/heic', 'image/heif']
     const maxBytes = maxSizeMB * 1024 * 1024
 
-    const validFiles = files.filter(file => {
-      // On mobile, file.type can be empty or incorrect for camera photos — accept if extension looks right
+    const valid = files.filter(file => {
       const ext = file.name.toLowerCase().split('.').pop() || ''
       const validExts = ['jpg', 'jpeg', 'png', 'webp', 'heic', 'heif']
-      const typeOk = validTypes.includes(file.type) || file.type.startsWith('image/') || validExts.includes(ext)
-      if (!typeOk) {
-        console.warn(`Invalid file type: ${file.type} (${file.name})`)
-        return false
-      }
-      if (file.size > maxBytes) {
-        console.warn(`File too large: ${file.name} (${(file.size / 1024 / 1024).toFixed(1)}MB)`)
-        return false
-      }
-      return true
+      const typeOk =
+        validTypes.includes(file.type) ||
+        file.type.startsWith('image/') ||
+        validExts.includes(ext)
+      return typeOk && file.size <= maxBytes
     })
 
-    if (validFiles.length > 0) {
-      setPendingFiles(prev => [...prev, ...validFiles])
-    }
+    if (valid.length > 0) setPendingFiles(prev => [...prev, ...valid])
   }
 
   const handleUpload = async () => {
@@ -85,46 +78,142 @@ export function ImageUploadCard({
     setPendingFiles([])
   }
 
-  const removePending = (index: number) => {
-    setPendingFiles(prev => prev.filter((_, i) => i !== index))
+  const openFilePicker = () => fileInputRef.current?.click()
+
+  const handleRemoveAll = async () => {
+    setRemoving(true)
+    try {
+      for (const photo of images) {
+        onDelete(photo.id)
+      }
+    } finally {
+      setRemoving(false)
+    }
   }
 
-  const openFilePicker = () => {
-    fileInputRef.current?.click()
-  }
+  const PlaceholderIcon = variant === 'body' ? Camera : Dumbbell
 
-  const hasCapacity = images.length + pendingFiles.length < maxImages
+  // ─── State 3: Photos uploaded, no pending ─────────────────────────────────
+  if (hasUploaded && pendingFiles.length === 0) {
+    return (
+      <div className="space-y-3">
+        {/* Hidden file input */}
+        <input
+          ref={fileInputRef}
+          type="file"
+          multiple
+          accept="image/jpeg,image/jpg,image/png,image/webp,image/heic,image/heif"
+          onChange={handleFileInput}
+          style={{ position: 'absolute', width: 1, height: 1, opacity: 0, overflow: 'hidden', pointerEvents: 'none' }}
+          disabled={loading}
+        />
 
-  return (
-    <div className="space-y-4">
-      {/* Existing Images Control */}
-      {images.length > 0 && (
-        <div className="flex items-center justify-between bg-white/5 p-3 rounded-xl border border-primary/10">
-          <div className="flex items-center gap-2">
-            <div className="w-2 h-2 rounded-full bg-primary shadow-[0_0_8px_rgba(139,92,246,0.6)]"></div>
-            <span className="text-sm text-white/90 font-medium">
-              {images.length} photo{images.length !== 1 ? 's' : ''} uploaded
-            </span>
+        {/* Placeholder card — no actual photo shown */}
+        <button
+          type="button"
+          onClick={openFilePicker}
+          disabled={loading}
+          className="w-full rounded-2xl border border-emerald-500/30 bg-emerald-500/8 p-5 flex flex-col items-center gap-3 hover:bg-emerald-500/12 active:scale-[0.98] transition-all disabled:opacity-50 group"
+        >
+          {/* Generic icon — NOT the actual photo */}
+          <div className="relative">
+            <div className="w-16 h-16 rounded-2xl bg-emerald-500/15 border border-emerald-500/25 flex items-center justify-center">
+              <PlaceholderIcon className="w-8 h-8 text-emerald-400/80" />
+            </div>
+            <div className="absolute -bottom-1.5 -right-1.5 w-6 h-6 rounded-full bg-emerald-500 border-2 border-[#12121e] flex items-center justify-center">
+              <CheckCircle className="w-3.5 h-3.5 text-white" />
+            </div>
           </div>
+
+          <div className="text-center">
+            <p className="text-sm font-semibold text-white">
+              {images.length} photo{images.length !== 1 ? 's' : ''} uploaded ✓
+            </p>
+            <p className="text-xs text-emerald-300/70 mt-0.5 group-hover:text-emerald-300 transition-colors">
+              Tap to replace
+            </p>
+          </div>
+        </button>
+
+        {/* Remove all — subtle text link */}
+        <div className="flex justify-center">
           <button
             type="button"
-            onClick={() => setShowImages(!showImages)}
-            className="text-xs text-primary-light hover:text-primary-lighter font-medium flex items-center gap-1 transition-colors"
+            onClick={handleRemoveAll}
+            disabled={loading || removing}
+            className="text-xs text-muted hover:text-red-300 transition-colors disabled:opacity-40 flex items-center gap-1"
           >
-            {showImages ? 'Hide photos' : 'View photos'}
-            <svg
-              className={`w-3.5 h-3.5 transition-transform duration-200 ${showImages ? 'rotate-180' : ''}`}
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-            >
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-            </svg>
+            <X className="w-3 h-3" />
+            {removing ? 'Removing…' : 'Remove all photos'}
           </button>
         </div>
-      )}
 
-      {/* Visually hidden file input — display:none blocks programmatic .click() on Android */}
+        {error && <ErrorBanner message={error} />}
+      </div>
+    )
+  }
+
+  // ─── State 1: No photos, no pending — empty upload zone ───────────────────
+  if (!hasUploaded && pendingFiles.length === 0) {
+    return (
+      <div className="space-y-3">
+        <input
+          ref={fileInputRef}
+          type="file"
+          multiple
+          accept="image/jpeg,image/jpg,image/png,image/webp,image/heic,image/heif"
+          onChange={handleFileInput}
+          style={{ position: 'absolute', width: 1, height: 1, opacity: 0, overflow: 'hidden', pointerEvents: 'none' }}
+          disabled={loading}
+        />
+
+        {/* Drag-drop zone (desktop) */}
+        <div
+          className={`hidden sm:block border-2 border-dashed rounded-2xl p-6 transition-all ${
+            dragActive ? 'border-primary bg-primary/5' : 'border-primary/20'
+          } ${loading ? 'opacity-50' : ''}`}
+          onDragEnter={handleDrag}
+          onDragLeave={handleDrag}
+          onDragOver={handleDrag}
+          onDrop={handleDrop}
+        >
+          <div className="text-center">
+            <div className="mx-auto w-12 h-12 mb-3 rounded-full bg-white/8 border border-primary/15 flex items-center justify-center">
+              <PlaceholderIcon className="w-6 h-6 text-white/50" />
+            </div>
+            <p className="text-sm font-medium text-white/70 mb-1">
+              Drop photos here or choose below
+            </p>
+            <p className="text-xs text-muted/60">
+              0/{maxImages} photos • Max {maxSizeMB}MB each
+            </p>
+          </div>
+        </div>
+
+        {/* Mobile hint */}
+        <p className="sm:hidden text-xs text-muted/60 text-center">
+          0/{maxImages} photos • Max {maxSizeMB}MB each
+        </p>
+
+        {/* Choose photos button */}
+        <button
+          type="button"
+          onClick={openFilePicker}
+          disabled={loading}
+          className="w-full py-3 rounded-xl bg-primary/12 border border-dashed border-primary/25 text-sm font-semibold text-primary-light hover:bg-primary/20 active:bg-primary/25 transition-all active:scale-[0.97] disabled:opacity-50 flex items-center justify-center gap-2"
+        >
+          <ImagePlus className="w-4 h-4" />
+          Choose Photos
+        </button>
+
+        {error && <ErrorBanner message={error} />}
+      </div>
+    )
+  }
+
+  // ─── State 2: Pending files ready to confirm ──────────────────────────────
+  return (
+    <div className="space-y-3">
       <input
         ref={fileInputRef}
         type="file"
@@ -135,176 +224,103 @@ export function ImageUploadCard({
         disabled={loading}
       />
 
-      {/* Upload Zone */}
-      {hasCapacity ? (
-        <div className="space-y-3">
-          {/* Drag-drop area (desktop only) */}
-          <div
-            className={`hidden sm:block border-2 border-dashed rounded-2xl p-6 transition-all ${dragActive
-                ? 'border-primary bg-primary/5'
-                : 'border-primary/20'
-              } ${loading ? 'opacity-50' : ''}`}
-            onDragEnter={handleDrag}
-            onDragLeave={handleDrag}
-            onDragOver={handleDrag}
-            onDrop={handleDrop}
-          >
-            <div className="text-center">
-              <div className="mx-auto w-12 h-12 mb-3 rounded-full bg-white/10 flex items-center justify-center">
-                <svg
-                  className="w-6 h-6 text-white/70"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
-                  />
-                </svg>
-              </div>
-              <p className="text-sm font-medium text-white/90 mb-1">
-                Drop photos here
-              </p>
-              <p className="text-xs text-muted/70">
-                {images.length + pendingFiles.length}/{maxImages} images • Max {maxSizeMB}MB each
-              </p>
-            </div>
-          </div>
-
-          {/* Mobile info text */}
-          <p className="sm:hidden text-xs text-muted/70 text-center">
-            {images.length + pendingFiles.length}/{maxImages} images • Max {maxSizeMB}MB each
-          </p>
-
-          {/* Upload button — standalone, outside drag zone, always tappable */}
-          <button
-            type="button"
-            onClick={openFilePicker}
-            disabled={loading}
-            className="w-full py-3 rounded-xl bg-primary/15 border border-primary/30 text-sm font-semibold text-primary-light hover:bg-primary/25 active:bg-primary/30 transition-all active:scale-[0.97] disabled:opacity-50 flex items-center justify-center gap-2"
-          >
-            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-            </svg>
-            Choose Photos
-          </button>
+      {/* Already-uploaded badge (when replacing) */}
+      {hasUploaded && (
+        <div className="flex items-center gap-2 bg-white/5 px-3 py-2 rounded-xl border border-primary/10">
+          <CheckCircle className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+          <span className="text-xs text-white/70">
+            {images.length} existing photo{images.length !== 1 ? 's' : ''} will be replaced on upload
+          </span>
         </div>
-      ) : (
-        <p className="text-xs text-muted text-center py-2">
-          Maximum limit reached. Remove images to add new ones.
+      )}
+
+      {/* Pending files list */}
+      <div className="space-y-2">
+        <p className="text-xs text-muted font-medium ml-1">
+          {pendingFiles.length} photo{pendingFiles.length !== 1 ? 's' : ''} ready to upload:
         </p>
-      )}
-
-      {/* Pending Files List */}
-      {pendingFiles.length > 0 && (
-        <div className="space-y-2 animate-in fade-in duration-200">
-          <p className="text-xs text-muted font-medium ml-1">Ready to upload:</p>
-          <div className="grid grid-cols-2 gap-2">
-            {pendingFiles.map((file, i) => (
-              <div key={i} className="flex items-center gap-2 bg-white/5 border border-primary/10 p-2 rounded-lg">
-                <div className="w-10 h-10 rounded bg-slate-800 flex items-center justify-center flex-shrink-0">
-                  <svg className="w-5 h-5 text-muted" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                  </svg>
-                </div>
-                <div className="min-w-0 flex-1">
-                  <p className="text-xs text-white truncate">{file.name}</p>
-                  <p className="text-xs text-muted">{(file.size / 1024).toFixed(0)}KB</p>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => removePending(i)}
-                  className="p-1 hover:bg-white/10 rounded-full text-muted hover:text-white"
-                >
-                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                  </svg>
-                </button>
-              </div>
-            ))}
-          </div>
-
-          {/* Security Note & Upload Button */}
-          <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-xl p-4 mt-2">
-            <div className="flex items-start gap-3 mb-4">
-              <svg className="w-5 h-5 text-emerald-400 mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
-              </svg>
-              <p className="text-xs text-emerald-100/90 leading-relaxed">
-                <span className="font-bold block mb-1">Security Verification</span>
-                By clicking "Confirm Upload", you agree to process these images. Photos are analyzed securely and not shared with third parties.
-              </p>
-            </div>
-
-            <button
-              type="button"
-              onClick={handleUpload}
-              disabled={loading}
-              className="w-full py-2.5 bg-emerald-500 hover:bg-emerald-600 active:bg-emerald-700 text-white rounded-xl font-medium text-sm transition-all shadow-lg hover:shadow-emerald-500/25 flex items-center justify-center gap-2 disabled:opacity-50"
-            >
-              {loading ? (
-                <>
-                  <svg className="animate-spin w-4 h-4" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-                  </svg>
-                  Uploading...
-                </>
-              ) : (
-                'Confirm Upload'
-              )}
-            </button>
-          </div>
-        </div>
-      )}
-
-      {/* Error Display */}
-      {error && (
-        <div className="rounded-xl border border-red-500/40 bg-red-500/10 px-4 py-3 text-red-200 text-sm flex items-center gap-2">
-          <svg className="w-5 h-5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-          </svg>
-          {error}
-        </div>
-      )}
-
-      {/* Image Thumbnails (Hidden by default) */}
-      {images.length > 0 && showImages && (
-        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 animate-in fade-in zoom-in-95 duration-200">
-          {images.map((photo) => (
+        <div className="grid grid-cols-2 gap-2">
+          {pendingFiles.map((file, i) => (
             <div
-              key={photo.id}
-              className="relative group rounded-xl overflow-hidden border border-primary/10 bg-white/5 aspect-square"
+              key={i}
+              className="flex items-center gap-2 bg-white/5 border border-primary/10 p-2 rounded-lg"
             >
-              <img
-                src={photo.base64}
-                alt="Gym photo"
-                className="w-full h-full object-cover"
-              />
-
-              {/* Delete Button — always visible on touch, hover-reveal on desktop */}
+              {/* Generic file icon — NOT a preview of the photo */}
+              <div className="w-10 h-10 rounded bg-primary/10 border border-primary/15 flex items-center justify-center flex-shrink-0">
+                <Upload className="w-4 h-4 text-primary/60" />
+              </div>
+              <div className="min-w-0 flex-1">
+                <p className="text-xs text-white truncate">{file.name}</p>
+                <p className="text-xs text-muted">{(file.size / 1024).toFixed(0)} KB</p>
+              </div>
               <button
                 type="button"
-                onClick={() => onDelete(photo.id)}
-                className="absolute top-2 right-2 w-8 h-8 rounded-full bg-red-500/90 hover:bg-red-500 flex items-center justify-center sm:opacity-0 sm:group-hover:opacity-100 transition-opacity"
-                aria-label="Delete photo"
+                onClick={() => setPendingFiles(prev => prev.filter((_, j) => j !== i))}
+                className="p-1 hover:bg-white/10 rounded-full text-muted hover:text-white"
               >
-                <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
+                <X className="w-3.5 h-3.5" />
               </button>
-
-              {/* File Size */}
-              <div className="absolute bottom-2 left-2 px-2 py-1 rounded-md bg-black/60 text-xs text-white/90">
-                {(photo.size_bytes / 1024 / 1024).toFixed(1)}MB
-              </div>
             </div>
           ))}
         </div>
+      </div>
+
+      {/* Add more (if capacity allows) */}
+      {images.length + pendingFiles.length < maxImages && (
+        <button
+          type="button"
+          onClick={openFilePicker}
+          disabled={loading}
+          className="w-full py-2 rounded-xl bg-primary/8 border border-dashed border-primary/20 text-xs font-medium text-primary-light hover:bg-primary/15 transition-all disabled:opacity-50 flex items-center justify-center gap-1.5"
+        >
+          <ImagePlus className="w-3.5 h-3.5" />
+          Add more ({images.length + pendingFiles.length}/{maxImages})
+        </button>
       )}
+
+      {/* Security notice + confirm */}
+      <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-xl p-4">
+        <div className="flex items-start gap-3 mb-4">
+          <CheckCircle className="w-4 h-4 text-emerald-400 mt-0.5 shrink-0" />
+          <p className="text-xs text-emerald-100/90 leading-relaxed">
+            <span className="font-bold block mb-0.5">Secure processing</span>
+            Photos are analyzed by AI and stored encrypted. They are never shared with third parties.
+          </p>
+        </div>
+
+        <button
+          type="button"
+          onClick={handleUpload}
+          disabled={loading}
+          className="w-full py-2.5 bg-emerald-500 hover:bg-emerald-600 active:bg-emerald-700 text-white rounded-xl font-medium text-sm transition-all flex items-center justify-center gap-2 disabled:opacity-50"
+        >
+          {loading ? (
+            <>
+              <svg className="animate-spin w-4 h-4" viewBox="0 0 24 24">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+              </svg>
+              Analyzing…
+            </>
+          ) : (
+            <>
+              <Upload className="w-4 h-4" />
+              Confirm &amp; Analyze
+            </>
+          )}
+        </button>
+      </div>
+
+      {error && <ErrorBanner message={error} />}
+    </div>
+  )
+}
+
+function ErrorBanner({ message }: { message: string }) {
+  return (
+    <div className="rounded-xl border border-red-500/40 bg-red-500/10 px-4 py-3 text-red-200 text-sm flex items-center gap-2">
+      <AlertCircle className="w-4 h-4 shrink-0" />
+      {message}
     </div>
   )
 }

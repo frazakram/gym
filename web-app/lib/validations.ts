@@ -83,6 +83,7 @@ export const ProfileUpdateSchema = z.object({
   body_composition_analysis: z.any().optional().nullable(),
   nationality: z.string().length(2).regex(/^[A-Z]{2}$/, "Country must be a 2-letter ISO code").optional().nullable(),
   region: z.enum(["APAC", "EMEA", "NA", "LATAM"]).optional().nullable(),
+  preferred_rest_days: z.array(z.enum(["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"])).max(2, "Maximum 2 rest days allowed").optional().nullable(),
 });
 
 // ============= COMMUNITY SCHEMAS =============
@@ -126,6 +127,8 @@ export const RoutineGenerateSchema = z.object({
   stream: z.boolean().optional(),
   week_number: z.coerce.number().int().min(1).max(52).optional(),
   regenerate: z.boolean().optional(),
+  restDays: z.array(z.enum(["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"])).max(2).optional(),
+  is_next_week: z.boolean().optional(),
 });
 
 export const RoutineSaveSchema = z.object({

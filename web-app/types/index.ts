@@ -37,6 +37,8 @@ export interface Profile {
     // Body Photos (NEW)
     body_photos?: BodyPhoto[];
     body_composition_analysis?: BodyCompositionAnalysis;
+    // Rest day preferences (saved to profile, injected into AI)
+    preferred_rest_days?: string[]; // e.g. ["Sat", "Sun"] — empty/null means AI decides
     // Nationality / Region (for community auto-assignment)
     nationality?: string;  // ISO 3166-1 alpha-2 country code (e.g. 'IN', 'US')
     region?: 'APAC' | 'EMEA' | 'NA' | 'LATAM';
@@ -154,6 +156,9 @@ export interface RoutineGenerationInput {
     model_provider: 'Anthropic' | 'OpenAI';
     apiKey?: string;
     model?: string;
+    restDays?: string[]; // e.g. ["Sat", "Sun"]
+    isNextWeek?: boolean; // true = generating Week N+1, apply progressive overload
+    weekNumber?: number;  // which week number is being generated
 }
 
 // Progress Tracking Types

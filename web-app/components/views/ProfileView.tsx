@@ -1,10 +1,10 @@
 'use client'
 
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
 import { motion } from 'framer-motion'
-import { LogOut, ChevronRight, Settings, Camera, Dumbbell, CheckCircle, AlertCircle, Globe } from 'lucide-react'
-import { Profile, GymPhoto, GymEquipmentAnalysis, BodyPhoto, BodyCompositionAnalysis } from '@/types'
+import { LogOut, ChevronRight, Settings, Camera, Dumbbell, CheckCircle, AlertCircle, Globe, Flame, Lock, BarChart2, Moon } from 'lucide-react'
+import { Profile, GymPhoto, GymEquipmentAnalysis, BodyPhoto, BodyCompositionAnalysis, AnalyticsPayload } from '@/types'
 import { GlassCard } from '../ui/GlassCard'
 import { SectionHeader } from '../ui/SectionHeader'
 import { Chip } from '../ui/Chip'
@@ -12,6 +12,7 @@ import { AnimatedButton, IconButton } from '../ui/AnimatedButton'
 import { Collapsible } from '../ui/Collapsible'
 import { UserAvatar } from '../ui/UserAvatar'
 import { ImageUploadCard } from '../ui/ImageUploadCard'
+import { csrfFetch } from '@/lib/useCsrf'
 
 const COUNTRIES = [
   { code: 'IN', name: 'India', flag: '🇮🇳' }, { code: 'US', name: 'United States', flag: '🇺🇸' },
@@ -98,6 +99,8 @@ interface ProfileViewProps {
   loading: boolean
   onOpenCoachApply?: () => void
   onOpenCoachPortal?: () => void
+  onNavigateToAnalytics?: () => void
+  preferredRestDays?: string[]
 }
 
 export function ProfileView({
@@ -149,11 +152,62 @@ export function ProfileView({
   loading,
   onOpenCoachApply,
   onOpenCoachPortal,
+  onNavigateToAnalytics,
+  preferredRestDays = [],
 }: ProfileViewProps) {
   const [advancedNutritionOpen, setAdvancedNutritionOpen] = useState(false)
   const [notesOpen, setNotesOpen] = useState(false)
   const [gymPhotosOpen, setGymPhotosOpen] = useState(false)
   const [bodyPhotosOpen, setBodyPhotosOpen] = useState(false)
+
+  // Analytics summary
+  const [analyticsData, setAnalyticsData] = useState<AnalyticsPayload | null>(null)
+  const [analyticsLoading, setAnalyticsLoading] = useState(true)
+  const [analyticsLocked, setAnalyticsLocked] = useState(false)
+
+  useEffect(() => {
+    let cancelled = false
+    setAnalyticsLoading(true)
+    setAnalyticsLocked(false)
+    csrfFetch('/api/analytics?days=30')
+      .then(async (res) => {
+        if (cancelled) return
+        if (res.status === 403) { setAnalyticsLocked(true); setAnalyticsLoading(false); return }
+        if (!res.ok) { setAnalyticsLoading(false); return }
+        const data: AnalyticsPayload = await res.json()
+        if (!cancelled) { setAnalyticsData(data); setAnalyticsLoading(false) }
+      })
+      .catch(() => { if (!cancelled) setAnalyticsLoading(false) })
+    return () => { cancelled = true }
+  }, [])
+
+  // Derive most-trained muscle group from workout day names
+  const topMuscle = useMemo(() => {
+    if (!analyticsData) return null
+    const counts: Record<string, number> = {}
+    for (const w of analyticsData.workout_history) {
+      const name = w.day_name.toLowerCase()
+      if (name.includes('push') || name.includes('chest')) { counts['Push'] = (counts['Push'] || 0) + 1 }
+      else if (name.includes('pull') || name.includes('back')) { counts['Pull/Back'] = (counts['Pull/Back'] || 0) + 1 }
+      else if (name.includes('leg') || name.includes('squat')) { counts['Legs'] = (counts['Legs'] || 0) + 1 }
+      else if (name.includes('shoulder') || name.includes('press')) { counts['Shoulders'] = (counts['Shoulders'] || 0) + 1 }
+      else if (name.includes('arm') || name.includes('bicep') || name.includes('tricep')) { counts['Arms'] = (counts['Arms'] || 0) + 1 }
+      else if (name.includes('cardio') || name.includes('hiit')) { counts['Cardio'] = (counts['Cardio'] || 0) + 1 }
+      else if (name.includes('full') || name.includes('total')) { counts['Full Body'] = (counts['Full Body'] || 0) + 1 }
+      else { counts['Other'] = (counts['Other'] || 0) + 1 }
+    }
+    const entries = Object.entries(counts)
+    if (!entries.length) return null
+    return entries.sort((a, b) => b[1] - a[1])[0][0]
+  }, [analyticsData])
+
+  // This week completion from weekly trends (last entry)
+  const weekCompletion = useMemo(() => {
+    if (!analyticsData) return null
+    const weekly = analyticsData.trends.weekly
+    if (!weekly.length) return null
+    return Math.round(weekly[weekly.length - 1].completion_percentage)
+  }, [analyticsData])
 
   const goalOptions: Profile['goal'][] = useMemo(
     () => ['General fitness', 'Fat loss', 'Muscle gain', 'Strength', 'Recomposition', 'Endurance'],
@@ -221,6 +275,91 @@ export function ProfileView({
           </div>
         </div>
       </GlassCard>
+      </motion.div>
+
+      {/* Analytics Summary Card */}
+      <motion.div variants={fadeUp}>
+        <GlassCard className="p-4">
+          <SectionHeader
+            title="Your Progress"
+            subtitle="Last 30 days"
+            right={
+              <button
+                type="button"
+                onClick={onNavigateToAnalytics}
+                className="text-xs px-3 py-1 rounded-full btn-secondary inline-flex items-center gap-1 ui-focus-ring"
+              >
+                <BarChart2 className="w-3 h-3" />
+                Full analytics
+              </button>
+            }
+          />
+
+          {analyticsLoading ? (
+            <div className="mt-3 grid grid-cols-2 gap-2">
+              {[0, 1, 2, 3].map((i) => (
+                <div key={i} className="glass-soft rounded-2xl border border-primary/10 p-3 animate-pulse">
+                  <div className="h-5 w-10 bg-white/10 rounded mb-1" />
+                  <div className="h-3 w-16 bg-white/5 rounded" />
+                </div>
+              ))}
+            </div>
+          ) : analyticsLocked ? (
+            <div className="mt-3 relative">
+              {/* Blurred placeholder stats */}
+              <div className="grid grid-cols-2 gap-2 blur-sm pointer-events-none select-none" aria-hidden>
+                {[['24', 'workouts'], ['7🔥', 'day streak'], ['Push', 'top muscle'], ['85%', 'this week']].map(([val, label]) => (
+                  <div key={label} className="glass-soft rounded-2xl border border-primary/10 p-3 text-center">
+                    <p className="text-[16px] font-semibold text-white">{val}</p>
+                    <p className="text-xs text-muted mt-0.5">{label}</p>
+                  </div>
+                ))}
+              </div>
+              {/* Lock overlay */}
+              <div className="absolute inset-0 flex flex-col items-center justify-center gap-2">
+                <div className="w-8 h-8 rounded-full bg-white/8 border border-white/15 flex items-center justify-center">
+                  <Lock className="w-4 h-4 text-white/60" />
+                </div>
+                <AnimatedButton
+                  type="button"
+                  variant="primary"
+                  size="sm"
+                  onClick={onNavigateToAnalytics}
+                >
+                  Unlock full analytics
+                </AnimatedButton>
+              </div>
+            </div>
+          ) : analyticsData ? (
+            <div className="mt-3 grid grid-cols-2 gap-2">
+              <div className="glass-soft rounded-2xl border border-primary/10 p-3 text-center">
+                <p className="text-[18px] font-semibold text-white">{analyticsData.workout_history.length}</p>
+                <p className="text-xs text-muted mt-0.5">workouts</p>
+              </div>
+              <div className="glass-soft rounded-2xl border border-brand-cyan/20 p-3 text-center">
+                <p className="text-[18px] font-semibold text-white flex items-center justify-center gap-1">
+                  {analyticsData.streak.current}
+                  <Flame className="w-4 h-4 text-orange-400" />
+                </p>
+                <p className="text-xs text-muted mt-0.5">day streak</p>
+              </div>
+              <div className="glass-soft rounded-2xl border border-primary/10 p-3 text-center">
+                <p className="text-[14px] font-semibold text-white truncate">{topMuscle ?? '—'}</p>
+                <p className="text-xs text-muted mt-0.5">top muscle</p>
+              </div>
+              <div className="glass-soft rounded-2xl border border-emerald-500/20 p-3 text-center">
+                <p className="text-[18px] font-semibold text-white">
+                  {weekCompletion != null ? `${weekCompletion}%` : '—'}
+                </p>
+                <p className="text-xs text-muted mt-0.5">this week</p>
+              </div>
+            </div>
+          ) : (
+            <p className="mt-3 text-xs text-muted text-center py-4">
+              Complete workouts to see your stats here.
+            </p>
+          )}
+        </GlassCard>
       </motion.div>
 
       {/* Admin tools */}
@@ -519,6 +658,50 @@ export function ProfileView({
               ))}
             </div>
           </div>
+          {/* Rest Days */}
+          <div>
+            <div className="flex items-center gap-1.5 mb-2">
+              <Moon className="w-3.5 h-3.5 text-muted" />
+              <p className="text-xs text-muted">Preferred rest days (max 2)</p>
+            </div>
+            <div className="flex flex-wrap gap-2 mb-2">
+              {(['Mon','Tue','Wed','Thu','Fri','Sat','Sun'] as const).map((day) => {
+                const isSelected = preferredRestDays.includes(day)
+                const isDisabled = !isSelected && preferredRestDays.length >= 2
+                return (
+                  <Chip
+                    key={day}
+                    selected={isSelected}
+                    onClick={() => {
+                      if (isDisabled) return
+                      const next = isSelected
+                        ? preferredRestDays.filter(d => d !== day)
+                        : [...preferredRestDays, day]
+                      onUpdateField('preferredRestDays', next)
+                    }}
+                  >
+                    {day}
+                  </Chip>
+                )
+              })}
+              <Chip
+                selected={preferredRestDays.length === 0}
+                onClick={() => onUpdateField('preferredRestDays', [])}
+              >
+                AI default
+              </Chip>
+            </div>
+            {preferredRestDays.length >= 2 && (
+              <p className="text-xs text-amber-400/80 flex items-center gap-1">
+                <AlertCircle className="w-3 h-3" />
+                Max 2 rest days. Deselect one to pick another.
+              </p>
+            )}
+            {preferredRestDays.length === 0 && (
+              <p className="text-xs text-muted">AI will decide rest days (usually Sat &amp; Sun).</p>
+            )}
+          </div>
+
           <Collapsible
             open={notesOpen}
             onToggle={() => setNotesOpen(v => !v)}
@@ -580,6 +763,7 @@ export function ProfileView({
                 onDelete={onGymPhotoDelete}
                 loading={analyzingEquipment}
                 error={equipmentError}
+                variant="gym"
               />
             )}
 
@@ -644,6 +828,7 @@ export function ProfileView({
                 onDelete={onBodyPhotoDelete}
                 loading={analyzingBody}
                 error={bodyError}
+                variant="body"
               />
             )}
 

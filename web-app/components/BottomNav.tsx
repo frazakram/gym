@@ -1,11 +1,12 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   Home, Calendar, ClipboardCheck, User, Plus,
-  BarChart3, Utensils, MessageCircle, Ruler, Users,
+  Utensils, MessageCircle, Ruler, Users, Zap,
 } from 'lucide-react'
+import { csrfFetch } from '@/lib/useCsrf'
 
 type View = 'home' | 'routine' | 'workout' | 'profile' | 'diet' | 'analytics' | 'coach' | 'measurements' | 'communities'
 
@@ -14,34 +15,26 @@ interface BottomNavProps {
   onViewChange: (view: View) => void
 }
 
-type FloatItem = {
-  id: View
-  label: string
-  emoji: string
-  icon: React.ComponentType<{ className?: string }>
-  color: string       // accent for icon
-  topPct: number      // viewport % from top
-  leftPct: number     // viewport % from left
-  bobDur: number      // seconds for the gentle bob loop
-  bobOffset: number   // px range for the bob
-}
+type NI = { id: 'home' | 'routine' | 'workout' | 'profile'; label: string; icon: React.ComponentType<{ className?: string }> }
 
-// Hand-placed constellation: symmetric quincunx (4 corners + 1 center)
-// Order tuned so they arrive in a visually pleasing sequence:
-// center → upper-left → upper-right → lower-left → lower-right
-const FLOAT_ITEMS: FloatItem[] = [
-  { id: 'communities',  label: 'Community', emoji: '🌍', icon: Users,         color: '#F472B6', topPct: 40, leftPct: 50, bobDur: 6.0, bobOffset: 8 },
-  { id: 'analytics',    label: 'Analytics', emoji: '📊', icon: BarChart3,     color: '#A78BFA', topPct: 20, leftPct: 25, bobDur: 5.2, bobOffset: 7 },
-  { id: 'diet',         label: 'Diet',      emoji: '🍽️', icon: Utensils,      color: '#34D399', topPct: 20, leftPct: 75, bobDur: 4.6, bobOffset: 6 },
-  { id: 'measurements', label: 'Body',      emoji: '📏', icon: Ruler,         color: '#67E8F9', topPct: 62, leftPct: 25, bobDur: 4.8, bobOffset: 6 },
-  { id: 'coach',        label: 'Coach',     emoji: '💬', icon: MessageCircle, color: '#FBBF24', topPct: 62, leftPct: 75, bobDur: 5.4, bobOffset: 7 },
+const MENU_ITEMS: { id: View; label: string; icon: React.ComponentType<{ className?: string }> }[] = [
+  { id: 'diet',         label: 'Diet',      icon: Utensils      },
+  { id: 'communities',  label: 'Community', icon: Users         },
+  { id: 'measurements', label: 'Body',      icon: Ruler         },
+  { id: 'coach',        label: 'Coach',     icon: MessageCircle },
 ]
 
 export function BottomNav({ activeView, onViewChange }: BottomNavProps) {
   const [open, setOpen] = useState(false)
   const pick = (id: View) => { onViewChange(id); setOpen(false) }
 
-  type NI = { id: 'home' | 'routine' | 'workout' | 'profile'; label: string; icon: React.ComponentType<{ className?: string }> }
+  const [totalXp, setTotalXp] = useState<number | null>(null)
+  useEffect(() => {
+    csrfFetch('/api/xp')
+      .then(r => r.ok ? r.json() : null)
+      .then(d => { if (d?.total_xp != null) setTotalXp(d.total_xp) })
+      .catch(() => {})
+  }, [])
 
   const Tab = ({ item, isActive }: { item: NI; isActive: boolean }) => {
     const Icon = item.icon
@@ -76,114 +69,126 @@ export function BottomNav({ activeView, onViewChange }: BottomNavProps) {
     )
   }
 
-  const FloatingIcon = ({ item, index }: { item: FloatItem; index: number }) => {
-    const Icon = item.icon
-    const isActive = activeView === item.id
-
-    return (
-      <motion.button
-        onClick={() => pick(item.id)}
-        // Mount/unmount: each icon rises from the FAB with a spin, lands with a soft overshoot
-        initial={{ opacity: 0, scale: 0.2, y: 140, rotate: -45 }}
-        animate={{ opacity: 1, scale: 1, y: 0, rotate: 0 }}
-        exit={{
-          opacity: 0,
-          scale: 0.2,
-          y: 80,
-          rotate: 30,
-          transition: { duration: 0.22, ease: 'easeIn', delay: (FLOAT_ITEMS.length - 1 - index) * 0.05 },
-        }}
-        transition={{
-          type: 'spring',
-          stiffness: 240,
-          damping: 16,
-          mass: 0.9,
-          delay: 0.15 + index * 0.18,
-        }}
-        whileHover={{ scale: 1.12 }}
-        whileTap={{ scale: 0.92 }}
-        className="absolute pointer-events-auto select-none"
-        style={{
-          top: `${item.topPct}%`,
-          left: `${item.leftPct}%`,
-          transform: 'translate(-50%, -50%)',
-        }}
-      >
-        {/* Idle bob */}
-        <motion.div
-          animate={{ y: [-item.bobOffset, item.bobOffset, -item.bobOffset] }}
-          transition={{ duration: item.bobDur, repeat: Infinity, ease: 'easeInOut', delay: index * 0.3 }}
-          className="flex flex-col items-center gap-1"
-        >
-          {/* Emoji */}
-          <span
-            className="text-[34px] leading-none"
-            style={{ filter: 'drop-shadow(0 4px 10px rgba(0,0,0,0.45))' }}
-          >
-            {item.emoji}
-          </span>
-
-          {/* Lucide icon (small, accent-colored, beneath emoji) */}
-          <span
-            style={{
-              color: item.color,
-              filter: `drop-shadow(0 0 8px ${item.color}88)`,
-            }}
-          >
-            <Icon className="w-5 h-5" />
-          </span>
-
-          {/* Label */}
-          <span
-            className="text-[12.5px] font-semibold tracking-wide text-white whitespace-nowrap"
-            style={{
-              textShadow: '0 2px 8px rgba(0,0,0,0.7), 0 0 1px rgba(0,0,0,0.6)',
-            }}
-          >
-            {item.label}
-          </span>
-
-          {/* Active indicator: tiny dot under the label */}
-          {isActive && (
-            <motion.div
-              layoutId="float-active"
-              className="w-1.5 h-1.5 rounded-full mt-0.5"
-              style={{ background: item.color, boxShadow: `0 0 8px ${item.color}` }}
-            />
-          )}
-        </motion.div>
-      </motion.button>
-    )
-  }
-
   return (
     <>
-      {/* Backdrop */}
+      {/* Backdrop — subtle, not heavy */}
       <AnimatePresence>
         {open && (
           <motion.div
             key="bd"
-            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-            transition={{ duration: 0.3 }}
-            className="fixed inset-0 bg-black/55 backdrop-blur-xl"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            className="fixed inset-0 bg-black/50 backdrop-blur-sm"
             style={{ zIndex: 40 }}
             onClick={() => setOpen(false)}
           />
         )}
       </AnimatePresence>
 
-      {/* Floating icon constellation */}
+      {/* Floating action bar */}
       <AnimatePresence>
         {open && (
-          <div
-            key="float"
-            className="fixed inset-0 pointer-events-none max-w-md mx-auto"
-            style={{ zIndex: 51 }}
+          <motion.div
+            key="action-bar"
+            initial={{ opacity: 0, y: 20, scale: 0.96 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 14, scale: 0.96 }}
+            transition={{ type: 'spring', stiffness: 420, damping: 30 }}
+            className="fixed left-1/2 -translate-x-1/2 z-50"
+            style={{
+              bottom: '86px',
+              width: 'calc(100% - 32px)',
+              maxWidth: '440px',
+            }}
           >
-            {FLOAT_ITEMS.map((item, i) => (
-              <FloatingIcon key={item.id} item={item} index={i} />
-            ))}
-          </div>
+            {/* Bar */}
+            <div
+              className="flex items-stretch justify-around rounded-2xl border border-white/[0.07] overflow-hidden"
+              style={{
+                background: 'rgba(8, 10, 20, 0.94)',
+                backdropFilter: 'blur(28px)',
+                WebkitBackdropFilter: 'blur(28px)',
+                boxShadow:
+                  '0 0 0 1px rgba(139,92,246,0.12), 0 -4px 32px rgba(0,0,0,0.4), 0 16px 48px rgba(0,0,0,0.5)',
+              }}
+            >
+              {MENU_ITEMS.map((item, i) => {
+                const Icon = item.icon
+                const isActive = activeView === item.id
+                return (
+                  <motion.button
+                    key={item.id}
+                    onClick={() => pick(item.id)}
+                    initial={{ opacity: 0, y: 8 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: i * 0.045, duration: 0.22, ease: 'easeOut' }}
+                    whileHover={{ backgroundColor: 'rgba(124,58,237,0.1)' }}
+                    whileTap={{ scale: 0.93 }}
+                    className="relative flex flex-col items-center justify-center gap-1.5 flex-1 py-3.5 px-1 transition-colors duration-150"
+                  >
+                    {/* Active highlight */}
+                    {isActive && (
+                      <motion.div
+                        layoutId="bar-active-bg"
+                        className="absolute inset-0"
+                        style={{ background: 'rgba(124,58,237,0.13)' }}
+                        transition={{ type: 'spring', stiffness: 400, damping: 30 }}
+                      />
+                    )}
+
+                    {/* Divider between items (skip first) */}
+                    {i > 0 && (
+                      <span
+                        className="absolute left-0 top-1/2 -translate-y-1/2 w-px h-6"
+                        style={{ background: 'rgba(255,255,255,0.05)' }}
+                      />
+                    )}
+
+                    <div
+                      className="relative z-10 transition-all duration-200"
+                      style={{
+                        color: isActive ? '#a78bfa' : 'rgba(148,163,184,0.7)',
+                        filter: isActive ? 'drop-shadow(0 0 7px rgba(167,139,250,0.55))' : 'none',
+                      }}
+                    >
+                      <Icon className="w-5 h-5" />
+                    </div>
+
+                    <span
+                      className="relative z-10 text-[10px] font-medium tracking-wide whitespace-nowrap transition-colors duration-200"
+                      style={{ color: isActive ? '#c4b5fd' : 'rgba(100,116,139,0.9)' }}
+                    >
+                      {item.label}
+                    </span>
+
+                    {/* Active indicator: thin line at top of the bar item */}
+                    {isActive && (
+                      <motion.span
+                        layoutId="bar-active-line"
+                        className="absolute top-0 left-1/4 right-1/4 h-[2px] rounded-full"
+                        style={{
+                          background: 'linear-gradient(90deg, transparent, #7c3aed, #a78bfa, transparent)',
+                          boxShadow: '0 0 8px rgba(124,58,237,0.7)',
+                        }}
+                        transition={{ type: 'spring', stiffness: 400, damping: 30 }}
+                      />
+                    )}
+                  </motion.button>
+                )
+              })}
+            </div>
+
+            {/* Connector taper to FAB */}
+            <div className="flex justify-center">
+              <svg width="40" height="10" viewBox="0 0 40 10" fill="none">
+                <path d="M20 10 L8 0 L32 0 Z" fill="rgba(8,10,20,0.94)" />
+                <line x1="8" y1="0" x2="20" y2="10" stroke="rgba(139,92,246,0.15)" strokeWidth="1" />
+                <line x1="32" y1="0" x2="20" y2="10" stroke="rgba(139,92,246,0.15)" strokeWidth="1" />
+              </svg>
+            </div>
+          </motion.div>
         )}
       </AnimatePresence>
 
@@ -201,16 +206,39 @@ export function BottomNav({ activeView, onViewChange }: BottomNavProps) {
 
             {/* FAB */}
             <div className="relative -mt-6" style={{ zIndex: 52 }}>
+              {/* XP pill — floats above the FAB */}
+              <AnimatePresence>
+                {totalXp != null && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 4, scale: 0.9 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    exit={{ opacity: 0, scale: 0.9 }}
+                    transition={{ type: 'spring', stiffness: 400, damping: 28 }}
+                    className="absolute -top-6 left-1/2 -translate-x-1/2 flex items-center gap-0.5 px-2 py-0.5 rounded-full whitespace-nowrap pointer-events-none select-none"
+                    style={{
+                      background: 'rgba(124,58,237,0.18)',
+                      border: '1px solid rgba(167,139,250,0.35)',
+                      boxShadow: '0 0 10px rgba(124,58,237,0.25)',
+                    }}
+                  >
+                    <Zap className="w-2.5 h-2.5 text-violet-300" />
+                    <span className="text-[10px] font-semibold text-violet-200 tracking-wide">
+                      {totalXp.toLocaleString('en-IN')} XP
+                    </span>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+
               <motion.button
                 onClick={() => setOpen(v => !v)}
-                whileTap={{ scale: 0.84 }}
-                animate={{ scale: open ? 1.1 : 1, rotate: open ? 45 : 0 }}
-                transition={{ type: 'spring', stiffness: 500, damping: 26 }}
+                whileTap={{ scale: 0.86 }}
+                animate={{ rotate: open ? 45 : 0 }}
+                transition={{ type: 'spring', stiffness: 480, damping: 26 }}
                 className="flex items-center justify-center w-14 h-14 rounded-full bg-gradient-to-br from-primary via-primary-dark to-brand-cyan"
                 style={{
                   boxShadow: open
-                    ? '0 0 0 6px rgba(139,92,246,0.18), 0 0 32px rgba(139,92,246,0.55)'
-                    : '0 4px 24px rgba(139,92,246,0.4), 0 0 40px rgba(34,211,238,0.1)',
+                    ? '0 0 0 5px rgba(139,92,246,0.2), 0 0 28px rgba(139,92,246,0.6)'
+                    : '0 4px 20px rgba(139,92,246,0.45), 0 0 36px rgba(34,211,238,0.08)',
                 }}
               >
                 <Plus className="w-7 h-7 text-white" strokeWidth={2.5} />
@@ -223,6 +251,7 @@ export function BottomNav({ activeView, onViewChange }: BottomNavProps) {
                 { id: 'profile' as const, label: 'Profile', icon: User },
               ] as NI[]).map(t => <Tab key={t.id} item={t} isActive={activeView === t.id} />)}
             </div>
+
           </div>
         </div>
       </nav>

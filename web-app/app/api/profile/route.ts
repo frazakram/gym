@@ -91,7 +91,8 @@ export async function PUT(request: NextRequest) {
       nullToUndefined(data.gym_photos),
       nullToUndefined(data.gym_equipment_analysis),
       nullToUndefined(data.body_photos),
-      nullToUndefined(data.body_composition_analysis)
+      nullToUndefined(data.body_composition_analysis),
+      nullToUndefined(data.preferred_rest_days) ?? undefined
     );
 
     // Persist nationality + region (separate update so we don't bloat saveProfile signature)

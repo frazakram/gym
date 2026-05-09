@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { withCors } from '@/lib/corsMiddleware';
 import OpenAI from 'openai';
 import { getSession } from '@/lib/auth';
+import { initializeDatabase, hasBodyPhotos } from '@/lib/db';
 import type { BodyCompositionAnalysis } from '@/types';
 
 export const runtime = "nodejs";
@@ -42,6 +43,8 @@ export async function POST(req: NextRequest) {
   if (!session) {
     return withCors(NextResponse.json({ error: 'Unauthorized' }, { status: 401 }));
   }
+
+  await initializeDatabase();
 
   try {
     const body = await req.json();
@@ -115,7 +118,8 @@ export async function POST(req: NextRequest) {
       };
     }
 
-    return withCors(NextResponse.json({ analysis }));
+    const hasExistingPhoto = await hasBodyPhotos(session.userId);
+    return withCors(NextResponse.json({ analysis, hasExistingPhoto }));
   } catch (error) {
     console.error('Body analysis error:', error);
     return withCors(NextResponse.json(

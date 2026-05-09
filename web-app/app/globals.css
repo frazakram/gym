@@ -132,6 +132,8 @@ body {
   background: var(--background);
   line-height: 1.6;
   transition: background-color 0.3s ease, color 0.3s ease;
+  /* Block the browser's native pull-to-refresh so our custom one fires instead */
+  overscroll-behavior-y: contain;
 }
 
 p {
@@ -554,6 +556,11 @@ html:not(.dark) .panel-solid {
 /* ─────────────────────────────────────────────────────────────
    ANIMATIONS
    ───────────────────────────────────────────────────────────── */
+@keyframes orbit {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+
 @keyframes fade-in {
   from {
     opacity: 0;
