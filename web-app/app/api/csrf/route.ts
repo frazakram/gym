@@ -11,7 +11,7 @@ import { generateCsrfToken } from "@/lib/csrf";
  * Returns a fresh CSRF token for the client.
  * The token is also set as a cookie for double-submit validation.
  */
-export async function GET(request: NextRequest) {
+export async function GET(_request: NextRequest) {
   try {
     // Get session (optional - token works with or without auth)
     const session = await getSession();

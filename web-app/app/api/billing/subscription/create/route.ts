@@ -7,12 +7,6 @@ import { redisDel } from "@/lib/redis";
 
 export const runtime = "nodejs";
 
-function requireEnv(name: string): string {
-  const v = process.env[name];
-  if (!v || !v.trim()) throw new Error(`${name} is not set`);
-  return v.trim();
-}
-
 export async function POST(req: NextRequest) {
   try {
     const session = await getSession();

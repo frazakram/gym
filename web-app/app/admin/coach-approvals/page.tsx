@@ -131,7 +131,7 @@ export default function AdminCoachApprovalsPage() {
           <div className="mt-3 flex flex-col sm:flex-row gap-2">
             <select
               value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value as any)}
+              onChange={(e) => setStatusFilter(e.target.value as (typeof STATUS)[number])}
               className="w-full sm:w-60 px-4 py-3 glass-soft rounded-2xl text-white ui-focus-ring border border-white/10 bg-transparent"
             >
               {STATUS.map((s) => (

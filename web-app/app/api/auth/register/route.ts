@@ -1,7 +1,7 @@
 import { withCors } from "@/lib/corsMiddleware";
 import { NextRequest, NextResponse } from 'next/server';
 import { createUser, initializeDatabase } from '@/lib/db';
-import { createSession, setSessionCookie } from '@/lib/auth';
+import { createSession } from '@/lib/auth';
 import { rateLimit, RATE_LIMITS } from '@/lib/rate-limit';
 import { RegisterSchema, safeParseWithError } from '@/lib/validations';
 import { generateCsrfToken } from '@/lib/csrf';

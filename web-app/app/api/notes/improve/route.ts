@@ -21,15 +21,15 @@ function assertAsciiHeaderValue(value: string) {
 }
 
 function extractText(out: unknown): string {
-  const anyOut = out as any;
-  const content = anyOut?.content;
+  const typed = out as { content?: unknown };
+  const content = typed?.content;
   if (typeof content === "string") return content;
   if (Array.isArray(content)) {
     // Anthropic can return array of blocks
-    const texts = content.map((b: any) => (typeof b?.text === "string" ? b.text : "")).filter(Boolean);
+    const texts = (content as { text?: unknown }[]).map((b) => (typeof b?.text === "string" ? b.text : "")).filter(Boolean);
     return texts.join("\n").trim();
   }
-  return String(anyOut ?? "").trim();
+  return String(out ?? "").trim();
 }
 
 export async function POST(request: NextRequest) {

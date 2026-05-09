@@ -145,7 +145,7 @@ export async function POST(request: NextRequest) {
     const cacheKey = hashCacheKey('diet', cacheInputs);
     
     // Check cache first
-    const cached = await getCachedAIResponse<any>(cacheKey);
+    const cached = await getCachedAIResponse<Record<string, unknown>>(cacheKey);
     if (cached.hit) {
       console.log(`[Diet] Cache hit for user ${session.userId}, saving AI cost!`);
       return withCors(NextResponse.json({ dietPlan: cached.data, source: 'cache' }, { status: 200 }));

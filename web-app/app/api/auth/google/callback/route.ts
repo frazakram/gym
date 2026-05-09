@@ -53,7 +53,7 @@ export async function GET(request: NextRequest) {
       throw new Error(`Google token exchange failed: HTTP ${tokenRes.status} ${t}`);
     }
 
-    const tokenJson = (await tokenRes.json()) as any;
+    const tokenJson = (await tokenRes.json()) as { id_token?: string };
     const idToken: string | undefined = tokenJson?.id_token;
     if (!idToken) throw new Error("Google response missing id_token");
 
@@ -93,7 +93,7 @@ export async function GET(request: NextRequest) {
     res.cookies.set("google_oauth_state", "", { path: "/", maxAge: 0 });
     res.cookies.set("google_oauth_return_to", "", { path: "/", maxAge: 0 });
     return withCors(res);
-  } catch (err: unknown) {
+  } catch (_err: unknown) {
     const origin = request.nextUrl.origin;
     const url = new URL("/login", origin);
     url.searchParams.set("error", "google_failed");

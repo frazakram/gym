@@ -41,7 +41,7 @@ export async function GET(req: NextRequest) {
         admin_notes: app.admin_notes,
         approved_at: app.approved_at ? app.approved_at.toISOString() : null,
         rejected_at: app.rejected_at ? app.rejected_at.toISOString() : null,
-        created_at: app.created_at ? new Date(app.created_at as any).toISOString() : null,
+        created_at: app.created_at ? new Date(app.created_at as string | number | Date).toISOString() : null,
       },
       profile,
     },
