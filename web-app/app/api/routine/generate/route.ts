@@ -137,11 +137,20 @@ export async function POST(request: NextRequest) {
         ? ftInToCm(height_ft, Math.max(0, Math.min(11.9, height_in)))
         : height;
 
-    // Fetch profile first — needed for restDays fallback + equipment/body analysis
-    const { getProfile } = await import('@/lib/db');
-    const userProfile = await getProfile(session.userId);
+    // Fetch profile + selected gym — needed for restDays fallback + equipment/body analysis
+    const { getProfile, getUserGym } = await import('@/lib/db');
+    const [userProfile, userGym] = await Promise.all([
+      getProfile(session.userId),
+      getUserGym(session.userId),
+    ]);
     const equipmentAnalysis = userProfile?.gym_equipment_analysis || null;
     const bodyAnalysis = userProfile?.body_composition_analysis || null;
+
+    // Build gym equipment context from selected gym (overrides photo-based analysis if available)
+    let gymEquipmentContext: string | undefined;
+    if (userGym && userGym.equipment.length > 0) {
+      gymEquipmentContext = `The user trains at ${userGym.gymName}. Available equipment: ${userGym.equipment.join(', ')}. Only suggest exercises that can be performed with this equipment. Do not suggest exercises requiring equipment not in this list.`;
+    }
 
     // Build historical context for progressive routines
     let historicalContextStr: string | undefined;
@@ -232,8 +241,8 @@ export async function POST(request: NextRequest) {
 
             const routine =
               provider === 'OpenAI'
-                ? await generateRoutineOpenAI(input, historicalContextStr, equipmentAnalysis, bodyAnalysis)
-                : await generateRoutine(input, historicalContextStr, equipmentAnalysis, bodyAnalysis);
+                ? await generateRoutineOpenAI(input, historicalContextStr, equipmentAnalysis, bodyAnalysis, gymEquipmentContext)
+                : await generateRoutine(input, historicalContextStr, equipmentAnalysis, bodyAnalysis, gymEquipmentContext);
 
             clearInterval(tick);
             controller.enqueue(sse('progress', { pct: 100, stage: 'Done' }));
@@ -339,8 +348,8 @@ export async function POST(request: NextRequest) {
     // AI Generation (with equipment and body composition analysis already fetched above)
     const routine =
       provider === 'OpenAI'
-        ? await generateRoutineOpenAI(input, historicalContextStr, equipmentAnalysis, bodyAnalysis)
-        : await generateRoutine(input, historicalContextStr, equipmentAnalysis, bodyAnalysis);
+        ? await generateRoutineOpenAI(input, historicalContextStr, equipmentAnalysis, bodyAnalysis, gymEquipmentContext)
+        : await generateRoutine(input, historicalContextStr, equipmentAnalysis, bodyAnalysis, gymEquipmentContext);
 
     if (!routine) {
       return withCors(NextResponse.json(

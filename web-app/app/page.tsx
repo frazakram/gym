@@ -2,7 +2,61 @@
 
 import Link from 'next/link'
 import { ThemeToggle } from '@/components/ThemeToggle'
+import { motion, useInView } from 'framer-motion'
+import { useRef, useState, useEffect } from 'react'
 
+// ── Shared animation variants ──────────────────────────────────
+const fadeUp = {
+  hidden: { opacity: 0, y: 28 },
+  visible: { opacity: 1, y: 0, transition: { duration: 0.55, ease: 'easeOut' } },
+}
+
+function staggerContainer(delay = 0) {
+  return {
+    hidden: {},
+    visible: { transition: { staggerChildren: 0.12, delayChildren: delay } },
+  }
+}
+
+// ── CountUp: animates a number when it scrolls into view ────────
+function CountUp({
+  to,
+  prefix = '',
+  suffix = '',
+  duration = 1.8,
+}: {
+  to: number
+  prefix?: string
+  suffix?: string
+  duration?: number
+}) {
+  const ref = useRef<HTMLSpanElement>(null)
+  const inView = useInView(ref, { once: true })
+  const [count, setCount] = useState(0)
+
+  useEffect(() => {
+    if (!inView) return
+    let startTime: number | null = null
+    const tick = (ts: number) => {
+      if (!startTime) startTime = ts
+      const progress = Math.min((ts - startTime) / (duration * 1000), 1)
+      setCount(Math.floor(progress * to))
+      if (progress < 1) requestAnimationFrame(tick)
+      else setCount(to)
+    }
+    requestAnimationFrame(tick)
+  }, [inView, to, duration])
+
+  return (
+    <span ref={ref}>
+      {prefix}
+      {count.toLocaleString('en-IN')}
+      {suffix}
+    </span>
+  )
+}
+
+// ── CheckIcon ───────────────────────────────────────────────────
 function CheckIcon({ color = 'purple' }: { color?: 'purple' | 'green' | 'amber' }) {
   const styles = {
     purple: 'bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400',
@@ -72,21 +126,32 @@ export default function LandingPage() {
         <div className="mx-auto max-w-7xl px-6 md:px-16 lg:px-24 py-20 lg:py-28 w-full">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 items-center">
 
-            {/* Left: text */}
-            <div className="flex flex-col gap-6">
-              <span className="inline-flex items-center gap-2 bg-purple-50 dark:bg-purple-900/20 text-purple-700 dark:text-purple-300 rounded-full px-3 py-1 text-xs font-medium w-fit">
+            {/* Left: text — staggered fade-in-up on mount */}
+            <motion.div
+              className="flex flex-col gap-6"
+              initial="hidden"
+              animate="visible"
+              variants={staggerContainer(0.1)}
+            >
+              <motion.span
+                variants={fadeUp}
+                className="inline-flex items-center gap-2 bg-purple-50 dark:bg-purple-900/20 text-purple-700 dark:text-purple-300 rounded-full px-3 py-1 text-xs font-medium w-fit"
+              >
                 🇮🇳 Made for Indian athletes
-              </span>
+              </motion.span>
 
-              <h1 className="text-4xl sm:text-5xl lg:text-7xl font-black tracking-tight leading-[1.05] text-gray-900 dark:text-white">
+              <motion.h1
+                variants={fadeUp}
+                className="text-4xl sm:text-5xl lg:text-7xl font-black tracking-tight leading-[1.05] text-gray-900 dark:text-white"
+              >
                 The fitness app that actually knows what you eat.
-              </h1>
+              </motion.h1>
 
-              <p className="mt-6 text-lg text-gray-500 dark:text-gray-400 max-w-xl">
+              <motion.p variants={fadeUp} className="mt-6 text-lg text-gray-500 dark:text-gray-400 max-w-xl">
                 GymBro builds your workouts around your gym and your meals around your kitchen — then gets smarter every week you show up.
-              </p>
+              </motion.p>
 
-              <div className="flex flex-wrap gap-2">
+              <motion.div variants={fadeUp} className="flex flex-wrap gap-2">
                 {['✓ No generic meal plans', '✓ Adapts weekly', '✓ Free to start'].map((item) => (
                   <span
                     key={item}
@@ -95,9 +160,9 @@ export default function LandingPage() {
                     {item}
                   </span>
                 ))}
-              </div>
+              </motion.div>
 
-              <div className="mt-8 flex flex-wrap gap-3">
+              <motion.div variants={fadeUp} className="mt-8 flex flex-wrap gap-3">
                 {/* Start for free — rotating conic-gradient border */}
                 <div className="relative inline-flex rounded-full p-[2px] overflow-hidden">
                   <span
@@ -132,12 +197,12 @@ export default function LandingPage() {
                     Explore free →
                   </Link>
                 </div>
-              </div>
+              </motion.div>
 
-              <p className="text-xs text-gray-400 dark:text-gray-500">
+              <motion.p variants={fadeUp} className="text-xs text-gray-400 dark:text-gray-500">
                 Free forever for workouts and diet. No credit card needed.
-              </p>
-              <p className="text-xs text-gray-400 dark:text-gray-500">
+              </motion.p>
+              <motion.p variants={fadeUp} className="text-xs text-gray-400 dark:text-gray-500">
                 Curious?{' '}
                 <a
                   href="https://finalgym.vercel.app/"
@@ -145,21 +210,32 @@ export default function LandingPage() {
                 >
                   Explore without signing up →
                 </a>
-              </p>
-            </div>
+              </motion.p>
+            </motion.div>
 
-            {/* Right: phone mockup — dark image in dark mode, light image in light mode */}
+            {/* Right: phone mockup — entrance fade + continuous float */}
             <div className="flex items-center justify-center scale-[1.5] lg:scale-[1.5]">
-              <img
-                src="/app-dark.png"
-                alt="GymBro app dark mode"
-                className="hidden dark:block w-full drop-shadow-2xl"
-              />
-              <img
-                src="/app-light.png"
-                alt="GymBro app light mode"
-                className="block dark:hidden w-full drop-shadow-2xl"
-              />
+              <motion.div
+                initial={{ opacity: 0, y: 40 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.8, delay: 0.35, ease: 'easeOut' }}
+              >
+                <motion.div
+                  animate={{ y: [0, -12, 0] }}
+                  transition={{ repeat: Infinity, duration: 4.5, ease: 'easeInOut' }}
+                >
+                  <img
+                    src="/app-dark.png"
+                    alt="GymBro app dark mode"
+                    className="hidden dark:block w-full drop-shadow-2xl"
+                  />
+                  <img
+                    src="/app-light.png"
+                    alt="GymBro app light mode"
+                    className="block dark:hidden w-full drop-shadow-2xl"
+                  />
+                </motion.div>
+              </motion.div>
             </div>
 
           </div>
@@ -169,20 +245,30 @@ export default function LandingPage() {
       {/* ── SOCIAL PROOF STRIP ── */}
       <section className="transition-colors duration-300 bg-gray-50 dark:bg-[#0d1117] border-y border-gray-100 dark:border-white/5">
         <div className="mx-auto max-w-7xl px-6 md:px-16 lg:px-24 py-16">
-          <div className="grid grid-cols-3 text-center divide-x divide-gray-200 dark:divide-white/10 max-w-3xl mx-auto">
-            <div className="px-8">
-              <p className="text-4xl font-black text-gray-900 dark:text-white">10,000+</p>
+          <motion.div
+            className="grid grid-cols-3 text-center divide-x divide-gray-200 dark:divide-white/10 max-w-3xl mx-auto"
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true, margin: '-60px' }}
+            variants={staggerContainer()}
+          >
+            <motion.div variants={fadeUp} className="px-8">
+              <p className="text-4xl font-black text-gray-900 dark:text-white">
+                <CountUp to={10000} suffix="+" />
+              </p>
               <p className="text-sm text-gray-400 mt-1">workout plans generated</p>
-            </div>
-            <div className="px-8">
+            </motion.div>
+            <motion.div variants={fadeUp} className="px-8">
               <p className="text-4xl font-black text-gray-900 dark:text-white">Week 1</p>
               <p className="text-sm text-gray-400 mt-1">when users see first results</p>
-            </div>
-            <div className="px-8">
-              <p className="text-4xl font-black text-gray-900 dark:text-white">₹49/mo</p>
+            </motion.div>
+            <motion.div variants={fadeUp} className="px-8">
+              <p className="text-4xl font-black text-gray-900 dark:text-white">
+                <CountUp to={49} prefix="₹" suffix="/mo" duration={1.2} />
+              </p>
               <p className="text-sm text-gray-400 mt-1">to unlock everything</p>
-            </div>
-          </div>
+            </motion.div>
+          </motion.div>
         </div>
       </section>
 
@@ -191,28 +277,39 @@ export default function LandingPage() {
         <div className="mx-auto max-w-7xl px-6 md:px-16 lg:px-24 py-20 lg:py-28">
 
           {/* Section header */}
-          <div className="text-center mb-16">
-            <p className="text-xs font-bold tracking-[0.2em] text-[#7c3aed] uppercase mb-4">
+          <motion.div
+            className="text-center mb-16"
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true, margin: '-60px' }}
+            variants={staggerContainer()}
+          >
+            <motion.p variants={fadeUp} className="text-xs font-bold tracking-[0.2em] text-[#7c3aed] uppercase mb-4">
               What makes it different
-            </p>
-            <h2 className="text-4xl md:text-5xl font-black text-gray-900 dark:text-white">
+            </motion.p>
+            <motion.h2 variants={fadeUp} className="text-4xl md:text-5xl font-black text-gray-900 dark:text-white">
               Built different.<br />Works better.
-            </h2>
-          </div>
+            </motion.h2>
+          </motion.div>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 items-center">
             {/* Text */}
-            <div>
-              <p className="text-xs font-bold tracking-[0.2em] text-[#7c3aed] uppercase">
+            <motion.div
+              initial="hidden"
+              whileInView="visible"
+              viewport={{ once: true, margin: '-60px' }}
+              variants={staggerContainer()}
+            >
+              <motion.p variants={fadeUp} className="text-xs font-bold tracking-[0.2em] text-[#7c3aed] uppercase">
                 Workouts
-              </p>
-              <h3 className="mt-3 text-3xl lg:text-5xl font-black text-gray-900 dark:text-white leading-tight">
+              </motion.p>
+              <motion.h3 variants={fadeUp} className="mt-3 text-3xl lg:text-5xl font-black text-gray-900 dark:text-white leading-tight">
                 Learns your gym.<br />Improves every week.
-              </h3>
-              <p className="text-gray-500 dark:text-gray-400 text-lg mt-4 leading-relaxed">
+              </motion.h3>
+              <motion.p variants={fadeUp} className="text-gray-500 dark:text-gray-400 text-lg mt-4 leading-relaxed">
                 Most apps give you the same plan forever. GymBro watches what you actually complete, what you skip, and what your gym has — then rewrites next week&apos;s plan around reality, not a template.
-              </p>
-              <div className="flex flex-col gap-3 mt-8">
+              </motion.p>
+              <motion.div variants={fadeUp} className="flex flex-col gap-3 mt-8">
                 {[
                   'Adapts to your actual equipment',
                   'Progressive overload built in automatically',
@@ -224,10 +321,16 @@ export default function LandingPage() {
                     <span className="text-sm text-gray-700 dark:text-gray-300">{pt}</span>
                   </div>
                 ))}
-              </div>
-            </div>
+              </motion.div>
+            </motion.div>
             {/* Visual */}
-            <div className="rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#111827] p-6 shadow-sm">
+            <motion.div
+              className="rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#111827] p-6 shadow-sm"
+              initial={{ opacity: 0, x: 40 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              viewport={{ once: true, margin: '-60px' }}
+              transition={{ duration: 0.6, ease: 'easeOut' }}
+            >
               <div className="flex justify-between items-center mb-3">
                 <span className="font-bold text-sm text-gray-900 dark:text-white">Pull Day — Week 3</span>
                 <span className="text-xs text-gray-400">6 exercises</span>
@@ -250,7 +353,7 @@ export default function LandingPage() {
                   <div className="h-full rounded-full bg-[#7c3aed]" style={{ width: '41%' }} />
                 </div>
               </div>
-            </div>
+            </motion.div>
           </div>
         </div>
       </section>
@@ -258,23 +361,24 @@ export default function LandingPage() {
       {/* ── FEATURE: NUTRITION ── */}
       <section className="transition-colors duration-300 bg-gray-50 dark:bg-[#0d1117]">
         <div className="mx-auto max-w-7xl px-6 md:px-16 lg:px-24 py-20 lg:py-28">
-          {/*
-            lg:[&>*:first-child]:order-2 pushes the text col (first in DOM) to the
-            right at lg+, so the visual card (second in DOM) appears on the left.
-          */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 items-center lg:[&>*:first-child]:order-2">
             {/* Text — first in DOM, goes RIGHT on desktop */}
-            <div>
-              <p className="text-xs font-bold tracking-[0.2em] text-[#7c3aed] uppercase">
+            <motion.div
+              initial="hidden"
+              whileInView="visible"
+              viewport={{ once: true, margin: '-60px' }}
+              variants={staggerContainer()}
+            >
+              <motion.p variants={fadeUp} className="text-xs font-bold tracking-[0.2em] text-[#7c3aed] uppercase">
                 Nutrition
-              </p>
-              <h3 className="mt-3 text-3xl lg:text-5xl font-black text-gray-900 dark:text-white leading-tight">
+              </motion.p>
+              <motion.h3 variants={fadeUp} className="mt-3 text-3xl lg:text-5xl font-black text-gray-900 dark:text-white leading-tight">
                 Finally. Meal plans<br />with actual Indian food.
-              </h3>
-              <p className="text-gray-500 dark:text-gray-400 text-lg mt-4 leading-relaxed">
+              </motion.h3>
+              <motion.p variants={fadeUp} className="text-gray-500 dark:text-gray-400 text-lg mt-4 leading-relaxed">
                 Chicken breast and broccoli don&apos;t live in Indian kitchens. GymBro is built around Rajma, Dal, Roti, Sabzi, and what you actually have at home — then hits your protein and calorie targets anyway.
-              </p>
-              <div className="flex flex-col gap-3 mt-8">
+              </motion.p>
+              <motion.div variants={fadeUp} className="flex flex-col gap-3 mt-8">
                 {[
                   '500+ Indian dishes in the database',
                   'Calorie and protein targets set for you',
@@ -286,10 +390,16 @@ export default function LandingPage() {
                     <span className="text-sm text-gray-700 dark:text-gray-300">{pt}</span>
                   </div>
                 ))}
-              </div>
-            </div>
+              </motion.div>
+            </motion.div>
             {/* Visual — second in DOM, goes LEFT on desktop */}
-            <div className="rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#111827] p-6 shadow-sm">
+            <motion.div
+              className="rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#111827] p-6 shadow-sm"
+              initial={{ opacity: 0, x: -40 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              viewport={{ once: true, margin: '-60px' }}
+              transition={{ duration: 0.6, ease: 'easeOut' }}
+            >
               <div className="flex justify-between items-center mb-3">
                 <span className="font-bold text-sm text-gray-900 dark:text-white">Today&apos;s meals</span>
                 <span className="text-xs text-[#7c3aed] font-semibold">2490 kcal</span>
@@ -313,7 +423,7 @@ export default function LandingPage() {
                   <div className="h-full rounded-full bg-[#22c55e]" style={{ width: '73%' }} />
                 </div>
               </div>
-            </div>
+            </motion.div>
           </div>
         </div>
       </section>
@@ -323,17 +433,22 @@ export default function LandingPage() {
         <div className="mx-auto max-w-7xl px-6 md:px-16 lg:px-24 py-20 lg:py-28">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 items-center">
             {/* Text */}
-            <div>
-              <p className="text-xs font-bold tracking-[0.2em] text-[#7c3aed] uppercase">
+            <motion.div
+              initial="hidden"
+              whileInView="visible"
+              viewport={{ once: true, margin: '-60px' }}
+              variants={staggerContainer()}
+            >
+              <motion.p variants={fadeUp} className="text-xs font-bold tracking-[0.2em] text-[#7c3aed] uppercase">
                 Progress
-              </p>
-              <h3 className="mt-3 text-3xl lg:text-5xl font-black text-gray-900 dark:text-white leading-tight">
+              </motion.p>
+              <motion.h3 variants={fadeUp} className="mt-3 text-3xl lg:text-5xl font-black text-gray-900 dark:text-white leading-tight">
                 Your streak.<br />Your proof.
-              </h3>
-              <p className="text-gray-500 dark:text-gray-400 text-lg mt-4 leading-relaxed">
+              </motion.h3>
+              <motion.p variants={fadeUp} className="text-gray-500 dark:text-gray-400 text-lg mt-4 leading-relaxed">
                 No complicated graphs. No data overload. Just a streak that shows you showed up, a weekly score, and a plan that quietly improves in the background.
-              </p>
-              <div className="flex flex-col gap-3 mt-8">
+              </motion.p>
+              <motion.div variants={fadeUp} className="flex flex-col gap-3 mt-8">
                 {[
                   'Daily streak — breaks reset automatically',
                   'Skipped days logged, not punished',
@@ -345,10 +460,16 @@ export default function LandingPage() {
                     <span className="text-sm text-gray-700 dark:text-gray-300">{pt}</span>
                   </div>
                 ))}
-              </div>
-            </div>
+              </motion.div>
+            </motion.div>
             {/* Visual */}
-            <div className="rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#111827] p-6 shadow-sm">
+            <motion.div
+              className="rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#111827] p-6 shadow-sm"
+              initial={{ opacity: 0, x: 40 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              viewport={{ once: true, margin: '-60px' }}
+              transition={{ duration: 0.6, ease: 'easeOut' }}
+            >
               <p className="text-2xl font-black text-gray-900 dark:text-white">🔥 5 day streak</p>
               <p className="text-sm text-gray-400 mt-1">Best: 12 days</p>
               <div className="flex gap-2 flex-wrap mt-6">
@@ -372,7 +493,7 @@ export default function LandingPage() {
                   <div className="h-full rounded-full bg-[#7c3aed]" style={{ width: '41%' }} />
                 </div>
               </div>
-            </div>
+            </motion.div>
           </div>
         </div>
       </section>
@@ -380,15 +501,27 @@ export default function LandingPage() {
       {/* ── HOW IT WORKS ── */}
       <section id="how-it-works" className="transition-colors duration-300 bg-gray-50 dark:bg-[#0d1117]">
         <div className="mx-auto max-w-7xl px-6 md:px-16 lg:px-24 py-20 lg:py-28">
-          <div className="text-center mb-16">
-            <p className="text-xs font-bold tracking-[0.2em] text-[#7c3aed] uppercase mb-4">
+          <motion.div
+            className="text-center mb-16"
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true, margin: '-60px' }}
+            variants={staggerContainer()}
+          >
+            <motion.p variants={fadeUp} className="text-xs font-bold tracking-[0.2em] text-[#7c3aed] uppercase mb-4">
               Getting started
-            </p>
-            <h2 className="text-4xl md:text-5xl font-black text-gray-900 dark:text-white">
+            </motion.p>
+            <motion.h2 variants={fadeUp} className="text-4xl md:text-5xl font-black text-gray-900 dark:text-white">
               Up and running in 5 minutes.
-            </h2>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-12">
+            </motion.h2>
+          </motion.div>
+          <motion.div
+            className="grid grid-cols-1 md:grid-cols-3 gap-12"
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true, margin: '-60px' }}
+            variants={staggerContainer()}
+          >
             {[
               {
                 num: '01',
@@ -406,31 +539,42 @@ export default function LandingPage() {
                 body: 'Every session you log teaches the AI. Week 2 is smarter than week 1. Week 4 is smarter than week 2.',
               },
             ].map(({ num, title, body }) => (
-              <div key={num}>
+              <motion.div key={num} variants={fadeUp}>
                 <p className="text-8xl font-black text-gray-100 dark:text-white/5 leading-none select-none">
                   {num}
                 </p>
                 <h3 className="text-xl font-bold text-gray-900 dark:text-white mt-2">{title}</h3>
                 <p className="text-gray-500 dark:text-gray-400 mt-2 leading-relaxed">{body}</p>
-              </div>
+              </motion.div>
             ))}
-          </div>
+          </motion.div>
         </div>
       </section>
 
       {/* ── PRICING ── */}
       <section id="pricing" className="transition-colors duration-300 bg-white dark:bg-[#080c14]">
         <div className="mx-auto max-w-7xl px-6 md:px-16 lg:px-24 py-20 lg:py-28">
-          <div className="text-center mb-12">
-            <h2 className="text-4xl font-black text-gray-900 dark:text-white">Simple pricing.</h2>
-            <p className="text-gray-500 dark:text-gray-400 mt-3">
+          <motion.div
+            className="text-center mb-12"
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true, margin: '-60px' }}
+            variants={staggerContainer()}
+          >
+            <motion.h2 variants={fadeUp} className="text-4xl font-black text-gray-900 dark:text-white">Simple pricing.</motion.h2>
+            <motion.p variants={fadeUp} className="text-gray-500 dark:text-gray-400 mt-3">
               Start free. Upgrade when you&apos;re ready.
-            </p>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto">
-
+            </motion.p>
+          </motion.div>
+          <motion.div
+            className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto"
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true, margin: '-60px' }}
+            variants={staggerContainer()}
+          >
             {/* Free tier */}
-            <div className="rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#111827] p-8">
+            <motion.div variants={fadeUp} className="rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#111827] p-8">
               <p className="text-2xl font-black text-gray-900 dark:text-white">Free</p>
               <p className="text-4xl font-black text-gray-900 dark:text-white mt-2">
                 ₹0{' '}
@@ -455,10 +599,10 @@ export default function LandingPage() {
               >
                 Get started free
               </Link>
-            </div>
+            </motion.div>
 
-            {/* Premium tier — bg-violet-600 so the CSS exception keeps text-white visible in light mode */}
-            <div className="rounded-2xl border-2 border-[#7c3aed] bg-violet-600 text-white p-8 relative">
+            {/* Premium tier */}
+            <motion.div variants={fadeUp} className="rounded-2xl border-2 border-[#7c3aed] bg-violet-600 text-white p-8 relative">
               <div className="flex items-center gap-2 flex-wrap">
                 <p className="text-2xl font-black text-white">Premium</p>
                 <span className="bg-white/20 text-white text-xs rounded-full px-3 py-1">Most popular</span>
@@ -487,34 +631,43 @@ export default function LandingPage() {
               >
                 Start for ₹49
               </Link>
-            </div>
-          </div>
+            </motion.div>
+          </motion.div>
         </div>
       </section>
 
       {/* ── FINAL CTA ── */}
       <section className="landing-dark transition-colors duration-300 bg-[#080c14] text-center">
         <div className="mx-auto max-w-7xl px-6 md:px-16 lg:px-24 py-20 lg:py-28">
-          <h2 className="text-5xl md:text-6xl font-black text-white leading-tight max-w-2xl mx-auto">
-            Show up once.<br />See why it works.
-          </h2>
-          <p className="text-gray-400 text-lg mt-4">
-            Free to start. No gym required for day one.
-          </p>
-          <Link
-            href="/login"
-            className="inline-block mt-10 bg-[#7c3aed] hover:bg-[#6d28d9] text-white rounded-full px-12 py-5 text-lg font-semibold shadow-lg shadow-purple-500/30 transition-colors"
+          <motion.div
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true, margin: '-60px' }}
+            variants={staggerContainer()}
           >
-            Create your free account
-          </Link>
-          <div className="mt-4">
-            <Link
-              href="/login"
-              className="text-sm text-gray-600 hover:text-gray-400 underline transition-colors"
-            >
-              Already have an account? Sign in →
-            </Link>
-          </div>
+            <motion.h2 variants={fadeUp} className="text-5xl md:text-6xl font-black text-white leading-tight max-w-2xl mx-auto">
+              Show up once.<br />See why it works.
+            </motion.h2>
+            <motion.p variants={fadeUp} className="text-gray-400 text-lg mt-4">
+              Free to start. No gym required for day one.
+            </motion.p>
+            <motion.div variants={fadeUp}>
+              <Link
+                href="/login"
+                className="inline-block mt-10 bg-[#7c3aed] hover:bg-[#6d28d9] text-white rounded-full px-12 py-5 text-lg font-semibold shadow-lg shadow-purple-500/30 transition-colors"
+              >
+                Create your free account
+              </Link>
+            </motion.div>
+            <motion.div variants={fadeUp} className="mt-4">
+              <Link
+                href="/login"
+                className="text-sm text-gray-600 hover:text-gray-400 underline transition-colors"
+              >
+                Already have an account? Sign in →
+              </Link>
+            </motion.div>
+          </motion.div>
         </div>
       </section>
 

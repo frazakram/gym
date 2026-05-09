@@ -43,7 +43,7 @@ export const DietView: React.FC<DietViewProps> = ({ diet, onGenerateDiet, genera
               Generate a personalized meal plan tailored to your goal, diet type (e.g., Keto, Vegan), and calorie needs.
             </p>
             <AnimatedButton onClick={onGenerateDiet} disabled={generating} loading={generating} variant="primary">
-              Generate diet plan
+              Generate Nutrition Plan
             </AnimatedButton>
           </GlassCard>
         )}
@@ -68,8 +68,8 @@ export const DietView: React.FC<DietViewProps> = ({ diet, onGenerateDiet, genera
               disabled={generating}
               className="text-xs px-3 py-1.5 rounded-full btn-secondary disabled:opacity-50 transition ui-focus-ring inline-flex items-center gap-1"
             >
-              <RefreshCw className="w-3 h-3" />
-              {generating ? 'Refreshing…' : 'Regenerate'}
+              <RefreshCw className={`w-3 h-3 ${generating ? 'animate-spin' : ''}`} />
+              {generating ? 'Generating…' : 'Regenerate'}
             </button>
           }
         />

@@ -49,16 +49,35 @@ export async function POST(request: NextRequest) {
 
     await initializeDatabase();
 
-    const { images, api_key } = await request.json();
+    const body = await request.json();
+    const { images, api_key, imageUrl } = body;
 
-    if (!images || !Array.isArray(images) || images.length === 0) {
+    // Support analyzing from a URL (used by gym selection flow)
+    let resolvedImages: string[] = [];
+
+    if (typeof imageUrl === 'string' && imageUrl.trim()) {
+      try {
+        const imgRes = await fetch(imageUrl, { signal: AbortSignal.timeout(15000) });
+        if (!imgRes.ok) {
+          return withCors(NextResponse.json({ error: 'Failed to fetch image from URL' }, { status: 400 }));
+        }
+        const buffer = Buffer.from(await imgRes.arrayBuffer());
+        const contentType = imgRes.headers.get('content-type') || 'image/jpeg';
+        const base64 = `data:${contentType};base64,${buffer.toString('base64')}`;
+        resolvedImages = [base64];
+      } catch {
+        return withCors(NextResponse.json({ error: 'Could not download image from URL' }, { status: 400 }));
+      }
+    } else if (images && Array.isArray(images) && images.length > 0) {
+      resolvedImages = images;
+    } else {
       return withCors(NextResponse.json(
         { error: 'No images provided' },
         { status: 400 }
       ));
     }
 
-    if (images.length > 6) {
+    if (resolvedImages.length > 6) {
       return withCors(NextResponse.json(
         { error: 'Maximum 6 images allowed' },
         { status: 400 }
@@ -83,7 +102,7 @@ export async function POST(request: NextRequest) {
             type: 'text',
             text: EQUIPMENT_DETECTION_PROMPT
           },
-          ...images.map((base64: string) => ({
+          ...resolvedImages.map((base64: string) => ({
             type: 'image_url',
             image_url: {
               url: base64.startsWith('data:') ? base64 : `data:image/jpeg;base64,${base64}`,

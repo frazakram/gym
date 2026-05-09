@@ -430,6 +430,13 @@ export async function initializeDatabase() {
       // Preferred rest days (user-configurable, max 2)
       await client.query(`ALTER TABLE profiles ADD COLUMN IF NOT EXISTS preferred_rest_days TEXT[];`);
 
+      // Selected gym columns (gym selection + equipment auto-detection)
+      await client.query(`ALTER TABLE profiles ADD COLUMN IF NOT EXISTS selected_gym_name TEXT;`);
+      await client.query(`ALTER TABLE profiles ADD COLUMN IF NOT EXISTS selected_gym_place_id TEXT;`);
+      await client.query(`ALTER TABLE profiles ADD COLUMN IF NOT EXISTS selected_gym_image_url TEXT;`);
+      await client.query(`ALTER TABLE profiles ADD COLUMN IF NOT EXISTS selected_gym_equipment JSONB;`);
+      await client.query(`ALTER TABLE profiles ADD COLUMN IF NOT EXISTS selected_gym_location TEXT;`);
+
       // ============= XP SYSTEM =============
       await client.query(`
         CREATE TABLE IF NOT EXISTS user_xp (
@@ -940,6 +947,69 @@ export async function hasBodyPhotos(userId: number): Promise<boolean> {
     return (res.rowCount ?? 0) > 0;
   } catch {
     return false;
+  }
+}
+
+// ============= GYM SELECTION =============
+
+export interface UserGym {
+  gymName: string;
+  placeId?: string;
+  imageUrl?: string;
+  equipment: string[];
+  location?: string;
+}
+
+export async function saveUserGym(userId: number, gym: UserGym): Promise<void> {
+  try {
+    await pool.query(
+      `UPDATE profiles
+         SET selected_gym_name = $1,
+             selected_gym_place_id = $2,
+             selected_gym_image_url = $3,
+             selected_gym_equipment = $4,
+             selected_gym_location = $5
+       WHERE user_id = $6`,
+      [
+        gym.gymName,
+        gym.placeId ?? null,
+        gym.imageUrl ?? null,
+        JSON.stringify(gym.equipment),
+        gym.location ?? null,
+        userId,
+      ],
+    );
+  } catch (error) {
+    console.error('saveUserGym failed:', error);
+    throw error;
+  }
+}
+
+export async function getUserGym(userId: number): Promise<UserGym | null> {
+  try {
+    const res = await pool.query<{
+      selected_gym_name: string | null;
+      selected_gym_place_id: string | null;
+      selected_gym_image_url: string | null;
+      selected_gym_equipment: string[] | null;
+      selected_gym_location: string | null;
+    }>(
+      `SELECT selected_gym_name, selected_gym_place_id, selected_gym_image_url,
+              selected_gym_equipment, selected_gym_location
+       FROM profiles WHERE user_id = $1`,
+      [userId],
+    );
+    const row = res.rows[0];
+    if (!row?.selected_gym_name) return null;
+    return {
+      gymName: row.selected_gym_name,
+      placeId: row.selected_gym_place_id ?? undefined,
+      imageUrl: row.selected_gym_image_url ?? undefined,
+      equipment: Array.isArray(row.selected_gym_equipment) ? row.selected_gym_equipment : [],
+      location: row.selected_gym_location ?? undefined,
+    };
+  } catch {
+    return null;
   }
 }
 

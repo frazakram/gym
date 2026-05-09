@@ -40,12 +40,20 @@ export default function RootLayout({
 }: {
   children: React.ReactNode
 }) {
+  const isLightModeLocked = process.env.LIGHT_MODE_LOCK === 'true'
+  const themeScript = isLightModeLocked
+    ? `(function(){document.documentElement.classList.add('dark');})();`
+    : `(function(){var t=localStorage.getItem('theme');if(t!=='light'){document.documentElement.classList.add('dark');}})();`
+
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
-        <script dangerouslySetInnerHTML={{ __html: `(function(){var t=localStorage.getItem('theme');if(t!=='light'){document.documentElement.classList.add('dark');}})();` }} />
+        <script dangerouslySetInnerHTML={{ __html: themeScript }} />
       </head>
-      <body className={`min-h-screen text-gray-900 dark:text-slate-100 ${inter.variable} ${jakarta.variable}`}>
+      <body
+        className={`min-h-screen text-gray-900 dark:text-slate-100 ${inter.variable} ${jakarta.variable}`}
+        data-light-mode-locked={isLightModeLocked ? 'true' : undefined}
+      >
         <ServiceWorkerRegistration />
         <div className="app-shell" style={{ overflow: 'visible' }}>
           <div className="app-bg" />

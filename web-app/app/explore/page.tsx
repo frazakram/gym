@@ -3,15 +3,28 @@
 import Link from 'next/link'
 import { useEffect, useState } from 'react'
 import { motion } from 'framer-motion'
-import { Sun, Moon } from 'lucide-react'
+import { Sun, Moon, Lock } from 'lucide-react'
+import { toast } from 'sonner'
 import { BrandLogo } from '@/components/BrandLogo'
 
 function ThemeToggle() {
   const [dark, setDark] = useState(false)
+  const [locked, setLocked] = useState(false)
   useEffect(() => {
+    const isLocked = document.body.dataset.lightModeLocked === 'true'
+    setLocked(isLocked)
+    if (isLocked) {
+      document.documentElement.classList.add('dark')
+      setDark(true)
+      return
+    }
     setDark(document.documentElement.classList.contains('dark'))
   }, [])
   function toggle() {
+    if (locked) {
+      toast('🔒 Dark mode only — light mode coming soon!')
+      return
+    }
     const isDark = document.documentElement.classList.toggle('dark')
     localStorage.setItem('theme', isDark ? 'dark' : 'light')
     setDark(isDark)
@@ -20,9 +33,10 @@ function ThemeToggle() {
     <button
       onClick={toggle}
       aria-label="Toggle theme"
-      className="absolute top-4 right-4 p-2 rounded-lg text-gray-500 hover:bg-gray-100 dark:text-white/50 dark:hover:bg-white/[0.06] transition-colors"
+      className={`absolute top-4 right-4 p-2 rounded-lg text-gray-500 hover:bg-gray-100 dark:text-white/50 dark:hover:bg-white/[0.06] transition-colors flex items-center gap-1 ${locked ? 'opacity-50 cursor-not-allowed' : ''}`}
     >
       {dark ? <Sun size={18} /> : <Moon size={18} />}
+      {locked && <Lock size={12} aria-hidden="true" />}
     </button>
   )
 }

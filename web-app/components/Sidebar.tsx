@@ -2,7 +2,8 @@
 
 import { useEffect, useMemo, useRef, useState, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { X, Archive, ArchiveRestore, Trash2, Loader2, Key, ChevronDown, Eye, EyeOff, Check } from 'lucide-react'
+import { X, Archive, ArchiveRestore, Trash2, Loader2, Key, ChevronDown, Eye, EyeOff, Check, Lock } from 'lucide-react'
+import { toast } from 'sonner'
 
 interface RoutineHistoryItem {
   id: number
@@ -37,19 +38,31 @@ interface SidebarProps {
 
 function ThemeToggleButton() {
   const [dark, setDark] = useState(false)
+  const [locked, setLocked] = useState(false)
   useEffect(() => {
+    const isLocked = document.body.dataset.lightModeLocked === 'true'
+    setLocked(isLocked)
+    if (isLocked) {
+      document.documentElement.classList.add('dark')
+      setDark(true)
+      return
+    }
     setDark(document.documentElement.classList.contains('dark'))
   }, [])
   const toggle = useCallback(() => {
+    if (locked) {
+      toast('🔒 Dark mode only — light mode coming soon!')
+      return
+    }
     const isDark = document.documentElement.classList.toggle('dark')
     localStorage.setItem('theme', isDark ? 'dark' : 'light')
     setDark(isDark)
-  }, [])
+  }, [locked])
   return (
     <button
       onClick={toggle}
       aria-label="Toggle theme"
-      className="p-1.5 rounded-lg text-gray-500 dark:text-slate-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-white/10 transition-colors"
+      className={`p-1.5 rounded-lg text-gray-500 dark:text-slate-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-white/10 transition-colors flex items-center gap-1 ${locked ? 'opacity-50 cursor-not-allowed' : ''}`}
     >
       {dark ? (
         <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -60,6 +73,7 @@ function ThemeToggleButton() {
           <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
         </svg>
       )}
+      {locked && <Lock size={11} aria-hidden="true" />}
     </button>
   )
 }

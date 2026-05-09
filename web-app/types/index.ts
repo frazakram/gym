@@ -42,6 +42,12 @@ export interface Profile {
     // Nationality / Region (for community auto-assignment)
     nationality?: string;  // ISO 3166-1 alpha-2 country code (e.g. 'IN', 'US')
     region?: 'APAC' | 'EMEA' | 'NA' | 'LATAM';
+    // Selected gym (gym selection + equipment auto-detection)
+    selected_gym_name?: string;
+    selected_gym_place_id?: string;
+    selected_gym_image_url?: string;
+    selected_gym_equipment?: string[];
+    selected_gym_location?: string;
 }
 
 export interface GymPhoto {

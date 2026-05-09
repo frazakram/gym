@@ -240,6 +240,22 @@ export const AdminBookingStatusSchema = z.object({
   status: z.enum(["pending", "confirmed", "cancelled", "completed"]),
 });
 
+// ============= GYM SEARCH & SAVE SCHEMAS =============
+
+export const GymSearchSchema = z.object({
+  q: z.string().min(1, "Search query is required").max(200),
+  lat: z.coerce.number().min(-90).max(90).optional(),
+  lng: z.coerce.number().min(-180).max(180).optional(),
+});
+
+export const GymSaveSchema = z.object({
+  gymName: z.string().min(1).max(200),
+  placeId: z.string().max(200).optional(),
+  imageUrl: z.string().max(2000).optional(),
+  equipment: z.array(z.string().max(100)).max(100).default([]),
+  location: z.string().max(200).optional(),
+});
+
 // ============= GYM/BODY ANALYSIS SCHEMAS =============
 
 export const GymAnalyzeSchema = z.object({

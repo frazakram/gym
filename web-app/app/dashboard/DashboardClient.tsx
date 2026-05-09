@@ -55,6 +55,7 @@ export default function DashboardPage() {
   const router = useRouter()
   const [activeView, setActiveView] = useState<'home' | 'routine' | 'workout' | 'profile' | 'diet' | 'analytics' | 'coach' | 'measurements' | 'communities'>('home')
   const [isSidebarOpen, setIsSidebarOpen] = useState(false)
+  const [gymSheetOpen, setGymSheetOpen] = useState(false)
   const [historyRoutines, setHistoryRoutines] = useState<any[]>([])
   const [loadingHistory, setLoadingHistory] = useState(false)
   const [viewingHistory, setViewingHistory] = useState(false) // True if viewing a past routine
@@ -1498,6 +1499,7 @@ export default function DashboardPage() {
                 routineIsStale={routineIsStale}
                 weeksElapsed={weeksElapsed}
                 onStartNewWeek={handleStartNewWeek}
+                onOpenGymSheet={() => setGymSheetOpen(true)}
               />
             )}
 
@@ -1623,7 +1625,7 @@ export default function DashboardPage() {
       </div>
 
       {/* Bottom Navigation — hide when sidebar is open */}
-      {!isSidebarOpen && <BottomNav activeView={activeView} onViewChange={handleViewChange} />}
+      {!isSidebarOpen && <BottomNav activeView={activeView} onViewChange={handleViewChange} gymSheetOpen={gymSheetOpen} onGymSheetChange={setGymSheetOpen} />}
 
       {/* Confirm Modal */}
       <ConfirmModal

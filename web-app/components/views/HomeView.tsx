@@ -13,7 +13,7 @@ import { UserAvatar } from '../ui/UserAvatar'
 import { StreakBanner } from '../ui/StreakBanner'
 import { RestDayCard } from '../ui/RestDayCard'
 import { QuoteLoader } from '../ui/QuoteLoader'
-import { ArrowRight, Timer, Percent, MessageCircle, ChevronRight, Flame, Drumstick, CalendarPlus, MapPin, TrendingUp, ChevronDown } from 'lucide-react'
+import { ArrowRight, Timer, Percent, MessageCircle, ChevronRight, Flame, Drumstick, CalendarPlus, MapPin, TrendingUp, ChevronDown, Dumbbell } from 'lucide-react'
 import { useLocation } from '@/hooks/useLocation'
 import { WeeklyBreakdownSheet, type DayBreakdown } from '../ui/WeeklyBreakdownSheet'
 
@@ -45,6 +45,7 @@ interface HomeViewProps {
   routineIsStale?: boolean
   weeksElapsed?: number
   onStartNewWeek?: () => void
+  onOpenGymSheet?: () => void
 }
 
 export function HomeView({
@@ -65,6 +66,7 @@ export function HomeView({
   routineIsStale = false,
   weeksElapsed = 0,
   onStartNewWeek,
+  onOpenGymSheet,
 }: HomeViewProps) {
   const [manageOpen, setManageOpen] = useState(false)
   const [showBreakdown, setShowBreakdown] = useState(false)
@@ -164,7 +166,7 @@ export function HomeView({
               {profile?.goal || 'General fitness'} &bull; {profile?.level || 'Beginner'}
             </p>
             {detectedLocation?.source !== 'denied' && (
-              <div className="mt-1.5">
+              <div className="mt-1.5 flex items-center gap-1.5 flex-wrap">
                 {locationLoading ? (
                   <div className="inline-flex h-5 w-24 animate-pulse rounded-full bg-white/5 border border-white/10" />
                 ) : detectedCity ? (
@@ -177,6 +179,18 @@ export function HomeView({
                     {detectedCity}
                   </span>
                 ) : null}
+                {profile?.selected_gym_name && (
+                  <button
+                    type="button"
+                    onClick={onOpenGymSheet}
+                    className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-medium
+                               bg-white/5 text-white/70 border border-white/10
+                               hover:bg-white/8 transition-colors"
+                  >
+                    <Dumbbell className="w-3 h-3 text-primary-light" />
+                    {profile.selected_gym_name}
+                  </button>
+                )}
               </div>
             )}
           </div>

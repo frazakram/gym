@@ -4,15 +4,18 @@ import { useEffect, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   Home, Calendar, ClipboardCheck, User, Plus,
-  Utensils, MessageCircle, Ruler, Users, Zap,
+  Utensils, MessageCircle, Ruler, Users, Zap, MapPin,
 } from 'lucide-react'
 import { csrfFetch } from '@/lib/useCsrf'
+import { GymNearbySheet } from '@/components/ui/GymNearbySheet'
 
 type View = 'home' | 'routine' | 'workout' | 'profile' | 'diet' | 'analytics' | 'coach' | 'measurements' | 'communities'
 
 interface BottomNavProps {
   activeView: View
   onViewChange: (view: View) => void
+  gymSheetOpen?: boolean
+  onGymSheetChange?: (open: boolean) => void
 }
 
 type NI = { id: 'home' | 'routine' | 'workout' | 'profile'; label: string; icon: React.ComponentType<{ className?: string }> }
@@ -24,8 +27,11 @@ const MENU_ITEMS: { id: View; label: string; icon: React.ComponentType<{ classNa
   { id: 'coach',        label: 'Coach',     icon: MessageCircle },
 ]
 
-export function BottomNav({ activeView, onViewChange }: BottomNavProps) {
+export function BottomNav({ activeView, onViewChange, gymSheetOpen, onGymSheetChange }: BottomNavProps) {
   const [open, setOpen] = useState(false)
+  const [localGymSheet, setLocalGymSheet] = useState(false)
+  const showGymSheet = gymSheetOpen ?? localGymSheet
+  const setShowGymSheet = onGymSheetChange ?? setLocalGymSheet
   const pick = (id: View) => { onViewChange(id); setOpen(false) }
 
   const [totalXp, setTotalXp] = useState<number | null>(null)
@@ -105,7 +111,7 @@ export function BottomNav({ activeView, onViewChange }: BottomNavProps) {
           >
             {/* Bar */}
             <div
-              className="flex items-stretch justify-around rounded-2xl border border-white/[0.07] overflow-hidden"
+              className="rounded-2xl border border-white/[0.07] overflow-hidden"
               style={{
                 background: 'rgba(8, 10, 20, 0.94)',
                 backdropFilter: 'blur(28px)',
@@ -114,6 +120,7 @@ export function BottomNav({ activeView, onViewChange }: BottomNavProps) {
                   '0 0 0 1px rgba(139,92,246,0.12), 0 -4px 32px rgba(0,0,0,0.4), 0 16px 48px rgba(0,0,0,0.5)',
               }}
             >
+            <div className="flex items-stretch justify-around">
               {MENU_ITEMS.map((item, i) => {
                 const Icon = item.icon
                 const isActive = activeView === item.id
@@ -178,6 +185,25 @@ export function BottomNav({ activeView, onViewChange }: BottomNavProps) {
                   </motion.button>
                 )
               })}
+            </div>
+
+              {/* Find gym nearby */}
+              <div className="border-t border-white/[0.06]">
+                <motion.button
+                  onClick={() => { setOpen(false); setShowGymSheet(true) }}
+                  initial={{ opacity: 0, y: 6 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: MENU_ITEMS.length * 0.045, duration: 0.22, ease: 'easeOut' }}
+                  whileHover={{ backgroundColor: 'rgba(124,58,237,0.1)' }}
+                  whileTap={{ scale: 0.96 }}
+                  className="w-full flex items-center justify-center gap-2 py-3 px-4 transition-colors duration-150"
+                >
+                  <MapPin className="w-4 h-4" style={{ color: 'rgba(148,163,184,0.8)' }} />
+                  <span className="text-[11px] font-medium tracking-wide" style={{ color: 'rgba(148,163,184,0.8)' }}>
+                    Find gym nearby
+                  </span>
+                </motion.button>
+              </div>
             </div>
 
             {/* Connector taper to FAB */}
@@ -255,6 +281,9 @@ export function BottomNav({ activeView, onViewChange }: BottomNavProps) {
           </div>
         </div>
       </nav>
+
+      {/* Gym nearby sheet */}
+      <GymNearbySheet open={showGymSheet} onClose={() => setShowGymSheet(false)} />
     </>
   )
 }
