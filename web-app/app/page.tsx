@@ -2,16 +2,16 @@
 
 import Link from 'next/link'
 import { ThemeToggle } from '@/components/ThemeToggle'
-import { motion, useInView } from 'framer-motion'
+import { motion, useInView, type Variants } from 'framer-motion'
 import { useRef, useState, useEffect } from 'react'
 
 // ── Shared animation variants ──────────────────────────────────
-const fadeUp = {
+const fadeUp: Variants = {
   hidden: { opacity: 0, y: 28 },
   visible: { opacity: 1, y: 0, transition: { duration: 0.55, ease: 'easeOut' } },
 }
 
-function staggerContainer(delay = 0) {
+function staggerContainer(delay = 0): Variants {
   return {
     hidden: {},
     visible: { transition: { staggerChildren: 0.12, delayChildren: delay } },
