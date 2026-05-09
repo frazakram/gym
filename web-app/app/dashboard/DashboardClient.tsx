@@ -1625,7 +1625,7 @@ export default function DashboardPage() {
       </div>
 
       {/* Bottom Navigation — hide when sidebar is open */}
-      {!isSidebarOpen && <BottomNav activeView={activeView} onViewChange={handleViewChange} gymSheetOpen={gymSheetOpen} onGymSheetChange={setGymSheetOpen} />}
+      {!isSidebarOpen && <BottomNav activeView={activeView} onViewChange={handleViewChange} gymSheetOpen={gymSheetOpen} onGymSheetChange={setGymSheetOpen} onGymSaved={fetchProfile} />}
 
       {/* Confirm Modal */}
       <ConfirmModal

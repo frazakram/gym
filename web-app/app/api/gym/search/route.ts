@@ -18,23 +18,23 @@ const MOCK_GYMS: GymSearchResult[] = [
   {
     placeId: "mock_1",
     name: "Gold's Gym",
-    address: "123 Fitness Road, Mumbai",
+    address: "Nearby — add GOOGLE_PLACES_API_KEY for real results",
     imageUrl: null,
-    rating: 4.5,
+    rating: null,
   },
   {
     placeId: "mock_2",
     name: "Anytime Fitness",
-    address: "456 Health Avenue, Mumbai",
+    address: "Nearby — add GOOGLE_PLACES_API_KEY for real results",
     imageUrl: null,
-    rating: 4.2,
+    rating: null,
   },
   {
     placeId: "mock_3",
     name: "CrossFit Box",
-    address: "789 Strength Lane, Mumbai",
+    address: "Nearby — add GOOGLE_PLACES_API_KEY for real results",
     imageUrl: null,
-    rating: 4.7,
+    rating: null,
   },
 ];
 

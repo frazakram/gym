@@ -16,6 +16,7 @@ interface BottomNavProps {
   onViewChange: (view: View) => void
   gymSheetOpen?: boolean
   onGymSheetChange?: (open: boolean) => void
+  onGymSaved?: () => void
 }
 
 type NI = { id: 'home' | 'routine' | 'workout' | 'profile'; label: string; icon: React.ComponentType<{ className?: string }> }
@@ -27,7 +28,7 @@ const MENU_ITEMS: { id: View; label: string; icon: React.ComponentType<{ classNa
   { id: 'coach',        label: 'Coach',     icon: MessageCircle },
 ]
 
-export function BottomNav({ activeView, onViewChange, gymSheetOpen, onGymSheetChange }: BottomNavProps) {
+export function BottomNav({ activeView, onViewChange, gymSheetOpen, onGymSheetChange, onGymSaved }: BottomNavProps) {
   const [open, setOpen] = useState(false)
   const [localGymSheet, setLocalGymSheet] = useState(false)
   const showGymSheet = gymSheetOpen ?? localGymSheet
@@ -283,7 +284,7 @@ export function BottomNav({ activeView, onViewChange, gymSheetOpen, onGymSheetCh
       </nav>
 
       {/* Gym nearby sheet */}
-      <GymNearbySheet open={showGymSheet} onClose={() => setShowGymSheet(false)} />
+      <GymNearbySheet open={showGymSheet} onClose={() => setShowGymSheet(false)} onGymSaved={onGymSaved} />
     </>
   )
 }
