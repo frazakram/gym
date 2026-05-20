@@ -1,3 +1,5 @@
+export const runtime = "nodejs";
+
 import { withCors } from "@/lib/corsMiddleware";
 import { NextRequest, NextResponse } from 'next/server';
 import { generateRoutine } from '@/lib/ai-agent';

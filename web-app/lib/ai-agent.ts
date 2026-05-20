@@ -1,9 +1,15 @@
 import { ChatAnthropic } from "@langchain/anthropic";
 import { ChatOpenAI } from "@langchain/openai";
+import { LangChainTracer } from "@langchain/core/tracers/tracer_langchain";
 import { z } from "zod";
 import { RoutineGenerationInput, WeeklyRoutine } from "@/types";
 import { postProcessRoutine } from "@/lib/routine-postprocess";
 import { wrapUntrustedBlock } from "@/lib/prompt-safety";
+
+function getLangSmithCallbacks() {
+  if (!process.env.LANGSMITH_API_KEY || process.env.LANGSMITH_TRACING_V2 !== "true") return undefined;
+  return [new LangChainTracer({ projectName: process.env.LANGSMITH_PROJECT ?? "gym-bro-dev" })];
+}
 
 const ExerciseSchema = z.object({
   name: z.string().describe("Name of the exercise"),
@@ -276,7 +282,7 @@ ${input.notes && input.notes.trim()
     ];
 
     // @ts-ignore - LangChain types might be strict about message content structure but this is valid for Anthropic
-    const response = await structuredModel.invoke(messages);
+    const response = await structuredModel.invoke(messages, { callbacks: getLangSmithCallbacks() });
     return await postProcessRoutine(response as WeeklyRoutine);
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : String(err);
@@ -298,7 +304,7 @@ ${input.notes && input.notes.trim()
     const fallbackResponse = await fallback.invoke([
       { role: "system", content: systemPromptContent },
       { role: "user", content: userContext }
-    ]);
+    ], { callbacks: getLangSmithCallbacks() });
     return await postProcessRoutine(fallbackResponse as WeeklyRoutine);
   }
 

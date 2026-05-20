@@ -11,6 +11,11 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - After making code changes, **DO NOT** run build verification, `npm run build`, or `npm run lint`. The user verifies manually.
 - When I say "new feature", always: read this file first, follow Critical Code Patterns, check Known Bugs, use `csrfFetch` (never plain `fetch`).
 
+## CI / Repo Layout Gotchas
+
+- **Git root is the parent `gym/` directory, not `web-app/`.** Commits/PRs affect the whole monorepo (including legacy `.py` files and `gym-ui/`). The primary working directory is `web-app/`.
+- **CI enforces what you don't run locally.** `.github/workflows/ci.yml` runs `npm run lint` **and** `npx tsc --noEmit` (no build) on every push/PR to `main` and `dev`. Even though the workflow preference says don't verify locally, code must still be lint-clean and type-clean or CI fails — write accordingly (note recent commits fixing Framer Motion `Variants` type errors that broke CI).
+
 ## Commands
 
 All commands run from `web-app/`:

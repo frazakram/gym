@@ -1,8 +1,14 @@
 import { ChatAnthropic } from "@langchain/anthropic";
 import { ChatOpenAI } from "@langchain/openai";
+import { LangChainTracer } from "@langchain/core/tracers/tracer_langchain";
 import { z } from "zod";
 import { Profile, WeeklyDiet, WeeklyRoutine } from "@/types";
 import { wrapUntrustedBlock } from "@/lib/prompt-safety";
+
+function getLangSmithCallbacks() {
+  if (!process.env.LANGSMITH_API_KEY || process.env.LANGSMITH_TRACING_V2 !== "true") return undefined;
+  return [new LangChainTracer({ projectName: process.env.LANGSMITH_PROJECT ?? "gym-bro-dev" })];
+}
 
 const MealSchema = z.object({
   name: z.string().describe("Name of the meal (e.g., Breakfast, Snack 1)"),
@@ -200,7 +206,7 @@ ${proteinDeduction > 0 ? `    - **CRITICAL**: You MUST include a "Protein Shake"
      const response = await structuredModel.invoke([
          { role: "system", content: systemPrompt },
          { role: "user", content: userContext }
-     ]);
+     ], { callbacks: getLangSmithCallbacks() });
      return response as WeeklyDiet;
   } catch (error) {
       console.error("Diet generation failed:", error);
