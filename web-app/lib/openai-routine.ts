@@ -433,21 +433,28 @@ export async function generateRoutineOpenAI(
 
       if (langsmith && runId) {
         const usage = data?.usage;
+        const usageMetadata = usage
+          ? {
+              input_tokens: usage.prompt_tokens ?? 0,
+              output_tokens: usage.completion_tokens ?? 0,
+              total_tokens: usage.total_tokens ?? 0,
+            }
+          : undefined;
         await langsmith.updateRun(runId, {
           outputs: {
-            generations: [{ text: content, message: { role: "assistant", content } }],
-            llm_output: { token_usage: usage, model_name: model },
-          },
-          extra: {
-            metadata: {
-              usage_metadata: usage
-                ? {
-                    input_tokens: usage.prompt_tokens,
-                    output_tokens: usage.completion_tokens,
-                    total_tokens: usage.total_tokens,
-                  }
-                : undefined,
-            },
+            generations: [
+              {
+                text: content,
+                message: {
+                  role: "assistant",
+                  content,
+                  usage_metadata: usageMetadata,
+                },
+                generationInfo: { finish_reason: data?.choices?.[0]?.finish_reason },
+              },
+            ],
+            llm_output: { tokenUsage: usage, model_name: model },
+            usage_metadata: usageMetadata,
           },
           end_time: Date.now(),
         }).catch(() => {});
