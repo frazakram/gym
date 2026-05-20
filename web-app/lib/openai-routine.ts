@@ -387,7 +387,16 @@ export async function generateRoutineOpenAI(
         id: runId,
         name: `generateRoutineOpenAI:${model}`,
         run_type: "llm",
-        inputs: { model, prompt: promptContent },
+        inputs: { messages: [{ role: "user", content: promptContent }] },
+        extra: {
+          invocation_params: { model, temperature: 0.7 },
+          metadata: {
+            ls_provider: "openai",
+            ls_model_name: model,
+            ls_model_type: "chat",
+            ls_temperature: 0.7,
+          },
+        },
         project_name: project,
         start_time: startTime,
       }).catch(() => {});
@@ -423,8 +432,23 @@ export async function generateRoutineOpenAI(
       const result = await postProcessRoutine(validated as WeeklyRoutine);
 
       if (langsmith && runId) {
+        const usage = data?.usage;
         await langsmith.updateRun(runId, {
-          outputs: { response: content, usage: data?.usage },
+          outputs: {
+            generations: [{ text: content, message: { role: "assistant", content } }],
+            llm_output: { token_usage: usage, model_name: model },
+          },
+          extra: {
+            metadata: {
+              usage_metadata: usage
+                ? {
+                    input_tokens: usage.prompt_tokens,
+                    output_tokens: usage.completion_tokens,
+                    total_tokens: usage.total_tokens,
+                  }
+                : undefined,
+            },
+          },
           end_time: Date.now(),
         }).catch(() => {});
       }
