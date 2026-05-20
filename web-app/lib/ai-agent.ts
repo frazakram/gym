@@ -1,6 +1,7 @@
 import { ChatAnthropic } from "@langchain/anthropic";
 import { ChatOpenAI } from "@langchain/openai";
 import { LangChainTracer } from "@langchain/core/tracers/tracer_langchain";
+import { awaitAllCallbacks } from "@langchain/core/callbacks/promises";
 import { z } from "zod";
 import { RoutineGenerationInput, WeeklyRoutine } from "@/types";
 import { postProcessRoutine } from "@/lib/routine-postprocess";
@@ -283,6 +284,7 @@ ${input.notes && input.notes.trim()
 
     // @ts-ignore - LangChain types might be strict about message content structure but this is valid for Anthropic
     const response = await structuredModel.invoke(messages, { callbacks: getLangSmithCallbacks() });
+    await awaitAllCallbacks();
     return await postProcessRoutine(response as WeeklyRoutine);
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : String(err);
@@ -305,6 +307,7 @@ ${input.notes && input.notes.trim()
       { role: "system", content: systemPromptContent },
       { role: "user", content: userContext }
     ], { callbacks: getLangSmithCallbacks() });
+    await awaitAllCallbacks();
     return await postProcessRoutine(fallbackResponse as WeeklyRoutine);
   }
 

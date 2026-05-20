@@ -1,6 +1,7 @@
 import { ChatAnthropic } from "@langchain/anthropic";
 import { ChatOpenAI } from "@langchain/openai";
 import { LangChainTracer } from "@langchain/core/tracers/tracer_langchain";
+import { awaitAllCallbacks } from "@langchain/core/callbacks/promises";
 import { z } from "zod";
 import { Profile, WeeklyDiet, WeeklyRoutine } from "@/types";
 import { wrapUntrustedBlock } from "@/lib/prompt-safety";
@@ -207,6 +208,7 @@ ${proteinDeduction > 0 ? `    - **CRITICAL**: You MUST include a "Protein Shake"
          { role: "system", content: systemPrompt },
          { role: "user", content: userContext }
      ], { callbacks: getLangSmithCallbacks() });
+     await awaitAllCallbacks();
      return response as WeeklyDiet;
   } catch (error) {
       console.error("Diet generation failed:", error);
