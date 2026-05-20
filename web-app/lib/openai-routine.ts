@@ -1,7 +1,13 @@
 import { z } from "zod";
+import { Client } from "langsmith";
 import type { RoutineGenerationInput, WeeklyRoutine } from "@/types";
 import { postProcessRoutine } from "@/lib/routine-postprocess";
 import { wrapUntrustedBlock } from "@/lib/prompt-safety";
+
+function getLangSmithClient(): Client | null {
+  if (!process.env.LANGSMITH_API_KEY || process.env.LANGSMITH_TRACING_V2 !== "true") return null;
+  return new Client({ apiKey: process.env.LANGSMITH_API_KEY });
+}
 
 const ExerciseSchema = z.object({
   name: z.string(),
@@ -363,12 +369,29 @@ export async function generateRoutineOpenAI(
   const maxAttempts = Number(process.env.OPENAI_RETRY_ATTEMPTS || 2);
   let lastErr: unknown;
 
+  const langsmith = getLangSmithClient();
+  const project = process.env.LANGSMITH_PROJECT ?? "gym-bro-prod";
+  const promptContent = buildPrompt(input, historicalContext, equipmentAnalysis, bodyAnalysis, gymEquipmentContext);
+
   for (let attempt = 1; attempt <= Math.max(1, maxAttempts); attempt++) {
     const controller = new AbortController();
     const timeout = setTimeout(
       () => controller.abort(),
       Number.isFinite(timeoutMs) ? timeoutMs : 120_000
     );
+
+    const runId = langsmith ? crypto.randomUUID() : undefined;
+    const startTime = Date.now();
+    if (langsmith && runId) {
+      await langsmith.createRun({
+        id: runId,
+        name: `generateRoutineOpenAI:${model}`,
+        run_type: "llm",
+        inputs: { model, prompt: promptContent },
+        project_name: project,
+        start_time: startTime,
+      }).catch(() => {});
+    }
 
     try {
       const res = await fetch(`${baseURL}/v1/chat/completions`, {
@@ -381,7 +404,7 @@ export async function generateRoutineOpenAI(
           model,
           temperature: 0.7,
           response_format: { type: "json_object" },
-          messages: [{ role: "user", content: buildPrompt(input, historicalContext, equipmentAnalysis, bodyAnalysis, gymEquipmentContext) }],
+          messages: [{ role: "user", content: promptContent }],
         }),
         signal: controller.signal,
       });
@@ -397,9 +420,24 @@ export async function generateRoutineOpenAI(
 
       const parsed = coerceJsonObject(content);
       const validated = WeeklyRoutineSchema.parse(parsed);
-      return await postProcessRoutine(validated as WeeklyRoutine);
+      const result = await postProcessRoutine(validated as WeeklyRoutine);
+
+      if (langsmith && runId) {
+        await langsmith.updateRun(runId, {
+          outputs: { response: content, usage: data?.usage },
+          end_time: Date.now(),
+        }).catch(() => {});
+      }
+
+      return result;
     } catch (err: unknown) {
       lastErr = err;
+      if (langsmith && runId) {
+        await langsmith.updateRun(runId, {
+          error: err instanceof Error ? err.message : String(err),
+          end_time: Date.now(),
+        }).catch(() => {});
+      }
       if (attempt >= maxAttempts || !isRetryableNetworkError(err)) break;
       await sleep(500 * attempt);
     } finally {
