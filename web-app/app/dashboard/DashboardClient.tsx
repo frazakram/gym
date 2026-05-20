@@ -688,11 +688,12 @@ export default function DashboardPage() {
       setModalConfig({
         type: 'warning',
         title: 'No Changes Detected',
-        message: "You haven't changed your profile since the last generation. The new routine might be very similar.",
+        message: "You haven't changed your profile. Click Continue to load your saved routine instantly (free). If you want a fresh AI-generated variation, this will use AI credits.",
         emoji: '🤔',
         onConfirm: () => {
           setModalConfig(null)
-          performGeneration(isNextWeek, restDays, forceRegenerate)
+          // Use cache: same inputs => return saved routine, no AI cost
+          performGeneration(isNextWeek, restDays, false)
         },
         onCancel: () => setModalConfig(null)
       })
@@ -1493,7 +1494,7 @@ export default function DashboardPage() {
                   setActiveView('workout')
                 }}
                 onNavigateToCoach={() => handleViewChange('coach')}
-                onGenerateRoutine={(restDays, forceRegenerate) => handleGenerateRoutine(false, restDays, forceRegenerate)}
+                onGenerateRoutine={(restDays, _forceRegenerate) => handleGenerateRoutine(false, restDays, false)}
                 onGenerateNextWeek={handleGenerateNextWeek}
                 generating={generating}
                 viewingHistory={viewingHistory}
@@ -1512,7 +1513,7 @@ export default function DashboardPage() {
                   setSelectedDayIndex(dayIndex)
                   setActiveView('workout')
                 }}
-                onGenerateRoutine={(restDays, forceRegenerate) => handleGenerateRoutine(false, restDays, forceRegenerate)}
+                onGenerateRoutine={(restDays, _forceRegenerate) => handleGenerateRoutine(false, restDays, false)}
                 onGenerateNextWeek={handleGenerateNextWeek}
                 completionPercentage={calculateCompletionPercentage()}
                 currentWeekNumber={currentWeekNumber}
