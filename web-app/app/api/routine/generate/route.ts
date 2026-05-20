@@ -220,6 +220,37 @@ export async function POST(request: NextRequest) {
       input.session_duration = userProfile.session_duration;
     }
 
+    // ========== BUILD CACHE KEY (shared between streaming and non-streaming) ==========
+    // Hash all fields that affect AI output so identical inputs return identical routines.
+    // Different week / different rest days / different history => different key => fresh generation.
+    const { createHash } = await import('crypto');
+    const shortHash = (s: string) => createHash('sha256').update(s).digest('hex').slice(0, 16);
+    const cacheInputs = {
+      userId: session.userId,
+      age: input.age,
+      weight: input.weight,
+      height: input.height,
+      gender: input.gender,
+      goal: input.goal,
+      level: input.level,
+      tenure: input.tenure,
+      goal_weight: input.goal_weight ?? null,
+      goal_duration: input.goal_duration ?? null,
+      session_duration: input.session_duration ?? null,
+      notes: input.notes ?? null,
+      provider,
+      model: typeof input.model === 'string' ? input.model : null,
+      restDays: input.restDays ?? null,
+      is_next_week: !!is_next_week,
+      week_number: week_number ?? null,
+      equipmentHash: equipmentAnalysis ? shortHash(JSON.stringify(equipmentAnalysis)) : null,
+      bodyHash: bodyAnalysis ? shortHash(JSON.stringify(bodyAnalysis)) : null,
+      gymHash: gymEquipmentContext ? shortHash(gymEquipmentContext) : null,
+      historicalHash: historicalContextStr ? shortHash(historicalContextStr) : null,
+    };
+    const cacheKey = hashCacheKey('routine', cacheInputs);
+    const shouldUseCache = body.regenerate !== true;
+
     // Streaming (SSE) mode for progress UI
     if (stream === true) {
       const encoder = new TextEncoder();
@@ -239,6 +270,19 @@ export async function POST(request: NextRequest) {
             const keyPreview = input.apiKey ? `${input.apiKey.slice(0, 6)}...${input.apiKey.slice(-4)}` : 'NONE';
             console.log(`[Routine SSE] Provider: ${provider}, Model: ${input.model || 'default'}, ClientKey: ${keyPreview}, ServerKey: ${hasServerKey ? 'YES' : 'NO'}`);
             controller.enqueue(sse('progress', { pct: 5, stage: 'Validating request…' }));
+
+            // ========== CACHE CHECK (streaming branch) ==========
+            if (shouldUseCache) {
+              const cached = await getCachedAIResponse<any>(cacheKey);
+              if (cached.hit) {
+                console.log(`[Routine SSE] Cache hit for user ${session.userId}`);
+                clearInterval(tick);
+                controller.enqueue(sse('progress', { pct: 100, stage: 'Loaded from cache' }));
+                controller.enqueue(sse('routine', { routine: cached.data, source: 'cache' }));
+                return;
+              }
+            }
+
             controller.enqueue(sse('progress', { pct: 10, stage: `Contacting ${provider}…` }));
 
             const routine =
@@ -246,9 +290,16 @@ export async function POST(request: NextRequest) {
                 ? await generateRoutineOpenAI(input, historicalContextStr, equipmentAnalysis, bodyAnalysis, gymEquipmentContext)
                 : await generateRoutine(input, historicalContextStr, equipmentAnalysis, bodyAnalysis, gymEquipmentContext);
 
+            // ========== CACHE WRITE (streaming branch) ==========
+            try {
+              await setCachedAIResponse(cacheKey, routine, AI_CACHE_TTL.routine);
+            } catch (cacheErr) {
+              console.warn('[Routine SSE] Failed to cache:', cacheErr);
+            }
+
             clearInterval(tick);
             controller.enqueue(sse('progress', { pct: 100, stage: 'Done' }));
-            controller.enqueue(sse('routine', { routine }));
+            controller.enqueue(sse('routine', { routine, source: 'ai' }));
           } catch (err: unknown) {
             clearInterval(tick);
             const message = err instanceof Error ? err.message : String(err);
@@ -312,30 +363,9 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // ========== REDIS CACHE CHECK (before expensive AI call) ==========
-    // Build cache key from input parameters (excluding API keys)
-    const cacheInputs = {
-      userId: session.userId,
-      age: input.age,
-      weight: input.weight,
-      height: input.height,
-      gender: input.gender,
-      goal: input.goal,
-      level: input.level,
-      tenure: input.tenure,
-      goal_weight: input.goal_weight,
-      session_duration: input.session_duration,
-      notes: input.notes,
-      provider,
-      // Include equipment/body analysis in cache key
-      equipmentHash: equipmentAnalysis ? JSON.stringify(equipmentAnalysis).slice(0, 100) : null,
-      bodyHash: bodyAnalysis ? JSON.stringify(bodyAnalysis).slice(0, 100) : null,
-    };
-    
-    const cacheKey = hashCacheKey('routine', cacheInputs);
-    
-    // Skip cache if regenerate is explicitly requested
-    if (body.regenerate !== true) {
+    // ========== REDIS CACHE CHECK (non-streaming, before expensive AI call) ==========
+    // Cache key was built earlier (before streaming branch).
+    if (shouldUseCache) {
       const cached = await getCachedAIResponse<any>(cacheKey);
       if (cached.hit) {
         console.log(`[Routine] Cache hit for user ${session.userId}, saving AI cost!`);

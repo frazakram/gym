@@ -3,6 +3,7 @@ import { Inter, Plus_Jakarta_Sans } from 'next/font/google'
 import './globals.css'
 import { ServiceWorkerRegistration } from '@/components/ServiceWorkerRegistration'
 import { ToastProvider } from '@/components/ui/ToastProvider'
+import { CookieConsent } from '@/components/CookieConsent'
 
 const inter = Inter({
   subsets: ['latin'],
@@ -61,6 +62,7 @@ export default function RootLayout({
           <div className="app-content">{children}</div>
         </div>
         <ToastProvider />
+        <CookieConsent />
       </body>
     </html>
   )

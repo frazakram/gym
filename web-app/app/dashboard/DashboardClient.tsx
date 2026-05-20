@@ -669,7 +669,7 @@ export default function DashboardPage() {
     }
   }
 
-  const handleGenerateRoutine = async (isNextWeek: boolean = false, restDays?: string[]) => {
+  const handleGenerateRoutine = async (isNextWeek: boolean = false, restDays?: string[], forceRegenerate: boolean = false) => {
     if (!profile) {
       setError('Please complete your profile first.')
       return
@@ -692,17 +692,17 @@ export default function DashboardPage() {
         emoji: '🤔',
         onConfirm: () => {
           setModalConfig(null)
-          performGeneration(isNextWeek, restDays)
+          performGeneration(isNextWeek, restDays, forceRegenerate)
         },
         onCancel: () => setModalConfig(null)
       })
       return
     }
 
-    performGeneration(isNextWeek, restDays)
+    performGeneration(isNextWeek, restDays, forceRegenerate)
   }
 
-  const performGeneration = async (isNextWeek: boolean = false, restDays?: string[]) => {
+  const performGeneration = async (isNextWeek: boolean = false, restDays?: string[], forceRegenerate: boolean = false) => {
     if (!profile || resolvedHeightCm == null) return
 
     setGenerating(true)
@@ -742,6 +742,7 @@ export default function DashboardPage() {
           is_next_week: isNextWeek,
           week_number: targetWeekNumber,
           stream: true, // SSE streaming to avoid Vercel timeout
+          regenerate: forceRegenerate, // bypass cache when user explicitly clicks Regenerate
           // Explicit modal selection > saved profile preference > AI decides
           restDays: restDays && restDays.length > 0
             ? restDays
@@ -1492,7 +1493,7 @@ export default function DashboardPage() {
                   setActiveView('workout')
                 }}
                 onNavigateToCoach={() => handleViewChange('coach')}
-                onGenerateRoutine={(restDays) => handleGenerateRoutine(false, restDays)}
+                onGenerateRoutine={(restDays, forceRegenerate) => handleGenerateRoutine(false, restDays, forceRegenerate)}
                 onGenerateNextWeek={handleGenerateNextWeek}
                 generating={generating}
                 viewingHistory={viewingHistory}
@@ -1511,7 +1512,7 @@ export default function DashboardPage() {
                   setSelectedDayIndex(dayIndex)
                   setActiveView('workout')
                 }}
-                onGenerateRoutine={(restDays) => handleGenerateRoutine(false, restDays)}
+                onGenerateRoutine={(restDays, forceRegenerate) => handleGenerateRoutine(false, restDays, forceRegenerate)}
                 onGenerateNextWeek={handleGenerateNextWeek}
                 completionPercentage={calculateCompletionPercentage()}
                 currentWeekNumber={currentWeekNumber}

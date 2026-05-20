@@ -41,7 +41,7 @@ interface RoutineViewProps {
   routine: WeeklyRoutine | null
   diet: WeeklyDiet | null
   onNavigateToWorkout: (dayIndex: number) => void
-  onGenerateRoutine: (restDays?: string[]) => void
+  onGenerateRoutine: (restDays?: string[], forceRegenerate?: boolean) => void
   onGenerateNextWeek: () => void
   completionPercentage: number
   currentWeekNumber: number
@@ -347,7 +347,8 @@ export function RoutineView({
         initialDays={profileRestDays}
         onConfirm={(restDays) => {
           setShowRestDayPicker(false)
-          onGenerateRoutine(restDays.length > 0 ? restDays : undefined)
+          // routine exists at this point => this modal is a regenerate; bypass cache
+          onGenerateRoutine(restDays.length > 0 ? restDays : undefined, true)
         }}
       />
     </div>

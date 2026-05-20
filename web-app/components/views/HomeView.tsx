@@ -38,7 +38,7 @@ interface HomeViewProps {
   currentWeekNumber: number
   onNavigateToWorkout: (dayIndex?: number) => void
   onNavigateToCoach: () => void
-  onGenerateRoutine: (restDays?: string[]) => void
+  onGenerateRoutine: (restDays?: string[], forceRegenerate?: boolean) => void
   onGenerateNextWeek: () => void
   generating: boolean
   viewingHistory?: boolean
@@ -467,7 +467,7 @@ export function HomeView({
                 ) : null}
 
                 <AnimatedButton
-                  onClick={onGenerateRoutine}
+                  onClick={() => onGenerateRoutine(undefined, true)}
                   disabled={generating}
                   loading={generating}
                   variant="ghost"
