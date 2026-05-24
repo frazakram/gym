@@ -107,7 +107,7 @@ export default function LoginPage() {
   const baseDelay = 0.2
 
   return (
-    <div className="relative min-h-screen flex flex-col lg:flex-row items-stretch overflow-hidden">
+    <div className="login-page relative min-h-screen flex flex-col lg:flex-row items-stretch overflow-hidden">
       <ThemeToggle />
       {/* Left Side - LoginAnimation panel (desktop only) */}
       <div className="login-left-panel hidden lg:flex lg:w-1/2 flex-col relative overflow-hidden">
@@ -119,8 +119,10 @@ export default function LoginPage() {
         </div>
       </div>
 
-      {/* Right Side - Dark Glass Login Form */}
-      <div className="flex-1 flex items-center justify-center px-4 py-10 relative bg-navy-0">
+      {/* Right Side - Premium glass login form */}
+      <div className="login-form-panel flex-1 flex items-center justify-center px-4 py-10 relative overflow-hidden">
+        <div className="login-form-orb login-form-orb--one" aria-hidden="true" />
+        <div className="login-form-orb login-form-orb--two" aria-hidden="true" />
 
         <div className="w-full max-w-md relative z-10">
           <motion.div
@@ -135,22 +137,22 @@ export default function LoginPage() {
             <h1 className="text-4xl font-semibold tracking-tight bg-gradient-to-r from-primary-light via-primary to-brand-cyan bg-clip-text text-transparent mb-2 font-display">
               Gym Bro
             </h1>
-            <p className="text-sm text-slate-300/80">
+            <p className="text-sm text-slate-300/80 dark:text-emerald-100/70">
               Welcome back! Please enter your details.
             </p>
           </motion.div>
 
-          <div className="glass glow-ring rounded-2xl p-6 sm:p-8 border border-primary/20">
+          <div className="login-card rounded-3xl p-6 sm:p-8">
             {/* Login / Register Toggle Tabs */}
-            <motion.div {...staggerItem(baseDelay)} className="flex mb-6 glass-soft rounded-xl p-1">
+            <motion.div {...staggerItem(baseDelay)} className="flex mb-6 glass-soft rounded-xl p-1 border border-primary/10">
               <button
                 onClick={() => {
                   setIsLogin(true)
                   setError('')
                 }}
-                className={`flex-1 py-2 rounded-md font-medium transition-all ${
+                className={`flex-1 py-2.5 rounded-lg font-semibold transition-all ${
                   isLogin
-                    ? 'bg-gradient-to-r from-primary to-primary-dark text-white shadow-lg shadow-primary/25'
+                    ? 'login-tab-active'
                     : 'text-slate-300/70 hover:text-white'
                 }`}
               >
@@ -161,9 +163,9 @@ export default function LoginPage() {
                   setIsLogin(false)
                   setError('')
                 }}
-                className={`flex-1 py-2 rounded-md font-medium transition-all ${
+                className={`flex-1 py-2.5 rounded-lg font-semibold transition-all ${
                   !isLogin
-                    ? 'bg-gradient-to-r from-primary to-primary-dark text-white shadow-lg shadow-primary/25'
+                    ? 'login-tab-active'
                     : 'text-slate-300/70 hover:text-white'
                 }`}
               >
@@ -181,7 +183,7 @@ export default function LoginPage() {
                         setError('')
                         window.location.href = '/api/auth/google/start?returnTo=/dashboard'
                       }}
-                      className="w-full flex items-center justify-center gap-3 py-3 rounded-xl bg-white text-slate-900 font-semibold hover:bg-slate-100 transition shadow-lg shadow-primary/10"
+                      className="w-full flex items-center justify-center gap-3 py-3 rounded-xl bg-white text-slate-900 font-semibold hover:bg-slate-100 transition shadow-lg shadow-primary/15 border border-white/80"
                     >
                       <svg width="18" height="18" viewBox="0 0 48 48" aria-hidden="true">
                         <path
@@ -229,7 +231,7 @@ export default function LoginPage() {
                       if (isLoginFailed) setIsLoginFailed(false)
                     }}
                     required
-                    className="w-full pl-10 pr-4 py-3 glass-soft rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/60 text-white placeholder:text-slate-300/50 transition border border-transparent focus:border-primary/30"
+                    className="w-full pl-10 pr-4 py-3 glass-soft rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/50 text-white placeholder:text-slate-300/50 transition border border-primary/10 focus:border-primary/35"
                     placeholder="Enter your email or username"
                     autoComplete="username"
                   />
@@ -263,7 +265,7 @@ export default function LoginPage() {
                     onFocus={() => setPasswordFocused(true)}
                     onBlur={() => setPasswordFocused(false)}
                     required
-                    className="w-full pl-10 pr-4 py-3 glass-soft rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/60 text-white placeholder:text-slate-300/50 transition border border-transparent focus:border-primary/30"
+                    className="w-full pl-10 pr-4 py-3 glass-soft rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/50 text-white placeholder:text-slate-300/50 transition border border-primary/10 focus:border-primary/35"
                     placeholder="Enter your password"
                     autoComplete={isLogin ? 'current-password' : 'new-password'}
                   />
@@ -292,7 +294,7 @@ export default function LoginPage() {
                 <button
                   type="submit"
                   disabled={loading}
-                  className="w-full bg-gradient-to-r from-primary to-primary-dark hover:brightness-110 text-white font-semibold py-3 rounded-xl transition-all transform hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none shadow-lg shadow-primary/25"
+                  className="login-submit w-full font-semibold py-3.5 rounded-xl transition-all transform hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
                 >
                   {loading ? 'Processing...' : isLogin ? 'Sign In' : 'Create Account'}
                 </button>

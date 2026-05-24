@@ -26,11 +26,11 @@ export function ToastContainer(props?: Record<string, unknown>) {
       toastOptions={{
         className: 'neon-edge-toast',
         style: {
-          background: 'rgba(15, 15, 30, 0.85)',
+          background: 'rgba(10, 22, 24, 0.88)',
           backdropFilter: 'blur(16px)',
-          border: '1px solid rgba(139, 92, 246, 0.3)',
-          color: '#e2e8f0',
-          boxShadow: '0 8px 32px rgba(139, 92, 246, 0.15)',
+          border: '1px solid rgba(0, 229, 188, 0.32)',
+          color: '#ecfdf5',
+          boxShadow: '0 8px 32px rgba(0, 229, 188, 0.18)',
           borderRadius: '1rem',
         },
       }}

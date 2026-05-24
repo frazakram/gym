@@ -71,7 +71,7 @@ function resolveAnimData(): AnimData {
 
 const PILLS = [
   {
-    accent: '#7c3aed',
+    accent: '#00E5BC',
     title: 'Learns your gym, week by week',
     subtitle: 'Adapts your routine based on your equipment, body type and actual session logs',
     icon: (
@@ -86,7 +86,7 @@ const PILLS = [
     ),
   },
   {
-    accent: '#22c55e',
+    accent: '#14B8A6',
     title: 'Diet built around your food',
     subtitle: 'Custom meal plans using ingredients you actually eat — not generic Western templates',
     icon: (
@@ -184,7 +184,7 @@ export default function LoginAnimation() {
         }
         .login-pill:hover {
           transform: translateY(-2px);
-          box-shadow: 0 10px 28px rgba(124, 58, 237, 0.18);
+          box-shadow: 0 10px 28px rgba(0, 229, 188, 0.18);
         }
         .login-pill:nth-child(1) { animation-delay: 0.05s; }
         .login-pill:nth-child(2) { animation-delay: 0.15s; }
@@ -206,11 +206,11 @@ export default function LoginAnimation() {
         {/* Typewriter */}
         <div style={{ fontSize: '52px', fontWeight: 700, color: headlineColor, letterSpacing: '-1px', minHeight: '72px', lineHeight: 1.1 }}>
           {displayed}
-          <span className="login-cursor" style={{ color: '#7c3aed', marginLeft: '2px' }}>|</span>
+          <span className="login-cursor" style={{ color: '#00E5BC', marginLeft: '2px' }}>|</span>
         </div>
 
-        {/* Purple underline */}
-        <div className="login-underline" style={{ height: '2px', background: '#7c3aed', margin: '16px 0 28px 0', borderRadius: '1px' }} />
+        {/* Teal accent underline */}
+        <div className="login-underline" style={{ height: '2px', background: '#00E5BC', margin: '16px 0 28px 0', borderRadius: '1px' }} />
 
         {/* Personalized streak line for returning users */}
         {showPersonalLine && (
@@ -232,9 +232,10 @@ export default function LoginAnimation() {
                 alignItems: 'flex-start',
                 gap: '12px',
                 padding: '12px 16px',
-                borderRadius: '10px',
-                background: isDark ? `${pill.accent}14` : `${pill.accent}1f`,
-                border: `0.5px solid ${pill.accent}${isDark ? '33' : '55'}`,
+                borderRadius: '14px',
+                background: isDark ? `${pill.accent}12` : `${pill.accent}18`,
+                border: `1px solid ${pill.accent}${isDark ? '28' : '40'}`,
+                backdropFilter: 'blur(8px)',
               }}
             >
               {/* Icon box */}

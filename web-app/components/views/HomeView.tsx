@@ -353,7 +353,7 @@ export function HomeView({
                       className="w-full h-2 rounded-full"
                       style={{
                         backgroundColor: d.value >= 1 ? 'var(--primary)' : d.value > 0 ? '#6d3fc4' : '#252540',
-                        boxShadow: d.value >= 1 ? '0 0 6px rgba(139,92,246,0.4)' : 'none',
+                        boxShadow: d.value >= 1 ? '0 0 6px rgba(0,229,188,0.4)' : 'none',
                       }}
                     />
                     <span className="text-xs text-white/70">{dayLabels[i]}</span>
@@ -368,7 +368,7 @@ export function HomeView({
       {/* Generate Next Week banner — shown when 80%+ complete */}
       {routine && !viewingHistory && !routineIsStale && progress.percentage >= 80 && (
         <motion.div variants={fadeUp}>
-          <GlassCard className="p-4 bg-gradient-to-br from-violet-600/15 via-primary/10 to-brand-cyan/10 border-primary/30">
+          <GlassCard className="p-4 bg-gradient-to-br from-teal-600/15 via-primary/10 to-brand-cyan/10 border-primary/30">
             <div className="flex items-start gap-3">
               <div className="w-10 h-10 rounded-xl bg-primary/20 flex items-center justify-center shrink-0">
                 <TrendingUp className="w-5 h-5 text-primary-light" />

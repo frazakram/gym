@@ -57,9 +57,9 @@ function CountUp({
 }
 
 // ── CheckIcon ───────────────────────────────────────────────────
-function CheckIcon({ color = 'purple' }: { color?: 'purple' | 'green' | 'amber' }) {
+function CheckIcon({ color = 'teal' }: { color?: 'teal' | 'green' | 'amber' }) {
   const styles = {
-    purple: 'bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400',
+    teal: 'bg-teal-100 dark:bg-teal-900/30 text-teal-600 dark:text-teal-400',
     green: 'bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400',
     amber: 'bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400',
   }
@@ -135,7 +135,7 @@ export default function LandingPage() {
             >
               <motion.span
                 variants={fadeUp}
-                className="inline-flex items-center gap-2 bg-purple-50 dark:bg-purple-900/20 text-purple-700 dark:text-purple-300 rounded-full px-3 py-1 text-xs font-medium w-fit"
+                className="inline-flex items-center gap-2 bg-teal-50 dark:bg-teal-900/20 text-teal-700 dark:text-teal-300 rounded-full px-3 py-1 text-xs font-medium w-fit"
               >
                 🇮🇳 Made for Indian athletes
               </motion.span>
@@ -169,13 +169,13 @@ export default function LandingPage() {
                     className="pointer-events-none absolute"
                     style={{
                       inset: '-50%',
-                      background: 'conic-gradient(from 0deg, transparent 0%, #7c3aed 25%, #a78bfa 45%, transparent 65%)',
+                      background: 'conic-gradient(from 0deg, transparent 0%, #00E5BC 25%, #5FFFE0 45%, transparent 65%)',
                       animation: 'orbit 3s linear infinite',
                     }}
                   />
                   <Link
                     href="/login"
-                    className="relative z-10 bg-violet-600 hover:bg-violet-700 text-white rounded-full px-8 py-4 text-base font-semibold shadow-lg shadow-purple-500/25 transition-colors"
+                    className="relative z-10 bg-teal-500 hover:bg-teal-600 text-accent-ink rounded-full px-8 py-4 text-base font-semibold shadow-lg shadow-teal-500/25 transition-colors"
                   >
                     Start for free
                   </Link>
@@ -186,7 +186,7 @@ export default function LandingPage() {
                     className="pointer-events-none absolute"
                     style={{
                       inset: '-50%',
-                      background: 'conic-gradient(from 0deg, transparent 0%, rgba(139,92,246,0.5) 25%, rgba(167,139,250,0.35) 45%, transparent 65%)',
+                      background: 'conic-gradient(from 0deg, transparent 0%, rgba(0,229,188,0.5) 25%, rgba(95,255,224,0.35) 45%, transparent 65%)',
                       animation: 'orbit 4s linear infinite',
                     }}
                   />
@@ -284,7 +284,7 @@ export default function LandingPage() {
             viewport={{ once: true, margin: '-60px' }}
             variants={staggerContainer()}
           >
-            <motion.p variants={fadeUp} className="text-xs font-bold tracking-[0.2em] text-[#7c3aed] uppercase mb-4">
+            <motion.p variants={fadeUp} className="text-xs font-bold tracking-[0.2em] text-[#00E5BC] uppercase mb-4">
               What makes it different
             </motion.p>
             <motion.h2 variants={fadeUp} className="text-4xl md:text-5xl font-black text-gray-900 dark:text-white">
@@ -300,7 +300,7 @@ export default function LandingPage() {
               viewport={{ once: true, margin: '-60px' }}
               variants={staggerContainer()}
             >
-              <motion.p variants={fadeUp} className="text-xs font-bold tracking-[0.2em] text-[#7c3aed] uppercase">
+              <motion.p variants={fadeUp} className="text-xs font-bold tracking-[0.2em] text-[#00E5BC] uppercase">
                 Workouts
               </motion.p>
               <motion.h3 variants={fadeUp} className="mt-3 text-3xl lg:text-5xl font-black text-gray-900 dark:text-white leading-tight">
@@ -317,7 +317,7 @@ export default function LandingPage() {
                   'Works for home gym, commercial, or bodyweight',
                 ].map((pt) => (
                   <div key={pt} className="flex items-start gap-3">
-                    <CheckIcon color="purple" />
+                    <CheckIcon color="teal" />
                     <span className="text-sm text-gray-700 dark:text-gray-300">{pt}</span>
                   </div>
                 ))}
@@ -350,7 +350,7 @@ export default function LandingPage() {
               <div className="mt-6">
                 <p className="text-xs text-gray-400 mb-2">41% week done</p>
                 <div className="h-2 w-full rounded-full bg-gray-100 dark:bg-white/10">
-                  <div className="h-full rounded-full bg-[#7c3aed]" style={{ width: '41%' }} />
+                  <div className="h-full rounded-full bg-[#00E5BC]" style={{ width: '41%' }} />
                 </div>
               </div>
             </motion.div>
@@ -369,7 +369,7 @@ export default function LandingPage() {
               viewport={{ once: true, margin: '-60px' }}
               variants={staggerContainer()}
             >
-              <motion.p variants={fadeUp} className="text-xs font-bold tracking-[0.2em] text-[#7c3aed] uppercase">
+              <motion.p variants={fadeUp} className="text-xs font-bold tracking-[0.2em] text-[#00E5BC] uppercase">
                 Nutrition
               </motion.p>
               <motion.h3 variants={fadeUp} className="mt-3 text-3xl lg:text-5xl font-black text-gray-900 dark:text-white leading-tight">
@@ -402,7 +402,7 @@ export default function LandingPage() {
             >
               <div className="flex justify-between items-center mb-3">
                 <span className="font-bold text-sm text-gray-900 dark:text-white">Today&apos;s meals</span>
-                <span className="text-xs text-[#7c3aed] font-semibold">2490 kcal</span>
+                <span className="text-xs text-[#00E5BC] font-semibold">2490 kcal</span>
               </div>
               <div className="flex flex-col gap-2">
                 {[
@@ -439,7 +439,7 @@ export default function LandingPage() {
               viewport={{ once: true, margin: '-60px' }}
               variants={staggerContainer()}
             >
-              <motion.p variants={fadeUp} className="text-xs font-bold tracking-[0.2em] text-[#7c3aed] uppercase">
+              <motion.p variants={fadeUp} className="text-xs font-bold tracking-[0.2em] text-[#00E5BC] uppercase">
                 Progress
               </motion.p>
               <motion.h3 variants={fadeUp} className="mt-3 text-3xl lg:text-5xl font-black text-gray-900 dark:text-white leading-tight">
@@ -477,7 +477,7 @@ export default function LandingPage() {
                   <div key={day} className="flex flex-col items-center gap-1">
                     <div
                       className={`h-10 w-10 rounded-full flex items-center justify-center text-sm font-semibold ${i < 5
-                        ? 'bg-violet-600 text-white'
+                        ? 'bg-teal-500 text-accent-ink'
                         : 'bg-gray-100 text-gray-400 dark:bg-[#1a2234] dark:text-gray-500'
                         }`}
                     >
@@ -490,7 +490,7 @@ export default function LandingPage() {
               <div className="mt-6">
                 <p className="text-xs text-gray-400 mb-2">41% this week</p>
                 <div className="h-2 w-full rounded-full bg-gray-100 dark:bg-white/10">
-                  <div className="h-full rounded-full bg-[#7c3aed]" style={{ width: '41%' }} />
+                  <div className="h-full rounded-full bg-[#00E5BC]" style={{ width: '41%' }} />
                 </div>
               </div>
             </motion.div>
@@ -508,7 +508,7 @@ export default function LandingPage() {
             viewport={{ once: true, margin: '-60px' }}
             variants={staggerContainer()}
           >
-            <motion.p variants={fadeUp} className="text-xs font-bold tracking-[0.2em] text-[#7c3aed] uppercase mb-4">
+            <motion.p variants={fadeUp} className="text-xs font-bold tracking-[0.2em] text-[#00E5BC] uppercase mb-4">
               Getting started
             </motion.p>
             <motion.h2 variants={fadeUp} className="text-4xl md:text-5xl font-black text-gray-900 dark:text-white">
@@ -602,7 +602,7 @@ export default function LandingPage() {
             </motion.div>
 
             {/* Premium tier */}
-            <motion.div variants={fadeUp} className="rounded-2xl border-2 border-[#7c3aed] bg-violet-600 text-white p-8 relative">
+            <motion.div variants={fadeUp} className="rounded-2xl border-2 border-primary bg-gradient-to-br from-teal-500 to-teal-600 text-accent-ink p-8 relative">
               <div className="flex items-center gap-2 flex-wrap">
                 <p className="text-2xl font-black text-white">Premium</p>
                 <span className="bg-white/20 text-white text-xs rounded-full px-3 py-1">Most popular</span>
@@ -627,7 +627,7 @@ export default function LandingPage() {
               </div>
               <Link
                 href="/login"
-                className="bg-white text-[#7c3aed] hover:bg-gray-100 rounded-full h-11 px-6 font-semibold w-full mt-8 flex items-center justify-center transition-colors"
+                className="bg-white text-[#00E5BC] hover:bg-gray-100 rounded-full h-11 px-6 font-semibold w-full mt-8 flex items-center justify-center transition-colors"
               >
                 Start for ₹49
               </Link>
@@ -654,7 +654,7 @@ export default function LandingPage() {
             <motion.div variants={fadeUp}>
               <Link
                 href="/login"
-                className="inline-block mt-10 bg-[#7c3aed] hover:bg-[#6d28d9] text-white rounded-full px-12 py-5 text-lg font-semibold shadow-lg shadow-purple-500/30 transition-colors"
+                className="inline-block mt-10 bg-primary hover:bg-primary-dark text-accent-ink rounded-full px-12 py-5 text-lg font-semibold shadow-lg shadow-teal-500/30 transition-colors"
               >
                 Create your free account
               </Link>
@@ -672,7 +672,7 @@ export default function LandingPage() {
       </section>
 
       {/* ── FOOTER ── */}
-      <footer className="landing-dark bg-[#080c14] border-t border-white/5">
+      <footer className="landing-dark bg-[#060E10] border-t border-white/5">
         <div className="max-w-7xl mx-auto px-6 md:px-16 lg:px-24 py-12 flex flex-col sm:flex-row justify-between items-center gap-4">
           <div className="flex items-center gap-2">
             <img src="/logo.png" alt="GymBro" className="w-6 h-6 rounded-md" />

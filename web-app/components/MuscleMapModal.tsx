@@ -37,11 +37,11 @@ interface MuscleMapModalProps {
   } | null
 }
 
-const PRIMARY_FILL = 'rgba(96, 165, 250, 0.9)'
-const SECONDARY_FILL = 'rgba(96, 165, 250, 0.4)'
-const BASE_FILL = 'rgba(148, 163, 184, 0.18)'
-const BASE_STROKE = 'rgba(148, 163, 184, 0.45)'
-const SILHOUETTE_FILL = 'rgba(148, 163, 184, 0.08)'
+const PRIMARY_FILL = 'rgba(0, 229, 188, 0.92)'
+const SECONDARY_FILL = 'rgba(0, 229, 188, 0.42)'
+const BASE_FILL = 'rgba(122, 148, 144, 0.18)'
+const BASE_STROKE = 'rgba(122, 148, 144, 0.45)'
+const SILHOUETTE_FILL = 'rgba(122, 148, 144, 0.08)'
 
 function fillFor(muscle: MuscleGroup, primary: MuscleGroup[], secondary: MuscleGroup[]) {
   if (primary.includes(muscle)) return PRIMARY_FILL

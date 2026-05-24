@@ -40,7 +40,7 @@ export function PullToRefreshIndicator({
             className="w-10 h-10 rounded-full flex items-center justify-center shadow-xl"
             style={{
               background: 'rgba(18, 18, 42, 0.92)',
-              border: '1px solid rgba(139, 92, 246, 0.35)',
+              border: '1px solid rgba(0,229,188, 0.35)',
               backdropFilter: 'blur(12px)',
               willChange: 'transform',
             }}
@@ -63,7 +63,7 @@ export function PullToRefreshIndicator({
                 style={{
                   color: progress >= 1 || isRefreshing
                     ? 'var(--primary-light)'
-                    : 'rgba(139, 92, 246, 0.5)',
+                    : 'rgba(0,229,188, 0.5)',
                 }}
               />
             </motion.div>
