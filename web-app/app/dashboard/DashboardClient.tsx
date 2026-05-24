@@ -244,15 +244,25 @@ export default function DashboardPage() {
         setProteinPowderAmount(data.profile.protein_powder_amount ?? 0)
         setSpecificFoodPreferences(data.profile.specific_food_preferences ?? '')
         setMealsPerDay(data.profile.meals_per_day ?? 3)
-        setAllergies(data.profile.allergies || [])
+        setAllergies(Array.isArray(data.profile.allergies) ? data.profile.allergies : [])
         setCookingLevel(data.profile.cooking_level ?? 'Moderate')
         setBudget(data.profile.budget ?? 'Standard')
         setNationality(data.profile.nationality ?? '')
-        setGymPhotos(data.profile.gym_photos || [])
-        setEquipmentAnalysis(data.profile.gym_equipment_analysis || null)
-        setBodyPhotos(data.profile.body_photos || [])
-        setBodyAnalysis(data.profile.body_composition_analysis || null)
-        setPreferredRestDays(data.profile.preferred_rest_days || [])
+        // JSONB columns can come back as {} from legacy/corrupt rows — coerce to []/null
+        // so downstream code can safely .map / spread / sort.
+        setGymPhotos(Array.isArray(data.profile.gym_photos) ? data.profile.gym_photos : [])
+        setEquipmentAnalysis(
+          data.profile.gym_equipment_analysis && typeof data.profile.gym_equipment_analysis === 'object' && !Array.isArray(data.profile.gym_equipment_analysis)
+            ? data.profile.gym_equipment_analysis
+            : null
+        )
+        setBodyPhotos(Array.isArray(data.profile.body_photos) ? data.profile.body_photos : [])
+        setBodyAnalysis(
+          data.profile.body_composition_analysis && typeof data.profile.body_composition_analysis === 'object' && !Array.isArray(data.profile.body_composition_analysis)
+            ? data.profile.body_composition_analysis
+            : null
+        )
+        setPreferredRestDays(Array.isArray(data.profile.preferred_rest_days) ? data.profile.preferred_rest_days : [])
       }
     } catch (err: unknown) {
       console.error('Error fetching profile:', err)
