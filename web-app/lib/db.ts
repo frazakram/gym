@@ -750,6 +750,41 @@ export async function saveProfile(
     }
 
     if (existing) {
+      // Partial-update safety: if a caller omits a field (undefined), keep the
+      // existing DB value. Without this, a partial PUT (e.g., the photo-upload
+      // handler sending only body_photos) would NULL every other column.
+      // `null` is still respected as "explicitly clear" — only undefined falls back.
+      const keep = <T>(input: T | null | undefined, current: T | null | undefined): T | null =>
+        input !== undefined ? (input as T | null) : ((current ?? null) as T | null);
+
+      const effAge = keep(age, existing.age);
+      const effWeight = keep(weight, existing.weight);
+      const effHeight = keep(height, existing.height);
+      const effGender = keep(gender, existing.gender);
+      const effGoal = keep(goal, existing.goal);
+      const effLevel = keep(level, existing.level);
+      const effTenure = keep(tenure, existing.tenure);
+      const effGoalWeight = keep(goal_weight, existing.goal_weight);
+      const effNotes = keep(notes, existing.notes);
+      const effGoalDuration = keep(goal_duration, existing.goal_duration);
+      const effSessionDuration = keep(session_duration, existing.session_duration);
+      const effDietType = keep(diet_type, existing.diet_type);
+      const effCuisine = keep(cuisine, existing.cuisine);
+      const effProteinPowder = keep(protein_powder, existing.protein_powder);
+      const effMealsPerDay = keep(meals_per_day, existing.meals_per_day);
+      const effAllergies = keep(allergies, existing.allergies);
+      const effCookingLevel = keep(cooking_level, existing.cooking_level);
+      const effBudget = keep(budget, existing.budget);
+      const effProteinPowderAmount = keep(protein_powder_amount, existing.protein_powder_amount);
+      const effSpecificFood = keep(specific_food_preferences, existing.specific_food_preferences);
+      // name needs encrypt-on-set; on preserve, re-use the already-decrypted existing value (re-encrypted below)
+      const effNameRaw = keep(name, existing.name);
+      const effGymPhotos = keep(gym_photos, existing.gym_photos as any);
+      const effGymEquipmentAnalysis = keep(gym_equipment_analysis, existing.gym_equipment_analysis as any);
+      const effBodyPhotos = keep(body_photos, existing.body_photos as any);
+      const effBodyCompositionAnalysis = keep(body_composition_analysis, existing.body_composition_analysis as any);
+      const effPreferredRestDays = keep(preferred_rest_days, existing.preferred_rest_days as any);
+
       const result = await pool.query<Profile>(
         `UPDATE profiles
          SET age = $2, weight = $3, height = $4, gender = $5,
@@ -765,32 +800,32 @@ export async function saveProfile(
          RETURNING *`,
         [
           userId,
-          age,
-          weight,
-          height,
-          gender,
-          goal,
-          level,
-          tenure,
-          typeof goal_weight === 'number' && Number.isFinite(goal_weight) ? goal_weight : null,
-          notes?.trim() ? notes.trim() : null,
-          goal_duration?.trim() ? goal_duration.trim() : null,
-          typeof session_duration === 'number' && Number.isFinite(session_duration) ? session_duration : null,
-          diet_type || null,
-          cuisine || null,
-          protein_powder || null,
-          meals_per_day || null,
-          allergies || null,
-          cooking_level || null,
-          budget || null,
-          protein_powder_amount || null,
-          specific_food_preferences?.trim() ? specific_food_preferences.trim() : null,
-          name?.trim() ? encryptRnd(name.trim()) : null,
-          gym_photos || null,
-          gym_equipment_analysis || null,
-          body_photos || null,
-          body_composition_analysis || null,
-          preferred_rest_days && preferred_rest_days.length > 0 ? preferred_rest_days : null
+          typeof effAge === 'number' && Number.isFinite(effAge) ? effAge : null,
+          typeof effWeight === 'number' && Number.isFinite(effWeight) ? effWeight : null,
+          typeof effHeight === 'number' && Number.isFinite(effHeight) ? effHeight : null,
+          effGender || null,
+          effGoal || null,
+          effLevel || null,
+          effTenure || null,
+          typeof effGoalWeight === 'number' && Number.isFinite(effGoalWeight) ? effGoalWeight : null,
+          typeof effNotes === 'string' && effNotes.trim() ? effNotes.trim() : null,
+          typeof effGoalDuration === 'string' && effGoalDuration.trim() ? effGoalDuration.trim() : null,
+          typeof effSessionDuration === 'number' && Number.isFinite(effSessionDuration) ? effSessionDuration : null,
+          effDietType || null,
+          effCuisine || null,
+          effProteinPowder || null,
+          effMealsPerDay || null,
+          effAllergies || null,
+          effCookingLevel || null,
+          effBudget || null,
+          effProteinPowderAmount || null,
+          typeof effSpecificFood === 'string' && effSpecificFood.trim() ? effSpecificFood.trim() : null,
+          typeof effNameRaw === 'string' && effNameRaw.trim() ? encryptRnd(effNameRaw.trim()) : null,
+          effGymPhotos ?? null,
+          effGymEquipmentAnalysis ?? null,
+          effBodyPhotos ?? null,
+          effBodyCompositionAnalysis ?? null,
+          Array.isArray(effPreferredRestDays) && effPreferredRestDays.length > 0 ? effPreferredRestDays : null,
         ]
       );
       revalidateTag('user-profile', undefined as any);
