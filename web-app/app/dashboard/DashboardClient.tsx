@@ -1157,7 +1157,7 @@ export default function DashboardPage() {
       setEquipmentAnalysis(analysis)
       setSuccess('Gym equipment analyzed successfully!')
 
-      await csrfFetch('/api/profile', {
+      const saveRes = await csrfFetch('/api/profile', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -1165,6 +1165,10 @@ export default function DashboardPage() {
           gym_equipment_analysis: analysis,
         }),
       });
+      if (!saveRes.ok) {
+        const errPayload = await saveRes.json().catch(() => null) as { error?: string } | null
+        throw new Error(errPayload?.error || `Failed to save gym photos (HTTP ${saveRes.status})`)
+      }
     } catch (error) {
       const msg = error instanceof Error ? error.message : 'Failed to analyze gym equipment. Please try again.'
       setEquipmentError(msg)
@@ -1272,7 +1276,7 @@ export default function DashboardPage() {
       setBodyAnalysis(analysis)
       setSuccess('Body composition analyzed successfully!')
 
-      await csrfFetch('/api/profile', {
+      const saveRes = await csrfFetch('/api/profile', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -1280,6 +1284,10 @@ export default function DashboardPage() {
           body_composition_analysis: analysis,
         }),
       });
+      if (!saveRes.ok) {
+        const errPayload = await saveRes.json().catch(() => null) as { error?: string } | null
+        throw new Error(errPayload?.error || `Failed to save body photos (HTTP ${saveRes.status})`)
+      }
 
     } catch (error) {
       const msg = error instanceof Error ? error.message : 'Failed to analyze body composition. Please try again.'

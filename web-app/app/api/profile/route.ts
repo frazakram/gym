@@ -60,39 +60,40 @@ export async function PUT(request: NextRequest) {
     }
 
     const data = parsed.data;
-    
-    // Helper to convert null to undefined (Zod nullable vs TypeScript optional)
-    const nullToUndefined = <T>(val: T | null | undefined): T | undefined => 
-      val === null ? undefined : val;
 
+    // Pass values through as-is. saveProfile distinguishes:
+    //   undefined  → caller didn't send the field → preserve existing DB value
+    //   null       → caller explicitly cleared the field → store NULL
+    //   any value  → store the value
+    // Collapsing null→undefined would break the "explicitly clear photos" flow.
     const profile = await saveProfile(
       session.userId,
-      data.age,
-      data.weight,
-      data.height,
-      data.gender,
-      data.goal,
-      data.level,
-      data.tenure,
-      nullToUndefined(data.goal_weight),
-      nullToUndefined(data.notes),
-      nullToUndefined(data.goal_duration),
-      nullToUndefined(data.session_duration),
-      nullToUndefined(data.diet_type),
-      nullToUndefined(data.cuisine),
-      nullToUndefined(data.protein_powder),
-      nullToUndefined(data.protein_powder_amount),
-      nullToUndefined(data.meals_per_day),
-      nullToUndefined(data.allergies),
-      nullToUndefined(data.specific_food_preferences),
-      nullToUndefined(data.cooking_level),
-      nullToUndefined(data.budget),
-      nullToUndefined(data.name),
-      nullToUndefined(data.gym_photos),
-      nullToUndefined(data.gym_equipment_analysis),
-      nullToUndefined(data.body_photos),
-      nullToUndefined(data.body_composition_analysis),
-      nullToUndefined(data.preferred_rest_days) ?? undefined
+      data.age as any,
+      data.weight as any,
+      data.height as any,
+      data.gender as any,
+      data.goal as any,
+      data.level as any,
+      data.tenure as any,
+      data.goal_weight as any,
+      data.notes as any,
+      data.goal_duration as any,
+      data.session_duration as any,
+      data.diet_type as any,
+      data.cuisine as any,
+      data.protein_powder as any,
+      data.protein_powder_amount as any,
+      data.meals_per_day as any,
+      data.allergies as any,
+      data.specific_food_preferences as any,
+      data.cooking_level as any,
+      data.budget as any,
+      data.name as any,
+      data.gym_photos,
+      data.gym_equipment_analysis,
+      data.body_photos,
+      data.body_composition_analysis,
+      data.preferred_rest_days as any
     );
 
     // Persist nationality + region (separate update so we don't bloat saveProfile signature)

@@ -56,13 +56,15 @@ export const CuisineEnum = z.enum([
 ]).optional();
 
 export const ProfileUpdateSchema = z.object({
-  age: z.coerce.number().int().min(13, "Age must be at least 13").max(120, "Age must be at most 120"),
-  weight: z.coerce.number().min(20, "Weight must be at least 20 kg").max(400, "Weight must be at most 400 kg"),
-  height: z.coerce.number().min(50, "Height must be at least 50 cm").max(300, "Height must be at most 300 cm"),
-  gender: GenderEnum,
-  goal: GoalEnum,
-  level: z.string().min(1, "Level is required").max(50),
-  tenure: z.string().min(1, "Tenure is required").max(100),
+  // Basic fields are optional so partial updates (e.g., photo-only saves) pass validation.
+  // First-time profile creation goes through OnboardingWizard which sends them all.
+  age: z.coerce.number().int().min(13, "Age must be at least 13").max(120, "Age must be at most 120").optional(),
+  weight: z.coerce.number().min(20, "Weight must be at least 20 kg").max(400, "Weight must be at most 400 kg").optional(),
+  height: z.coerce.number().min(50, "Height must be at least 50 cm").max(300, "Height must be at most 300 cm").optional(),
+  gender: GenderEnum.optional(),
+  goal: GoalEnum.optional(),
+  level: z.string().min(1, "Level is required").max(50).optional(),
+  tenure: z.string().min(1, "Tenure is required").max(100).optional(),
   goal_weight: z.coerce.number().min(20).max(400).optional().nullable(),
   notes: z.string().max(2000, "Notes must be at most 2000 characters").optional().nullable(),
   goal_duration: z.string().max(100).optional().nullable(),
