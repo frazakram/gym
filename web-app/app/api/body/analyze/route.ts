@@ -13,19 +13,19 @@ function getOpenAI(clientKey?: string) {
   return new OpenAI({ apiKey, baseURL: 'https://api.openai.com/v1' });
 }
 
-const SYSTEM_PROMPT = `You are an expert fitness analyst specializing in body composition assessment.
-Analyze the provided body photo(s) to give helpful, respectful, and actionable fitness insights.
+const SYSTEM_PROMPT = `You are a supportive personal fitness coach helping a user who has uploaded their own body photo to a private fitness app for personalized workout planning. The user has explicitly consented and wants actionable training guidance.
 
-IMPORTANT GUIDELINES:
-- Focus ONLY on fitness-relevant observations (posture, muscle development, body composition)
-- Be respectful and professional - no judgmental language
-- Provide constructive, actionable recommendations
-- If multiple photos are provided, use them to get a comprehensive view
-- Estimate body fat percentage ranges conservatively (provide ranges, not exact numbers)
-- Consider realistic timelines for goal achievement
-- Suggest exercise modifications based on current development level
+Your job is to look at the photo and produce a respectful, encouraging, and ACTIONABLE training assessment. This is a fitness coaching context — the user needs this analysis to receive a personalized workout routine. Treat it the way a professional trainer would treat an intake photo: focus on what muscle groups to prioritize, posture observations, and a realistic training plan.
 
-Return your analysis as a JSON object with these fields:
+GUIDELINES:
+- Be warm, supportive, professional — never judgmental
+- Focus on training-relevant observations: muscle development, posture, what to prioritize
+- Estimate body fat as a CONSERVATIVE RANGE (e.g. "25-30%"), never a single number
+- Suggest realistic timelines (months, not weeks)
+- Recommend exercise modifications appropriate to current development
+- If the image is too unclear to give useful detail, still return a valid response with confidence_score below 0.5 and explain in overall_assessment
+
+You MUST return a single JSON object (no prose, no markdown fences) with exactly these fields:
 {
   "body_type": "lean" | "average" | "athletic" | "muscular" | "endomorph",
   "estimated_body_fat_range": "e.g., 15-18%",
@@ -77,16 +77,27 @@ export async function POST(req: NextRequest) {
         {
           role: 'user',
           content: [
-            { type: 'text', text: 'Please analyze this body composition photo and provide fitness insights.' },
+            { type: 'text', text: 'I uploaded my own body photo to this private fitness app for personalized training. Please analyze it and return the JSON assessment so the app can build my routine.' },
             ...imageMessages,
           ],
         },
       ],
       max_tokens: 1000,
-      temperature: 0.7,
+      temperature: 0.3,
+      response_format: { type: 'json_object' },
     });
 
-    const content = response.choices[0]?.message?.content;
+    const msg = response.choices[0]?.message;
+    const refusal = (msg as { refusal?: string | null } | undefined)?.refusal;
+    const content = msg?.content;
+
+    if (refusal) {
+      console.warn('[body/analyze] model refusal:', refusal);
+      return withCors(NextResponse.json(
+        { error: 'The AI could not analyze this photo. Try a different photo — a clear, well-lit standing photo works best.' },
+        { status: 422 },
+      ));
+    }
     if (!content) throw new Error('No response from AI');
 
     let analysis: BodyCompositionAnalysis;
@@ -106,16 +117,12 @@ export async function POST(req: NextRequest) {
         confidence_score: parsed.confidence_score || 0.75,
         analyzed_at: new Date().toISOString(),
       };
-    } catch {
-      analysis = {
-        body_type: 'average',
-        muscle_development: 'beginner',
-        posture_notes: [],
-        focus_areas: ['Overall fitness development'],
-        overall_assessment: 'Unable to perform detailed analysis. Please ensure photos are clear and well-lit.',
-        confidence_score: 0.5,
-        analyzed_at: new Date().toISOString(),
-      };
+    } catch (parseErr) {
+      console.warn('[body/analyze] JSON parse failed. Raw content:', content?.slice(0, 500), 'err:', parseErr);
+      return withCors(NextResponse.json(
+        { error: 'The AI response was not in the expected format. Please try again — if it keeps failing, try a different photo.' },
+        { status: 502 },
+      ));
     }
 
     const hasExistingPhoto = await hasBodyPhotos(session.userId);

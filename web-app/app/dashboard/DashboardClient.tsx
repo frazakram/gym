@@ -1238,9 +1238,12 @@ export default function DashboardPage() {
         body: JSON.stringify({ images: updatedPhotos.map(p => p.base64), api_key: userApiKey || undefined })
       })
 
-      if (!response.ok) throw new Error('Failed to analyze body composition')
+      const payload = await response.json().catch(() => null) as { analysis?: BodyCompositionAnalysis; error?: string } | null
+      if (!response.ok || !payload?.analysis) {
+        throw new Error(payload?.error || 'Failed to analyze body composition')
+      }
 
-      const { analysis } = await response.json()
+      const { analysis } = payload
       setBodyAnalysis(analysis)
       setSuccess('Body composition analyzed successfully!')
 
@@ -1281,7 +1284,11 @@ export default function DashboardPage() {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ images: updatedPhotos.map(p => p.base64), api_key: userApiKey || undefined })
         })
-        const { analysis } = await response.json()
+        const payload = await response.json().catch(() => null) as { analysis?: BodyCompositionAnalysis; error?: string } | null
+        if (!response.ok || !payload?.analysis) {
+          throw new Error(payload?.error || 'Failed to re-analyze body composition')
+        }
+        const { analysis } = payload
         setBodyAnalysis(analysis)
         await csrfFetch('/api/profile', {
           method: 'PUT',
@@ -1289,6 +1296,8 @@ export default function DashboardPage() {
           body: JSON.stringify({ body_photos: updatedPhotos, body_composition_analysis: analysis }),
         });
       } catch (error) {
+        const msg = error instanceof Error ? error.message : 'Re-analysis failed.'
+        setBodyError(msg)
         console.error('Re-analysis error:', error)
       } finally {
         setAnalyzingBody(false)
