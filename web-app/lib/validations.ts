@@ -129,6 +129,7 @@ export const RoutineGenerateSchema = z.object({
   regenerate: z.boolean().optional(),
   restDays: z.array(z.enum(["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"])).max(2).optional(),
   is_next_week: z.boolean().optional(),
+  client_today: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
 });
 
 export const RoutineSaveSchema = z.object({
