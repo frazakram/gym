@@ -1059,25 +1059,46 @@ export async function saveRoutine(
   }
 }
 
-export async function getLatestRoutine(userId: number): Promise<any | null> {
+export async function getLatestRoutine(userId: number, asOfDate?: string): Promise<any | null> {
+  // asOfDate (YYYY-MM-DD in the user's local timezone) gates out future routines.
+  // Without it, a routine pre-generated for next week would be returned as "latest"
+  // while the user is still in the current week — causing stale completions to leak
+  // across week boundaries.
   try {
-    const result = await pool.query(
-      `SELECT id, user_id, week_number, routine_json, week_start_date, created_at
-       FROM routines
-       WHERE user_id = $1
-         AND archived = FALSE
-       ORDER BY week_number DESC, week_start_date DESC NULLS LAST, created_at DESC
-       LIMIT 1`,
-      [userId]
-    );
+    const result = asOfDate
+      ? await pool.query(
+          `SELECT id, user_id, week_number, routine_json, week_start_date, created_at
+           FROM routines
+           WHERE user_id = $1
+             AND archived = FALSE
+             AND (week_start_date IS NULL OR week_start_date <= $2::date)
+           ORDER BY week_start_date DESC NULLS LAST, week_number DESC, created_at DESC
+           LIMIT 1`,
+          [userId, asOfDate]
+        )
+      : await pool.query(
+          `SELECT id, user_id, week_number, routine_json, week_start_date, created_at
+           FROM routines
+           WHERE user_id = $1
+             AND archived = FALSE
+           ORDER BY week_start_date DESC NULLS LAST, week_number DESC, created_at DESC
+           LIMIT 1`,
+          [userId]
+        );
     if (result.rows.length > 0) return result.rows[0];
     throw new Error("No DB routine found");
   } catch (error) {
     if (allowMockAuth()) {
       console.warn("getLatestRoutine DB failed/empty, checking mock:", error);
       // FALLBACK
+      const cutoff = asOfDate ? new Date(`${asOfDate}T23:59:59`) : null;
       const userRoutines = Array.from(mockRoutineStore.values())
-        .filter(r => r.user_id === userId)
+        .filter(r => {
+          if (r.user_id !== userId) return false;
+          if (!cutoff || !r.week_start_date) return true;
+          const ws = r.week_start_date instanceof Date ? r.week_start_date : new Date(r.week_start_date);
+          return ws.getTime() <= cutoff.getTime();
+        })
         .sort((a, b) => b.created_at.getTime() - a.created_at.getTime());
       return userRoutines[0] || null;
     }

@@ -200,6 +200,8 @@ export async function GET(req: NextRequest) {
 
     const { searchParams } = new URL(req.url);
     const routineIdParam = searchParams.get("routineId");
+    const asOfRaw = searchParams.get("asOf");
+    const asOf = asOfRaw && /^\d{4}-\d{2}-\d{2}$/.test(asOfRaw) ? asOfRaw : undefined;
 
     // ---- Current routine ----
     let routine: any;
@@ -210,7 +212,7 @@ export async function GET(req: NextRequest) {
       }
       routine = await getRoutineById(session.userId, id);
     } else {
-      routine = await getLatestRoutine(session.userId);
+      routine = await getLatestRoutine(session.userId, asOf);
     }
 
     if (!routine) {

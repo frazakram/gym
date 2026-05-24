@@ -154,11 +154,13 @@ export async function POST(request: NextRequest) {
       gymEquipmentContext = `The user trains at ${userGym.gymName}. Available equipment: ${userGym.equipment.join(', ')}. Only suggest exercises that can be performed with this equipment. Do not suggest exercises requiring equipment not in this list.`;
     }
 
-    // Build historical context for progressive routines
+    // Build historical context for progressive routines.
+    // Pass client_today so a pre-generated next-week routine isn't treated as
+    // "historical" while the user is still in the current week.
     let historicalContextStr: string | undefined;
     let historicalContext: Awaited<ReturnType<typeof buildHistoricalContext>> = null;
     try {
-      historicalContext = await buildHistoricalContext(session.userId);
+      historicalContext = await buildHistoricalContext(session.userId, body.client_today);
       if (historicalContext) {
         historicalContextStr = formatHistoricalContextForPrompt(historicalContext);
       }

@@ -9,9 +9,11 @@ export interface HistoricalContext {
   excelling: string[];
 }
 
-export async function buildHistoricalContext(userId: number): Promise<HistoricalContext | null> {
+export async function buildHistoricalContext(userId: number, asOfDate?: string): Promise<HistoricalContext | null> {
   try {
-    const latestRoutine = await getLatestRoutine(userId);
+    // asOfDate gates out future routines so we don't treat a pre-generated next-week
+    // routine as "historical context" while the user is still in the current week.
+    const latestRoutine = await getLatestRoutine(userId, asOfDate);
     if (!latestRoutine) return null;
 
     const completions = await getCompletionStats(userId, latestRoutine.id);

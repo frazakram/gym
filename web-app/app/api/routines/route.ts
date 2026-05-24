@@ -74,13 +74,16 @@ export async function GET(req: NextRequest) {
     const getAll = searchParams.get('all') === 'true';
     const includeArchived = searchParams.get('includeArchived') === 'true';
     const archivedOnly = searchParams.get('archivedOnly') === 'true';
+    const asOfRaw = searchParams.get('asOf');
+    // Strict YYYY-MM-DD guard so we never inject arbitrary input downstream.
+    const asOf = asOfRaw && /^\d{4}-\d{2}-\d{2}$/.test(asOfRaw) ? asOfRaw : undefined;
 
     // Use session userId instead of accepting it from query params
     if (getAll) {
       const routines = await getRoutinesByUser(session.userId, { includeArchived, archivedOnly });
       return withCors(NextResponse.json({ routines }));
     } else {
-      const routine = await getLatestRoutine(session.userId);
+      const routine = await getLatestRoutine(session.userId, asOf);
       return withCors(NextResponse.json({ routine }));
     }
   } catch (error) {

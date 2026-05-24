@@ -261,7 +261,11 @@ export default function DashboardPage() {
 
   const fetchLatestRoutine = useCallback(async () => {
     try {
-      const res = await csrfFetch(`/api/routines`)
+      // Pass user's LOCAL date so the server can exclude future routines
+      // (e.g., a "next week" routine pre-generated while still in the current week).
+      const today = new Date()
+      const asOf = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`
+      const res = await csrfFetch(`/api/routines?asOf=${asOf}`)
       const { routine } = await res.json()
       if (routine) {
         setRoutine(routine.routine_json)
@@ -624,7 +628,7 @@ export default function DashboardPage() {
     return out
   }
 
-  const saveRoutineToDatabase = async (routineData: WeeklyRoutine, weekNumberOverride?: number, weekStartDateOverride?: Date) => {
+  const saveRoutineToDatabase = async (routineData: WeeklyRoutine, weekNumberOverride?: number, weekStartDateOverride?: Date, setAsActive: boolean = true) => {
     try {
       let currentUserId = userId
       if (!currentUserId) {
@@ -659,7 +663,9 @@ export default function DashboardPage() {
 
       const data = await res.json()
       if (data.routineId) {
-        setCurrentRoutineId(data.routineId)
+        if (setAsActive) {
+          setCurrentRoutineId(data.routineId)
+        }
         return data.routineId
       }
       throw new Error(`API returned success but no routineId: ${JSON.stringify(data)}`);
@@ -722,6 +728,11 @@ export default function DashboardPage() {
 
       setGenerationStage('Contacting AI provider…')
 
+      const todayLocal = (() => {
+        const d = new Date()
+        return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+      })()
+
       const response = await csrfFetch('/api/routine/generate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -744,6 +755,7 @@ export default function DashboardPage() {
           week_number: targetWeekNumber,
           stream: true, // SSE streaming to avoid Vercel timeout
           regenerate: forceRegenerate, // bypass cache when user explicitly clicks Regenerate
+          client_today: todayLocal,
           // Explicit modal selection > saved profile preference > AI decides
           restDays: restDays && restDays.length > 0
             ? restDays
@@ -808,12 +820,25 @@ export default function DashboardPage() {
         dietType, cuisine, proteinPowder, mealsPerDay, allergies
       })
 
+      // Next-week generation: persist the routine for next week but DON'T switch
+      // the active routine. The user is still in the current week — completions
+      // logged in the remainder of the week must stay on the current routine.
+      // The new routine becomes active automatically when its week_start_date arrives,
+      // via the asOf filter in /api/routines.
+      if (isNextWeek) {
+        if (data.source === 'db' || data.source === 'cache') {
+          setSuccess("Next week's routine is ready. It will activate next Monday.")
+        } else {
+          await saveRoutineToDatabase(data.routine, targetWeekNumber, targetWeekStart, false)
+          setSuccess("Next week's routine is ready. It will activate next Monday.")
+        }
+        return
+      }
+
       setRoutine(data.routine)
 
       if (data.week_number) {
         setCurrentWeekNumber(data.week_number)
-      } else if (isNextWeek) {
-        setCurrentWeekNumber(prev => prev + 1)
       }
 
       if (data.source === 'db' || data.source === 'cache') {

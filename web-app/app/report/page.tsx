@@ -444,7 +444,11 @@ export default function ReportPage() {
   useEffect(() => {
     const url = new URL(window.location.href)
     const routineId = url.searchParams.get('routineId')
-    const endpoint = routineId ? `/api/report?routineId=${routineId}` : '/api/report'
+    const today = new Date()
+    const asOf = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`
+    const endpoint = routineId
+      ? `/api/report?routineId=${routineId}`
+      : `/api/report?asOf=${asOf}`
 
     fetch(endpoint, { cache: 'no-store' })
       .then(async (res) => {
