@@ -314,7 +314,7 @@ export default function OnboardingWizard({ isReset = false }: { isReset?: boolea
               <div
                 className={`h-1.5 w-full rounded-full transition-all duration-500 ${
                   i <= step
-                    ? 'bg-gradient-to-r from-primary to-primary-light shadow-[0_0_12px_rgba(139,92,246,0.4)]'
+                    ? 'bg-gradient-to-r from-primary to-primary-light shadow-[0_0_12px_rgba(0,229,188,0.4)]'
                     : 'bg-white/8'
                 }`}
               />
@@ -392,7 +392,7 @@ export default function OnboardingWizard({ isReset = false }: { isReset?: boolea
                           onClick={() => setLevel(l.value)}
                           className={`w-full flex items-center justify-between px-4 py-3 rounded-xl border transition-all ${
                             level === l.value
-                              ? 'border-primary/40 bg-primary/15 shadow-[0_0_15px_rgba(139,92,246,0.15)]'
+                              ? 'border-primary/40 bg-primary/15 shadow-[0_0_15px_rgba(0,229,188,0.15)]'
                               : 'border-primary/10 bg-white/5 hover:bg-primary/8'
                           }`}
                         >
@@ -548,7 +548,7 @@ export default function OnboardingWizard({ isReset = false }: { isReset?: boolea
                           onClick={() => setTenure(t.value)}
                           className={`w-full text-left px-4 py-3 rounded-xl border transition-all ${
                             tenure === t.value
-                              ? 'border-primary/40 bg-primary/15 shadow-[0_0_15px_rgba(139,92,246,0.15)]'
+                              ? 'border-primary/40 bg-primary/15 shadow-[0_0_15px_rgba(0,229,188,0.15)]'
                               : 'border-primary/10 bg-white/5 hover:bg-primary/8'
                           }`}
                         >

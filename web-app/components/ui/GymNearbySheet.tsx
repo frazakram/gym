@@ -388,9 +388,9 @@ export function GymNearbySheet({ open, onClose, onGymSaved }: GymNearbySheetProp
                       <span
                         className="text-[11px] font-semibold px-2 py-0.5 rounded-full"
                         style={{
-                          background: totalSelected > 0 ? 'rgba(124,58,237,0.2)' : 'rgba(255,255,255,0.06)',
-                          color: totalSelected > 0 ? '#c4b5fd' : 'rgba(148,163,184,0.6)',
-                          border: totalSelected > 0 ? '1px solid rgba(167,139,250,0.3)' : '1px solid rgba(255,255,255,0.08)',
+                          background: totalSelected > 0 ? 'rgba(0,229,188,0.2)' : 'rgba(255,255,255,0.06)',
+                          color: totalSelected > 0 ? '#99FFF0' : 'rgba(148,163,184,0.6)',
+                          border: totalSelected > 0 ? '1px solid rgba(95,255,224,0.3)' : '1px solid rgba(255,255,255,0.08)',
                         }}
                       >
                         {totalSelected} selected
@@ -416,10 +416,10 @@ export function GymNearbySheet({ open, onClose, onGymSaved }: GymNearbySheetProp
                                   style={
                                     active
                                       ? {
-                                          background: 'rgba(124,58,237,0.22)',
-                                          color: '#c4b5fd',
-                                          border: '1px solid rgba(167,139,250,0.45)',
-                                          boxShadow: '0 0 8px rgba(124,58,237,0.2)',
+                                          background: 'rgba(0,229,188,0.22)',
+                                          color: '#99FFF0',
+                                          border: '1px solid rgba(95,255,224,0.45)',
+                                          boxShadow: '0 0 8px rgba(0,229,188,0.2)',
                                         }
                                       : {
                                           background: 'rgba(255,255,255,0.04)',
@@ -454,10 +454,10 @@ export function GymNearbySheet({ open, onClose, onGymSaved }: GymNearbySheetProp
                                   style={
                                     active
                                       ? {
-                                          background: 'rgba(124,58,237,0.22)',
-                                          color: '#c4b5fd',
-                                          border: '1px solid rgba(167,139,250,0.45)',
-                                          boxShadow: '0 0 8px rgba(124,58,237,0.2)',
+                                          background: 'rgba(0,229,188,0.22)',
+                                          color: '#99FFF0',
+                                          border: '1px solid rgba(95,255,224,0.45)',
+                                          boxShadow: '0 0 8px rgba(0,229,188,0.2)',
                                         }
                                       : {
                                           background: 'rgba(255,255,255,0.04)',

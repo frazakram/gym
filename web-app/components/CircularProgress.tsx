@@ -49,7 +49,7 @@ export function CircularProgress({
             cy={size / 2}
             r={radius}
             fill="none"
-            stroke="rgba(139, 92, 246, 0.15)"
+            stroke="rgba(0, 229, 188, 0.15)"
             strokeWidth={strokeWidth}
           />
           {/* Progress circle with glow */}

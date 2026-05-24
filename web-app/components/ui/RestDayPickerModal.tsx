@@ -131,7 +131,7 @@ export function RestDayPickerModal({ open, onClose, onConfirm, initialDays }: Re
                       className="flex flex-col items-center py-2.5 rounded-xl border transition-all"
                       style={
                         isSelected
-                          ? { background: 'rgba(167,139,250,0.18)', borderColor: 'rgba(167,139,250,0.55)', color: '#c4b5fd' }
+                          ? { background: 'rgba(0,229,188,0.18)', borderColor: 'rgba(95,255,224,0.55)', color: '#99FFF0' }
                           : isDisabled
                           ? { background: 'rgba(255,255,255,0.02)', borderColor: 'rgba(255,255,255,0.04)', color: 'rgba(148,163,184,0.3)', cursor: 'not-allowed' }
                           : { background: 'rgba(255,255,255,0.04)', borderColor: 'rgba(255,255,255,0.08)', color: 'rgba(148,163,184,0.7)' }
@@ -139,7 +139,7 @@ export function RestDayPickerModal({ open, onClose, onConfirm, initialDays }: Re
                     >
                       <span className="text-[11px] font-semibold">{day}</span>
                       {isSelected && (
-                        <span className="mt-1 w-1.5 h-1.5 rounded-full bg-violet-400" />
+                        <span className="mt-1 w-1.5 h-1.5 rounded-full bg-primary" />
                       )}
                     </button>
                   )
@@ -167,7 +167,7 @@ export function RestDayPickerModal({ open, onClose, onConfirm, initialDays }: Re
               <button
                 onClick={handleConfirm}
                 className="w-full py-3 rounded-xl text-sm font-semibold text-white transition-all active:scale-[0.98]"
-                style={{ background: 'linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%)' }}
+                style={{ background: 'linear-gradient(135deg, #00E5BC 0%, #00B89A 100%)' }}
               >
                 {selected.size === 0
                   ? 'Generate (AI picks rest days)'

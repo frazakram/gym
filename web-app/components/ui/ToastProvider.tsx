@@ -118,9 +118,9 @@ function GlassItem({ t, onRemove }: { t: Toast; onRemove: (id: string) => void }
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   const isSuccess = t.type === 'success'
-  const dotColor = isSuccess ? '#22c55e' : '#7c3aed'
+  const dotColor = isSuccess ? '#22c55e' : '#00E5BC'
   const icon = isSuccess ? '✅' : 'ℹ️'
-  const actionBg = isSuccess ? '#22c55e' : '#7c3aed'
+  const actionBg = isSuccess ? '#22c55e' : '#00E5BC'
 
   return (
     <div

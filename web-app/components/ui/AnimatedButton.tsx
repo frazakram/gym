@@ -48,8 +48,8 @@ export function AnimatedButton({
   }
 
   const variantClasses = {
-    primary: 'bg-gradient-to-r from-primary to-primary-light text-white shadow-lg hover:shadow-[0_0_30px_rgba(139,92,246,0.4)] hover:brightness-110',
-    secondary: 'bg-white/5 border border-primary/20 text-slate-100 hover:bg-primary/10 hover:border-primary/30 hover:shadow-[0_0_20px_rgba(139,92,246,0.15)]',
+    primary: 'bg-gradient-to-r from-primary to-primary-light text-accent-ink shadow-lg hover:shadow-[0_0_30px_rgba(0,229,188,0.45)] hover:brightness-110',
+    secondary: 'bg-white/5 border border-primary/20 text-slate-100 hover:bg-primary/10 hover:border-primary/30 hover:shadow-[0_0_20px_rgba(0,229,188,0.18)]',
     ghost: 'glass-soft text-slate-100 hover:text-white hover:bg-primary/10',
     premium: 'bg-gradient-to-r from-gold to-gold-light text-slate-900 font-bold shadow-lg hover:shadow-[0_0_30px_rgba(245,158,11,0.5)] hover:brightness-110',
     coral: 'bg-gradient-to-r from-coral to-[#FF8A65] text-white shadow-lg hover:shadow-[0_0_30px_rgba(255,111,97,0.4)] hover:brightness-110',

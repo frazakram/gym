@@ -212,7 +212,7 @@ export function WorkoutView({
           >
             <div className="glass rounded-xl p-5 text-center bg-gradient-to-r from-primary/15 to-brand-cyan/10 border border-primary/25 relative overflow-hidden">
               {/* Celebration glow */}
-              <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(139,92,246,0.15),transparent_70%)]" />
+              <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(0,229,188,0.15),transparent_70%)]" />
 
               <motion.div
                 className="relative z-10"

@@ -31,7 +31,7 @@ export function GlassCard({
         ${variantClass[variant]} ui-card rounded-2xl
         transition-all duration-300
         hover:shadow-xl hover:shadow-primary/10 hover:-translate-y-0.5
-        ${glowOnHover ? 'hover:border-primary/25 hover:shadow-[0_0_20px_rgba(139,92,246,0.1)]' : ''}
+        ${glowOnHover ? 'hover:border-primary/25 hover:shadow-[0_0_20px_rgba(0,229,188,0.12)]' : ''}
         ${className}
       `}
     >

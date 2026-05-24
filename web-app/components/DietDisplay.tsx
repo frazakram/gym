@@ -61,7 +61,7 @@ export const DietDisplay: React.FC<DietDisplayProps> = ({ diet }) => {
               variant="soft" 
               className={`p-3 transition-colors ${
                 isToday
-                  ? 'bg-primary/14 border-primary/25 shadow-[0_8px_30px_rgba(139,92,246,0.1)]'
+                  ? 'bg-primary/14 border-primary/25 shadow-[0_8px_30px_rgba(0,229,188,0.12)]'
                   : ''
               }`}
             >

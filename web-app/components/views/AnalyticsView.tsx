@@ -76,8 +76,8 @@ function TrendLineChart({ points }: { points: TrendPoint[] }) {
     <svg viewBox={`0 0 ${w} ${h}`} className="w-full h-[190px]">
       <defs>
         <linearGradient id="trendFill" x1="0" x2="0" y1="0" y2="1">
-          <stop offset="0%" stopColor="rgba(139,92,246,0.22)" />
-          <stop offset="100%" stopColor="rgba(139,92,246,0.02)" />
+          <stop offset="0%" stopColor="rgba(0,229,188,0.22)" />
+          <stop offset="100%" stopColor="rgba(0,229,188,0.02)" />
         </linearGradient>
       </defs>
 
@@ -121,7 +121,7 @@ function TrendLineChart({ points }: { points: TrendPoint[] }) {
         const firstX = seg[0].x
         return (
           <g key={si}>
-            <path d={d} fill="none" stroke="rgba(139,92,246,0.92)" strokeWidth="2.5" strokeLinejoin="round" />
+            <path d={d} fill="none" stroke="rgba(0,229,188,0.92)" strokeWidth="2.5" strokeLinejoin="round" />
             <path
               d={`${d} L ${lastX.toFixed(2)} ${(h - padB).toFixed(2)} L ${firstX.toFixed(2)} ${(h - padB).toFixed(2)} Z`}
               fill="url(#trendFill)"
@@ -137,7 +137,7 @@ function TrendLineChart({ points }: { points: TrendPoint[] }) {
             cx={p.x}
             cy={p.y}
             r={p.isMissing ? 3 : 3.2}
-            fill={p.isMissing ? 'rgba(148,163,184,0.10)' : 'rgba(139,92,246,0.95)'}
+            fill={p.isMissing ? 'rgba(148,163,184,0.10)' : 'rgba(0,229,188,0.95)'}
             stroke={p.isMissing ? 'rgba(148,163,184,0.35)' : 'rgba(16,185,129,0.0)'}
             strokeWidth={p.isMissing ? 1.2 : 0}
           />
