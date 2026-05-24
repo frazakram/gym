@@ -368,42 +368,71 @@ export default function ReportPage() {
   const reportRef = useRef<HTMLDivElement | null>(null)
 
   /**
-   * Generate PDF client-side via html2pdf.js (works on Android PWA standalone,
-   * iOS Safari, and desktop — unlike window.print() which only works in
-   * browser display-mode on Android).
+   * Generate PDF client-side via html2canvas-pro + jsPDF.
    *
-   * Library is dynamically imported so it doesn't bloat the initial bundle.
+   * Why this stack:
+   * - Vanilla html2canvas chokes on Tailwind v4's modern color functions
+   *   (`oklch()`, `lab()`, `color-mix()`) — throws "unexpected color function".
+   * - `html2canvas-pro` is a community fork that natively understands them.
+   * - Works on Android PWA standalone, iOS Safari, and desktop — unlike
+   *   `window.print()` which is only available in browser display-mode on Android.
+   *
+   * Libraries are dynamically imported so they don't bloat the initial bundle.
    */
   const handleSavePdf = async () => {
     if (!reportRef.current || savingPdf) return
     setSavingPdf(true)
     setPdfError('')
     try {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const html2pdf: any = (await import('html2pdf.js' as string)).default
+      const [{ default: html2canvas }, { jsPDF }] = await Promise.all([
+        import('html2canvas-pro'),
+        import('jspdf'),
+      ])
+
+      const element = reportRef.current
+      const canvas = await html2canvas(element, {
+        scale: 2,
+        useCORS: true,
+        backgroundColor: '#0a0a1a',
+        // Hide the floating action bar (and any other .no-print elements)
+        // in the cloned doc before rendering — those should never be in the PDF
+        onclone: (clonedDoc: Document) => {
+          clonedDoc.querySelectorAll('.no-print').forEach((el) => {
+            ;(el as HTMLElement).style.display = 'none'
+          })
+        },
+      })
+
+      const imgData = canvas.toDataURL('image/jpeg', 0.92)
+
+      // A4 portrait in mm. 210 x 297. 8mm side margin, 10mm top/bottom.
+      const pdf = new jsPDF({ unit: 'mm', format: 'a4', orientation: 'portrait' })
+      const pageWidth = pdf.internal.pageSize.getWidth()
+      const pageHeight = pdf.internal.pageSize.getHeight()
+      const sideMargin = 8
+      const topMargin = 10
+      const bottomMargin = 10
+      const imgWidth = pageWidth - sideMargin * 2
+      const imgHeight = (canvas.height * imgWidth) / canvas.width
+      const usablePerPage = pageHeight - topMargin - bottomMargin
+
+      // First page
+      let heightLeft = imgHeight
+      let position = topMargin
+      pdf.addImage(imgData, 'JPEG', sideMargin, position, imgWidth, imgHeight)
+      heightLeft -= usablePerPage
+
+      // Additional pages — keep adding the same image with a negative y offset
+      // so each page shows the next vertical slice
+      while (heightLeft > 0) {
+        pdf.addPage()
+        position = topMargin - (imgHeight - heightLeft)
+        pdf.addImage(imgData, 'JPEG', sideMargin, position, imgWidth, imgHeight)
+        heightLeft -= usablePerPage
+      }
+
       const weekNum = data?.routine?.week_number ?? 0
-      await html2pdf()
-        .set({
-          margin: [10, 8, 10, 8] as [number, number, number, number],
-          filename: `gymbro-weekly-report-week-${weekNum}.pdf`,
-          image: { type: 'jpeg', quality: 0.95 },
-          html2canvas: {
-            scale: 2,
-            useCORS: true,
-            backgroundColor: '#0a0a1a',
-            // Strip the floating action bar + any .no-print elements from the cloned doc
-            // before rendering — those should never be in the PDF
-            onclone: (clonedDoc: Document) => {
-              clonedDoc.querySelectorAll('.no-print').forEach((el) => {
-                ;(el as HTMLElement).style.display = 'none'
-              })
-            },
-          },
-          jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
-          pagebreak: { mode: ['css', 'avoid-all'] },
-        })
-        .from(reportRef.current)
-        .save()
+      pdf.save(`gymbro-weekly-report-week-${weekNum}.pdf`)
     } catch (err) {
       console.error('PDF generation failed:', err)
       setPdfError(err instanceof Error ? err.message : 'Failed to generate PDF')
