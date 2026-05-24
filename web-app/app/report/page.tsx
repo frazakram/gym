@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { BodySvgShared } from '@/components/BodySvgShared'
 import { muscleLabel, type MuscleGroup } from '@/lib/exercise-muscles'
 import type {
@@ -13,6 +13,7 @@ import { generateWeeklyReportData } from '@/lib/report-utils'
 import { WeeklyRoutine, Profile, BodyCompositionAnalysis, BodyPhoto } from '@/types'
 import {
   Download,
+  Loader2,
   ChevronLeft,
   Flame,
   Zap,
@@ -362,6 +363,54 @@ export default function ReportPage() {
   const [data, setData] = useState<ReportApiResponse | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
+  const [savingPdf, setSavingPdf] = useState(false)
+  const [pdfError, setPdfError] = useState('')
+  const reportRef = useRef<HTMLDivElement | null>(null)
+
+  /**
+   * Generate PDF client-side via html2pdf.js (works on Android PWA standalone,
+   * iOS Safari, and desktop — unlike window.print() which only works in
+   * browser display-mode on Android).
+   *
+   * Library is dynamically imported so it doesn't bloat the initial bundle.
+   */
+  const handleSavePdf = async () => {
+    if (!reportRef.current || savingPdf) return
+    setSavingPdf(true)
+    setPdfError('')
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const html2pdf: any = (await import('html2pdf.js' as string)).default
+      const weekNum = data?.routine?.week_number ?? 0
+      await html2pdf()
+        .set({
+          margin: [10, 8, 10, 8] as [number, number, number, number],
+          filename: `gymbro-weekly-report-week-${weekNum}.pdf`,
+          image: { type: 'jpeg', quality: 0.95 },
+          html2canvas: {
+            scale: 2,
+            useCORS: true,
+            backgroundColor: '#0a0a1a',
+            // Strip the floating action bar + any .no-print elements from the cloned doc
+            // before rendering — those should never be in the PDF
+            onclone: (clonedDoc: Document) => {
+              clonedDoc.querySelectorAll('.no-print').forEach((el) => {
+                ;(el as HTMLElement).style.display = 'none'
+              })
+            },
+          },
+          jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
+          pagebreak: { mode: ['css', 'avoid-all'] },
+        })
+        .from(reportRef.current)
+        .save()
+    } catch (err) {
+      console.error('PDF generation failed:', err)
+      setPdfError(err instanceof Error ? err.message : 'Failed to generate PDF')
+    } finally {
+      setSavingPdf(false)
+    }
+  }
 
   useEffect(() => {
     const url = new URL(window.location.href)
@@ -461,8 +510,8 @@ export default function ReportPage() {
         @page { size: A4; margin: 16mm 12mm; }
       `}</style>
 
-      <div className="min-h-screen bg-[#0a0a1a] report-page">
-        {/* Floating action bar — hidden on print */}
+      <div ref={reportRef} className="min-h-screen bg-[#0a0a1a] report-page">
+        {/* Floating action bar — hidden on print AND stripped from PDF capture via onclone */}
         <div className="no-print sticky top-0 z-30 backdrop-blur-xl bg-[#0a0a1a]/80 border-b border-primary/10 px-4 py-3">
           <div className="max-w-2xl mx-auto flex items-center justify-between">
             <a href="/dashboard" className="inline-flex items-center gap-1.5 text-sm text-muted hover:text-white transition">
@@ -470,13 +519,27 @@ export default function ReportPage() {
             </a>
             <div className="flex items-center gap-2">
               <button
-                onClick={() => window.print()}
-                className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-r from-primary to-brand-cyan text-white text-sm font-semibold shadow-lg shadow-primary/25 hover:brightness-110 transition"
+                onClick={handleSavePdf}
+                disabled={savingPdf}
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-r from-primary to-brand-cyan text-white text-sm font-semibold shadow-lg shadow-primary/25 hover:brightness-110 transition disabled:opacity-60 disabled:cursor-not-allowed"
               >
-                <Download className="w-4 h-4" /> Save as PDF
+                {savingPdf ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" /> Saving…
+                  </>
+                ) : (
+                  <>
+                    <Download className="w-4 h-4" /> Save as PDF
+                  </>
+                )}
               </button>
             </div>
           </div>
+          {pdfError && (
+            <div className="max-w-2xl mx-auto mt-2 text-xs text-rose-300 text-right">
+              {pdfError}
+            </div>
+          )}
         </div>
 
         <div className="max-w-2xl mx-auto px-4 py-8 space-y-6">
