@@ -13,7 +13,7 @@ import { UserAvatar } from '../ui/UserAvatar'
 import { StreakBanner } from '../ui/StreakBanner'
 import { RestDayCard } from '../ui/RestDayCard'
 import { QuoteLoader } from '../ui/QuoteLoader'
-import { ArrowRight, Timer, Percent, MessageCircle, ChevronRight, Flame, Drumstick, CalendarPlus, MapPin, TrendingUp, ChevronDown, Dumbbell } from 'lucide-react'
+import { ArrowRight, Timer, Percent, MessageCircle, ChevronRight, Flame, Drumstick, CalendarPlus, MapPin, TrendingUp, ChevronDown, Dumbbell, BarChart3 } from 'lucide-react'
 import { useLocation } from '@/hooks/useLocation'
 import { WeeklyBreakdownSheet, type DayBreakdown } from '../ui/WeeklyBreakdownSheet'
 
@@ -46,6 +46,7 @@ interface HomeViewProps {
   weeksElapsed?: number
   onStartNewWeek?: () => void
   onOpenGymSheet?: () => void
+  currentRoutineId?: number | null
 }
 
 export function HomeView({
@@ -67,6 +68,7 @@ export function HomeView({
   weeksElapsed = 0,
   onStartNewWeek,
   onOpenGymSheet,
+  currentRoutineId,
 }: HomeViewProps) {
   const [manageOpen, setManageOpen] = useState(false)
   const [showBreakdown, setShowBreakdown] = useState(false)
@@ -364,6 +366,37 @@ export function HomeView({
           </GlassCard>
         </motion.div>
       ) : null}
+
+      {/* Weekly Report card — shown on Sundays when there is a routine */}
+      {routine && !viewingHistory && new Date().getDay() === 0 && currentRoutineId && (
+        <motion.div variants={fadeUp}>
+          <GlassCard className="p-4 bg-gradient-to-r from-indigo-600/10 via-primary/10 to-brand-cyan/10 border-primary/25">
+            <div className="flex items-start gap-3">
+              <div className="w-10 h-10 rounded-xl bg-primary/15 flex items-center justify-center shrink-0">
+                <BarChart3 className="w-5 h-5 text-primary-light" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-semibold text-white">
+                  Weekly Report Available 📊
+                </p>
+                <p className="text-xs text-muted mt-1">
+                  Review your muscle activation heatmap, achievements, and body progress.
+                </p>
+                <div className="mt-3">
+                  <AnimatedButton
+                    onClick={() => window.location.href = `/report?routineId=${currentRoutineId}`}
+                    variant="primary"
+                    fullWidth
+                    icon={<BarChart3 className="w-4 h-4" />}
+                  >
+                    View &amp; Download Report
+                  </AnimatedButton>
+                </div>
+              </div>
+            </div>
+          </GlassCard>
+        </motion.div>
+      )}
 
       {/* Generate Next Week banner — shown when 80%+ complete */}
       {routine && !viewingHistory && !routineIsStale && progress.percentage >= 80 && (

@@ -5,7 +5,7 @@ import { useEffect, useRef, useState } from 'react'
 import { WeeklyRoutine } from '@/types'
 import { ExerciseCard } from '../ExerciseCard'
 import { SwipeableExerciseWrapper } from '../ui/SwipeableExercise'
-import { ChevronLeft, Moon, PartyPopper } from 'lucide-react'
+import { ChevronLeft, Moon, PartyPopper, BarChart3 } from 'lucide-react'
 
 const stagger = {
   hidden: {},
@@ -239,6 +239,20 @@ export function WorkoutView({
                 Great job finishing today&apos;s workout
                 {elapsed > 0 && <span className="ml-1 text-white">· {formatTime(elapsed)}</span>}
               </motion.p>
+
+              {/* Weekly Report CTA — shown on last day (Sunday = index 6) or any completed day */}
+              {(selectedDayIndex >= 6 || day.day.toLowerCase().includes('sunday')) && currentRoutineId && (
+                <motion.a
+                  href={`/report?routineId=${currentRoutineId}`}
+                  className="relative z-10 inline-flex items-center gap-2 mt-4 px-5 py-2.5 rounded-2xl bg-gradient-to-r from-primary to-brand-cyan text-white text-sm font-semibold shadow-lg shadow-primary/25 hover:brightness-110 transition"
+                  initial={{ opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.55 }}
+                >
+                  <BarChart3 className="w-4 h-4" />
+                  View Weekly Report
+                </motion.a>
+              )}
             </div>
           </motion.div>
         )}

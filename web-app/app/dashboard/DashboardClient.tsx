@@ -1539,6 +1539,7 @@ export default function DashboardPage() {
                 weeksElapsed={weeksElapsed}
                 onStartNewWeek={handleStartNewWeek}
                 onOpenGymSheet={() => setGymSheetOpen(true)}
+                currentRoutineId={currentRoutineId}
               />
             )}
 
