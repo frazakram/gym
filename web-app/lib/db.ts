@@ -821,10 +821,13 @@ export async function saveProfile(
           effProteinPowderAmount || null,
           typeof effSpecificFood === 'string' && effSpecificFood.trim() ? effSpecificFood.trim() : null,
           typeof effNameRaw === 'string' && effNameRaw.trim() ? encryptRnd(effNameRaw.trim()) : null,
-          effGymPhotos ?? null,
-          effGymEquipmentAnalysis ?? null,
-          effBodyPhotos ?? null,
-          effBodyCompositionAnalysis ?? null,
+          // JSONB columns must be JSON-stringified — pg/Neon would otherwise try
+          // to encode JS arrays as Postgres array literals and reject the insert
+          // with "invalid input syntax for type json".
+          effGymPhotos != null ? JSON.stringify(effGymPhotos) : null,
+          effGymEquipmentAnalysis != null ? JSON.stringify(effGymEquipmentAnalysis) : null,
+          effBodyPhotos != null ? JSON.stringify(effBodyPhotos) : null,
+          effBodyCompositionAnalysis != null ? JSON.stringify(effBodyCompositionAnalysis) : null,
           Array.isArray(effPreferredRestDays) && effPreferredRestDays.length > 0 ? effPreferredRestDays : null,
         ]
       );
@@ -862,10 +865,11 @@ export async function saveProfile(
           protein_powder_amount || null,
           specific_food_preferences?.trim() ? specific_food_preferences.trim() : null,
           name?.trim() ? encryptRnd(name.trim()) : null,
-          gym_photos || null,
-          gym_equipment_analysis || null,
-          body_photos || null,
-          body_composition_analysis || null,
+          // See UPDATE path above: JSONB columns must be JSON-stringified.
+          gym_photos != null ? JSON.stringify(gym_photos) : null,
+          gym_equipment_analysis != null ? JSON.stringify(gym_equipment_analysis) : null,
+          body_photos != null ? JSON.stringify(body_photos) : null,
+          body_composition_analysis != null ? JSON.stringify(body_composition_analysis) : null,
           preferred_rest_days && preferred_rest_days.length > 0 ? preferred_rest_days : null
         ]
       );
