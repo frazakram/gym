@@ -27,6 +27,11 @@ interface WorkoutViewProps {
   onToggleRestDay: (dayIndex: number, completed: boolean) => Promise<void>
   onEnsureRoutineSaved: () => Promise<number | null>
   onBack: () => void
+  bodyAnalysis?: {
+    focus_areas?: string[]
+    posture_notes?: string[]
+    body_type?: string
+  } | null
 }
 
 export function WorkoutView({
@@ -39,6 +44,7 @@ export function WorkoutView({
   onToggleRestDay,
   onEnsureRoutineSaved,
   onBack,
+  bodyAnalysis,
 }: WorkoutViewProps) {
   if (!routine) {
     return (
@@ -184,6 +190,7 @@ export function WorkoutView({
                         onToggleExercise(selectedDayIndex, exerciseIndex, completed)
                       }}
                       onEnsureRoutineSaved={onEnsureRoutineSaved}
+                      bodyAnalysis={bodyAnalysis}
                     />
                   </SwipeableExerciseWrapper>
                 </motion.div>

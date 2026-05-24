@@ -4,7 +4,8 @@ import { useState } from 'react'
 import { ExerciseCheckbox } from './ExerciseCheckbox'
 import YouTubeHoverPreview from './YouTubeHoverPreview'
 import { getYouTubeId } from '@/lib/youtube'
-import { Play, ExternalLink, ChevronDown } from 'lucide-react'
+import { Play, ExternalLink, ChevronDown, Activity } from 'lucide-react'
+import { MuscleMapModal } from './MuscleMapModal'
 
 interface Exercise {
   name: string
@@ -25,6 +26,11 @@ interface ExerciseCardProps {
   onToggle: (completed: boolean) => void
   onEnsureRoutineSaved: () => Promise<number | null>
   imageUrl?: string
+  bodyAnalysis?: {
+    focus_areas?: string[]
+    posture_notes?: string[]
+    body_type?: string
+  } | null
 }
 
 export function ExerciseCard({
@@ -36,8 +42,10 @@ export function ExerciseCard({
   onToggle,
   onEnsureRoutineSaved,
   imageUrl,
+  bodyAnalysis,
 }: ExerciseCardProps) {
   const [isExpanded, setIsExpanded] = useState(false)
+  const [muscleMapOpen, setMuscleMapOpen] = useState(false)
 
   // Get YouTube URLs
   const getYouTubeUrls = (): string[] => {
@@ -146,30 +154,41 @@ export function ExerciseCard({
           )}
         </div>
 
-        {/* Expandable Tutorial Points */}
-        {points.length > 0 && (
-          <div>
-            <button
-              onClick={() => setIsExpanded(!isExpanded)}
-              className="w-full flex items-center justify-between text-sm font-semibold text-slate-100 mb-2 hover:text-white transition"
-            >
-              <span>Tutorial Points</span>
-              <ChevronDown className={`w-4 h-4 transition-transform ${isExpanded ? 'rotate-180' : ''}`} />
-            </button>
-            
-            {isExpanded && (
-              <ul className="list-disc pl-5 space-y-1.5 text-sm text-slate-200/80 mb-3">
-                {points.map((p, i) => (
-                  <li key={i}>{p}</li>
-                ))}
-              </ul>
-            )}
-          </div>
-        )}
+        {/* Expandable section — always rendered so Muscles & Benefits is reachable */}
+        <div>
+          <button
+            onClick={() => setIsExpanded(!isExpanded)}
+            className="w-full flex items-center justify-between text-sm font-semibold text-slate-100 mb-2 hover:text-white transition"
+          >
+            <span>{points.length > 0 ? 'Tutorial Points' : 'Details'}</span>
+            <ChevronDown className={`w-4 h-4 transition-transform ${isExpanded ? 'rotate-180' : ''}`} />
+          </button>
+
+          {isExpanded && points.length > 0 && (
+            <ul className="list-disc pl-5 space-y-1.5 text-sm text-slate-200/80 mb-3">
+              {points.map((p, i) => (
+                <li key={i}>{p}</li>
+              ))}
+            </ul>
+          )}
+
+          {isExpanded && (
+            <div className="mt-1">
+              <button
+                onClick={() => setMuscleMapOpen(true)}
+                className="text-xs px-3 py-2 rounded-xl bg-primary/15 hover:bg-primary/25 border border-primary/30 text-primary-light transition flex items-center gap-1.5"
+              >
+                <Activity className="w-3.5 h-3.5" />
+                <span>Muscles &amp; Benefits</span>
+              </button>
+            </div>
+          )}
+        </div>
+
 
         {/* Additional Videos */}
         {urls.length > 1 && isExpanded && (
-          <div>
+          <div className="mt-3">
             <div className="text-xs font-semibold text-slate-100 mb-2">Additional videos</div>
             <div className="flex flex-wrap gap-2">
               {urls.slice(1, 4).map((u, i) => (
@@ -187,6 +206,13 @@ export function ExerciseCard({
           </div>
         )}
       </div>
+
+      <MuscleMapModal
+        open={muscleMapOpen}
+        onClose={() => setMuscleMapOpen(false)}
+        exerciseName={exercise.name}
+        bodyAnalysis={bodyAnalysis}
+      />
     </div>
   )
 }

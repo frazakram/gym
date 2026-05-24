@@ -1540,6 +1540,7 @@ export default function DashboardPage() {
                 onToggleRestDay={handleToggleRestDay}
                 onEnsureRoutineSaved={() => routine ? saveRoutineToDatabase(routine) : Promise.resolve(null)}
                 onBack={() => setActiveView('routine')}
+                bodyAnalysis={bodyAnalysis}
               />
             )}
 

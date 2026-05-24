@@ -156,8 +156,9 @@ export async function POST(request: NextRequest) {
 
     // Build historical context for progressive routines
     let historicalContextStr: string | undefined;
+    let historicalContext: Awaited<ReturnType<typeof buildHistoricalContext>> = null;
     try {
-      const historicalContext = await buildHistoricalContext(session.userId);
+      historicalContext = await buildHistoricalContext(session.userId);
       if (historicalContext) {
         historicalContextStr = formatHistoricalContextForPrompt(historicalContext);
       }
@@ -222,9 +223,21 @@ export async function POST(request: NextRequest) {
 
     // ========== BUILD CACHE KEY (shared between streaming and non-streaming) ==========
     // Hash all fields that affect AI output so identical inputs return identical routines.
-    // Different week / different rest days / different history => different key => fresh generation.
+    // Different week / different rest days / different completion bucket => different key => fresh generation.
     const { createHash } = await import('crypto');
     const shortHash = (s: string) => createHash('sha256').update(s).digest('hex').slice(0, 16);
+
+    // Coarsen historical context to a stable bucket. The full struggling/excelling lists still
+    // enter the prompt on a cache miss, but they should NOT bust the cache every time the user
+    // toggles a single exercise — that defeats the entire point of caching. We bucket using the
+    // same thresholds the prompt itself uses (<50% deload, 50-79% maintain, >=80% overload).
+    let historicalBucket: string | null = null;
+    if (historicalContext) {
+      const pct = historicalContext.completionPercentage;
+      const bucket = pct >= 80 ? 'high' : pct < 50 ? 'low' : 'mid';
+      historicalBucket = `${historicalContext.weekNumber}:${bucket}`;
+    }
+
     const cacheInputs = {
       userId: session.userId,
       age: input.age,
@@ -246,10 +259,11 @@ export async function POST(request: NextRequest) {
       equipmentHash: equipmentAnalysis ? shortHash(JSON.stringify(equipmentAnalysis)) : null,
       bodyHash: bodyAnalysis ? shortHash(JSON.stringify(bodyAnalysis)) : null,
       gymHash: gymEquipmentContext ? shortHash(gymEquipmentContext) : null,
-      historicalHash: historicalContextStr ? shortHash(historicalContextStr) : null,
+      historicalBucket,
     };
     const cacheKey = hashCacheKey('routine', cacheInputs);
     const shouldUseCache = body.regenerate !== true;
+    console.log(`[Routine cache] key=${cacheKey} shouldUseCache=${shouldUseCache} bucket=${historicalBucket}`);
 
     // Streaming (SSE) mode for progress UI
     if (stream === true) {
