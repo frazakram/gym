@@ -1,133 +1,158 @@
 /**
- * Utility to compress and resize images on the client side using Canvas API.
- * This helps in reducing payload size for API requests and ensures compatibility
- * with server-side body size limits.
+ * Client-side image compression. Iteratively downscales and re-encodes until
+ * the result fits the target size, so users never have to worry about how
+ * big their photo is.
  *
- * Handles mobile-specific issues:
- * - HEIC/HEIF formats (common on iPhone) that canvas can't render
- * - canvas.toBlob() hanging on mobile due to memory constraints
- * - Graceful fallback to original file when compression fails
+ * Handles:
+ * - HEIC/HEIF formats (iPhone) by graceful fallback
+ * - canvas.toBlob() hanging on mobile (per-step timeout)
+ * - Originals up to ~25 MB — we keep retrying with smaller dimensions/quality
+ *   until we hit the target or exhaust the step ladder
  */
 
 export interface CompressionOptions {
-  maxWidth?: number;
-  maxHeight?: number;
-  quality?: number; // 0 to 1
-  timeoutMs?: number; // timeout for toBlob on mobile
+  /** Soft target — first result <= this wins. Default 700 KB. */
+  targetBytes?: number;
+  /** Hard ceiling — if even most-aggressive step exceeds this, we throw. Default 1.2 MB. */
+  maxBytes?: number;
+  /** Per-step toBlob timeout (mobile safety). Default 12 s. */
+  timeoutMs?: number;
 }
 
-const DEFAULT_OPTIONS: CompressionOptions = {
-  maxWidth: 800,
-  maxHeight: 800,
-  quality: 0.7,
-  timeoutMs: 15000,
-};
+/** Default target keeps full request payload (2 photos + JSON) well under Vercel's 4.5 MB limit. */
+export const TARGET_COMPRESSED_SIZE = 700 * 1024;
+/** Hard ceiling. */
+export const MAX_COMPRESSED_SIZE = 1.2 * 1024 * 1024;
 
-/** Max allowed size in bytes after compression (1MB). */
-export const MAX_COMPRESSED_SIZE = 1 * 1024 * 1024;
+/** Compression ladder: tried in order, first result <= target wins. */
+const STEPS: Array<{ maxDim: number; quality: number }> = [
+  { maxDim: 1280, quality: 0.82 },
+  { maxDim: 1024, quality: 0.78 },
+  { maxDim: 1024, quality: 0.65 },
+  { maxDim: 800,  quality: 0.7 },
+  { maxDim: 800,  quality: 0.55 },
+  { maxDim: 640,  quality: 0.6 },
+  { maxDim: 512,  quality: 0.55 },
+  { maxDim: 384,  quality: 0.5 },
+];
 
-/**
- * Compress and resize an image. On failure (e.g. HEIC on non-Safari,
- * mobile memory limits), returns the original file instead of throwing.
- * Throws if the resulting file exceeds MAX_COMPRESSED_SIZE.
- */
+const UNSUPPORTED_TYPES = ['image/heic', 'image/heif'];
+
 export async function compressImage(
   file: File,
   options: CompressionOptions = {}
 ): Promise<File> {
-  const { maxWidth, maxHeight, quality, timeoutMs } = { ...DEFAULT_OPTIONS, ...options };
+  const targetBytes = options.targetBytes ?? TARGET_COMPRESSED_SIZE;
+  const maxBytes = options.maxBytes ?? MAX_COMPRESSED_SIZE;
+  const timeoutMs = options.timeoutMs ?? 12000;
 
-  // Skip compression for unsupported formats that canvas can't handle
-  const unsupported = ['image/heic', 'image/heif'];
-  if (unsupported.includes(file.type)) {
-    // Return as-is — the server or browser may still handle it
-    return file;
+  // HEIC/HEIF: canvas can't decode, so accept as-is only when already small.
+  if (UNSUPPORTED_TYPES.includes(file.type) || /\.(heic|heif)$/i.test(file.name)) {
+    if (file.size <= maxBytes) return file;
+    throw new Error(
+      `HEIC images this large (${(file.size / 1024 / 1024).toFixed(1)} MB) cannot be compressed in the browser. Please convert to JPEG/PNG first.`
+    );
   }
 
+  // Load once, reuse the decoded image across every compression step.
+  const img = await loadImage(file);
+
+  let smallest: File | null = null;
+  for (const step of STEPS) {
+    try {
+      const out = await encodeStep(img, file.name, step.maxDim, step.maxDim, step.quality, timeoutMs);
+      if (!out) continue;
+      if (!smallest || out.size < smallest.size) smallest = out;
+      if (out.size <= targetBytes) return out;
+    } catch (err) {
+      console.warn(`[compressImage] step ${step.maxDim}@${step.quality} failed:`, err);
+    }
+  }
+
+  if (smallest && smallest.size <= maxBytes) return smallest;
+
+  // Original-as-fallback only when it's already tiny.
+  if (file.size <= maxBytes) return file;
+
+  throw new Error(
+    `Couldn't compress image below ${(maxBytes / 1024 / 1024).toFixed(1)} MB. ` +
+    `Smallest version was ${smallest ? (smallest.size / 1024 / 1024).toFixed(1) : '?'} MB. Try a different photo.`
+  );
+}
+
+function loadImage(file: File): Promise<HTMLImageElement> {
   return new Promise((resolve, reject) => {
-    // Timeout guard: if toBlob() never fires (common on mobile), resolve with original file
-    const timer = setTimeout(() => {
-      console.warn('Image compression timed out, using original file');
-      resolve(file);
-    }, timeoutMs!);
-
-    const cleanup = () => clearTimeout(timer);
-
     const reader = new FileReader();
-    reader.readAsDataURL(file);
     reader.onload = (event) => {
       const img = new Image();
+      img.onload = () => resolve(img);
+      img.onerror = () => reject(new Error('Could not decode image — file may be corrupt or in an unsupported format.'));
       img.src = event.target?.result as string;
-      img.onload = () => {
-        try {
-          const canvas = document.createElement('canvas');
-          let width = img.width;
-          let height = img.height;
+    };
+    reader.onerror = () => reject(new Error('Failed to read image file.'));
+    reader.readAsDataURL(file);
+  });
+}
 
-          // Calculate new dimensions while maintaining aspect ratio
-          if (width > height) {
-            if (width > maxWidth!) {
-              height = Math.round((height * maxWidth!) / width);
-              width = maxWidth!;
-            }
-          } else {
-            if (height > maxHeight!) {
-              width = Math.round((width * maxHeight!) / height);
-              height = maxHeight!;
-            }
-          }
+function encodeStep(
+  img: HTMLImageElement,
+  baseName: string,
+  maxWidth: number,
+  maxHeight: number,
+  quality: number,
+  timeoutMs: number
+): Promise<File | null> {
+  return new Promise((resolve) => {
+    const timer = setTimeout(() => resolve(null), timeoutMs);
+    try {
+      let width = img.width;
+      let height = img.height;
+      if (width > height) {
+        if (width > maxWidth) {
+          height = Math.round((height * maxWidth) / width);
+          width = maxWidth;
+        }
+      } else {
+        if (height > maxHeight) {
+          width = Math.round((width * maxHeight) / height);
+          height = maxHeight;
+        }
+      }
 
-          canvas.width = width;
-          canvas.height = height;
+      const canvas = document.createElement('canvas');
+      canvas.width = width;
+      canvas.height = height;
+      const ctx = canvas.getContext('2d');
+      if (!ctx) {
+        clearTimeout(timer);
+        resolve(null);
+        return;
+      }
+      ctx.drawImage(img, 0, 0, width, height);
 
-          const ctx = canvas.getContext('2d');
-          if (!ctx) {
-            cleanup();
-            console.warn('Failed to get canvas context, using original file');
-            resolve(file);
+      canvas.toBlob(
+        (blob) => {
+          clearTimeout(timer);
+          if (!blob) {
+            resolve(null);
             return;
           }
-
-          ctx.drawImage(img, 0, 0, width, height);
-
-          canvas.toBlob(
-            (blob) => {
-              cleanup();
-              if (!blob) {
-                console.warn('Failed to create blob from canvas, using original file');
-                resolve(file);
-                return;
-              }
-              const compressedFile = new File([blob], file.name, {
-                type: 'image/jpeg',
-                lastModified: Date.now(),
-              });
-              if (compressedFile.size > MAX_COMPRESSED_SIZE) {
-                reject(new Error(`Image is too large after compression (${(compressedFile.size / 1024 / 1024).toFixed(1)}MB). Please use a smaller image.`));
-                return;
-              }
-              resolve(compressedFile);
-            },
-            'image/jpeg',
-            quality
-          );
-        } catch (err) {
-          cleanup();
-          console.warn('Canvas compression failed, using original file:', err);
-          resolve(file);
-        }
-      };
-      img.onerror = () => {
-        cleanup();
-        // Image couldn't be loaded (HEIC on non-Safari, corrupt file, etc.)
-        // Fall back to original file instead of breaking the upload flow
-        console.warn('Failed to load image for compression, using original file');
-        resolve(file);
-      };
-    };
-    reader.onerror = () => {
-      cleanup();
-      reject(new Error('Failed to read file for compression'));
-    };
+          resolve(new File([blob], renameToJpeg(baseName), {
+            type: 'image/jpeg',
+            lastModified: Date.now(),
+          }));
+        },
+        'image/jpeg',
+        quality,
+      );
+    } catch (err) {
+      clearTimeout(timer);
+      console.warn('[compressImage] encode error:', err);
+      resolve(null);
+    }
   });
+}
+
+function renameToJpeg(name: string): string {
+  return name.replace(/\.[^.]+$/, '') + '.jpg';
 }
