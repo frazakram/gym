@@ -240,7 +240,6 @@ export function MuscleMapModal({ open, onClose, exerciseName, bodyAnalysis }: Mu
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           onClick={onClose}
-          style={{ opacity: 1 }}
         >
           <motion.div
             className="glass w-full sm:max-w-lg max-h-[90vh] overflow-y-auto overscroll-contain rounded-t-3xl sm:rounded-3xl border border-primary/20 p-5"

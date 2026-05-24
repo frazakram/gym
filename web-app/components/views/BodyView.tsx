@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from 'react'
 import { motion } from 'framer-motion'
-import { Camera, Ruler, AlertCircle, CheckCircle, Sparkles, RefreshCw } from 'lucide-react'
+import { Camera, Ruler, AlertCircle, CheckCircle, Sparkles, RefreshCw, Brain, Zap, Loader2 } from 'lucide-react'
 import type { BodyPhoto, BodyCompositionAnalysis } from '@/types'
 import { GlassCard } from '../ui/GlassCard'
 import { ImageUploadCard } from '../ui/ImageUploadCard'
@@ -16,6 +16,10 @@ interface BodyViewProps {
   onBodyPhotoUpload: (files: File[]) => Promise<void>
   onBodyPhotoDelete: (id: string) => void
   onBodyPhotoClearAll?: () => Promise<void>
+  /** Triggers a routine generation using the current body analysis. */
+  onRegenerateRoutine?: () => Promise<void> | void
+  /** True while the parent is regenerating a routine. */
+  regeneratingRoutine?: boolean
 }
 
 type Tab = 'composition' | 'measurements'
@@ -46,6 +50,8 @@ export function BodyView({
   onBodyPhotoUpload,
   onBodyPhotoDelete,
   onBodyPhotoClearAll,
+  onRegenerateRoutine,
+  regeneratingRoutine = false,
 }: BodyViewProps) {
   const [tab, setTab] = useState<Tab>('composition')
 
@@ -119,6 +125,49 @@ export function BodyView({
               />
             </GlassCard>
           </motion.div>
+
+          {/* AI agent context status — confirms analysis is saved and used for routine gen */}
+          {bodyAnalysis && (
+            <motion.div variants={fadeUp}>
+              <div className="rounded-2xl p-4 border border-emerald-400/30 bg-gradient-to-br from-emerald-500/10 to-cyan-500/5">
+                <div className="flex items-start gap-3 mb-3">
+                  <div className="w-9 h-9 rounded-xl bg-emerald-500/20 border border-emerald-500/30 flex items-center justify-center shrink-0">
+                    <Brain className="w-4 h-4 text-emerald-300" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-semibold text-white flex items-center gap-1.5">
+                      Saved to AI agent context
+                      <CheckCircle className="w-3.5 h-3.5 text-emerald-400" />
+                    </p>
+                    <p className="text-xs text-emerald-100/85 mt-0.5">
+                      Your routine will adapt to your body type, focus areas and posture every time you generate a new one.
+                    </p>
+                  </div>
+                </div>
+
+                {onRegenerateRoutine && (
+                  <button
+                    type="button"
+                    onClick={() => { void onRegenerateRoutine() }}
+                    disabled={regeneratingRoutine || analyzingBody}
+                    className="w-full py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-600 active:bg-emerald-700 text-white text-sm font-semibold transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {regeneratingRoutine ? (
+                      <>
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                        Regenerating routine…
+                      </>
+                    ) : (
+                      <>
+                        <Zap className="w-4 h-4" />
+                        Update my routine with this analysis
+                      </>
+                    )}
+                  </button>
+                )}
+              </div>
+            </motion.div>
+          )}
 
           {/* Analysis results */}
           {bodyAnalysis && (

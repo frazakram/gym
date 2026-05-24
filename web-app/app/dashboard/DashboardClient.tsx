@@ -1600,6 +1600,8 @@ export default function DashboardPage() {
                 onBodyPhotoUpload={handleBodyPhotoUpload}
                 onBodyPhotoDelete={handleBodyPhotoDelete}
                 onBodyPhotoClearAll={handleBodyPhotoClearAll}
+                onRegenerateRoutine={() => performGeneration(false, undefined, false)}
+                regeneratingRoutine={generating}
               />
             )}
 

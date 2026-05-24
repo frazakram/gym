@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
 import { motion } from 'framer-motion'
-import { LogOut, ChevronRight, Settings, Camera, Dumbbell, CheckCircle, AlertCircle, Globe, Flame, Lock, BarChart2, Moon } from 'lucide-react'
+import { LogOut, ChevronRight, Settings, Dumbbell, CheckCircle, AlertCircle, Globe, Flame, Lock, BarChart2, Moon } from 'lucide-react'
 import { Profile, GymPhoto, GymEquipmentAnalysis, BodyPhoto, BodyCompositionAnalysis, AnalyticsPayload } from '@/types'
 import { GlassCard } from '../ui/GlassCard'
 import { SectionHeader } from '../ui/SectionHeader'
@@ -797,27 +797,6 @@ export function ProfileView({
       </GlassCard>
       </motion.div>
 
-      {/* Body Analysis moved to the Body tab — leave a discoverable pointer */}
-      <motion.div variants={fadeUp}>
-        <GlassCard className="p-4">
-          <div className="flex items-center justify-between gap-2">
-            <div className="flex items-center gap-2 min-w-0">
-              <Camera className="w-4 h-4 text-primary shrink-0" />
-              <div className="min-w-0">
-                <p className="text-sm font-semibold text-white truncate">Body Analysis</p>
-                <p className="text-xs text-muted truncate">
-                  {bodyAnalysis
-                    ? `${bodyPhotos.length} photo${bodyPhotos.length !== 1 ? 's' : ''} • analyzed`
-                    : 'Upload body photos for personalized training'}
-                </p>
-              </div>
-              {bodyAnalysis && <CheckCircle className="w-3.5 h-3.5 text-green-400 shrink-0" />}
-            </div>
-            <ChevronRight className="w-4 h-4 text-muted shrink-0" />
-          </div>
-          <p className="text-[11px] text-muted/80 mt-2">Manage in Body tab</p>
-        </GlassCard>
-      </motion.div>
 
       {/* Nutrition preferences */}
       <motion.div variants={fadeUp}>
