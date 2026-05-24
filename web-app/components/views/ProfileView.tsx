@@ -83,6 +83,7 @@ interface ProfileViewProps {
   equipmentAnalysis?: GymEquipmentAnalysis | null
   onGymPhotoUpload?: (files: File[]) => Promise<void>
   onGymPhotoDelete?: (id: string) => void
+  onGymPhotoClearAll?: () => Promise<void>
   analyzingEquipment?: boolean
   equipmentError?: string
   // Body Photos
@@ -137,6 +138,7 @@ export function ProfileView({
   equipmentAnalysis,
   onGymPhotoUpload,
   onGymPhotoDelete,
+  onGymPhotoClearAll,
   analyzingEquipment = false,
   equipmentError,
   bodyPhotos = [],
@@ -158,7 +160,6 @@ export function ProfileView({
   const [advancedNutritionOpen, setAdvancedNutritionOpen] = useState(false)
   const [notesOpen, setNotesOpen] = useState(false)
   const [gymPhotosOpen, setGymPhotosOpen] = useState(false)
-  const [bodyPhotosOpen, setBodyPhotosOpen] = useState(false)
 
   // Analytics summary
   const [analyticsData, setAnalyticsData] = useState<AnalyticsPayload | null>(null)
@@ -761,6 +762,7 @@ export function ProfileView({
                 maxSizeMB={5}
                 onUpload={onGymPhotoUpload}
                 onDelete={onGymPhotoDelete}
+                onClearAll={onGymPhotoClearAll}
                 loading={analyzingEquipment}
                 error={equipmentError}
                 variant="gym"
@@ -795,77 +797,26 @@ export function ProfileView({
       </GlassCard>
       </motion.div>
 
-      {/* Body Composition Photos (optional) */}
+      {/* Body Analysis moved to the Body tab — leave a discoverable pointer */}
       <motion.div variants={fadeUp}>
-      <GlassCard className="p-4">
-        <Collapsible
-          open={bodyPhotosOpen}
-          onToggle={() => setBodyPhotosOpen(v => !v)}
-          header={
-            <div className="flex items-center justify-between w-full">
-              <div className="flex items-center gap-2">
-                <Camera className="w-4 h-4 text-primary" />
-                <div>
-                  <p className="text-sm font-semibold text-white">Body Analysis</p>
-                  <p className="text-xs text-muted">Upload body photos for personalized training</p>
-                </div>
-                {bodyAnalysis && <CheckCircle className="w-3.5 h-3.5 text-green-400" />}
+        <GlassCard className="p-4">
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex items-center gap-2 min-w-0">
+              <Camera className="w-4 h-4 text-primary shrink-0" />
+              <div className="min-w-0">
+                <p className="text-sm font-semibold text-white truncate">Body Analysis</p>
+                <p className="text-xs text-muted truncate">
+                  {bodyAnalysis
+                    ? `${bodyPhotos.length} photo${bodyPhotos.length !== 1 ? 's' : ''} • analyzed`
+                    : 'Upload body photos for personalized training'}
+                </p>
               </div>
-              <ChevronRight className={`w-4 h-4 text-muted transition-transform ${bodyPhotosOpen ? 'rotate-90' : ''}`} />
+              {bodyAnalysis && <CheckCircle className="w-3.5 h-3.5 text-green-400 shrink-0" />}
             </div>
-          }
-        >
-          <div className="mt-3 space-y-3">
-            <p className="text-xs text-muted">
-              Upload 1–2 body photos. AI will assess body composition and personalize your routine for faster results.
-            </p>
-            {onBodyPhotoUpload && onBodyPhotoDelete && (
-              <ImageUploadCard
-                images={bodyPhotos}
-                maxImages={2}
-                maxSizeMB={5}
-                onUpload={onBodyPhotoUpload}
-                onDelete={onBodyPhotoDelete}
-                loading={analyzingBody}
-                error={bodyError}
-                variant="body"
-              />
-            )}
-
-            {/* Body analysis results */}
-            {bodyAnalysis && (
-              <div className="mt-3 p-3 glass-soft rounded-xl border border-primary/10 space-y-2">
-                <p className="text-xs font-medium text-primary">Analysis Results</p>
-                <div className="grid grid-cols-2 gap-2 text-xs text-muted">
-                  <div>Body Type: <span className="text-white capitalize">{bodyAnalysis.body_type}</span></div>
-                  <div>Muscle Dev: <span className="text-white capitalize">{bodyAnalysis.muscle_development}</span></div>
-                  {bodyAnalysis.estimated_body_fat_range && (
-                    <div className="col-span-2">Est. Body Fat: <span className="text-white">{bodyAnalysis.estimated_body_fat_range}</span></div>
-                  )}
-                </div>
-                {bodyAnalysis.focus_areas && bodyAnalysis.focus_areas.length > 0 && (
-                  <div>
-                    <p className="text-xs text-muted mb-1">Focus Areas:</p>
-                    <div className="flex flex-wrap gap-1.5">
-                      {bodyAnalysis.focus_areas.map((area, i) => (
-                        <span key={i} className="text-xs px-2 py-0.5 rounded-full bg-primary/15 text-white">
-                          {area}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-                )}
-                {bodyAnalysis.realistic_timeline && (
-                  <p className="text-xs text-green-300/80">🎯 {bodyAnalysis.realistic_timeline}</p>
-                )}
-                {bodyAnalysis.overall_assessment && (
-                  <p className="text-xs text-muted mt-1 leading-relaxed">{bodyAnalysis.overall_assessment}</p>
-                )}
-              </div>
-            )}
+            <ChevronRight className="w-4 h-4 text-muted shrink-0" />
           </div>
-        </Collapsible>
-      </GlassCard>
+          <p className="text-[11px] text-muted/80 mt-2">Manage in Body tab</p>
+        </GlassCard>
       </motion.div>
 
       {/* Nutrition preferences */}

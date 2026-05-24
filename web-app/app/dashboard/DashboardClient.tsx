@@ -11,7 +11,7 @@ import { ProfileView } from '@/components/views/ProfileView'
 import { DietView } from '@/components/views/DietView'
 import { AnalyticsView } from '@/components/views/AnalyticsView'
 import { CoachView } from '@/components/views/CoachView'
-import { MeasurementsView } from '@/components/views/MeasurementsView'
+import { BodyView } from '@/components/views/BodyView'
 import { CommunitiesView } from '@/components/views/CommunitiesView'
 import { Sidebar } from '@/components/Sidebar'
 import { ToastType } from '@/components/ui/Toast'
@@ -1183,6 +1183,34 @@ export default function DashboardPage() {
     }
   }
 
+  const handleGymPhotoClearAll = async () => {
+    setGymPhotos([])
+    setEquipmentAnalysis(null)
+    try {
+      await csrfFetch('/api/profile', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ gym_photos: [], gym_equipment_analysis: null }),
+      })
+    } catch (err) {
+      console.error('Gym photos clear-all failed:', err)
+    }
+  }
+
+  const handleBodyPhotoClearAll = async () => {
+    setBodyPhotos([])
+    setBodyAnalysis(null)
+    try {
+      await csrfFetch('/api/profile', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ body_photos: [], body_composition_analysis: null }),
+      })
+    } catch (err) {
+      console.error('Body photos clear-all failed:', err)
+    }
+  }
+
   const handleBodyPhotoUpload = async (files: File[]) => {
     try {
       setAnalyzingBody(true)
@@ -1564,7 +1592,15 @@ export default function DashboardPage() {
             )}
 
             {activeView === 'measurements' && (
-              <MeasurementsView />
+              <BodyView
+                bodyPhotos={bodyPhotos}
+                bodyAnalysis={bodyAnalysis}
+                analyzingBody={analyzingBody}
+                bodyError={bodyError}
+                onBodyPhotoUpload={handleBodyPhotoUpload}
+                onBodyPhotoDelete={handleBodyPhotoDelete}
+                onBodyPhotoClearAll={handleBodyPhotoClearAll}
+              />
             )}
 
             {activeView === 'communities' && (
@@ -1606,6 +1642,7 @@ export default function DashboardPage() {
                 equipmentAnalysis={equipmentAnalysis}
                 onGymPhotoUpload={handleGymPhotoUpload}
                 onGymPhotoDelete={handleGymPhotoDelete}
+                onGymPhotoClearAll={handleGymPhotoClearAll}
                 analyzingEquipment={analyzingEquipment}
                 equipmentError={equipmentError}
                 bodyPhotos={bodyPhotos}

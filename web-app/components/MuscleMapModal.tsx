@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { createPortal } from 'react-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { X, Sparkles, Target, Loader2 } from 'lucide-react'
 import { csrfFetch } from '@/lib/useCsrf'
@@ -167,14 +168,26 @@ function BodySvg({ primary, secondary, side }: BodySvgProps) {
 export function MuscleMapModal({ open, onClose, exerciseName, bodyAnalysis }: MuscleMapModalProps) {
   const [ai, setAi] = useState<ExerciseInfoResponse | null>(null)
   const [loading, setLoading] = useState(false)
+  const [mounted, setMounted] = useState(false)
+
+  useEffect(() => {
+    setMounted(true)
+  }, [])
 
   useEffect(() => {
     if (!open) return
     const onKey = (e: KeyboardEvent) => {
       if (e.key === 'Escape') onClose()
     }
+    // Lock background scroll while the modal is open — fixes scroll bubbling
+    // through the modal on touch devices.
+    const prevOverflow = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
     window.addEventListener('keydown', onKey)
-    return () => window.removeEventListener('keydown', onKey)
+    return () => {
+      window.removeEventListener('keydown', onKey)
+      document.body.style.overflow = prevOverflow
+    }
   }, [open, onClose])
 
   // Fetch AI-enhanced info once per open. Static fallback shows instantly underneath.
@@ -216,7 +229,9 @@ export function MuscleMapModal({ open, onClose, exerciseName, bodyAnalysis }: Mu
   const personalNote = ai?.personalNote
   const hasAnyMuscles = primary.length > 0 || secondary.length > 0
 
-  return (
+  if (!mounted) return null
+
+  const modalContent = (
     <AnimatePresence>
       {open && (
         <motion.div
@@ -225,9 +240,10 @@ export function MuscleMapModal({ open, onClose, exerciseName, bodyAnalysis }: Mu
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           onClick={onClose}
+          style={{ opacity: 1 }}
         >
           <motion.div
-            className="glass w-full sm:max-w-lg max-h-[90vh] overflow-y-auto rounded-t-3xl sm:rounded-3xl border border-primary/20 p-5"
+            className="glass w-full sm:max-w-lg max-h-[90vh] overflow-y-auto overscroll-contain rounded-t-3xl sm:rounded-3xl border border-primary/20 p-5"
             initial={{ y: 40, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             exit={{ y: 40, opacity: 0 }}
@@ -377,7 +393,7 @@ export function MuscleMapModal({ open, onClose, exerciseName, bodyAnalysis }: Mu
 
             {!bodyAnalysis && (
               <div className="mt-5 text-xs text-muted">
-                Upload body photos in Measurements to see how this exercise matches your personal focus areas.
+                Upload body photos in the Body tab to see how this exercise matches your personal focus areas.
               </div>
             )}
           </motion.div>
@@ -385,4 +401,6 @@ export function MuscleMapModal({ open, onClose, exerciseName, bodyAnalysis }: Mu
       )}
     </AnimatePresence>
   )
+
+  return createPortal(modalContent, document.body)
 }

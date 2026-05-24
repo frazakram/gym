@@ -11,7 +11,10 @@ interface ImageUploadCardProps {
   maxImages: number
   maxSizeMB: number
   onUpload: (files: File[]) => Promise<void>
-  onDelete: (id: string) => void
+  onDelete: (id: string) => void | Promise<void>
+  /** Optional: when provided, used to delete all photos in a single call. Avoids
+   *  firing parallel re-analyses when removing multiple photos at once. */
+  onClearAll?: () => void | Promise<void>
   loading?: boolean
   error?: string
   /** Controls which placeholder icon and copy to use */
@@ -24,6 +27,7 @@ export function ImageUploadCard({
   maxSizeMB,
   onUpload,
   onDelete,
+  onClearAll,
   loading = false,
   error,
   variant = 'gym',
@@ -83,8 +87,14 @@ export function ImageUploadCard({
   const handleRemoveAll = async () => {
     setRemoving(true)
     try {
-      for (const photo of images) {
-        onDelete(photo.id)
+      if (onClearAll) {
+        // Single-shot delete avoids parallel re-analyses when there are multiple photos
+        await onClearAll()
+      } else {
+        // Sequential to avoid races on the parent's optimistic state updates
+        for (const photo of images) {
+          await onDelete(photo.id)
+        }
       }
     } finally {
       setRemoving(false)
