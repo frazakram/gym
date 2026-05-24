@@ -1099,6 +1099,24 @@ export async function getLatestRoutine(userId: number): Promise<any | null> {
   }
 }
 
+export async function getRoutineById(userId: number, routineId: number): Promise<any | null> {
+  try {
+    const result = await pool.query(
+      `SELECT id, user_id, week_number, routine_json, week_start_date, archived, archived_at, profile_snapshot, created_at
+       FROM routines
+       WHERE id = $1 AND user_id = $2`,
+      [routineId, userId]
+    );
+    return result.rows[0] || null;
+  } catch (error) {
+    if (allowMockAuth()) {
+      return mockRoutineStore.get(routineId) || null;
+    }
+    console.error("getRoutineById DB failed:", error);
+    throw error;
+  }
+}
+
 export async function getRoutinesByUser(
   userId: number,
   opts?: { includeArchived?: boolean; archivedOnly?: boolean }
