@@ -30,31 +30,34 @@ export async function POST(req: NextRequest) {
       ));
     }
 
-    const { routineId, dayIndex, exerciseIndex, completed } = parsed.data;
+    const { routineId, dayIndex, exerciseIndex, completed, actual_weight, actual_reps, notes } = parsed.data;
 
-    const success = await toggleExerciseCompletion(
+    const result = await toggleExerciseCompletion(
       session.userId,
       routineId,
       dayIndex,
       exerciseIndex,
-      completed
+      completed,
+      { actual_weight, actual_reps, notes }
     );
 
-    if (!success) {
+    if (!result.ok) {
       return withCors(NextResponse.json(
         { error: 'Failed to update completion status (Access Denied or Error)' },
         { status: 403 } // 403 Forbidden is more appropriate if it was an ownership issue
       ));
     }
 
-    // Award XP only when toggled to completed (not when un-checking)
-    if (parsed.data.completed === true) {
+    // Award XP only on a genuine transition to completed — re-saving an already
+    // completed exercise (e.g. editing the logged weight) must not farm XP.
+    if (result.newlyCompleted) {
       await awardXp(session.userId, 'exercise_completed', XP_VALUES.EXERCISE);
       await awardStreakXpIfFirstToday(session.userId);
     }
 
-    // Invalidate derived analytics cache for ALL `days=` values (best-effort).
+    // Invalidate derived analytics + personal-record caches (best-effort).
     await redisIncr(`analytics_ver:${session.userId}`);
+    await redisIncr(`pr_ver:${session.userId}`);
 
     return withCors(NextResponse.json({ success: true }));
   } catch (error) {
