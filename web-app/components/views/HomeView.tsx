@@ -13,6 +13,7 @@ import { UserAvatar } from '../ui/UserAvatar'
 import { StreakBanner } from '../ui/StreakBanner'
 import { RestDayCard } from '../ui/RestDayCard'
 import { QuoteLoader } from '../ui/QuoteLoader'
+import { PersonalRecordsCard } from '../ui/PersonalRecordsCard'
 import { ArrowRight, Timer, Percent, MessageCircle, ChevronRight, Flame, Drumstick, CalendarPlus, MapPin, TrendingUp, ChevronDown, Dumbbell, BarChart3 } from 'lucide-react'
 import { useLocation } from '@/hooks/useLocation'
 import { WeeklyBreakdownSheet, type DayBreakdown } from '../ui/WeeklyBreakdownSheet'
@@ -366,6 +367,13 @@ export function HomeView({
           </GlassCard>
         </motion.div>
       ) : null}
+
+      {/* Personal Records — heaviest logged lifts (only meaningful once a routine exists) */}
+      {routine && (
+        <motion.div variants={fadeUp}>
+          <PersonalRecordsCard />
+        </motion.div>
+      )}
 
       {/* Weekly Report card — shown on Sundays when there is a routine */}
       {routine && !viewingHistory && new Date().getDay() === 0 && currentRoutineId && (

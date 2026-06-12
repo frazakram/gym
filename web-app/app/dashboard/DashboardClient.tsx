@@ -188,9 +188,26 @@ export default function DashboardPage() {
   const [currentRoutineId, setCurrentRoutineId] = useState<number | null>(null)
   const [currentWeekNumber, setCurrentWeekNumber] = useState(1)
   const [exerciseCompletions, setExerciseCompletions] = useState<Map<string, boolean>>(new Map())
+  const [completionDetails, setCompletionDetails] = useState<Map<string, { actual_weight?: number | null; actual_reps?: number | null }>>(new Map())
   const [dayCompletions, setDayCompletions] = useState<Map<number, boolean>>(new Map())
   const [userId, setUserId] = useState<number | null>(null)
-  
+
+  // Apply a /api/completions response to both the completed map and the
+  // logged weight/reps map in one place.
+  const applyCompletions = useCallback((completions: any[]) => {
+    const map = new Map<string, boolean>()
+    const dmap = new Map<string, { actual_weight?: number | null; actual_reps?: number | null }>()
+    ;(completions || []).forEach((c: any) => {
+      const key = `${c.day_index}-${c.exercise_index}`
+      map.set(key, c.completed)
+      if (c.actual_weight != null || c.actual_reps != null) {
+        dmap.set(key, { actual_weight: c.actual_weight ?? null, actual_reps: c.actual_reps ?? null })
+      }
+    })
+    setExerciseCompletions(map)
+    setCompletionDetails(dmap)
+  }, [])
+
   // Stale routine detection: true when the loaded routine is from a past week
   const [routineIsStale, setRoutineIsStale] = useState(false)
   const [weeksElapsed, setWeeksElapsed] = useState(0)
@@ -244,15 +261,25 @@ export default function DashboardPage() {
         setProteinPowderAmount(data.profile.protein_powder_amount ?? 0)
         setSpecificFoodPreferences(data.profile.specific_food_preferences ?? '')
         setMealsPerDay(data.profile.meals_per_day ?? 3)
-        setAllergies(data.profile.allergies || [])
+        setAllergies(Array.isArray(data.profile.allergies) ? data.profile.allergies : [])
         setCookingLevel(data.profile.cooking_level ?? 'Moderate')
         setBudget(data.profile.budget ?? 'Standard')
         setNationality(data.profile.nationality ?? '')
-        setGymPhotos(data.profile.gym_photos || [])
-        setEquipmentAnalysis(data.profile.gym_equipment_analysis || null)
-        setBodyPhotos(data.profile.body_photos || [])
-        setBodyAnalysis(data.profile.body_composition_analysis || null)
-        setPreferredRestDays(data.profile.preferred_rest_days || [])
+        // JSONB columns can come back as {} from legacy/corrupt rows — coerce to []/null
+        // so downstream code can safely .map / spread / sort.
+        setGymPhotos(Array.isArray(data.profile.gym_photos) ? data.profile.gym_photos : [])
+        setEquipmentAnalysis(
+          data.profile.gym_equipment_analysis && typeof data.profile.gym_equipment_analysis === 'object' && !Array.isArray(data.profile.gym_equipment_analysis)
+            ? data.profile.gym_equipment_analysis
+            : null
+        )
+        setBodyPhotos(Array.isArray(data.profile.body_photos) ? data.profile.body_photos : [])
+        setBodyAnalysis(
+          data.profile.body_composition_analysis && typeof data.profile.body_composition_analysis === 'object' && !Array.isArray(data.profile.body_composition_analysis)
+            ? data.profile.body_composition_analysis
+            : null
+        )
+        setPreferredRestDays(Array.isArray(data.profile.preferred_rest_days) ? data.profile.preferred_rest_days : [])
       }
     } catch (err: unknown) {
       console.error('Error fetching profile:', err)
@@ -301,11 +328,7 @@ export default function DashboardPage() {
         const compRes = await csrfFetch(`/api/completions?routineId=${routine.id}`)
         const { completions } = await compRes.json()
 
-        const map = new Map<string, boolean>()
-        completions.forEach((c: any) => {
-          map.set(`${c.day_index}-${c.exercise_index}`, c.completed)
-        })
-        setExerciseCompletions(map)
+        applyCompletions(completions)
 
         try {
           const dayRes = await csrfFetch(`/api/day-completions?routineId=${routine.id}`)
@@ -571,11 +594,7 @@ export default function DashboardPage() {
     try {
       const compRes = await csrfFetch(`/api/completions?routineId=${historyItem.id}`)
       const { completions } = await compRes.json()
-      const map = new Map<string, boolean>()
-      completions.forEach((c: any) => {
-        map.set(`${c.day_index}-${c.exercise_index}`, c.completed)
-      })
-      setExerciseCompletions(map)
+      applyCompletions(completions)
 
       try {
         const dayRes = await csrfFetch(`/api/day-completions?routineId=${historyItem.id}`)
@@ -847,11 +866,7 @@ export default function DashboardPage() {
           setCurrentRoutineId(data.routine_id)
           const compRes = await csrfFetch(`/api/completions?routineId=${data.routine_id}`)
           const { completions } = await compRes.json()
-          const map = new Map<string, boolean>()
-          completions.forEach((c: any) => {
-            map.set(`${c.day_index}-${c.exercise_index}`, c.completed)
-          })
-          setExerciseCompletions(map)
+          applyCompletions(completions)
 
           try {
             const dayRes = await csrfFetch(`/api/day-completions?routineId=${data.routine_id}`)
@@ -868,6 +883,7 @@ export default function DashboardPage() {
       } else {
         setSuccess('Routine generated successfully.')
         setExerciseCompletions(new Map())
+        setCompletionDetails(new Map())
         setDayCompletions(new Map())
         // Clear stale state since we just generated a fresh routine
         setRoutineIsStale(false)
@@ -957,6 +973,7 @@ export default function DashboardPage() {
           setCurrentWeekNumber(1)
           setDietPlan(null) // Clear diet too
           setExerciseCompletions(new Map())
+          setCompletionDetails(new Map())
 
           setSuccess('All routine data has been reset. You can now generate a fresh routine.')
         } catch (err) {
@@ -1338,13 +1355,26 @@ export default function DashboardPage() {
     }
   }
 
-  const handleToggleExercise = async (dayIndex: number, exerciseIndex: number, completed: boolean) => {
+  const handleToggleExercise = async (
+    dayIndex: number,
+    exerciseIndex: number,
+    completed: boolean,
+    details?: { actual_weight?: number | null; actual_reps?: number | null }
+  ) => {
+    const key = `${dayIndex}-${exerciseIndex}`
     // Optimistic UI update
     setExerciseCompletions(prev => {
       const next = new Map(prev)
-      next.set(`${dayIndex}-${exerciseIndex}`, completed)
+      next.set(key, completed)
       return next
     })
+    if (details) {
+      setCompletionDetails(prev => {
+        const next = new Map(prev)
+        next.set(key, { actual_weight: details.actual_weight ?? null, actual_reps: details.actual_reps ?? null })
+        return next
+      })
+    }
 
     // Persist to server
     let rid = currentRoutineId
@@ -1356,7 +1386,7 @@ export default function DashboardPage() {
         const res = await csrfFetch('/api/completions', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ routineId: rid, dayIndex, exerciseIndex, completed }),
+          body: JSON.stringify({ routineId: rid, dayIndex, exerciseIndex, completed, ...details }),
         })
         if (!res.ok) {
           const text = await res.text().catch(() => '');
@@ -1385,6 +1415,20 @@ export default function DashboardPage() {
 
     fetchHeatmapData()
     fetchStreak()
+  }
+
+  // Log a weight × reps set. Marks the exercise complete and persists the
+  // numbers so they feed the Personal Records card.
+  const handleLogSet = async (
+    dayIndex: number,
+    exerciseIndex: number,
+    details: { actual_weight?: number | null; actual_reps?: number | null }
+  ) => {
+    try {
+      await handleToggleExercise(dayIndex, exerciseIndex, true, details)
+    } catch (e) {
+      console.error('Failed to log set:', e)
+    }
   }
 
   const handleToggleRestDay = async (dayIndex: number, completed: boolean) => {
@@ -1607,7 +1651,9 @@ export default function DashboardPage() {
                 currentRoutineId={currentRoutineId}
                 exerciseCompletions={exerciseCompletions}
                 dayCompletions={dayCompletions}
+                completionDetails={completionDetails}
                 onToggleExercise={handleToggleExercise}
+                onLogSet={handleLogSet}
                 onToggleRestDay={handleToggleRestDay}
                 onEnsureRoutineSaved={() => routine ? saveRoutineToDatabase(routine) : Promise.resolve(null)}
                 onBack={() => setActiveView('routine')}

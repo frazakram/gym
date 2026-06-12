@@ -5,7 +5,11 @@ import { useEffect, useRef, useState } from 'react'
 import { WeeklyRoutine } from '@/types'
 import { ExerciseCard } from '../ExerciseCard'
 import { SwipeableExerciseWrapper } from '../ui/SwipeableExercise'
-import { ChevronLeft, Moon, PartyPopper, BarChart3 } from 'lucide-react'
+import { RestTimer } from '../ui/RestTimer'
+import { ChevronLeft, Moon, PartyPopper, BarChart3, Dumbbell } from 'lucide-react'
+
+/** Logged-set details keyed by `${dayIndex}-${exerciseIndex}`. */
+export type CompletionDetail = { actual_weight?: number | null; actual_reps?: number | null }
 
 const stagger = {
   hidden: {},
@@ -23,7 +27,11 @@ interface WorkoutViewProps {
   currentRoutineId: number | null
   exerciseCompletions: Map<string, boolean>
   dayCompletions: Map<number, boolean>
+  /** Logged weight/reps per exercise, keyed by `${dayIndex}-${exerciseIndex}`. */
+  completionDetails?: Map<string, CompletionDetail>
   onToggleExercise: (dayIndex: number, exerciseIndex: number, completed: boolean) => void
+  /** Persist a logged set (weight × reps). Also marks the exercise complete. */
+  onLogSet?: (dayIndex: number, exerciseIndex: number, details: CompletionDetail) => Promise<void> | void
   onToggleRestDay: (dayIndex: number, completed: boolean) => Promise<void>
   onEnsureRoutineSaved: () => Promise<number | null>
   onBack: () => void
@@ -40,7 +48,9 @@ export function WorkoutView({
   currentRoutineId,
   exerciseCompletions,
   dayCompletions,
+  completionDetails,
   onToggleExercise,
+  onLogSet,
   onToggleRestDay,
   onEnsureRoutineSaved,
   onBack,
@@ -93,6 +103,41 @@ export function WorkoutView({
   const formatTime = (s: number) => {
     const m = Math.floor(s / 60), sec = s % 60
     return `${String(m).padStart(2, '0')}:${String(sec).padStart(2, '0')}`
+  }
+
+  // Rest timer — auto-opens after completing a set (unless it was the last one)
+  const [restOpen, setRestOpen] = useState(false)
+  const [restKey, setRestKey] = useState(0)
+  const [restDuration, setRestDuration] = useState(90)
+
+  // Weight × reps logging inputs, keyed by exercise index
+  const [logInputs, setLogInputs] = useState<Record<number, { weight: string; reps: string }>>({})
+
+  const handleToggle = (exerciseIndex: number, completed: boolean) => {
+    if (!timerStarted) setTimerStarted(true)
+    onToggleExercise(selectedDayIndex, exerciseIndex, completed)
+    // Start a rest timer when a set is checked off and work remains.
+    if (completed && completedCount + 1 < totalCount) {
+      setRestKey((k) => k + 1)
+      setRestOpen(true)
+    }
+  }
+
+  const setLogValue = (eIdx: number, field: 'weight' | 'reps', value: string) => {
+    setLogInputs((prev) => ({
+      ...prev,
+      [eIdx]: { weight: '', reps: '', ...prev[eIdx], [field]: value },
+    }))
+  }
+
+  const commitLog = (eIdx: number) => {
+    const input = logInputs[eIdx]
+    if (!input) return
+    const w = input.weight.trim() === '' ? null : Number(input.weight)
+    if (w == null || !Number.isFinite(w) || w <= 0) return
+    const repsRaw = input.reps.trim() === '' ? null : Number(input.reps)
+    const reps = repsRaw != null && Number.isFinite(repsRaw) && repsRaw > 0 ? Math.round(repsRaw) : null
+    void onLogSet?.(selectedDayIndex, eIdx, { actual_weight: w, actual_reps: reps })
   }
 
   return (
@@ -168,16 +213,17 @@ export function WorkoutView({
           <>
             {day.exercises.map((exercise, exerciseIndex) => {
               const isCompleted = exerciseCompletions.get(`${selectedDayIndex}-${exerciseIndex}`) || false
+              const detail = completionDetails?.get(`${selectedDayIndex}-${exerciseIndex}`)
+              const input = logInputs[exerciseIndex]
+              const weightVal = input?.weight ?? (detail?.actual_weight != null ? String(detail.actual_weight) : '')
+              const repsVal = input?.reps ?? (detail?.actual_reps != null ? String(detail.actual_reps) : '')
+              const hasLogged = detail?.actual_weight != null && detail.actual_weight > 0
               return (
                 <motion.div key={exerciseIndex} variants={fadeUp}>
                   <SwipeableExerciseWrapper
                     isCompleted={isCompleted}
-                    onComplete={() => {
-                      onToggleExercise(selectedDayIndex, exerciseIndex, true)
-                    }}
-                    onSkip={() => {
-                      onToggleExercise(selectedDayIndex, exerciseIndex, false)
-                    }}
+                    onComplete={() => handleToggle(exerciseIndex, true)}
+                    onSkip={() => handleToggle(exerciseIndex, false)}
                   >
                     <ExerciseCard
                       exercise={exercise}
@@ -185,14 +231,53 @@ export function WorkoutView({
                       exerciseIndex={exerciseIndex}
                       routineId={currentRoutineId}
                       isCompleted={isCompleted}
-                      onToggle={(completed) => {
-                        if (!timerStarted) setTimerStarted(true)
-                        onToggleExercise(selectedDayIndex, exerciseIndex, completed)
-                      }}
+                      onToggle={(completed) => handleToggle(exerciseIndex, completed)}
                       onEnsureRoutineSaved={onEnsureRoutineSaved}
                       bodyAnalysis={bodyAnalysis}
                     />
                   </SwipeableExerciseWrapper>
+
+                  {/* Weight × reps logger — feeds personal records */}
+                  {onLogSet && (
+                    <div className="mt-2 flex items-center gap-2 px-1">
+                      <Dumbbell className="w-3.5 h-3.5 text-muted shrink-0" />
+                      <input
+                        type="number"
+                        inputMode="decimal"
+                        min={0}
+                        step="0.5"
+                        value={weightVal}
+                        onChange={(e) => setLogValue(exerciseIndex, 'weight', e.target.value)}
+                        onBlur={() => commitLog(exerciseIndex)}
+                        placeholder="kg"
+                        aria-label={`Weight for ${exercise.name}`}
+                        className="w-16 rounded-lg bg-white/5 border border-primary/15 px-2 py-1.5 text-sm text-white placeholder:text-muted/60 focus:outline-none focus:border-primary/40 tabular-nums"
+                      />
+                      <span className="text-xs text-muted">×</span>
+                      <input
+                        type="number"
+                        inputMode="numeric"
+                        min={0}
+                        step="1"
+                        value={repsVal}
+                        onChange={(e) => setLogValue(exerciseIndex, 'reps', e.target.value)}
+                        onBlur={() => commitLog(exerciseIndex)}
+                        placeholder="reps"
+                        aria-label={`Reps for ${exercise.name}`}
+                        className="w-16 rounded-lg bg-white/5 border border-primary/15 px-2 py-1.5 text-sm text-white placeholder:text-muted/60 focus:outline-none focus:border-primary/40 tabular-nums"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => commitLog(exerciseIndex)}
+                        className="rounded-lg bg-primary/15 hover:bg-primary/25 border border-primary/25 px-3 py-1.5 text-xs font-semibold text-primary-light transition"
+                      >
+                        Log
+                      </button>
+                      {hasLogged && (
+                        <span className="text-xs text-emerald-300/90 shrink-0">saved</span>
+                      )}
+                    </div>
+                  )}
                 </motion.div>
               )
             })}
@@ -257,6 +342,15 @@ export function WorkoutView({
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* Rest timer between sets */}
+      <RestTimer
+        key={restKey}
+        open={restOpen}
+        seconds={restDuration}
+        onClose={() => setRestOpen(false)}
+        onDurationChange={setRestDuration}
+      />
     </div>
   )
 }

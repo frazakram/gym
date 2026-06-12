@@ -188,6 +188,13 @@ export interface ExerciseCompletion {
     completed_at?: Date;
 }
 
+export interface PersonalRecord {
+    exercise: string;
+    weight: number;        // heaviest logged weight (kg)
+    reps: number | null;   // reps achieved at that weight
+    achieved_at: string | null; // ISO timestamp
+}
+
 export interface CompletionStats {
     total_exercises: number;
     completed_exercises: number;

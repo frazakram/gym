@@ -55,17 +55,21 @@ export function BodyView({
 }: BodyViewProps) {
   const [tab, setTab] = useState<Tab>('composition')
 
+  // Defensive: legacy/corrupt JSONB rows can deliver {} instead of [].
+  // Coerce here so every downstream .map / spread / .length is safe.
+  const photos = Array.isArray(bodyPhotos) ? bodyPhotos : []
+
   // Find most recent photo upload date for the weekly re-upload nudge
   const latestUploadIso = useMemo(() => {
-    if (!bodyPhotos || bodyPhotos.length === 0) return null
-    const sorted = [...bodyPhotos].sort((a, b) =>
+    if (photos.length === 0) return null
+    const sorted = [...photos].sort((a, b) =>
       (b.uploaded_at ?? '').localeCompare(a.uploaded_at ?? '')
     )
     return sorted[0]?.uploaded_at ?? null
-  }, [bodyPhotos])
+  }, [photos])
 
   const weeks = weeksSince(latestUploadIso)
-  const showReuploadPrompt = bodyPhotos.length > 0 && weeks != null && weeks >= 1
+  const showReuploadPrompt = photos.length > 0 && weeks != null && weeks >= 1
 
   return (
     <div className="pb-24 px-4 py-6">
@@ -113,7 +117,7 @@ export function BodyView({
               </div>
 
               <ImageUploadCard
-                images={bodyPhotos}
+                images={photos}
                 maxImages={2}
                 maxSizeMB={5}
                 onUpload={onBodyPhotoUpload}
@@ -231,7 +235,7 @@ export function BodyView({
           )}
 
           {/* Empty-state hint when no photos yet */}
-          {!bodyAnalysis && bodyPhotos.length === 0 && (
+          {!bodyAnalysis && photos.length === 0 && (
             <motion.div variants={fadeUp}>
               <div className="rounded-2xl p-4 border border-primary/15 bg-primary/5 text-xs text-slate-200/85 flex items-start gap-2">
                 <AlertCircle className="w-3.5 h-3.5 text-primary-light mt-0.5 shrink-0" />

@@ -156,6 +156,10 @@ export const ExerciseCompletionSchema = z.object({
   dayIndex: z.coerce.number().int().min(0).max(6),
   exerciseIndex: z.coerce.number().int().min(0).max(50),
   completed: z.boolean(),
+  // Optional logged-set details (weight × reps) for personal-record tracking.
+  actual_weight: z.coerce.number().min(0).max(2000).nullish(),
+  actual_reps: z.coerce.number().int().min(0).max(1000).nullish(),
+  notes: z.string().max(500).nullish(),
 });
 
 export const DayCompletionSchema = z.object({

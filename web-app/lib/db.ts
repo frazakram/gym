@@ -821,10 +821,13 @@ export async function saveProfile(
           effProteinPowderAmount || null,
           typeof effSpecificFood === 'string' && effSpecificFood.trim() ? effSpecificFood.trim() : null,
           typeof effNameRaw === 'string' && effNameRaw.trim() ? encryptRnd(effNameRaw.trim()) : null,
-          effGymPhotos ?? null,
-          effGymEquipmentAnalysis ?? null,
-          effBodyPhotos ?? null,
-          effBodyCompositionAnalysis ?? null,
+          // JSONB columns must be JSON-stringified — pg/Neon would otherwise try
+          // to encode JS arrays as Postgres array literals and reject the insert
+          // with "invalid input syntax for type json".
+          effGymPhotos != null ? JSON.stringify(effGymPhotos) : null,
+          effGymEquipmentAnalysis != null ? JSON.stringify(effGymEquipmentAnalysis) : null,
+          effBodyPhotos != null ? JSON.stringify(effBodyPhotos) : null,
+          effBodyCompositionAnalysis != null ? JSON.stringify(effBodyCompositionAnalysis) : null,
           Array.isArray(effPreferredRestDays) && effPreferredRestDays.length > 0 ? effPreferredRestDays : null,
         ]
       );
@@ -862,10 +865,11 @@ export async function saveProfile(
           protein_powder_amount || null,
           specific_food_preferences?.trim() ? specific_food_preferences.trim() : null,
           name?.trim() ? encryptRnd(name.trim()) : null,
-          gym_photos || null,
-          gym_equipment_analysis || null,
-          body_photos || null,
-          body_composition_analysis || null,
+          // See UPDATE path above: JSONB columns must be JSON-stringified.
+          gym_photos != null ? JSON.stringify(gym_photos) : null,
+          gym_equipment_analysis != null ? JSON.stringify(gym_equipment_analysis) : null,
+          body_photos != null ? JSON.stringify(body_photos) : null,
+          body_composition_analysis != null ? JSON.stringify(body_composition_analysis) : null,
           preferred_rest_days && preferred_rest_days.length > 0 ? preferred_rest_days : null
         ]
       );
@@ -1276,14 +1280,30 @@ export async function deleteRoutineById(userId: number, routineId: number): Prom
     throw error;
   }
 }
+/** Optional logged-set details persisted alongside an exercise completion. */
+export interface ExerciseSetDetails {
+  actual_weight?: number | null;
+  actual_reps?: number | null;
+  notes?: string | null;
+}
+
 export async function toggleExerciseCompletion(
   userId: number,
   routineId: number,
   dayIndex: number,
   exerciseIndex: number,
-  completed: boolean
-): Promise<boolean> {
+  completed: boolean,
+  details?: ExerciseSetDetails
+): Promise<{ ok: boolean; newlyCompleted: boolean }> {
   const key = `${dayIndex}-${exerciseIndex}`;
+  // Only touch weight/reps/notes when the caller actually sent them, so a plain
+  // check/uncheck never clobbers a previously logged set.
+  const hasDetails =
+    details != null &&
+    (details.actual_weight != null || details.actual_reps != null || details.notes != null);
+  const w = details?.actual_weight ?? null;
+  const reps = details?.actual_reps ?? null;
+  const notes = details?.notes ?? null;
   try {
     // 1. Verify ownership
     const ownership = await pool.query(
@@ -1292,33 +1312,45 @@ export async function toggleExerciseCompletion(
     );
     if (ownership.rows.length === 0) {
       console.warn(`User ${userId} attempted to modify routine ${routineId} which helps to someone else (or doesn't exist).`);
-      return false; // Or throw an error depending on preference, but false indicates failure to toggle
+      return { ok: false, newlyCompleted: false };
     }
 
-    // Check if completion record exists
-    const existing = await pool.query(
-      `SELECT id FROM exercise_completions
+    // Check if completion record exists (and its prior completed state, so XP is
+    // only awarded on a genuine transition to completed — not on every save).
+    const existing = await pool.query<{ id: number; completed: boolean }>(
+      `SELECT id, completed FROM exercise_completions
        WHERE routine_id = $1 AND day_index = $2 AND exercise_index = $3`,
       [routineId, dayIndex, exerciseIndex]
     );
+    const wasCompleted = existing.rows.length > 0 && Boolean(existing.rows[0].completed);
+    const newlyCompleted = completed === true && !wasCompleted;
 
     if (existing.rows.length > 0) {
       // Update existing
-      await pool.query(
-        `UPDATE exercise_completions
-         SET completed = $4, completed_at = $5
-         WHERE routine_id = $1 AND day_index = $2 AND exercise_index = $3`,
-        [routineId, dayIndex, exerciseIndex, completed, completed ? new Date() : null]
-      );
+      if (hasDetails) {
+        await pool.query(
+          `UPDATE exercise_completions
+           SET completed = $4, completed_at = $5, actual_weight = $6, actual_reps = $7, notes = $8
+           WHERE routine_id = $1 AND day_index = $2 AND exercise_index = $3`,
+          [routineId, dayIndex, exerciseIndex, completed, completed ? new Date() : null, w, reps, notes]
+        );
+      } else {
+        await pool.query(
+          `UPDATE exercise_completions
+           SET completed = $4, completed_at = $5
+           WHERE routine_id = $1 AND day_index = $2 AND exercise_index = $3`,
+          [routineId, dayIndex, exerciseIndex, completed, completed ? new Date() : null]
+        );
+      }
     } else {
       // Insert new
       await pool.query(
-        `INSERT INTO exercise_completions (routine_id, day_index, exercise_index, completed, completed_at)
-         VALUES ($1, $2, $3, $4, $5)`,
-        [routineId, dayIndex, exerciseIndex, completed, completed ? new Date() : null]
+        `INSERT INTO exercise_completions (routine_id, day_index, exercise_index, completed, completed_at, actual_weight, actual_reps, notes)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
+        [routineId, dayIndex, exerciseIndex, completed, completed ? new Date() : null, w, reps, notes]
       );
     }
-    return true;
+    return { ok: true, newlyCompleted };
   } catch (error) {
     if (allowMockAuth()) {
       console.warn("toggleExerciseCompletion DB failed, using mock:", error);
@@ -1326,8 +1358,9 @@ export async function toggleExerciseCompletion(
       if (!mockCompletionStore.has(routineId)) {
         mockCompletionStore.set(routineId, new Map());
       }
+      const mockWas = mockCompletionStore.get(routineId)?.get(key) === true;
       mockCompletionStore.get(routineId)?.set(key, completed);
-      return true;
+      return { ok: true, newlyCompleted: completed === true && !mockWas };
     }
     console.error("toggleExerciseCompletion DB failed:", error);
     throw error;
@@ -1422,12 +1455,20 @@ export async function getCompletionStats(userId: number, routineId: number): Pro
     }
 
     const result = await pool.query(
-      `SELECT day_index, exercise_index, completed
+      `SELECT day_index, exercise_index, completed, actual_weight, actual_reps, notes
        FROM exercise_completions
        WHERE routine_id = $1`,
       [routineId]
     );
-    return result.rows;
+    // actual_weight is DECIMAL -> pg returns it as a string; coerce to number.
+    return result.rows.map((r: any) => ({
+      day_index: Number(r.day_index),
+      exercise_index: Number(r.exercise_index),
+      completed: Boolean(r.completed),
+      actual_weight: r.actual_weight != null ? Number(r.actual_weight) : null,
+      actual_reps: r.actual_reps != null ? Number(r.actual_reps) : null,
+      notes: r.notes ?? null,
+    }));
   } catch (error) {
     if (allowMockAuth()) {
       console.warn("getCompletionStats DB failed, using mock:", error);
@@ -1441,6 +1482,84 @@ export async function getCompletionStats(userId: number, routineId: number): Pro
       });
     }
     console.error("getCompletionStats DB failed:", error);
+    throw error;
+  }
+}
+
+export interface PersonalRecord {
+  exercise: string;
+  weight: number;
+  reps: number | null;
+  achieved_at: string | null;
+}
+
+/**
+ * Personal records: heaviest logged weight per exercise across all of a user's
+ * routines. Completions store positional indexes, so we resolve the exercise
+ * name from each routine's routine_json and group by the normalized name.
+ */
+export async function getPersonalRecords(userId: number): Promise<PersonalRecord[]> {
+  try {
+    const res = await pool.query<{
+      routine_json: any;
+      day_index: number;
+      exercise_index: number;
+      actual_weight: string | number | null;
+      actual_reps: number | null;
+      completed_at: Date | null;
+    }>(
+      `SELECT r.routine_json, ec.day_index, ec.exercise_index,
+              ec.actual_weight, ec.actual_reps, ec.completed_at
+       FROM exercise_completions ec
+       JOIN routines r ON r.id = ec.routine_id
+       WHERE r.user_id = $1
+         AND ec.actual_weight IS NOT NULL
+         AND ec.actual_weight > 0`,
+      [userId]
+    );
+
+    // key: normalized name -> best record (with original display name)
+    const best = new Map<string, PersonalRecord>();
+
+    for (const row of res.rows) {
+      let routine: any = row.routine_json;
+      if (typeof routine === 'string') {
+        try { routine = JSON.parse(routine); } catch { continue; }
+      }
+      const ex = Array.isArray(routine?.days)
+        ? routine.days[row.day_index]?.exercises?.[row.exercise_index]
+        : null;
+      const name = typeof ex?.name === 'string' ? ex.name.trim() : '';
+      if (!name) continue;
+
+      const weight = Number(row.actual_weight);
+      if (!Number.isFinite(weight) || weight <= 0) continue;
+
+      const k = name.toLowerCase();
+      const prev = best.get(k);
+      const record: PersonalRecord = {
+        exercise: name,
+        weight,
+        reps: row.actual_reps != null ? Number(row.actual_reps) : null,
+        achieved_at: row.completed_at ? new Date(row.completed_at).toISOString() : null,
+      };
+      // Keep the heaviest; tie-break on reps, then recency.
+      if (
+        !prev ||
+        weight > prev.weight ||
+        (weight === prev.weight && (record.reps ?? 0) > (prev.reps ?? 0))
+      ) {
+        best.set(k, record);
+      }
+    }
+
+    return Array.from(best.values()).sort((a, b) => b.weight - a.weight);
+  } catch (error) {
+    if (allowMockAuth()) {
+      console.warn("getPersonalRecords DB failed, using mock:", error);
+      return [];
+    }
+    console.error("getPersonalRecords DB failed:", error);
     throw error;
   }
 }
