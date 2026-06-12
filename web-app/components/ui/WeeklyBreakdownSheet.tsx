@@ -63,7 +63,7 @@ export function WeeklyBreakdownSheet({
           >
             <div
               className="rounded-t-3xl border border-primary/15 px-5 pt-4 pb-10"
-              style={{ background: 'rgba(16, 16, 30, 0.98)', backdropFilter: 'blur(24px)' }}
+              style={{ background: 'rgba(255, 255, 255, 0.94)', backdropFilter: 'blur(24px) saturate(1.5)' }}
             >
               {/* Drag handle */}
               <div className="flex justify-center mb-4">

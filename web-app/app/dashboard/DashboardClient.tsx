@@ -1534,7 +1534,7 @@ export default function DashboardPage() {
   })
 
   return (
-    <div className="min-h-screen bg-transparent">
+    <div className="lg-remap min-h-screen bg-transparent">
       {/* Offline status indicator */}
       <OfflineIndicator />
 

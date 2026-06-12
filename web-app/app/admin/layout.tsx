@@ -13,7 +13,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   if (!ok) redirect('/dashboard')
 
   return (
-    <div className="min-h-screen bg-transparent">
+    <div className="lg-remap min-h-screen bg-transparent">
       <div className="max-w-screen-md mx-auto px-4 pt-6 pb-24 space-y-4">
         <div className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3 flex items-center justify-between">
           <div className="min-w-0">

@@ -244,11 +244,21 @@ Create `.env.local` for local dev. See `ENV_SETUP.md` for full details.
 
 ## Known Bugs (Do Not Repeat)
 
-1. `next.config.ts` is empty — needs CSP/security headers before production.
-2. `ai-agent.ts` and `openai-routine.ts` have duplicate prompt-building logic — fix in both when editing either.
-3. Coach credentials are hardcoded in `lib/coach.ts` — must move to env vars.
-4. Analytics premium check runs AFTER the DB query in `app/api/analytics/route.ts` — should be BEFORE.
-5. Login page uses plain `fetch` instead of `csrfFetch` — inconsistent with rest of app.
+1. `ai-agent.ts` and `openai-routine.ts` have duplicate prompt-building logic — fix in both when editing either.
+
+Fixed (kept here so they don't regress):
+- `next.config.ts` sets CSP + security headers — keep them when editing the config.
+- Coach credentials in `lib/coach.ts` read from `DEFAULT_COACH_*` env vars (with fallbacks).
+- Analytics premium check runs BEFORE the cache/DB lookups in `app/api/analytics/route.ts`.
+- Login page uses `csrfFetch` like the rest of the app.
+
+## Theme (Light mode only)
+
+The app uses a light-only "Liquid Light" liquid-glass design system (`app/globals.css`):
+- No `.dark` class is ever applied; the ThemeToggle component was removed. The `@custom-variant dark` line is kept so legacy `dark:` utilities compile but stay dormant — don't add new ones.
+- Glass primitives: `.glass`, `.glass-soft`, `.glass-menu`, `.panel-solid` are translucent white with backdrop blur.
+- Dark-authored utility vocabulary (`text-white`, `bg-white/5`, `border-white/10`, `bg-slate-900`, pale `text-slate-300`-style text, …) is remapped to light equivalents inside the `.lg-remap {}` scope in `globals.css`. Dashboard/onboarding/coach/admin/report/login roots carry the `lg-remap` class; the landing page and explore page are light-first and intentionally NOT remapped.
+- Fonts: Manrope (`--font-sans-app`) for body, Sora (`--font-display-app`) for display/`font-display`.
 
 ## High-Traffic Files
 

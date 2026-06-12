@@ -4,8 +4,8 @@
     "description": "Generate personalized weekly workout plans with AI",
     "start_url": "/",
     "display": "standalone",
-    "background_color": "#060E10",
-    "theme_color": "#00E5BC",
+    "background_color": "#F2FAF7",
+    "theme_color": "#F2FAF7",
     "orientation": "portrait-primary",
     "icons": [
         {

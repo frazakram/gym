@@ -22,15 +22,15 @@ export function ToastContainer(props?: Record<string, unknown>) {
     <Toaster
       position="top-center"
       richColors
-      theme="dark"
+      theme="light"
       toastOptions={{
         className: 'neon-edge-toast',
         style: {
-          background: 'rgba(10, 22, 24, 0.88)',
-          backdropFilter: 'blur(16px)',
-          border: '1px solid rgba(0, 229, 188, 0.32)',
-          color: '#ecfdf5',
-          boxShadow: '0 8px 32px rgba(0, 229, 188, 0.18)',
+          background: 'rgba(255, 255, 255, 0.88)',
+          backdropFilter: 'blur(16px) saturate(1.5)',
+          border: '1px solid rgba(255, 255, 255, 0.85)',
+          color: '#0A2E29',
+          boxShadow: '0 8px 32px rgba(8, 76, 64, 0.14)',
           borderRadius: '1rem',
         },
       }}

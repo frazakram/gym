@@ -393,7 +393,7 @@ export default function ReportPage() {
       const canvas = await html2canvas(element, {
         scale: 2,
         useCORS: true,
-        backgroundColor: '#0a0a1a',
+        backgroundColor: '#F2FAF7',
         // Hide the floating action bar (and any other .no-print elements)
         // in the cloned doc before rendering — those should never be in the PDF
         onclone: (clonedDoc: Document) => {
@@ -465,7 +465,7 @@ export default function ReportPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#0a0a1a] flex items-center justify-center">
+      <div className="lg-remap min-h-screen bg-[#0a0a1a] flex items-center justify-center">
         <div className="text-center">
           <div className="w-12 h-12 rounded-full border-2 border-primary/30 border-t-primary animate-spin mx-auto" />
           <p className="text-muted mt-4 text-sm">Generating your weekly report…</p>
@@ -476,7 +476,7 @@ export default function ReportPage() {
 
   if (error || !data) {
     return (
-      <div className="min-h-screen bg-[#0a0a1a] flex items-center justify-center px-4">
+      <div className="lg-remap min-h-screen bg-[#0a0a1a] flex items-center justify-center px-4">
         <div className="glass rounded-2xl p-8 text-center max-w-sm border border-rose-500/20">
           <h2 className="text-xl font-bold text-white mb-2">Report Unavailable</h2>
           <p className="text-muted text-sm">{error || 'No data available. Please complete some workouts first.'}</p>
@@ -535,7 +535,7 @@ export default function ReportPage() {
       {/* Print stylesheet */}
       <style>{`
         @media print {
-          body { background: #0a0a1a !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+          body { background: #F2FAF7 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
           .no-print { display: none !important; }
           .print-break { page-break-before: always; }
           .report-page { padding: 0 !important; }
@@ -543,7 +543,7 @@ export default function ReportPage() {
         @page { size: A4; margin: 16mm 12mm; }
       `}</style>
 
-      <div ref={reportRef} className="min-h-screen bg-[#0a0a1a] report-page">
+      <div ref={reportRef} className="lg-remap min-h-screen bg-[#0a0a1a] report-page">
         {/* Floating action bar — hidden on print AND stripped from PDF capture via onclone */}
         <div className="no-print sticky top-0 z-30 backdrop-blur-xl bg-[#0a0a1a]/80 border-b border-primary/10 px-4 py-3">
           <div className="max-w-2xl mx-auto flex items-center justify-between">

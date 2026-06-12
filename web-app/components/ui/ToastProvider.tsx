@@ -39,11 +39,11 @@ function SlideItem({ t, onRemove }: { t: Toast; onRemove: (id: string) => void }
           {icon}
         </div>
         <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ fontSize: 14, fontWeight: 700, color: '#f1f5f9', lineHeight: 1.3 }}>
+          <div style={{ fontSize: 14, fontWeight: 700, color: '#0A2E29', lineHeight: 1.3 }}>
             {t.title}
           </div>
           {t.message && (
-            <div style={{ fontSize: 12, color: '#94a3b8', marginTop: 3, lineHeight: 1.4 }}>
+            <div style={{ fontSize: 12, color: '#54716B', marginTop: 3, lineHeight: 1.4 }}>
               {t.message}
             </div>
           )}
@@ -118,9 +118,9 @@ function GlassItem({ t, onRemove }: { t: Toast; onRemove: (id: string) => void }
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   const isSuccess = t.type === 'success'
-  const dotColor = isSuccess ? '#22c55e' : '#00E5BC'
+  const dotColor = isSuccess ? '#16a34a' : '#00A689'
   const icon = isSuccess ? '✅' : 'ℹ️'
-  const actionBg = isSuccess ? '#22c55e' : '#00E5BC'
+  const actionBg = isSuccess ? '#16a34a' : '#00A689'
 
   return (
     <div
@@ -137,9 +137,9 @@ function GlassItem({ t, onRemove }: { t: Toast; onRemove: (id: string) => void }
       />
       <span style={{ fontSize: 15 }}>{icon}</span>
       <div style={{ flex: 1, minWidth: 0 }}>
-        <span style={{ fontSize: 14, fontWeight: 500, color: '#e2e8f0' }}>{t.title}</span>
+        <span style={{ fontSize: 14, fontWeight: 500, color: '#0A2E29' }}>{t.title}</span>
         {t.message && (
-          <div style={{ fontSize: 12, color: '#94a3b8', marginTop: 2 }}>{t.message}</div>
+          <div style={{ fontSize: 12, color: '#54716B', marginTop: 2 }}>{t.message}</div>
         )}
       </div>
       {t.action && (
@@ -188,7 +188,7 @@ function GlowItem({ t, onRemove }: { t: Toast; onRemove: (id: string) => void })
       style={{
         position: 'fixed', inset: 0, zIndex: 9999,
         display: 'flex', alignItems: 'center', justifyContent: 'center',
-        background: 'rgba(0,0,0,0.6)',
+        background: 'rgba(6,38,33,0.40)',
         animation: exiting
           ? 'toast-d-backdrop-out 300ms ease forwards'
           : 'toast-d-backdrop-in 200ms ease forwards',
@@ -203,14 +203,14 @@ function GlowItem({ t, onRemove }: { t: Toast; onRemove: (id: string) => void })
           💥
         </div>
         <div style={{
-          fontSize: 17, fontWeight: 800, color: '#fca5a5',
+          fontSize: 17, fontWeight: 800, color: '#DC2626',
           textAlign: 'center', marginTop: 10, letterSpacing: '-0.01em',
         }}>
           {t.title}
         </div>
         {t.message && (
           <div style={{
-            fontSize: 13, color: '#94a3b8', textAlign: 'center',
+            fontSize: 13, color: '#54716B', textAlign: 'center',
             lineHeight: 1.5, marginTop: 6, maxWidth: 220,
           }}>
             {t.message}
@@ -221,8 +221,8 @@ function GlowItem({ t, onRemove }: { t: Toast; onRemove: (id: string) => void })
             onClick={dismiss}
             style={{
               flex: 1, padding: 10, borderRadius: 12, fontSize: 13, fontWeight: 600,
-              color: '#94a3b8', background: 'rgba(255,255,255,0.06)',
-              border: '1px solid rgba(255,255,255,0.1)', cursor: 'pointer',
+              color: '#54716B', background: 'rgba(10,62,52,0.05)',
+              border: '1px solid rgba(10,80,68,0.12)', cursor: 'pointer',
             }}
           >
             Dismiss
@@ -284,8 +284,11 @@ export function ToastProvider() {
         /* ── Style A: Slide & Burn ──────────────────────────────── */
         .toast-a {
           width: min(300px, calc(100vw - 32px));
-          background: #0d1117;
-          border: 1.5px solid #1a2235;
+          background: rgba(255,255,255,0.92);
+          border: 1.5px solid rgba(255,255,255,0.9);
+          box-shadow: 0 12px 36px rgba(8,76,64,0.16);
+          backdrop-filter: blur(18px) saturate(1.5);
+          -webkit-backdrop-filter: blur(18px) saturate(1.5);
           border-radius: 16px;
           overflow: hidden;
           transform: translateX(110%);
@@ -310,10 +313,11 @@ export function ToastProvider() {
           gap: 10px;
           padding: 10px 16px;
           border-radius: 50px;
-          background: rgba(13,11,32,.88);
-          border: 1.5px solid rgba(255,255,255,.06);
-          backdrop-filter: blur(12px);
-          -webkit-backdrop-filter: blur(12px);
+          background: rgba(255,255,255,0.88);
+          border: 1.5px solid rgba(255,255,255,0.9);
+          box-shadow: 0 10px 30px rgba(8,76,64,0.14);
+          backdrop-filter: blur(14px) saturate(1.5);
+          -webkit-backdrop-filter: blur(14px) saturate(1.5);
           max-width: min(440px, calc(100vw - 32px));
           white-space: nowrap;
           transform: translateY(-110%);
@@ -338,7 +342,7 @@ export function ToastProvider() {
         /* ── Style D: Glow Card ─────────────────────────────────── */
         .toast-d {
           width: 280px;
-          background: #0d0a20;
+          background: rgba(255,255,255,0.96);
           border: 1.5px solid rgba(239,68,68,.35);
           border-radius: 24px;
           padding: 28px 24px 24px;
@@ -367,8 +371,8 @@ export function ToastProvider() {
           to   { transform: scale(0.9); opacity: 0; }
         }
         @keyframes toast-glow-pulse {
-          0%, 100% { box-shadow: 0 0 32px 4px rgba(239,68,68,.3); }
-          50%       { box-shadow: 0 0 48px 8px rgba(239,68,68,.5); }
+          0%, 100% { box-shadow: 0 0 32px 4px rgba(239,68,68,.18); }
+          50%       { box-shadow: 0 0 48px 8px rgba(239,68,68,.30); }
         }
         @keyframes toast-emoji-bounce {
           0%   { transform: scale(0.3) rotate(-15deg); opacity: 0; }

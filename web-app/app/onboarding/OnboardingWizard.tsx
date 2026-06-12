@@ -284,7 +284,7 @@ export default function OnboardingWizard({ isReset = false }: { isReset?: boolea
   /*  RENDER                                                           */
   /* ================================================================ */
   return (
-    <div className="min-h-screen flex flex-col items-center justify-start px-4 pt-10 pb-20 relative overflow-hidden">
+    <div className="lg-remap min-h-screen flex flex-col items-center justify-start px-4 pt-10 pb-20 relative overflow-hidden">
       {/* ---- Header ---- */}
       <motion.div
         initial={{ opacity: 0, y: -20 }}

@@ -117,7 +117,7 @@ export default function CoachPortalPage() {
   }
 
   return (
-    <div className="min-h-screen bg-transparent">
+    <div className="lg-remap min-h-screen bg-transparent">
       <div className="max-w-screen-md mx-auto pb-24 px-4 pt-6 space-y-4">
         <GlassCard className="p-4">
           <SectionHeader title="Coach portal" subtitle="Edit your coach profile" />

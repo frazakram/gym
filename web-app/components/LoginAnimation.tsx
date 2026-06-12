@@ -118,17 +118,12 @@ export default function LoginAnimation() {
   const [wordIdx, setWordIdx] = useState(0);
   const [displayed, setDisplayed] = useState('');
   const [typing, setTyping] = useState(true);
-  const [isDark, setIsDark] = useState(true);
+  // App is light-mode-only: keep the light styling branch permanently.
+  const isDark = false;
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   useEffect(() => {
     setData(resolveAnimData());
-    const root = document.documentElement;
-    const sync = () => setIsDark(root.classList.contains('dark'));
-    sync();
-    const obs = new MutationObserver(sync);
-    obs.observe(root, { attributes: true, attributeFilter: ['class'] });
-    return () => obs.disconnect();
   }, []);
 
   useEffect(() => {
