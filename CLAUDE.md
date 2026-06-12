@@ -92,11 +92,16 @@ Create `web-app/.env.local` for local dev. See `web-app/ENV_SETUP.md` for full d
 This project uses Next.js 16, which has breaking changes from earlier versions. Read guides in `node_modules/next/dist/docs/` before making changes to Next.js-specific code.
 
 ## Known Bugs (Do Not Repeat)
-- `next.config.ts` is empty — needs CSP/security headers before production.
 - `ai-agent.ts` and `openai-routine.ts` have duplicate prompt-building logic — fix in both when editing either.
-- Coach credentials are hardcoded in `lib/coach.ts` — must move to env vars.
-- Analytics premium check runs AFTER the DB query in `app/api/analytics/route.ts` — should be BEFORE.
-- Login page uses plain `fetch` instead of `csrfFetch` — inconsistent with rest of app.
+
+Fixed (kept here so they don't regress):
+- `next.config.ts` now sets CSP + security headers — keep them when editing the config.
+- Coach credentials in `lib/coach.ts` read from `DEFAULT_COACH_*` env vars (with fallbacks).
+- Analytics premium check runs BEFORE the cache/DB lookups in `app/api/analytics/route.ts`.
+- Login page uses `csrfFetch` like the rest of the app.
+
+## Theme
+- The app is **light mode only** ("Liquid Light" liquid-glass design). There is no `.dark` class, no ThemeToggle, and no `LIGHT_MODE_LOCK` env var. Dark-authored utility classes (`text-white`, `bg-white/5`, `bg-slate-900`, …) are remapped to light equivalents via the `.lg-remap` scope in `app/globals.css` — new dashboard-area pages must include `lg-remap` on their root element if they reuse that dark-first vocabulary, or simply use light-first classes.
 
 ## High-Traffic Files (Summary)
 - `DashboardClient.tsx` — Tab controller for the main dashboard. DO NOT add logic here; extract to `components/views/` or hooks first.

@@ -1,20 +1,20 @@
 import type { Metadata, Viewport } from 'next'
-import { Inter, Plus_Jakarta_Sans } from 'next/font/google'
+import { Manrope, Sora } from 'next/font/google'
 import './globals.css'
 import { ServiceWorkerRegistration } from '@/components/ServiceWorkerRegistration'
 import { ToastProvider } from '@/components/ui/ToastProvider'
 import { CookieConsent } from '@/components/CookieConsent'
 
-const inter = Inter({
+const manrope = Manrope({
   subsets: ['latin'],
   display: 'swap',
-  variable: '--font-inter',
+  variable: '--font-sans-app',
 })
 
-const jakarta = Plus_Jakarta_Sans({
+const sora = Sora({
   subsets: ['latin'],
   display: 'swap',
-  variable: '--font-display',
+  variable: '--font-display-app',
 })
 
 export const metadata: Metadata = {
@@ -23,17 +23,18 @@ export const metadata: Metadata = {
   manifest: '/manifest.json',
   appleWebApp: {
     capable: true,
-    statusBarStyle: 'black-translucent',
+    statusBarStyle: 'default',
     title: 'Gym Bro',
   },
 }
 
 export const viewport: Viewport = {
-  themeColor: '#00E5BC',
+  themeColor: '#F2FAF7',
   width: 'device-width',
   initialScale: 1,
   maximumScale: 1,
   userScalable: false,
+  viewportFit: 'cover',
 }
 
 export default function RootLayout({
@@ -41,20 +42,9 @@ export default function RootLayout({
 }: {
   children: React.ReactNode
 }) {
-  const isLightModeLocked = process.env.LIGHT_MODE_LOCK === 'true'
-  const themeScript = isLightModeLocked
-    ? `(function(){document.documentElement.classList.add('dark');})();`
-    : `(function(){var t=localStorage.getItem('theme');if(t!=='light'){document.documentElement.classList.add('dark');}})();`
-
   return (
-    <html lang="en" suppressHydrationWarning>
-      <head>
-        <script dangerouslySetInnerHTML={{ __html: themeScript }} />
-      </head>
-      <body
-        className={`min-h-screen text-gray-900 dark:text-slate-100 ${inter.variable} ${jakarta.variable}`}
-        data-light-mode-locked={isLightModeLocked ? 'true' : undefined}
-      >
+    <html lang="en">
+      <body className={`min-h-screen text-gray-900 ${manrope.variable} ${sora.variable}`}>
         <ServiceWorkerRegistration />
         <div className="app-shell" style={{ overflow: 'visible' }}>
           <div className="app-bg" />

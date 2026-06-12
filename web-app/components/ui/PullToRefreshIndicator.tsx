@@ -39,7 +39,7 @@ export function PullToRefreshIndicator({
             transition={{ type: 'spring', stiffness: 400, damping: 28 }}
             className="w-10 h-10 rounded-full flex items-center justify-center shadow-xl"
             style={{
-              background: 'rgba(18, 18, 42, 0.92)',
+              background: 'rgba(255, 255, 255, 0.92)',
               border: '1px solid rgba(0,229,188, 0.35)',
               backdropFilter: 'blur(12px)',
               willChange: 'transform',

@@ -82,7 +82,7 @@ export function RestDayPickerModal({ open, onClose, onConfirm, initialDays }: Re
           >
             <div
               className="rounded-2xl border border-white/10 p-5"
-              style={{ background: 'rgba(10,12,25,0.97)', backdropFilter: 'blur(28px)' }}
+              style={{ background: 'rgba(255, 255, 255, 0.95)', backdropFilter: 'blur(28px) saturate(1.5)' }}
             >
               {/* Header */}
               <div className="flex items-start justify-between mb-1">
@@ -131,10 +131,10 @@ export function RestDayPickerModal({ open, onClose, onConfirm, initialDays }: Re
                       className="flex flex-col items-center py-2.5 rounded-xl border transition-all"
                       style={
                         isSelected
-                          ? { background: 'rgba(0,229,188,0.18)', borderColor: 'rgba(95,255,224,0.55)', color: '#99FFF0' }
+                          ? { background: 'rgba(0,201,167,0.16)', borderColor: 'rgba(0,166,137,0.55)', color: '#00715E' }
                           : isDisabled
-                          ? { background: 'rgba(255,255,255,0.02)', borderColor: 'rgba(255,255,255,0.04)', color: 'rgba(148,163,184,0.3)', cursor: 'not-allowed' }
-                          : { background: 'rgba(255,255,255,0.04)', borderColor: 'rgba(255,255,255,0.08)', color: 'rgba(148,163,184,0.7)' }
+                          ? { background: 'rgba(10,62,52,0.03)', borderColor: 'rgba(10,80,68,0.06)', color: 'rgba(74,106,99,0.4)', cursor: 'not-allowed' }
+                          : { background: 'rgba(10,62,52,0.045)', borderColor: 'rgba(10,80,68,0.10)', color: 'rgba(74,106,99,0.85)' }
                       }
                     >
                       <span className="text-[11px] font-semibold">{day}</span>

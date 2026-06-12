@@ -127,7 +127,7 @@ export function RestTimer({ open, seconds, onClose, onDurationChange }: RestTime
             className={`mx-auto max-w-md rounded-3xl border p-4 backdrop-blur-xl shadow-2xl transition-colors ${
               done
                 ? 'border-emerald-400/40 bg-emerald-500/10 shadow-emerald-500/20'
-                : 'border-primary/25 bg-[#0d1117]/90 shadow-primary/20'
+                : 'border-white/70 bg-white/90 shadow-primary/20'
             }`}
           >
             <div className="flex items-center gap-3">

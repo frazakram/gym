@@ -124,10 +124,10 @@ export function WorkoutView({
   }
 
   const setLogValue = (eIdx: number, field: 'weight' | 'reps', value: string) => {
-    setLogInputs((prev) => ({
-      ...prev,
-      [eIdx]: { weight: '', reps: '', ...prev[eIdx], [field]: value },
-    }))
+    setLogInputs((prev) => {
+      const current = prev[eIdx] ?? { weight: '', reps: '' }
+      return { ...prev, [eIdx]: { ...current, [field]: value } }
+    })
   }
 
   const commitLog = (eIdx: number) => {

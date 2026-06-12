@@ -137,7 +137,7 @@ function TrendLineChart({ points }: { points: TrendPoint[] }) {
             cx={p.x}
             cy={p.y}
             r={p.isMissing ? 3 : 3.2}
-            fill={p.isMissing ? 'rgba(148,163,184,0.10)' : 'rgba(0,229,188,0.95)'}
+            fill={p.isMissing ? 'rgba(148,163,184,0.10)' : 'rgba(0,178,148,0.95)'}
             stroke={p.isMissing ? 'rgba(148,163,184,0.35)' : 'rgba(16,185,129,0.0)'}
             strokeWidth={p.isMissing ? 1.2 : 0}
           />

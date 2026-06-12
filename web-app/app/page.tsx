@@ -1,7 +1,6 @@
 'use client'
 
 import Link from 'next/link'
-import { ThemeToggle } from '@/components/ThemeToggle'
 import { motion, useInView, type Variants } from 'framer-motion'
 import { useRef, useState, useEffect } from 'react'
 
@@ -118,7 +117,6 @@ export default function LandingPage() {
             </Link>
           </div>
         </div>
-        <ThemeToggle />
       </nav>
 
       {/* ── HERO ── */}
