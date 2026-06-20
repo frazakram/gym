@@ -2,6 +2,7 @@
 'use client'
 
 import React, { useMemo, useState } from 'react'
+import { motion } from 'framer-motion'
 import { WeeklyDiet, Meal } from '@/types'
 import { ChevronDown, Salad, Plus, Check, Loader2 } from 'lucide-react'
 import { GlassCard } from '@/components/ui/GlassCard'
@@ -51,10 +52,13 @@ function LogMealButton({ meal }: { meal: Meal }) {
   }
 
   return (
-    <button
+    <motion.button
       onClick={log}
       disabled={state !== 'idle'}
       aria-label={`Log ${meal.name} to tracker`}
+      whileTap={state === 'idle' ? { scale: 0.95 } : undefined}
+      animate={state === 'done' ? { scale: [1, 1.12, 1] } : { scale: 1 }}
+      transition={{ duration: 0.35, ease: 'easeOut' }}
       className={`shrink-0 inline-flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-medium border transition-colors ${
         state === 'done'
           ? 'border-primary/40 bg-primary/15 text-primary-light'
@@ -69,7 +73,7 @@ function LogMealButton({ meal }: { meal: Meal }) {
         <Plus className="w-3.5 h-3.5" />
       )}
       {state === 'done' ? 'Logged' : 'Log'}
-    </button>
+    </motion.button>
   )
 }
 

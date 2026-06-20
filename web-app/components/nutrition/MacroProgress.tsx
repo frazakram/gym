@@ -1,6 +1,7 @@
 'use client'
 
-import { motion } from 'framer-motion'
+import { useEffect, useRef } from 'react'
+import { motion, animate, useMotionValue, useTransform, useReducedMotion, useAnimationControls } from 'framer-motion'
 import type { MacroSet, NutritionGoals } from '@/types'
 
 /** A circular calorie ring + three macro bars, shown against the daily goal. */
@@ -8,6 +9,22 @@ import type { MacroSet, NutritionGoals } from '@/types'
 interface MacroProgressProps {
   totals: MacroSet
   goals: NutritionGoals | null
+}
+
+/** A number that smoothly counts to its target (respects reduced motion). */
+function AnimatedNumber({ value }: { value: number }) {
+  const reduce = useReducedMotion()
+  const mv = useMotionValue(value)
+  const rounded = useTransform(mv, (v) => Math.round(v))
+  useEffect(() => {
+    if (reduce) {
+      mv.set(value)
+      return
+    }
+    const controls = animate(mv, value, { duration: 0.6, ease: 'easeOut' })
+    return () => controls.stop()
+  }, [value, reduce, mv])
+  return <motion.span>{rounded}</motion.span>
 }
 
 const MACROS = [
@@ -25,8 +42,19 @@ function CalorieRing({ consumed, goal }: { consumed: number; goal: number | null
   const over = goal != null && consumed > goal
   const remaining = goal != null ? Math.round(goal - consumed) : null
 
+  // Pulse the ring whenever the consumed total grows (i.e. a meal was logged).
+  const reduce = useReducedMotion()
+  const controls = useAnimationControls()
+  const prev = useRef(consumed)
+  useEffect(() => {
+    if (!reduce && consumed > prev.current) {
+      controls.start({ scale: [1, 1.05, 1], transition: { duration: 0.45, ease: 'easeOut' } })
+    }
+    prev.current = consumed
+  }, [consumed, reduce, controls])
+
   return (
-    <div className="relative shrink-0" style={{ width: size, height: size }}>
+    <motion.div animate={controls} className="relative shrink-0" style={{ width: size, height: size }}>
       <svg width={size} height={size} className="-rotate-90">
         <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke="rgba(0,178,148,0.12)" strokeWidth={stroke} />
         <motion.circle
@@ -45,7 +73,9 @@ function CalorieRing({ consumed, goal }: { consumed: number; goal: number | null
         />
       </svg>
       <div className="absolute inset-0 flex flex-col items-center justify-center">
-        <span className="text-2xl font-bold text-white font-display leading-none">{Math.round(consumed)}</span>
+        <span className="text-2xl font-bold text-white font-display leading-none">
+          <AnimatedNumber value={Math.round(consumed)} />
+        </span>
         <span className="text-[10px] text-muted mt-1">
           {goal != null ? `of ${goal} kcal` : 'kcal logged'}
         </span>
@@ -55,7 +85,7 @@ function CalorieRing({ consumed, goal }: { consumed: number; goal: number | null
           </span>
         )}
       </div>
-    </div>
+    </motion.div>
   )
 }
 
