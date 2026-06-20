@@ -1,9 +1,9 @@
 'use client'
 
 import { useState } from 'react'
-import { motion } from 'framer-motion'
+import { motion, AnimatePresence } from 'framer-motion'
 import {
-  Plus, ChevronLeft, ChevronRight, CalendarDays, Target, Flame, Loader2, Star, History, Utensils,
+  Plus, ChevronLeft, ChevronRight, CalendarDays, Target, Flame, Loader2, Star, History, Utensils, Check,
 } from 'lucide-react'
 import type { Profile, DraftFoodItem, FoodEntry, FoodSearchResult, FavoriteFood } from '@/types'
 import { useNutrition, todayStr } from '@/hooks/useNutrition'
@@ -316,20 +316,46 @@ function dedupeQuick(recent: FavoriteFood[], favorites: FavoriteFood[]): QuickFo
   return out.slice(0, 12)
 }
 
-function QuickChip({ food, onLog, onRemoveFav }: { food: QuickFood; onLog: () => void; onRemoveFav?: () => void }) {
+function QuickChip({ food, onLog, onRemoveFav }: { food: QuickFood; onLog: () => void | Promise<unknown>; onRemoveFav?: () => void }) {
+  const [logged, setLogged] = useState(false)
+  const handle = async () => {
+    if (logged) return
+    await onLog()
+    setLogged(true)
+    setTimeout(() => setLogged(false), 1400)
+  }
   return (
     <div className="relative shrink-0">
-      <button
-        onClick={onLog}
-        className="flex flex-col items-start gap-1 w-36 p-3 rounded-2xl bg-white/4 border border-white/8 hover:border-primary/30 transition-colors text-left"
+      <motion.button
+        onClick={handle}
+        whileTap={{ scale: 0.96 }}
+        animate={logged ? { scale: [1, 1.06, 1] } : { scale: 1 }}
+        transition={{ duration: 0.3, ease: 'easeOut' }}
+        className={`flex flex-col items-start gap-1 w-36 p-3 rounded-2xl border text-left transition-colors ${
+          logged ? 'bg-primary/12 border-primary/40' : 'bg-white/4 border-white/8 hover:border-primary/30'
+        }`}
       >
         <div className="flex items-center gap-1.5 w-full">
           {food.isFavorite && <Star className="w-3 h-3 text-gold shrink-0" />}
           <span className="text-sm font-medium text-white truncate">{food.name}</span>
         </div>
-        <span className="text-[11px] text-muted">{Math.round(food.calories)} kcal · +1 tap</span>
-      </button>
-      {onRemoveFav && (
+        <span className="text-[11px] text-muted">
+          {logged ? 'Added to today' : `${Math.round(food.calories)} kcal · +1 tap`}
+        </span>
+      </motion.button>
+      <AnimatePresence>
+        {logged && (
+          <motion.span
+            initial={{ opacity: 0, scale: 0.5 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.5 }}
+            className="absolute top-1.5 right-1.5 w-5 h-5 rounded-full bg-primary flex items-center justify-center shadow"
+          >
+            <Check className="w-3 h-3 text-accent-ink" />
+          </motion.span>
+        )}
+      </AnimatePresence>
+      {onRemoveFav && !logged && (
         <button
           onClick={onRemoveFav}
           aria-label="Remove favorite"
