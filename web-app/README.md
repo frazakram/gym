@@ -146,8 +146,13 @@ web-app/
 | `OPENAI_TIMEOUT_MS` | No | Request timeout in ms (default `120000`) |
 | `OPENAI_PROXY` | No | Proxy URL for OpenAI requests (e.g. `http://proxy.mycorp:8080`). Falls back to `HTTPS_PROXY`/`HTTP_PROXY` |
 | `OPENAI_RETRY_ATTEMPTS` | No | Network retry attempts (default `2`) |
+| `LOGMEAL_API_KEY` | Optional | LogMeal APIUser token for photo meal recognition. Optional — photo recognition falls back to OpenAI vision (see below), then manual search. |
+| `OPENAI_VISION_MODEL` | Optional | Vision model for photo meal recognition (default `gpt-4o`). Uses `OPENAI_API_KEY`. |
+| `OFF_USER_AGENT` | Optional | Custom User-Agent sent to Open Food Facts, e.g. `MyApp/1.0 (contact@example.com)`. OFF requests it; a sensible default is used otherwise. |
 
-For a copy/paste setup guide, see `ENV_SETUP.md`.
+> **Nutrition tracking:** Open Food Facts (food search + barcode lookup) needs **no API key**, but enforces per-IP rate limits (~15 product reads/min, ~10 searches/min) — the app rate-limits per user and caches results to stay within them. Only photo recognition (LogMeal) needs a key.
+
+For a copy/paste setup guide, see `ENV_SETUP.md`. For all env vars in one place, see `.env.example`.
 
 ## Google Sign-In (OAuth)
 

@@ -2,14 +2,75 @@
 'use client'
 
 import React, { useMemo, useState } from 'react'
-import { WeeklyDiet } from '@/types'
-import { ChevronDown, Salad } from 'lucide-react'
+import { WeeklyDiet, Meal } from '@/types'
+import { ChevronDown, Salad, Plus, Check, Loader2 } from 'lucide-react'
 import { GlassCard } from '@/components/ui/GlassCard'
 import { SectionHeader } from '@/components/ui/SectionHeader'
 import { Collapsible } from '@/components/ui/Collapsible'
+import { csrfFetch } from '@/lib/useCsrf'
+import { toastSuccess, toastError } from '@/lib/toast'
+import { todayStr } from '@/hooks/useNutrition'
 
 interface DietDisplayProps {
   diet: WeeklyDiet | null
+}
+
+type LogState = 'idle' | 'logging' | 'done'
+
+/** Inline button to drop a planned meal straight into today's food log. */
+function LogMealButton({ meal }: { meal: Meal }) {
+  const [state, setState] = useState<LogState>('idle')
+
+  const log = async () => {
+    if (state !== 'idle') return
+    setState('logging')
+    try {
+      const res = await csrfFetch('/api/nutrition/food-entries', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          entry_date: todayStr(),
+          source: 'manual',
+          name: meal.name,
+          calories: Math.max(0, Math.round(meal.calories || 0)),
+          protein_g: Math.max(0, meal.protein || 0),
+          carb_g: Math.max(0, meal.carbs || 0),
+          fat_g: Math.max(0, meal.fats || 0),
+          quantity: 1,
+          unit: 'serving',
+        }),
+      })
+      if (!res.ok) throw new Error()
+      setState('done')
+      toastSuccess('Added to today', `${meal.name} logged to your tracker`)
+      setTimeout(() => setState('idle'), 2000)
+    } catch {
+      setState('idle')
+      toastError('Could not log meal', 'Try again in a moment.')
+    }
+  }
+
+  return (
+    <button
+      onClick={log}
+      disabled={state !== 'idle'}
+      aria-label={`Log ${meal.name} to tracker`}
+      className={`shrink-0 inline-flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-medium border transition-colors ${
+        state === 'done'
+          ? 'border-primary/40 bg-primary/15 text-primary-light'
+          : 'border-primary/25 text-primary-light hover:bg-primary/10'
+      }`}
+    >
+      {state === 'logging' ? (
+        <Loader2 className="w-3.5 h-3.5 animate-spin" />
+      ) : state === 'done' ? (
+        <Check className="w-3.5 h-3.5" />
+      ) : (
+        <Plus className="w-3.5 h-3.5" />
+      )}
+      {state === 'done' ? 'Logged' : 'Log'}
+    </button>
+  )
 }
 
 export const DietDisplay: React.FC<DietDisplayProps> = ({ diet }) => {
@@ -100,9 +161,14 @@ export const DietDisplay: React.FC<DietDisplayProps> = ({ diet }) => {
               >
                 <div className="divide-y divide-gray-100 dark:divide-gray-800">
                   {day.meals.map((meal, j) => (
-                    <div key={j} className="flex items-center justify-between py-3">
-                      <p className="text-sm text-gray-900 dark:text-white">{meal.name}</p>
-                      <p className="text-sm text-gray-400">{meal.calories} kcal</p>
+                    <div key={j} className="flex items-center justify-between gap-3 py-3">
+                      <div className="min-w-0">
+                        <p className="text-sm text-gray-900 dark:text-white truncate">{meal.name}</p>
+                        <p className="text-[11px] text-muted">
+                          {meal.calories} kcal · {meal.protein}P / {meal.carbs}C / {meal.fats}F
+                        </p>
+                      </div>
+                      <LogMealButton meal={meal} />
                     </div>
                   ))}
                 </div>

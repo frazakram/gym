@@ -21,6 +21,8 @@ export interface Profile {
     session_duration?: number; // Workout session duration in minutes (e.g., 30, 45, 60, 90, 120)
     notes?: string;
     updated_at?: Date;
+    // Activity level for TDEE — collected once, reused by the nutrition tracker
+    activity_level?: ActivityLevel;
     // Diet Preferences
     diet_type?: string[]; // Multi-select
     cuisine?: 'No Preference' | 'North Indian' | 'South Indian' | 'Mediterranean' | 'American' | 'Mexican' | 'Asian' | 'Mughlai';
@@ -108,6 +110,138 @@ export interface DailyDiet {
 
 export interface WeeklyDiet {
     days: DailyDiet[];
+}
+
+// ============= NUTRITION TRACKING (Cal AI-style food log) =============
+
+/** How a logged/draft food item entered the system. */
+export type FoodSource = 'photo' | 'barcode' | 'search' | 'manual';
+
+export type GoalType = 'maintenance' | 'deficit' | 'surplus';
+
+export type ActivityLevel =
+    | 'sedentary'
+    | 'light'
+    | 'moderate'
+    | 'active'
+    | 'very_active';
+
+/** Per-user daily nutrition targets, stored on the profile. */
+export interface NutritionGoals {
+    daily_calorie_goal: number | null;
+    protein_goal_g: number | null;
+    carb_goal_g: number | null;
+    fat_goal_g: number | null;
+    goal_type: GoalType | null;
+}
+
+/** A single logged meal/food row. */
+export interface FoodEntry {
+    id: number;
+    user_id: number;
+    entry_date: string; // YYYY-MM-DD
+    source: FoodSource;
+    name: string;
+    calories: number;
+    protein_g: number;
+    carb_g: number;
+    fat_g: number;
+    quantity: number;
+    unit: string;
+    created_at: string;
+}
+
+/** A saved food for fast re-logging. */
+export interface FavoriteFood {
+    id: number;
+    user_id: number;
+    name: string;
+    source: FoodSource;
+    calories: number;
+    protein_g: number;
+    carb_g: number;
+    fat_g: number;
+    quantity: number;
+    unit: string;
+    created_at: string;
+}
+
+/**
+ * A normalized search/barcode result. Macros are expressed per 100 g/ml AND,
+ * when the source provides it, per the product's declared serving — so the UI
+ * can scale to any quantity the user picks.
+ */
+export interface FoodSearchResult {
+    /** Open Food Facts barcode (`code`), when available. */
+    code?: string;
+    name: string;
+    brand?: string;
+    /** Macros per 100 g (or 100 ml). */
+    per100g: MacroSet;
+    /** Declared serving size string, e.g. "30 g" or "1 cup (240 ml)". */
+    serving_size?: string;
+    /** Grams (or ml) in one declared serving, parsed from serving_size. */
+    serving_grams?: number;
+    thumb_url?: string;
+    source: FoodSource;
+}
+
+export interface MacroSet {
+    calories: number;
+    protein_g: number;
+    carb_g: number;
+    fat_g: number;
+}
+
+/**
+ * An editable draft item shown before the user confirms a log. Shared across
+ * the photo, barcode, and search entry flows. The current displayed macros live
+ * on the item (via MacroSet); the optional bases below let the editor recompute
+ * macros live as the user changes quantity/unit:
+ *  - `per100g` + `servingGrams` for Open Food Facts search/barcode results
+ *  - `perServing` for photo recognition and manual entries (scales by quantity)
+ */
+export interface DraftFoodItem extends MacroSet {
+    /** Client-side id for list keys before persistence. */
+    tempId: string;
+    name: string;
+    quantity: number;
+    unit: string;
+    source: FoodSource;
+    /** Recognition confidence (photo flow only), 0–1. */
+    confidence?: number;
+    /** Macros per 100 g/ml (Open Food Facts results). */
+    per100g?: MacroSet;
+    /** Grams (or ml) in one declared serving (Open Food Facts results). */
+    servingGrams?: number;
+    /** Macros for a single serving (photo recognition / manual entries). */
+    perServing?: MacroSet;
+    /**
+     * When true the editor shows editable macro inputs (manual entries, or
+     * editing a logged entry whose per-100g base we no longer have). When
+     * false, macros are derived from per100g/perServing and shown read-only.
+     */
+    editableMacros?: boolean;
+}
+
+/** Result of running a meal photo through recognition. */
+export interface PhotoRecognitionResult {
+    ok: boolean;
+    /** True when the engine ran but confidence was too low to trust. */
+    lowConfidence?: boolean;
+    /** Why recognition is unavailable/failed, so the UI can fall back to search. */
+    reason?: string;
+    items: DraftFoodItem[];
+}
+
+/** Dashboard payload: today's totals vs. goals + entries + quick-log lists. */
+export interface NutritionDaySummary {
+    date: string;
+    goals: NutritionGoals;
+    totals: MacroSet;
+    entries: FoodEntry[];
+    recent: FavoriteFood[];
+    favorites: FavoriteFood[];
 }
 
 export interface Session {

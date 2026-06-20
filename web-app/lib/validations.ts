@@ -273,6 +273,94 @@ export const BodyAnalyzeSchema = z.object({
   images: z.array(z.string()).min(1, "At least one image is required").max(3, "Maximum 3 images allowed"),
 });
 
+// ============= NUTRITION TRACKING =============
+
+export const FoodSourceEnum = z.enum(["photo", "barcode", "search", "manual"]);
+export const GoalTypeEnum = z.enum(["maintenance", "deficit", "surplus"]);
+export const ActivityLevelEnum = z.enum([
+  "sedentary",
+  "light",
+  "moderate",
+  "active",
+  "very_active",
+]);
+
+const dateString = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Date must be YYYY-MM-DD");
+const macro = z.number().min(0).max(100000);
+
+export const FoodEntryCreateSchema = z.object({
+  entry_date: dateString,
+  source: FoodSourceEnum.default("manual"),
+  name: z.string().trim().min(1, "Name is required").max(200),
+  calories: macro,
+  protein_g: macro,
+  carb_g: macro,
+  fat_g: macro,
+  quantity: z.number().min(0).max(100000).default(1),
+  unit: z.string().trim().min(1).max(32).default("serving"),
+  // When true, also persist this item to the user's favorites.
+  save_favorite: z.boolean().optional(),
+});
+
+export const FoodEntryUpdateSchema = z
+  .object({
+    name: z.string().trim().min(1).max(200).optional(),
+    calories: macro.optional(),
+    protein_g: macro.optional(),
+    carb_g: macro.optional(),
+    fat_g: macro.optional(),
+    quantity: z.number().min(0).max(100000).optional(),
+    unit: z.string().trim().min(1).max(32).optional(),
+  })
+  .refine((o) => Object.keys(o).length > 0, "At least one field is required");
+
+export const FoodSearchQuerySchema = z.object({
+  q: z.string().trim().min(2, "Query must be at least 2 characters").max(100),
+  page_size: z.coerce.number().int().min(1).max(25).default(15),
+});
+
+export const BarcodeSchema = z.object({
+  // EAN/UPC barcodes are 8–14 digits.
+  barcode: z.string().trim().regex(/^\d{6,14}$/, "Invalid barcode"),
+});
+
+export const PhotoRecognizeSchema = z.object({
+  // base64 data URL produced by lib/image-utils client-side compression.
+  image: z.string().startsWith("data:image/", "Image must be a base64 data URL"),
+});
+
+export const NutritionGoalsSchema = z
+  .object({
+    daily_calorie_goal: z.number().int().min(500).max(20000).nullable().optional(),
+    protein_goal_g: z.number().int().min(0).max(2000).nullable().optional(),
+    carb_goal_g: z.number().int().min(0).max(2000).nullable().optional(),
+    fat_goal_g: z.number().int().min(0).max(2000).nullable().optional(),
+    goal_type: GoalTypeEnum.nullable().optional(),
+  })
+  .refine((o) => Object.keys(o).length > 0, "At least one field is required");
+
+export const GoalCalcSchema = z.object({
+  age: z.number().int().min(13).max(100),
+  weight_kg: z.number().min(20).max(400),
+  height_cm: z.number().min(100).max(250),
+  sex: z.enum(["Male", "Female"]),
+  activity_level: ActivityLevelEnum,
+  goal_type: GoalTypeEnum,
+  // Persist the computed targets to the profile when true.
+  save: z.boolean().optional(),
+});
+
+export const FavoriteCreateSchema = z.object({
+  source: FoodSourceEnum.default("manual"),
+  name: z.string().trim().min(1, "Name is required").max(200),
+  calories: macro,
+  protein_g: macro,
+  carb_g: macro,
+  fat_g: macro,
+  quantity: z.number().min(0).max(100000).default(1),
+  unit: z.string().trim().min(1).max(32).default("serving"),
+});
+
 // ============= HELPER FUNCTIONS =============
 
 /**
