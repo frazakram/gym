@@ -101,6 +101,30 @@ Admin routes are protected server-side. Configure who is admin using ONE of:
 - `ADMIN_USER_ID`: single numeric ID, e.g. `ADMIN_USER_ID=1`
 - `ADMIN_USERNAMES` (fallback): comma-separated usernames, e.g. `ADMIN_USERNAMES=admin,harshit`
 
+### 3.6) Nutrition tracking (photo / barcode / search food logging)
+
+The nutrition module uses two providers:
+
+- **Open Food Facts** — food search + barcode lookup. **No key required.** It asks
+  clients to send an identifying User-Agent and enforces per-IP rate limits
+  (~15 product reads/min, ~10 searches/min). The app rate-limits per user and
+  caches results in Redis (when configured) to stay within these limits.
+  - `OFF_USER_AGENT` (optional): `YourApp/1.0 (contact@example.com)`
+- **Photo meal recognition** runs through this engine priority:
+  1. **LogMeal** if `LOGMEAL_API_KEY` is set (optional, paid — APIUser token from
+     https://logmeal.com/api/, 30-day free trial; override base with `LOGMEAL_BASE_URL`).
+  2. **OpenAI vision** using your existing `OPENAI_API_KEY` — the default engine.
+     High quality (handles Indian dishes), no extra signup; costs a small amount
+     of OpenAI usage per photo. Override the model with `OPENAI_VISION_MODEL`
+     (default `gpt-4o`).
+  3. **Manual search** fallback when neither key is present or recognition fails.
+
+  So photo logging works out of the box as long as `OPENAI_API_KEY` is set.
+
+Photos are sent to LogMeal **only transiently** for parsing and are **not stored**
+server-side. Recognized meals are returned as an editable draft and are never
+auto-logged without explicit user confirmation.
+
 ### 4) Local dev example (DO NOT COMMIT)
 
 ```
@@ -130,6 +154,8 @@ SMTP_PASS=your_app_password
 SMTP_FROM=GymBro AI <your_gmail@gmail.com>
 APP_BASE_URL=http://localhost:3000
 ADMIN_USER_IDS=1
+LOGMEAL_API_KEY=your_logmeal_apiuser_token
+OFF_USER_AGENT=GymBroAI/1.0 (you@example.com)
 ```
 
 

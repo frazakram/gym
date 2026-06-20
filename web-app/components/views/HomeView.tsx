@@ -9,6 +9,7 @@ import { AnimatedButton } from '../ui/AnimatedButton'
 import { GlassCard } from '../ui/GlassCard'
 import { SectionHeader } from '../ui/SectionHeader'
 import { Collapsible } from '../ui/Collapsible'
+import { HomeNutritionCard } from '../nutrition/HomeNutritionCard'
 import { UserAvatar } from '../ui/UserAvatar'
 import { StreakBanner } from '../ui/StreakBanner'
 import { RestDayCard } from '../ui/RestDayCard'
@@ -48,6 +49,7 @@ interface HomeViewProps {
   onStartNewWeek?: () => void
   onOpenGymSheet?: () => void
   currentRoutineId?: number | null
+  onNavigateToNutrition?: () => void
 }
 
 export function HomeView({
@@ -70,6 +72,7 @@ export function HomeView({
   onStartNewWeek,
   onOpenGymSheet,
   currentRoutineId,
+  onNavigateToNutrition,
 }: HomeViewProps) {
   const [manageOpen, setManageOpen] = useState(false)
   const [showBreakdown, setShowBreakdown] = useState(false)
@@ -290,7 +293,7 @@ export function HomeView({
             {diet && todaysDiet ? (
               <div className="mt-4 pt-4 border-t border-primary/10">
                 <div className="flex items-center justify-between">
-                  <p className="text-xs text-muted">Today&apos;s nutrition</p>
+                  <p className="text-xs text-muted">Meal plan · today</p>
                   <div className="flex items-center gap-2 text-xs text-slate-200">
                     <span className="inline-flex items-center gap-1 rounded-full bg-white/5 px-2.5 py-1 border border-primary/10">
                       <Flame className="w-3 h-3 text-orange-400" />
@@ -319,6 +322,11 @@ export function HomeView({
           <NoRoutineEmptyState onGenerate={onGenerateRoutine} />
         </motion.div>
       )}
+
+      {/* Today's nutrition (tracker — logged vs goal) */}
+      <motion.div variants={fadeUp}>
+        <HomeNutritionCard onOpen={onNavigateToNutrition} />
+      </motion.div>
 
       {/* Rest Day Recovery Content */}
       {routine && todaysPlan && !(todaysPlan.exercises?.length) && (

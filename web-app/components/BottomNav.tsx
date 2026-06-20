@@ -4,12 +4,12 @@ import { useEffect, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   Home, Calendar, ClipboardCheck, User, Plus,
-  Utensils, MessageCircle, Ruler, Users, Zap, MapPin,
+  Utensils, MessageCircle, Ruler, Users, Zap, MapPin, Apple,
 } from 'lucide-react'
 import { csrfFetch } from '@/lib/useCsrf'
 import { GymNearbySheet } from '@/components/ui/GymNearbySheet'
 
-type View = 'home' | 'routine' | 'workout' | 'profile' | 'diet' | 'analytics' | 'coach' | 'measurements' | 'communities'
+type View = 'home' | 'routine' | 'workout' | 'profile' | 'diet' | 'analytics' | 'coach' | 'measurements' | 'communities' | 'nutrition'
 
 interface BottomNavProps {
   activeView: View
@@ -22,6 +22,7 @@ interface BottomNavProps {
 type NI = { id: 'home' | 'routine' | 'workout' | 'profile'; label: string; icon: React.ComponentType<{ className?: string }> }
 
 const MENU_ITEMS: { id: View; label: string; icon: React.ComponentType<{ className?: string }> }[] = [
+  { id: 'nutrition',    label: 'Nutrition', icon: Apple         },
   { id: 'diet',         label: 'Diet',      icon: Utensils      },
   { id: 'communities',  label: 'Community', icon: Users         },
   { id: 'measurements', label: 'Body',      icon: Ruler         },
@@ -156,7 +157,7 @@ export function BottomNav({ activeView, onViewChange, gymSheetOpen, onGymSheetCh
                     <motion.div
                       className="relative z-10 transition-all duration-200"
                       style={{
-                        color: isActive ? '#00876F' : 'rgba(74,106,99,0.8)',
+                        color: isActive ? '#00876F' : '#3F5C56',
                         filter: isActive ? 'drop-shadow(0 0 7px rgba(0,201,167,0.4))' : 'none',
                       }}
                     >
@@ -164,8 +165,8 @@ export function BottomNav({ activeView, onViewChange, gymSheetOpen, onGymSheetCh
                     </motion.div>
 
                     <span
-                      className="relative z-10 text-[10px] font-medium tracking-wide whitespace-nowrap transition-colors duration-200"
-                      style={{ color: isActive ? '#00715E' : 'rgba(84,113,107,0.9)' }}
+                      className="relative z-10 text-[10px] font-semibold tracking-wide whitespace-nowrap transition-colors duration-200"
+                      style={{ color: isActive ? '#00664F' : '#33514B' }}
                     >
                       {item.label}
                     </span>
@@ -196,8 +197,8 @@ export function BottomNav({ activeView, onViewChange, gymSheetOpen, onGymSheetCh
                   whileTap={{ scale: 0.96 }}
                   className="w-full flex items-center justify-center gap-2 py-3 px-4 transition-colors duration-150"
                 >
-                  <MapPin className="w-4 h-4" style={{ color: 'rgba(74,106,99,0.85)' }} />
-                  <span className="text-[11px] font-medium tracking-wide" style={{ color: 'rgba(74,106,99,0.85)' }}>
+                  <MapPin className="w-4 h-4" style={{ color: '#3F5C56' }} />
+                  <span className="text-[11px] font-semibold tracking-wide" style={{ color: '#33514B' }}>
                     Find gym nearby
                   </span>
                 </motion.button>

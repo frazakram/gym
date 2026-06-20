@@ -13,6 +13,7 @@ import { AnalyticsView } from '@/components/views/AnalyticsView'
 import { CoachView } from '@/components/views/CoachView'
 import { BodyView } from '@/components/views/BodyView'
 import { CommunitiesView } from '@/components/views/CommunitiesView'
+import { NutritionView } from '@/components/views/NutritionView'
 import { Sidebar } from '@/components/Sidebar'
 import { ToastType } from '@/components/ui/Toast'
 import { toastSuccess, toastError, toastInfo, toastWarning } from '@/lib/toast'
@@ -49,11 +50,12 @@ const VIEW_QUOTE_CATEGORY: Record<string, QuoteCategory> = {
   profile: 'general',
   measurements: 'analytics',
   communities: 'general',
+  nutrition: 'diet',
 }
 
 export default function DashboardPage() {
   const router = useRouter()
-  const [activeView, setActiveView] = useState<'home' | 'routine' | 'workout' | 'profile' | 'diet' | 'analytics' | 'coach' | 'measurements' | 'communities'>('home')
+  const [activeView, setActiveView] = useState<'home' | 'routine' | 'workout' | 'profile' | 'diet' | 'analytics' | 'coach' | 'measurements' | 'communities' | 'nutrition'>('home')
   const [isSidebarOpen, setIsSidebarOpen] = useState(false)
   const [gymSheetOpen, setGymSheetOpen] = useState(false)
   const [historyRoutines, setHistoryRoutines] = useState<any[]>([])
@@ -396,7 +398,7 @@ export default function DashboardPage() {
   const { markSessionActive, refreshSession } = useSessionPersistence()
 
   // Navigation history stack for back button handling
-  const viewHistoryRef = useRef<Array<'home' | 'routine' | 'workout' | 'profile' | 'diet' | 'analytics' | 'coach' | 'measurements' | 'communities'>>(['home'])
+  const viewHistoryRef = useRef<Array<'home' | 'routine' | 'workout' | 'profile' | 'diet' | 'analytics' | 'coach' | 'measurements' | 'communities' | 'nutrition'>>(['home'])
 
   useEffect(() => {
     fetchProfile()
@@ -472,7 +474,7 @@ export default function DashboardPage() {
     current_end: null,
   }
 
-  const handleViewChange = (view: 'home' | 'routine' | 'workout' | 'profile' | 'diet' | 'analytics' | 'coach' | 'measurements' | 'communities') => {
+  const handleViewChange = (view: 'home' | 'routine' | 'workout' | 'profile' | 'diet' | 'analytics' | 'coach' | 'measurements' | 'communities' | 'nutrition') => {
     // Track view history for back button handling
     const trackViewChange = (newView: typeof view) => {
       viewHistoryRef.current.push(newView)
@@ -1617,6 +1619,7 @@ export default function DashboardPage() {
                 onStartNewWeek={handleStartNewWeek}
                 onOpenGymSheet={() => setGymSheetOpen(true)}
                 currentRoutineId={currentRoutineId}
+                onNavigateToNutrition={() => handleViewChange('nutrition')}
               />
             )}
 
@@ -1696,6 +1699,10 @@ export default function DashboardPage() {
 
             {activeView === 'communities' && (
               <CommunitiesView currentUserId={userId ?? undefined} />
+            )}
+
+            {activeView === 'nutrition' && (
+              <NutritionView profile={profile} />
             )}
 
             {activeView === 'profile' && (
