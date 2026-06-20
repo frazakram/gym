@@ -6,6 +6,7 @@ import { Plus, Apple, ChevronRight, Loader2 } from 'lucide-react'
 import { csrfFetch } from '@/lib/useCsrf'
 import { GlassCard } from '@/components/ui/GlassCard'
 import { MacroProgress } from '@/components/nutrition/MacroProgress'
+import { todayStr } from '@/hooks/useNutrition'
 import type { NutritionDaySummary } from '@/types'
 
 /**
@@ -18,7 +19,7 @@ export function HomeNutritionCard({ onOpen }: { onOpen?: () => void }) {
 
   useEffect(() => {
     let alive = true
-    csrfFetch('/api/nutrition/summary')
+    csrfFetch(`/api/nutrition/summary?date=${todayStr()}`)
       .then((r) => (r.ok ? r.json() : null))
       .then((d) => { if (alive) setSummary(d) })
       .catch(() => {})
