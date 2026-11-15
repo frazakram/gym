@@ -49,10 +49,24 @@ export default defineConfig({
     trace: 'on-first-retry',
   },
 
+  /* Visual baselines are generated in the Linux Playwright container (CI job
+     "visual") and shared by every machine, so the path has no platform suffix. */
+  snapshotPathTemplate: '{testDir}/__screenshots__/{arg}{ext}',
+  expect: {
+    toHaveScreenshot: { animations: 'disabled', caret: 'hide', maxDiffPixelRatio: 0.002 },
+  },
+
   /* Configure projects for major browsers */
   projects: [
     {
       name: 'chromium',
+      use: { ...devices['Desktop Chrome'] },
+      testIgnore: '**/visual/**',
+    },
+    {
+      /* Screenshot comparisons: run only in the Linux Playwright container. */
+      name: 'visual',
+      testDir: './e2e/visual',
       use: { ...devices['Desktop Chrome'] },
     },
 

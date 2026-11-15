@@ -5,6 +5,12 @@ on:
     branches: [main, dev]
   pull_request:
     branches: [main, dev]
+  workflow_dispatch:
+    inputs:
+      update_visual_baselines:
+        description: "Regenerate the visual baselines (download the 'visual-baselines' artifact, review, commit)"
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -150,7 +156,7 @@ jobs:
           echo "App did not start"; cat next-start.log; exit 1
 
       - name: Playwright
-        run: npx playwright test --reporter=list,html
+        run: npx playwright test --project=chromium --reporter=list,html
 
       - name: Upload report on failure
         if: failure()
@@ -159,6 +165,95 @@ jobs:
           name: playwright-report
           path: |
             web-app/playwright-report/
+            web-app/next-start.log
+          retention-days: 7
+
+  visual:
+    name: Visual regression (Playwright container)
+    # Screenshots are compared inside the official Playwright image so fonts
+    # and emoji render exactly as when the baselines were generated.
+    runs-on: ubuntu-24.04
+    container:
+      image: mcr.microsoft.com/playwright:v1.57.0-noble
+    defaults:
+      run:
+        working-directory: web-app
+
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_USER: gym
+          POSTGRES_PASSWORD: gym
+          POSTGRES_DB: gym_visual
+        options: >-
+          --health-cmd "pg_isready -U gym -d gym_visual"
+          --health-interval 2s
+          --health-timeout 3s
+          --health-retries 30
+
+    env:
+      DATABASE_DRIVER: pg
+      POSTGRES_URL: postgres://gym:gym@postgres:5432/gym_visual
+      DB_SSL_DISABLED: "true"
+      JWT_SECRET: ci-visual-jwt-secret
+      DEFAULT_COACH_PHONE: "+910000000001"
+      DEFAULT_COACH_EMAIL: coach@example.com
+      NEXT_TELEMETRY_DISABLED: "1"
+      E2E_BASE_URL: http://localhost:3000
+      UPDATE_BASELINES: ${{ inputs.update_visual_baselines == true }}
+      HAS_BASELINES: ${{ hashFiles('web-app/e2e/visual/__screenshots__/*.png') != '' }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: web-app/.nvmrc
+          cache: npm
+          cache-dependency-path: web-app/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build
+        run: npm run build
+
+      - name: Start app
+        run: |
+          npx next start -p 3000 > next-start.log 2>&1 &
+          node -e '
+            const deadline = Date.now() + 60_000;
+            (async function wait() {
+              try { if ((await fetch("http://localhost:3000/login")).ok) process.exit(0); } catch {}
+              if (Date.now() > deadline) { console.error("App did not start"); process.exit(1); }
+              setTimeout(wait, 1000);
+            })();' || { cat next-start.log; exit 1; }
+
+      - name: Compare screenshots with the baselines
+        if: env.UPDATE_BASELINES != 'true' && env.HAS_BASELINES == 'true'
+        run: npx playwright test --project=visual --reporter=list,html
+
+      - name: Regenerate baselines
+        if: env.UPDATE_BASELINES == 'true'
+        run: npx playwright test --project=visual --update-snapshots --reporter=list
+
+      - name: Upload regenerated baselines
+        if: env.UPDATE_BASELINES == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: visual-baselines
+          path: web-app/e2e/visual/__screenshots__/
+          retention-days: 7
+
+      - name: Upload diff report on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: visual-report
+          path: |
+            web-app/playwright-report/
+            web-app/test-results/
             web-app/next-start.log
           retention-days: 7
 
