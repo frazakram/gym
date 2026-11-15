@@ -1,6 +1,7 @@
 export const runtime = "nodejs";
 
 import { withCors } from "@/lib/corsMiddleware";
+import { asAiProviderError, toErrorResponse } from "@/lib/api-errors";
 import { NextRequest, NextResponse } from 'next/server';
 import { generateDiet } from '@/lib/diet-agent';
 import { getSession } from '@/lib/auth';
@@ -176,8 +177,6 @@ export async function POST(request: NextRequest) {
 
     return withCors(NextResponse.json({ dietPlan, source: 'ai' }, { status: 200 }));
   } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : String(error);
-    console.error('Error generating diet:', message);
-    return withCors(NextResponse.json({ error: message }, { status: 500 }));
+    return withCors(toErrorResponse(asAiProviderError(error), 'diet/generate'));
   }
 }

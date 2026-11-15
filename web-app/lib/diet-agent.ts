@@ -5,6 +5,7 @@ import { awaitAllCallbacks } from "@langchain/core/callbacks/promises";
 import { z } from "zod";
 import { Profile, WeeklyDiet, WeeklyRoutine } from "@/types";
 import { wrapUntrustedBlock } from "@/lib/prompt-safety";
+import { UserFacingError } from "@/lib/api-errors";
 
 function getLangSmithCallbacks() {
   if (!process.env.LANGSMITH_API_KEY || process.env.LANGSMITH_TRACING_V2 !== "true") return undefined;
@@ -51,7 +52,7 @@ export async function generateDiet(input: DietGenerationInput): Promise<WeeklyDi
 
   if (input.model_provider === 'Anthropic') {
     const apiKey = input.apiKey || process.env.ANTHROPIC_API_KEY;
-    if (!apiKey) throw new Error('Anthropic API key is required');
+    if (!apiKey) throw new UserFacingError('Anthropic API key is required');
     model = new ChatAnthropic({
       model: input.model || "claude-3-5-sonnet-20241022",
       temperature: 0.7,
@@ -59,7 +60,7 @@ export async function generateDiet(input: DietGenerationInput): Promise<WeeklyDi
     });
   } else {
     const apiKey = input.apiKey || process.env.OPENAI_API_KEY;
-    if (!apiKey) throw new Error('OpenAI API key is required');
+    if (!apiKey) throw new UserFacingError('OpenAI API key is required');
     const openaiModel = input.model || process.env.OPENAI_MODEL || "gpt-4o";
     model = new ChatOpenAI({
       model: openaiModel,

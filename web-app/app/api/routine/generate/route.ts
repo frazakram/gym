@@ -1,6 +1,7 @@
 export const runtime = "nodejs";
 
 import { withCors } from "@/lib/corsMiddleware";
+import { asAiProviderError, toErrorResponse, toPublicError } from "@/lib/api-errors";
 import { NextRequest, NextResponse } from 'next/server';
 import { generateRoutine } from '@/lib/ai-agent';
 import { getSession } from '@/lib/auth';
@@ -317,10 +318,10 @@ export async function POST(request: NextRequest) {
             controller.enqueue(sse('routine', { routine, source: 'ai' }));
           } catch (err: unknown) {
             clearInterval(tick);
-            const message = err instanceof Error ? err.message : String(err);
-            const cause = err instanceof Error && err.cause ? String(err.cause) : '';
-            console.error('SSE routine generation error:', message, cause ? `Cause: ${cause}` : '');
-            controller.enqueue(sse('error', { message: cause ? `${message} (${cause})` : message }));
+            const classifiedError = asAiProviderError(err);
+            const publicError = toPublicError(classifiedError);
+            if (publicError.status >= 500) console.error('[routine/generate stream]', classifiedError);
+            controller.enqueue(sse('error', { message: publicError.message }));
           } finally {
             controller.close();
           }
@@ -424,12 +425,6 @@ export async function POST(request: NextRequest) {
       { status: 200 }
     ));
   } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : String(error);
-    const cause = error instanceof Error && error.cause ? String(error.cause) : '';
-    console.error('Error generating routine:', message, cause ? `| Cause: ${cause}` : '');
-    return withCors(NextResponse.json(
-      { error: cause ? `${message} (${cause})` : (message || 'Internal server error') },
-      { status: 500 }
-    ));
+    return withCors(toErrorResponse(asAiProviderError(error), 'routine/generate'));
   }
 }

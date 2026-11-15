@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { withCors } from '@/lib/corsMiddleware';
+import { asAiProviderError, toErrorResponse, UserFacingError } from "@/lib/api-errors";
 import OpenAI from 'openai';
 import { getSession } from '@/lib/auth';
 import { initializeDatabase, hasBodyPhotos } from '@/lib/db';
@@ -10,7 +11,7 @@ export const runtime = "nodejs";
 
 function getOpenAI(clientKey?: string) {
   const apiKey = clientKey || process.env.OPENAI_API_KEY;
-  if (!apiKey) throw new Error('OpenAI API key is required. Add it in AI Settings (sidebar).');
+  if (!apiKey) throw new UserFacingError('OpenAI API key is required. Add it in AI Settings (sidebar).');
   return new OpenAI({ apiKey, baseURL: 'https://api.openai.com/v1' });
 }
 
@@ -134,10 +135,6 @@ export async function POST(req: NextRequest) {
     const hasExistingPhoto = await hasBodyPhotos(session.userId);
     return withCors(NextResponse.json({ analysis, hasExistingPhoto }));
   } catch (error) {
-    console.error('Body analysis error:', error);
-    return withCors(NextResponse.json(
-      { error: error instanceof Error ? error.message : 'Failed to analyze body composition' },
-      { status: 500 },
-    ));
+    return withCors(toErrorResponse(asAiProviderError(error), 'body/analyze'));
   }
 }

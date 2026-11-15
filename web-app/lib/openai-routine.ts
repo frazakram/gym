@@ -3,6 +3,7 @@ import { Client } from "langsmith";
 import type { RoutineGenerationInput, WeeklyRoutine } from "@/types";
 import { postProcessRoutine } from "@/lib/routine-postprocess";
 import { wrapUntrustedBlock } from "@/lib/prompt-safety";
+import { UserFacingError } from "@/lib/api-errors";
 
 function getLangSmithClient(): Client | null {
   if (!process.env.LANGSMITH_API_KEY || process.env.LANGSMITH_TRACING_V2 !== "true") return null;
@@ -313,14 +314,14 @@ function sanitizeApiKey(raw: string): string {
 function assertValidOpenAIApiKey(apiKey: string) {
   // Header values must be ByteString; enforce ASCII to avoid undici "ByteString" errors.
   if (!/^[\x20-\x7E]+$/.test(apiKey)) {
-    throw new Error(
+    throw new UserFacingError(
       "OpenAI API key contains invalid characters. Please paste only the raw key (no extra symbols/spaces)."
     );
   }
 
   // Basic format check for standard OpenAI keys
   if (!/^sk-[A-Za-z0-9_.-]{10,}$/.test(apiKey)) {
-    throw new Error("OpenAI API key format looks invalid. It should start with 'sk-'.");
+    throw new UserFacingError("OpenAI API key format looks invalid. It should start with 'sk-'.");
   }
 }
 
@@ -359,7 +360,7 @@ export async function generateRoutineOpenAI(
   gymEquipmentContext?: string
 ): Promise<WeeklyRoutine> {
   const apiKey = sanitizeApiKey(input.apiKey || process.env.OPENAI_API_KEY || "");
-  if (!apiKey) throw new Error("OpenAI API key is required");
+  if (!apiKey) throw new UserFacingError("OpenAI API key is required");
   assertValidOpenAIApiKey(apiKey);
 
   const baseURL = "https://api.openai.com";
@@ -420,7 +421,8 @@ export async function generateRoutineOpenAI(
 
       if (!res.ok) {
         const text = await res.text().catch(() => "");
-        throw new Error(`OpenAI HTTP ${res.status}: ${text || res.statusText}`);
+        // Keep the raw body for server logs; status lets toPublicError() map it to a safe message.
+        throw Object.assign(new Error(`OpenAI HTTP ${res.status}: ${text || res.statusText}`), { status: res.status });
       }
 
       const data = (await res.json()) as any;
@@ -476,7 +478,13 @@ export async function generateRoutineOpenAI(
     }
   }
 
-  throw new Error(toHelpfulNetworkErrorMessage(lastErr));
+  // Connection failures/timeouts get an explanatory, user-facing message. Every
+  // other error is rethrown as-is so its HTTP status (if any) reaches
+  // toPublicError() and its raw details stay in server logs only.
+  if (isRetryableNetworkError(lastErr)) {
+    throw new UserFacingError(toHelpfulNetworkErrorMessage(lastErr), 502);
+  }
+  throw lastErr;
 }
 
 

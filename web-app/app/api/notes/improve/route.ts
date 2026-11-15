@@ -1,4 +1,5 @@
 import { withCors } from "@/lib/corsMiddleware";
+import { asAiProviderError, toErrorResponse } from "@/lib/api-errors";
 import { NextRequest, NextResponse } from "next/server";
 import { getSession } from "@/lib/auth";
 import { ChatAnthropic } from "@langchain/anthropic";
@@ -183,8 +184,7 @@ ${wrapUntrustedBlock("ORIGINAL_NOTES", userNotes, { maxChars: 2000 })}`.trim();
     if (!improved) throw new Error("No improved notes returned.");
     return withCors(NextResponse.json({ notes: improved }, { status: 200 }));
   } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : String(error);
-    return withCors(NextResponse.json({ error: message || "Internal server error" }, { status: 500 }));
+    return withCors(toErrorResponse(asAiProviderError(error), "notes/improve"));
   }
 }
 
