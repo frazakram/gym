@@ -282,9 +282,8 @@ export async function POST(request: NextRequest) {
           }, 1000);
 
           try {
-            const hasKey = Boolean(input.apiKey);
-            const keyPreview = input.apiKey ? `${input.apiKey.slice(0, 6)}...${input.apiKey.slice(-4)}` : 'NONE';
-            console.log(`[Routine SSE] Provider: ${provider}, Model: ${input.model || 'default'}, ClientKey: ${keyPreview}, ServerKey: ${hasServerKey ? 'YES' : 'NO'}`);
+            // Never log key material (not even a prefix/suffix): only whether one was supplied.
+            console.log(`[Routine SSE] Provider: ${provider}, Model: ${input.model || 'default'}, ClientKey: ${input.apiKey ? 'YES' : 'NO'}, ServerKey: ${hasServerKey ? 'YES' : 'NO'}`);
             controller.enqueue(sse('progress', { pct: 5, stage: 'Validating request…' }));
 
             // ========== CACHE CHECK (streaming branch) ==========
