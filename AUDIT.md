@@ -244,33 +244,40 @@ Tool choices follow rule 12 (boring, proven tools; new deps called out).
 4. Are you OK with removing tracked `node_modules/`, `.next/`, reports and stray PNGs from git (history preserved, files deleted going forward)?
 5. Are `coach.ts`'s fallback phone/email a real person's? If so, they should be removed, and the person may want to know they're in public history (if the repo is public).
 
-## 7. Remediation status (updated 2026-11-15)
+## 7. Remediation status (updated 2026-11-15, Phase 3 closed: `phase-3-done`)
 
-An independent mutation review of Phase 0/1 (39 deliberate breakages) checked 16 claims in this document; the inaccuracies it found and the P1-9 overstatement are corrected in place above.
+An independent mutation review of Phase 0/1 (39 deliberate breakages) checked 16 claims in this document; the inaccuracies it found and the P1-9 overstatement are corrected in place above. Every fix below shipped with a test that failed on the previous code (or, for refactors, characterization tests that pass before and after).
 
 | Finding | Status | Commit |
 |---|---|---|
 | P0-1 DDL on every cold start | Fixed: hash-versioned schema, applied once per change in one transaction under an advisory lock; cold start = 1 SELECT (local: 95 round-trips p50 44.3 ms -> 1 round-trip p50 0.4 ms) | `dc12055` |
 | P0-2 Unlimited paid AI calls | Fixed: per-user minute/hour limits, fail closed in production | `a2927b7` |
-| P0-3 No safety net | Fixed: 128 unit, 74 integration, 15 e2e tests; CI runs lint, typecheck, tests, build, integration | Phase 1, `phase-1-done` |
+| P0-3 No safety net | Fixed: 133 unit, 85 integration, 18 e2e tests; CI runs lint, typecheck, unit, build, integration and Playwright on Node 24 | Phase 1 + later |
 | P1-1 SSRF in gym/analyze | Fixed: client-supplied URL fetch removed | `4f89bbd` |
 | P1-2 Open redirect after Google login | Fixed: same-site return paths only | `d721cbc` |
 | P1-3 Mock auth in production | Fixed: hard-disabled when NODE_ENV=production | `c48cbf3` |
+| P1-4 Body photos unencrypted, sent with every profile | Fixed: AES-256-GCM at rest (DB_ENCRYPTION_KEY is set in production), legacy rows re-encrypted on read, served only by GET /api/body/photos | `63bf292` |
 | P1-5 API key fragments in logs | Fixed | `5ceb392` |
+| P1-6 Vulnerable dependencies | Fixed: next 16.4.3, nodemailer 10.2.1, non-breaking audit fixes; npm audit 48 -> 12 (0 critical, 1 high: langsmith, in an unused feature; deferred to the LangChain family upgrade) | `2a6afd2`, `187d421`, `ac19dd2` |
 | P1-7 Webhook not idempotent / order-safe | Fixed: event-id dedupe + last_event_at ordering | `949ec17` |
 | P1-8 Hardcoded coach phone/email | Fixed (values remain in git history) | `9f73805` |
 | P1-9 Rules-of-Hooks violations | Fixed; rule is an error again | `e65507c` |
 | P1-10 Undeclared openai/langsmith | Fixed; lint blocks undeclared imports | `8e7de1b` |
 | P1-11 CSRF gaps | Fixed on all 10 handlers, client calls use csrfFetch | `e218eaf` |
-| P2 Raw error messages to clients | Fixed: UserFacingError / generic 500; AI provider errors mapped | `4905872`, `25ed476` |
-| P1-4 Body photos unencrypted in profile rows | Open | |
-| P1-6 Vulnerable dependencies | Open (next) | |
 | P1-12 / P1-13 Giant files, duplicate AI prompt code | Open (Phase 2) | |
+| P2 Raw error messages to clients | Fixed: UserFacingError / generic 500; AI provider errors mapped; diet route surfaces provider errors | `4905872`, `25ed476`, `d7aa900` |
+| P2 Stateless sessions, no revocation | Fixed: users.session_version checked per request, bumped on logout (local p50 0.38 ms per check) | `aea58a0` |
+| P2 CORS `*` on every response | Fixed: removed (same-origin app and TWA) | `5337578` |
+| P2 Token-in-body Google endpoint | Fixed: unused endpoint removed | `c3c8d60` |
+| P2 Tracked junk in git | Fixed: 2,325 files untracked | cleanup commit |
+| P2 `pg` loaded on every production cold start | Fixed: loaded only with DATABASE_DRIVER=pg (saves ~17.6 ms median per cold start) | `6a74076` |
+| P2 CSRF "expired" message unreachable | Fixed | `85cc410` |
+| P2 Pre-commit skipped delete-only commits; CI on Node 20 | Fixed: hook covers deletions; CI on Node 24 via .nvmrc, Playwright in CI | `f8fd827`, `36db070`, `929b788`, `0a0a814` |
 
-New findings during remediation (open unless noted):
-- `lib/csrf.ts`: the "CSRF token expired" message is unreachable (jose's expiry error text never contains "expired"), so expired tokens get the generic message. P2.
-- Onboarding "Skip for now" routes to /dashboard, which sends a profile-less user straight back to /onboarding, so new users cannot skip. P2 UX.
-- Inactive bottom-nav tabs are icon-only buttons without accessible names. P2 accessibility.
-- TIMESTAMP (without time zone) columns are only read correctly when Node and Postgres share a time zone (true on Vercel, UTC). P2.
-- Pre-commit hook skips checks on delete-only commits; CI runs Node 20 (end of life) with no pinned version; `pg` is loaded on every production cold start even when unused. P2, next.
-
+Still open (P2, scheduled for later phases):
+- Onboarding "Skip for now" routes to /dashboard, which sends a profile-less user straight back to /onboarding, so new users cannot skip. UX.
+- Inactive bottom-nav tabs are icon-only buttons without accessible names. Accessibility.
+- TIMESTAMP (without time zone) columns are only read correctly when Node and Postgres share a time zone (true on Vercel, UTC).
+- eslint-config-next 16.4.x adds React-compiler lint rules that report new errors; adopt deliberately in Phase 2.
+- LangChain family upgrade (clears the last high advisory, langsmith).
+- 179 lint warnings (no errors).
