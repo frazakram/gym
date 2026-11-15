@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import { useRouter } from 'next/navigation'
-import { WeeklyRoutine, Profile, WeeklyDiet, PremiumStatus, GymPhoto, GymEquipmentAnalysis, BodyPhoto, BodyCompositionAnalysis } from '@/types'
+import { WeeklyRoutine, Profile, WeeklyDiet, PremiumStatus, GymPhoto, GymEquipmentAnalysis, BodyPhoto } from '@/types'
 import { BottomNav } from '@/components/BottomNav'
 import { HomeView } from '@/components/views/HomeView'
 import { RoutineView } from '@/components/views/RoutineView'
@@ -19,7 +19,6 @@ import { ToastType } from '@/components/ui/Toast'
 import { toastSuccess, toastError, toastInfo, toastWarning } from '@/lib/toast'
 import { ConfirmModal } from '@/components/ui/ConfirmModal'
 import { UpgradeModal } from '@/components/ui/UpgradeModal'
-import { compressImage } from '@/lib/image-utils'
 import { OfflineIndicator } from '@/components/OfflineIndicator'
 import { useSessionPersistence, clearSessionIndicator } from '@/lib/useSessionPersistence'
 import { csrfFetch } from '@/lib/useCsrf'
@@ -31,6 +30,8 @@ import { AnimatePresence, motion } from 'framer-motion'
 import { usePullToRefresh } from '@/hooks/usePullToRefresh'
 import { useAiSettings } from '@/hooks/useAiSettings'
 import { usePremiumStatus } from '@/hooks/usePremiumStatus'
+import { useGymPhotos } from '@/hooks/useGymPhotos'
+import { useBodyPhotos } from '@/hooks/useBodyPhotos'
 import { PullToRefreshIndicator } from '@/components/ui/PullToRefreshIndicator'
 
 function countryToRegionClient(code: string): 'APAC' | 'EMEA' | 'NA' | 'LATAM' {
@@ -133,17 +134,17 @@ export default function DashboardPage() {
   const [budget, setBudget] = useState<string>('Standard')
   const [nationality, setNationality] = useState<string>('')
   const [preferredRestDays, setPreferredRestDays] = useState<string[]>([])
-  // Gym Equipment State (NEW)
-  const [gymPhotos, setGymPhotos] = useState<any[]>([])
-  const [equipmentAnalysis, setEquipmentAnalysis] = useState<any>(null)
-  const [analyzingEquipment, setAnalyzingEquipment] = useState(false)
-  const [equipmentError, setEquipmentError] = useState('')
+  // Gym equipment photos + AI equipment analysis
+  const {
+    gymPhotos, setGymPhotos, equipmentAnalysis, setEquipmentAnalysis, analyzingEquipment, equipmentError,
+    handleGymPhotoUpload, handleGymPhotoDelete, handleGymPhotoClearAll,
+  } = useGymPhotos(userApiKey, setSuccess)
 
-  // Body Composition State (NEW)
-  const [bodyPhotos, setBodyPhotos] = useState<any[]>([])
-  const [bodyAnalysis, setBodyAnalysis] = useState<any>(null)
-  const [analyzingBody, setAnalyzingBody] = useState(false)
-  const [bodyError, setBodyError] = useState('')
+  // Body photos + AI body composition analysis
+  const {
+    bodyPhotos, setBodyPhotos, bodyAnalysis, setBodyAnalysis, analyzingBody, bodyError,
+    handleBodyPhotoUpload, handleBodyPhotoDelete, handleBodyPhotoClearAll,
+  } = useBodyPhotos(userApiKey, setSuccess)
 
   // Modal State
   const [modalConfig, setModalConfig] = useState<{
@@ -1112,228 +1113,6 @@ export default function DashboardPage() {
       case 'gymEquipmentAnalysis': setEquipmentAnalysis(value); break
       case 'bodyPhotos': setBodyPhotos(value); break
       case 'bodyCompositionAnalysis': setBodyAnalysis(value); break
-    }
-  }
-
-  const fileToBase64 = (file: File): Promise<string> => {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader()
-      reader.onloadend = () => resolve(reader.result as string)
-      reader.onerror = reject
-      reader.readAsDataURL(file)
-    })
-  }
-
-  const handleGymPhotoUpload = async (files: File[]) => {
-    try {
-      setAnalyzingEquipment(true)
-      setEquipmentError('')
-
-      const photoPromises = files.map(async (file) => {
-        const compressedFile = await compressImage(file)
-        return {
-          id: crypto.randomUUID?.() ?? Math.random().toString(36).slice(2),
-          base64: await fileToBase64(compressedFile),
-          content_type: compressedFile.type,
-          size_bytes: compressedFile.size,
-          uploaded_at: new Date().toISOString()
-        }
-      })
-
-      const newPhotos = await Promise.all(photoPromises)
-      const updatedPhotos = [...gymPhotos, ...newPhotos]
-      setGymPhotos(updatedPhotos)
-
-      const response = await csrfFetch('/api/gym/analyze', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ images: updatedPhotos.map(p => p.base64), api_key: userApiKey || undefined })
-      })
-
-      if (!response.ok) throw new Error('Failed to analyze equipment')
-
-      const { analysis } = await response.json()
-      setEquipmentAnalysis(analysis)
-      setSuccess('Gym equipment analyzed successfully!')
-
-      const saveRes = await csrfFetch('/api/profile', {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          gym_photos: updatedPhotos,
-          gym_equipment_analysis: analysis,
-        }),
-      });
-      if (!saveRes.ok) {
-        const errPayload = await saveRes.json().catch(() => null) as { error?: string } | null
-        throw new Error(errPayload?.error || `Failed to save gym photos (HTTP ${saveRes.status})`)
-      }
-    } catch (error) {
-      const msg = error instanceof Error ? error.message : 'Failed to analyze gym equipment. Please try again.'
-      setEquipmentError(msg)
-      console.error('Equipment analysis error:', error)
-    } finally {
-      setAnalyzingEquipment(false)
-    }
-  }
-
-  const handleGymPhotoDelete = async (id: string) => {
-    const updatedPhotos = gymPhotos.filter(p => p.id !== id)
-    setGymPhotos(updatedPhotos)
-
-    if (updatedPhotos.length === 0) {
-      setEquipmentAnalysis(null)
-      await csrfFetch('/api/profile', {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ gym_photos: [], gym_equipment_analysis: null }),
-      });
-    } else {
-      try {
-        setAnalyzingEquipment(true)
-        const response = await csrfFetch('/api/gym/analyze', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ images: updatedPhotos.map(p => p.base64), api_key: userApiKey || undefined })
-        })
-        const { analysis } = await response.json()
-        setEquipmentAnalysis(analysis)
-        await csrfFetch('/api/profile', {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ gym_photos: updatedPhotos, gym_equipment_analysis: analysis }),
-        });
-      } catch (error) {
-        console.error('Re-analysis error:', error)
-      } finally {
-        setAnalyzingEquipment(false)
-      }
-    }
-  }
-
-  const handleGymPhotoClearAll = async () => {
-    setGymPhotos([])
-    setEquipmentAnalysis(null)
-    try {
-      await csrfFetch('/api/profile', {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ gym_photos: [], gym_equipment_analysis: null }),
-      })
-    } catch (err) {
-      console.error('Gym photos clear-all failed:', err)
-    }
-  }
-
-  const handleBodyPhotoClearAll = async () => {
-    setBodyPhotos([])
-    setBodyAnalysis(null)
-    try {
-      await csrfFetch('/api/profile', {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ body_photos: [], body_composition_analysis: null }),
-      })
-    } catch (err) {
-      console.error('Body photos clear-all failed:', err)
-    }
-  }
-
-  const handleBodyPhotoUpload = async (files: File[]) => {
-    try {
-      setAnalyzingBody(true)
-      setBodyError('')
-
-      const photoPromises = files.map(async (file) => {
-        const compressedFile = await compressImage(file)
-        return {
-          id: crypto.randomUUID?.() ?? Math.random().toString(36).slice(2),
-          base64: await fileToBase64(compressedFile),
-          content_type: compressedFile.type,
-          size_bytes: compressedFile.size,
-          uploaded_at: new Date().toISOString()
-        }
-      })
-
-      const newPhotos = await Promise.all(photoPromises)
-      // Limit to max 2 photos
-      const updatedPhotos = [...bodyPhotos, ...newPhotos].slice(0, 2)
-      setBodyPhotos(updatedPhotos)
-
-      const response = await csrfFetch('/api/body/analyze', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ images: updatedPhotos.map(p => p.base64), api_key: userApiKey || undefined })
-      })
-
-      const payload = await response.json().catch(() => null) as { analysis?: BodyCompositionAnalysis; error?: string } | null
-      if (!response.ok || !payload?.analysis) {
-        throw new Error(payload?.error || 'Failed to analyze body composition')
-      }
-
-      const { analysis } = payload
-      setBodyAnalysis(analysis)
-      setSuccess('Body composition analyzed successfully!')
-
-      const saveRes = await csrfFetch('/api/profile', {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          body_photos: updatedPhotos,
-          body_composition_analysis: analysis,
-        }),
-      });
-      if (!saveRes.ok) {
-        const errPayload = await saveRes.json().catch(() => null) as { error?: string } | null
-        throw new Error(errPayload?.error || `Failed to save body photos (HTTP ${saveRes.status})`)
-      }
-
-    } catch (error) {
-      const msg = error instanceof Error ? error.message : 'Failed to analyze body composition. Please try again.'
-      setBodyError(msg)
-      console.error('Body analysis error:', error)
-    } finally {
-      setAnalyzingBody(false)
-    }
-  }
-
-  const handleBodyPhotoDelete = async (id: string) => {
-    const updatedPhotos = bodyPhotos.filter(p => p.id !== id)
-    setBodyPhotos(updatedPhotos)
-
-    if (updatedPhotos.length === 0) {
-      setBodyAnalysis(null)
-      await csrfFetch('/api/profile', {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ body_photos: [], body_composition_analysis: null }),
-      });
-    } else {
-      try {
-        setAnalyzingBody(true)
-        const response = await csrfFetch('/api/body/analyze', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ images: updatedPhotos.map(p => p.base64), api_key: userApiKey || undefined })
-        })
-        const payload = await response.json().catch(() => null) as { analysis?: BodyCompositionAnalysis; error?: string } | null
-        if (!response.ok || !payload?.analysis) {
-          throw new Error(payload?.error || 'Failed to re-analyze body composition')
-        }
-        const { analysis } = payload
-        setBodyAnalysis(analysis)
-        await csrfFetch('/api/profile', {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ body_photos: updatedPhotos, body_composition_analysis: analysis }),
-        });
-      } catch (error) {
-        const msg = error instanceof Error ? error.message : 'Re-analysis failed.'
-        setBodyError(msg)
-        console.error('Re-analysis error:', error)
-      } finally {
-        setAnalyzingBody(false)
-      }
     }
   }
 

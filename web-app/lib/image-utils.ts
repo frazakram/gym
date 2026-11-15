@@ -156,3 +156,29 @@ function encodeStep(
 function renameToJpeg(name: string): string {
   return name.replace(/\.[^.]+$/, '') + '.jpg';
 }
+
+/** Reads a file as a data URL (data:<type>;base64,...). */
+export function fileToBase64(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader()
+    reader.onloadend = () => resolve(reader.result as string)
+    reader.onerror = reject
+    reader.readAsDataURL(file)
+  })
+}
+
+/** Compresses uploaded images and turns them into stored photo records. */
+export async function preparePhotoRecords(files: File[]) {
+  return Promise.all(
+    files.map(async (file) => {
+      const compressedFile = await compressImage(file)
+      return {
+        id: crypto.randomUUID?.() ?? Math.random().toString(36).slice(2),
+        base64: await fileToBase64(compressedFile),
+        content_type: compressedFile.type,
+        size_bytes: compressedFile.size,
+        uploaded_at: new Date().toISOString(),
+      }
+    }),
+  )
+}
