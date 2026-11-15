@@ -10,6 +10,8 @@
  *   searchYouTubeForExercise — 100 units per call  (only for exercises with 0 valid URLs)
  */
 
+import { outboundTimeout } from '@/lib/outbound-timeouts';
+
 const YT_API = 'https://www.googleapis.com/youtube/v3';
 
 /**
@@ -29,7 +31,7 @@ export async function batchVerifyVideoIds(ids: string[]): Promise<Set<string>> {
     try {
       const res = await fetch(
         `${YT_API}/videos?part=id&id=${batch.map(encodeURIComponent).join('%2C')}&key=${key}`,
-        { next: { revalidate: 0 } } // always fresh
+        { next: { revalidate: 0 }, signal: outboundTimeout('lookup') } // always fresh
       );
       if (!res.ok) {
         // Quota exceeded or bad key — don't kill routine generation
@@ -60,7 +62,7 @@ export async function searchYouTubeForExercise(exerciseName: string): Promise<st
     const q = encodeURIComponent(`${exerciseName} proper form tutorial`);
     const res = await fetch(
       `${YT_API}/search?part=id&type=video&q=${q}&maxResults=3&relevanceLanguage=en&key=${key}`,
-      { next: { revalidate: 0 } }
+      { next: { revalidate: 0 }, signal: outboundTimeout('lookup') }
     );
     if (!res.ok) {
       console.warn(`[youtube-verify] search HTTP ${res.status} for "${exerciseName}"`);

@@ -3,6 +3,7 @@ import { createRemoteJWKSet, jwtVerify } from "jose";
 import { createSession } from "@/lib/auth";
 import { createUserWithRandomPassword, getSessionVersion, getUserIdByUsername, initializeDatabase } from "@/lib/db";
 import { toSafeReturnPath } from "@/lib/safe-redirect";
+import { outboundTimeout } from "@/lib/outbound-timeouts";
 
 export const runtime = "nodejs";
 
@@ -39,6 +40,7 @@ export async function GET(request: NextRequest) {
     // Exchange code -> tokens
     const tokenRes = await fetch("https://oauth2.googleapis.com/token", {
       method: "POST",
+      signal: outboundTimeout("oauthToken"),
       headers: { "Content-Type": "application/x-www-form-urlencoded" },
       body: new URLSearchParams({
         code,

@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { APIConnectionTimeoutError } from "openai";
 import { ZodError } from "zod";
 import { formatZodError } from "@/lib/validations";
 
@@ -61,8 +62,21 @@ const AI_PROVIDER_MESSAGES: Record<number, PublicError> = {
  * the user can act on become UserFacingErrors with fixed messages; the raw
  * provider error is kept as `cause` for server logs. Other errors pass through.
  */
+export const AI_PROVIDER_TIMEOUT_MESSAGE = "The AI provider took too long to respond. Please try again.";
+
+/**
+ * True for a call cut off by its time limit: fetch with
+ * `signal: outboundTimeout(...)` rejects with a "TimeoutError" DOMException,
+ * the OpenAI SDK (its `timeout` option) with APIConnectionTimeoutError.
+ */
+export function isOutboundTimeout(error: unknown): boolean {
+  if (error instanceof APIConnectionTimeoutError) return true;
+  return error instanceof DOMException && error.name === "TimeoutError";
+}
+
 export function asAiProviderError(error: unknown): unknown {
   if (error instanceof UserFacingError || typeof error !== "object" || error === null) return error;
+  if (isOutboundTimeout(error)) return new UserFacingError(AI_PROVIDER_TIMEOUT_MESSAGE, 504, { cause: error });
   const status = (error as { status?: unknown }).status;
   const mapped = typeof status === "number" ? AI_PROVIDER_MESSAGES[status] : undefined;
   return mapped ? new UserFacingError(mapped.message, mapped.status, { cause: error }) : error;

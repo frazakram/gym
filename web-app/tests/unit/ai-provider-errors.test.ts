@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { UserFacingError, asAiProviderError, toPublicError } from "@/lib/api-errors";
+import { APIConnectionTimeoutError } from "openai";
+import { AI_PROVIDER_TIMEOUT_MESSAGE, UserFacingError, asAiProviderError, toPublicError } from "@/lib/api-errors";
 import { generateDiet } from "@/lib/diet-agent";
 import { generateRoutine } from "@/lib/ai-agent";
 import { generateRoutineOpenAI } from "@/lib/openai-routine";
@@ -98,5 +99,19 @@ describe("toPublicError / asAiProviderError", () => {
     expect(toPublicError(classified).message).toBe("The AI provider rejected the API key. Check the key in AI Settings.");
     // The raw provider error stays attached for server-side logging.
     expect((classified as Error).cause).toBe(sdkError);
+  });
+});
+
+describe("AI provider timeouts", () => {
+  it.each([
+    ["fetch with an outbound time limit", new DOMException("The operation was aborted due to timeout", "TimeoutError")],
+    ["the OpenAI SDK timeout option", new APIConnectionTimeoutError()],
+  ])("%s becomes a 504 with a retry message", (_source, timeoutError) => {
+    expect(toPublicError(asAiProviderError(timeoutError))).toEqual({ status: 504, message: AI_PROVIDER_TIMEOUT_MESSAGE });
+  });
+
+  it("a user cancelling (AbortError) is not reported as a provider timeout", () => {
+    const cancelled = new DOMException("This operation was aborted", "AbortError");
+    expect(toPublicError(asAiProviderError(cancelled)).status).toBe(500);
   });
 });

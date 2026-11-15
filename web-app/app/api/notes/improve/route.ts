@@ -1,4 +1,5 @@
 import { asAiProviderError, toErrorResponse } from "@/lib/api-errors";
+import { outboundTimeout } from "@/lib/outbound-timeouts";
 import { NextRequest, NextResponse } from "next/server";
 import { getSession } from "@/lib/auth";
 import { ChatAnthropic } from "@langchain/anthropic";
@@ -146,6 +147,7 @@ ${wrapUntrustedBlock("ORIGINAL_NOTES", userNotes, { maxChars: 2000 })}`.trim();
 
     const res = await fetch(`${baseURL}/v1/chat/completions`, {
       method: "POST",
+      signal: outboundTimeout("aiCompletion"),
       headers: {
         "Content-Type": "application/json",
         Authorization: `Bearer ${openaiKey}`,

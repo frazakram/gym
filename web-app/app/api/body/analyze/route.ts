@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireCsrf } from '@/lib/csrf';
 import { asAiProviderError, toErrorResponse, UserFacingError } from "@/lib/api-errors";
+import { OUTBOUND_TIMEOUT_MS } from "@/lib/outbound-timeouts";
 import OpenAI from 'openai';
 import { getSession } from '@/lib/auth';
 import { initializeDatabase, hasBodyPhotos } from '@/lib/db';
@@ -12,7 +13,8 @@ export const runtime = "nodejs";
 function getOpenAI(clientKey?: string) {
   const apiKey = clientKey || process.env.OPENAI_API_KEY;
   if (!apiKey) throw new UserFacingError('OpenAI API key is required. Add it in AI Settings (sidebar).');
-  return new OpenAI({ apiKey, baseURL: 'https://api.openai.com/v1' });
+  // Bounded per attempt with one retry (the SDK default is 10 minutes, 2 retries).
+  return new OpenAI({ apiKey, baseURL: 'https://api.openai.com/v1', timeout: OUTBOUND_TIMEOUT_MS.aiCompletion, maxRetries: 1 });
 }
 
 const SYSTEM_PROMPT = `You are a supportive personal fitness coach helping a user who has uploaded their own body photo to a private fitness app for personalized workout planning. The user has explicitly consented and wants actionable training guidance.

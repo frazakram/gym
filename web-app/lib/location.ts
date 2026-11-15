@@ -1,3 +1,5 @@
+import { outboundTimeout } from '@/lib/outbound-timeouts'
+
 export type LocationResult = {
   lat: number
   lng: number
@@ -115,6 +117,7 @@ export async function reverseGeocode(lat: number, lng: number): Promise<ReverseG
       String(lat),
     )}&lon=${encodeURIComponent(String(lng))}&zoom=10&addressdetails=1`
     const res = await fetch(url, {
+      signal: outboundTimeout('lookup'),
       headers: { 'User-Agent': 'GymBroApp/1.0', Accept: 'application/json' },
     })
     if (!res.ok) return { city: null, countryCode: null }

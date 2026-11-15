@@ -4,6 +4,8 @@ import { getSession } from '@/lib/auth';
 import { initializeDatabase, hasGymPhotos } from '@/lib/db';
 import { checkPaidAiLimit, paidAiLimitResponse } from '@/lib/rate-limit';
 import type { GymEquipmentAnalysis } from '@/types';
+import { asAiProviderError, toErrorResponse } from '@/lib/api-errors';
+import { outboundTimeout } from '@/lib/outbound-timeouts';
 
 export const runtime = 'nodejs';
 
@@ -113,6 +115,7 @@ export async function POST(request: NextRequest) {
     // Call OpenAI Vision API
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
+      signal: outboundTimeout('aiCompletion'),
       headers: {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${apiKey}`,
@@ -169,10 +172,6 @@ export async function POST(request: NextRequest) {
     const hasExistingPhoto = await hasGymPhotos(session.userId);
     return NextResponse.json({ analysis, hasExistingPhoto }, { status: 200 });
   } catch (error) {
-    console.error('Error analyzing gym equipment:', error);
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    );
+    return toErrorResponse(asAiProviderError(error), 'gym/analyze');
   }
 }
