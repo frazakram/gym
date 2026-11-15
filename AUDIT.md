@@ -316,3 +316,11 @@ Measured and left as is:
 - Dashboard fan-out: 12 API requests on first load in two parallel waves (~270 ms each in production), no duplicates. Merging them needs a new aggregate API (an architecture change), not justified by the measured cost.
 
 Open (needs the owner): Upstash Redis in production is configured but unreachable. Until fixed, rate limits are off (fail open) and paid AI photo analysis returns 503 (fails closed). `public/app-dark.png` (1.3 MB) is no longer referenced; deleting it awaits approval.
+
+## 10. Incident: Android Google sign-in broken by c3c8d60 (fixed in 6fb52b3)
+
+- What: `POST /api/auth/google` was removed in Phase 3 as "unused". The Android app's native Google sign-in (account picker) posts the Google ID token to it, so from that deploy until 6fb52b3 every Google sign-in in the app failed with 404, which the app shows as "couldn't connect". Reported by the owner on 2026-11-16.
+- Why it was missed: "unused" was decided by searching this repository only. The Android project is not in this repository (or on this machine), and the regression test asserted the removal instead of the app's behaviour.
+- Fix: restored with the exact request/response contract (`{ idToken }` to `{ token, user: { id, email, name }, profileComplete }`), with the session version in the token so the app is not signed out immediately. Integration test proves the returned token is accepted by the API.
+- Wider check: since 23bcb04 no other route or method was removed, and the API never accepted any auth other than the session cookie, so in-WebView calls go through the web code covered by the test suite.
+- Rule from now on: the Android app is an API client. Do not remove or change an endpoint's contract without the APK source or explicit confirmation of what the app calls.
