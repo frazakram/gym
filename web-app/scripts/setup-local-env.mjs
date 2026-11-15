@@ -9,7 +9,7 @@ const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const target = path.join(root, ".env.local");
 
 if (existsSync(target)) {
-  console.log(".env.local already exists — leaving it unchanged.");
+  console.log(".env.local already exists - leaving it unchanged.");
   process.exit(0);
 }
 

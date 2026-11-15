@@ -6,9 +6,9 @@ import { parseSetsReps } from "@/lib/setsReps";
 describe("parseSetsReps", () => {
   it.each([
     ["3 sets x 10 reps (rest 90s)", { sets: 3, reps: 10, restSeconds: 90 }],
-    ["4 x 8–10 (rest 2 min)", { sets: 4, reps: 8, restSeconds: 120 }],
+    ["4 x 8\u201310 (rest 2 min)", { sets: 4, reps: 8, restSeconds: 120 }],
     ["3 sets of 12 reps", { sets: 3, reps: 12 }],
-    ["5 × 5", { sets: 5, reps: 5 }],
+    ["5 \u00d7 5", { sets: 5, reps: 5 }],
     ["4 sets x 6-8 reps, rest 1.5 min", { sets: 4, reps: 6, restSeconds: 90 }],
     ["1 set x 20 reps rest 45 seconds", { sets: 1, reps: 20, restSeconds: 45 }],
   ])("parses %j", (input, expected) => {

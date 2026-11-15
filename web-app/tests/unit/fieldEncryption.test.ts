@@ -52,7 +52,7 @@ describe("fieldEncryption with a key", () => {
 
   it("round-trips unicode", () => {
     vi.stubEnv("DB_ENCRYPTION_KEY", KEY);
-    expect(decrypt(encryptRnd("राहुल 💪"))).toBe("राहुल 💪");
+    expect(decrypt(encryptRnd("\u0930\u093e\u0939\u0941\u0932 \u0936\u0930\u094d\u092e\u093e"))).toBe("\u0930\u093e\u0939\u0941\u0932 \u0936\u0930\u094d\u092e\u093e");
   });
 
   it("returns the raw value for tampered ciphertext, wrong key, or malformed input", () => {
