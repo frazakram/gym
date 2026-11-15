@@ -104,3 +104,11 @@ export async function bookDefaultCoachViaApi(page: Page): Promise<number> {
   expect(res.status(), await res.text()).toBe(200);
   return (await res.json()).bookingId;
 }
+
+/**
+ * The error toast (role=alert). Next.js also renders a role=alert route
+ * announcer, so match the toast element itself.
+ */
+export function errorToast(page: Page) {
+  return page.locator('.toast-a[role="alert"]');
+}

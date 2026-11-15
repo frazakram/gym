@@ -31,6 +31,7 @@ function SlideItem({ t, onRemove }: { t: Toast; onRemove: (id: string) => void }
 
   return (
     <div
+      role={isError ? 'alert' : 'status'}
       className={`toast-a${visible && !exiting ? ' toast-a-show' : ''}${exiting ? ' toast-a-exit' : ''}`}
       style={{ borderLeft: `4px solid ${accent}` }}
     >
@@ -124,6 +125,7 @@ function GlassItem({ t, onRemove }: { t: Toast; onRemove: (id: string) => void }
 
   return (
     <div
+      role="status"
       className={`toast-b${visible && !exiting ? ' toast-b-show' : ''}${exiting ? ' toast-b-exit' : ''}`}
       onMouseEnter={clearTimer}
       onMouseLeave={startTimer}
@@ -196,6 +198,9 @@ function GlowItem({ t, onRemove }: { t: Toast; onRemove: (id: string) => void })
       onClick={dismiss}
     >
       <div
+        role="dialog"
+        aria-modal="true"
+        aria-label={t.title}
         className={`toast-d${visible && !exiting ? ' toast-d-show' : ''}${exiting ? ' toast-d-exit' : ''}`}
         onClick={e => e.stopPropagation()}
       >

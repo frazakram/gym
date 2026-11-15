@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { registerViaApi, saveProfileViaApi } from './helpers';
+import { registerViaApi, saveProfileViaApi, errorToast } from './helpers';
 
 test.describe('Routine Generation', () => {
   // These specs make real AI calls; they only run when a key is provided.
@@ -34,7 +34,7 @@ test.describe('Routine Generation', () => {
     
     // VERIFY loading state (Skeleton or Error)
     // HomeView uses WorkoutCardSkeleton which has .skeleton-shimmer class
-    await expect(page.locator('.skeleton-shimmer').first().or(page.getByText('Oops!'))).toBeVisible({ timeout: 10000 });
+    await expect(page.locator('.skeleton-shimmer').first().or(errorToast(page))).toBeVisible({ timeout: 10000 });
     // Assuming a Card/Modal appears. Select Provider.
     // The previous view_file didn't show the exact generation UI. 
     // Usually it prompts for Provider and Key.

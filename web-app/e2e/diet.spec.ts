@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { registerViaApi, saveProfileViaApi } from './helpers';
+import { registerViaApi, saveProfileViaApi, errorToast } from './helpers';
 
 test.describe('Diet Planning', () => {
   // These specs make real AI calls; they only run when a key is provided.
@@ -25,7 +25,7 @@ test.describe('Diet Planning', () => {
     await generateBtn.click({ force: true });
     
     // Check loading state to confirm click (Button text change or Error modal)
-    await expect(page.getByRole('button', { name: 'Generating plan...' }).or(page.getByText('Oops!'))).toBeVisible({ timeout: 10000 });
+    await expect(page.getByRole('button', { name: 'Generating plan...' }).or(errorToast(page))).toBeVisible({ timeout: 10000 });
 
     // Wait for generation (120s)
     await expect(page.getByText('Generating plan...')).not.toBeVisible({ timeout: 120000 });

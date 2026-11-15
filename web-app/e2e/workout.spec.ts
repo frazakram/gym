@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { registerViaApi, saveProfileViaApi } from './helpers';
+import { registerViaApi, saveProfileViaApi, errorToast } from './helpers';
 
 test.describe('Workout Tracking', () => {
   // These specs make real AI calls; they only run when a key is provided.
@@ -26,7 +26,7 @@ test.describe('Workout Tracking', () => {
     await page.getByRole('button', { name: 'Generate My Routine' }).click({ force: true });
     
     // Confirm generation started (Skeleton or Error)
-    await expect(page.locator('.skeleton-shimmer').first().or(page.getByText('Oops!'))).toBeVisible({ timeout: 10000 });
+    await expect(page.locator('.skeleton-shimmer').first().or(errorToast(page))).toBeVisible({ timeout: 10000 });
     
     // Wait for skeleton to disappear (increased timeout to 120s)
     await expect(page.locator('.skeleton-shimmer').first()).not.toBeVisible({ timeout: 120000 });
@@ -56,8 +56,8 @@ test.describe('Workout Tracking', () => {
         // Or fail if we expect a workout.
         // Assuming Day 1 always has workout.
         
-        // If "Oops!" modal is present due to API fail, test should ideally fail or skip.
-         if (await page.getByText('Oops!').isVisible()) {
+        // If an error toast (role=alert) is present due to API fail, test should ideally fail or skip.
+         if (await errorToast(page).isVisible()) {
              // API failure
              test.info().annotations.push({ type: 'issue', description: 'OpenAI API Error' });
              // We can return or throw. 
