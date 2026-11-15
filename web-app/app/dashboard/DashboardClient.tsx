@@ -12,6 +12,7 @@ import {
 import { Sidebar } from '@/components/Sidebar'
 import { ToastType } from '@/components/ui/Toast'
 import { toastSuccess, toastError, toastInfo, toastWarning } from '@/lib/toast'
+import { INCOMPLETE_PROFILE_MESSAGE, missingPlanFields } from '@/lib/profile-completeness'
 import { ConfirmModal } from '@/components/ui/ConfirmModal'
 import { UpgradeModal } from '@/components/ui/UpgradeModal'
 import { OfflineIndicator } from '@/components/OfflineIndicator'
@@ -649,8 +650,9 @@ export default function DashboardPage() {
   }
 
   const handleGenerateRoutine = async (isNextWeek: boolean = false, restDays?: string[], forceRegenerate: boolean = false) => {
-    if (!profile) {
-      setError('Please complete your profile first.')
+    if (missingPlanFields(profile).length > 0) {
+      setError(INCOMPLETE_PROFILE_MESSAGE)
+      setActiveView('profile')
       return
     }
     if (resolvedHeightCm == null) {
@@ -860,6 +862,11 @@ export default function DashboardPage() {
 
   const handleGenerateDiet = async (isNextWeek = false) => {
     if (!profile) return;
+    if (missingPlanFields(profile).length > 0) {
+      setError(INCOMPLETE_PROFILE_MESSAGE);
+      setActiveView('profile');
+      return;
+    }
     setGeneratingDiet(true);
     setError('');
     setSuccess('');
