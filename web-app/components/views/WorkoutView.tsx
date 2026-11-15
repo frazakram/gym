@@ -42,20 +42,8 @@ interface WorkoutViewProps {
   } | null
 }
 
-export function WorkoutView({
-  routine,
-  selectedDayIndex,
-  currentRoutineId,
-  exerciseCompletions,
-  dayCompletions,
-  completionDetails,
-  onToggleExercise,
-  onLogSet,
-  onToggleRestDay,
-  onEnsureRoutineSaved,
-  onBack,
-  bodyAnalysis,
-}: WorkoutViewProps) {
+export function WorkoutView(props: WorkoutViewProps) {
+  const { routine, selectedDayIndex } = props
   if (!routine) {
     return (
       <div className="pb-24 px-4 py-6">
@@ -80,6 +68,29 @@ export function WorkoutView({
     )
   }
 
+  return <WorkoutDayView {...props} day={day} />
+}
+
+type WorkoutDay = WeeklyRoutine['days'][number]
+
+/**
+ * The workout for one day. Split from WorkoutView so its hooks always run in
+ * the same order: WorkoutView's early returns happen before any hook.
+ */
+function WorkoutDayView({
+  day,
+  selectedDayIndex,
+  currentRoutineId,
+  exerciseCompletions,
+  dayCompletions,
+  completionDetails,
+  onToggleExercise,
+  onLogSet,
+  onToggleRestDay,
+  onEnsureRoutineSaved,
+  onBack,
+  bodyAnalysis,
+}: Omit<WorkoutViewProps, 'routine'> & { day: WorkoutDay }) {
   const completedCount = day.exercises.filter((_, eIdx) =>
     exerciseCompletions.get(`${selectedDayIndex}-${eIdx}`)
   ).length

@@ -485,6 +485,14 @@ export function AnalyticsView({ premiumStatus, onUpgrade }: AnalyticsViewProps) 
     )
   }
 
+  return <AnalyticsDashboard premiumStatus={premiumStatus} onUpgrade={onUpgrade} />
+}
+
+/**
+ * The analytics dashboard for users with access. Split from AnalyticsView so
+ * its hooks always run in the same order: the paywall return happens first.
+ */
+function AnalyticsDashboard({ premiumStatus, onUpgrade }: AnalyticsViewProps) {
   const isTrial = !premiumStatus.premium && premiumStatus.trial_active
   const trialEndsText =
     premiumStatus.trial_end ? new Date(premiumStatus.trial_end).toLocaleString() : null

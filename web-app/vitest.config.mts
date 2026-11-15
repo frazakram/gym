@@ -7,7 +7,7 @@ export default defineConfig({
     alias: { "@": path.resolve(import.meta.dirname) },
   },
   test: {
-    include: ["tests/unit/**/*.test.ts"],
+    include: ["tests/unit/**/*.test.{ts,tsx}"],
     environment: "node",
     // Tests must never reach real services: unset anything that would.
     env: {
