@@ -6,6 +6,8 @@ export type RateLimitResult = {
   limit: number;
   remaining: number;
   retryAfterSeconds: number;
+  /** True when Redis was configured but failed: the request was allowed without counting. */
+  degraded?: boolean;
 };
 
 function intFromEnv(name: string, fallback: number): number {
@@ -17,6 +19,10 @@ function intFromEnv(name: string, fallback: number): number {
 /**
  * Fixed-window rate limit using Redis INCR + EXPIRE.
  * - If Redis is not configured, it allows all requests (no-op).
+ * - If Redis fails (bad credentials, archived database, network), it logs and
+ *   allows the request with `degraded: true` instead of throwing: rate limiting
+ *   is defence in depth and must not take sign-in or other features down.
+ *   Callers that must fail closed (checkPaidAiLimit) check `degraded`.
  */
 export async function rateLimit(params: {
   key: string;
@@ -31,17 +37,22 @@ export async function rateLimit(params: {
     return { allowed: true, limit, remaining: limit, retryAfterSeconds: 0 };
   }
 
-  const count = await redis.incr(params.key);
-  if (count === 1) {
-    await redis.expire(params.key, windowSeconds);
+  try {
+    const count = await redis.incr(params.key);
+    if (count === 1) {
+      await redis.expire(params.key, windowSeconds);
+    }
+
+    const allowed = count <= limit;
+    const remaining = Math.max(0, limit - count);
+    const ttl = await redis.ttl(params.key);
+    const retryAfterSeconds = allowed ? 0 : Math.max(1, Number(ttl) || windowSeconds);
+
+    return { allowed, limit, remaining, retryAfterSeconds };
+  } catch (error) {
+    console.error(`[rate-limit] Redis unavailable; allowing ${params.key} without counting:`, error);
+    return { allowed: true, limit, remaining: limit, retryAfterSeconds: 0, degraded: true };
   }
-
-  const allowed = count <= limit;
-  const remaining = Math.max(0, limit - count);
-  const ttl = await redis.ttl(params.key);
-  const retryAfterSeconds = allowed ? 0 : Math.max(1, Number(ttl) || windowSeconds);
-
-  return { allowed, limit, remaining, retryAfterSeconds };
 }
 
 // ============= PAID AI COST GUARD =============
@@ -97,6 +108,13 @@ export async function checkPaidAiLimit(feature: PaidAiFeature, userId: number): 
         limit: rateWindow.limit,
         windowSeconds: rateWindow.seconds,
       });
+      if (windowResult.degraded) {
+        if (isProduction) {
+          console.error(`[paid-ai-limit] Redis error; refusing ${feature} in production`);
+          return LIMITER_UNAVAILABLE_DECISION;
+        }
+        return { ok: true };
+      }
       if (!windowResult.allowed) {
         return {
           ok: false,
