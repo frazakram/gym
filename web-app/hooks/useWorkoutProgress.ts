@@ -124,7 +124,7 @@ export function useWorkoutProgressActions(
     onProgressSaved()
   }
 
-  // Log a weight × reps set. Marks the exercise complete and persists the
+  // Log a weight x reps set. Marks the exercise complete and persists the
   // numbers so they feed the Personal Records card.
   const handleLogSet = async (
     dayIndex: number,
