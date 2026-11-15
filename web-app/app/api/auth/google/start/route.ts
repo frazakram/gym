@@ -1,6 +1,7 @@
 import { withCors } from "@/lib/corsMiddleware";
 import { NextRequest, NextResponse } from "next/server";
 import crypto from "crypto";
+import { toSafeReturnPath } from "@/lib/safe-redirect";
 
 export const runtime = "nodejs";
 
@@ -15,8 +16,8 @@ export async function GET(request: NextRequest) {
   const origin = request.nextUrl.origin;
   const redirectUri = `${origin}/api/auth/google/callback`;
 
-  // Optional: where to go after login
-  const returnTo = request.nextUrl.searchParams.get("returnTo") || "/dashboard";
+  // Optional: where to go after login (same-site paths only; prevents open redirects)
+  const returnTo = toSafeReturnPath(request.nextUrl.searchParams.get("returnTo"));
 
   if (!clientId || !clientSecret) {
     const url = new URL("/login", origin);

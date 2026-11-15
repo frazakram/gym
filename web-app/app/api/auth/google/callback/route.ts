@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createRemoteJWKSet, jwtVerify } from "jose";
 import { createSession } from "@/lib/auth";
 import { createUserWithRandomPassword, getUserIdByUsername, initializeDatabase } from "@/lib/db";
+import { toSafeReturnPath } from "@/lib/safe-redirect";
 
 export const runtime = "nodejs";
 
@@ -33,7 +34,8 @@ export async function GET(request: NextRequest) {
     const stateCookie = request.cookies.get("google_oauth_state")?.value;
     if (!stateCookie || stateCookie !== state) return redirectToLogin("google_state_mismatch");
 
-    const returnTo = request.cookies.get("google_oauth_return_to")?.value || "/dashboard";
+    // Re-validated here too: the cookie may predate this check or be tampered with.
+    const returnTo = toSafeReturnPath(request.cookies.get("google_oauth_return_to")?.value);
 
     // Exchange code -> tokens
     const tokenRes = await fetch("https://oauth2.googleapis.com/token", {
