@@ -43,3 +43,7 @@ next-env.d.ts
 
 # claude
 .claude/
+
+# Database backups (scripts/db-backup.sh) contain user data: never commit them.
+backups/
+*.dump
