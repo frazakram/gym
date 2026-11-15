@@ -298,3 +298,21 @@ Deliberately deferred (owner decision 2026-11-15, moving to Phase 4):
 - Adopting eslint-config-next 16.4 React-compiler rules; 172 lint warnings (0 errors).
 - Unifying the two providers' routine instruction texts (a product decision).
 
+
+## 9. Phase 4 (performance) status, closed at `phase-4-done`
+
+All numbers measured, before and after, on https://finalgym.vercel.app unless noted.
+
+| Change | Commit | Before | After |
+|---|---|---|---|
+| Rate limiter fails open when Redis is down (sign-in returned 500) | `659d058` | login/register: HTTP 500 | 401/201 as designed |
+| Redis calls bounded (500 ms timeout, 1 retry) | `e2a9b7e` | `/api/billing/status` p50 8,889 ms; dashboard data (8 parallel) p50 8,895 ms | 376 ms; 464 ms |
+| Landing hero as WebP, never-shown dark PNG removed | `83c4304` | Lighthouse mobile LCP 13.3-14.1 s, score 47-75, 3.17 MB | LCP 3.2-3.3 s, score 92-93, 0.50 MB |
+| Body photos loaded only when the Body view opens | `0423707` | photos downloaded on every dashboard load | only on the Body view |
+| Nine non-Home dashboard views loaded on demand | `f6cbf04` | 934 KB JS on first dashboard load (local prod build) | 735 KB |
+
+Measured and left as is:
+- Region: functions run in `iad1`. `/api/coaches` (2 DB round-trips) and `/api/csrf` (no DB) both take ~350 ms, so the database is co-located with the functions; moving to `sin1` would add latency. Re-verify the `POSTGRES_URL` host before any region change.
+- Dashboard fan-out: 12 API requests on first load in two parallel waves (~270 ms each in production), no duplicates. Merging them needs a new aggregate API (an architecture change), not justified by the measured cost.
+
+Open (needs the owner): Upstash Redis in production is configured but unreachable. Until fixed, rate limits are off (fail open) and paid AI photo analysis returns 503 (fails closed). `public/app-dark.png` (1.3 MB) is no longer referenced; deleting it awaits approval.
