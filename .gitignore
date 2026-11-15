@@ -82,3 +82,22 @@ Thumbs.db
 # Claude configs
 .claude/skills/
 .mcp.json
+
+# Dependencies and build output (any directory)
+node_modules/
+.next/
+
+# Test artifacts
+web-app/playwright-report/
+web-app/test-results/
+
+# Local screenshots and stray image copies (site images live in web-app/public/)
+/ChatGPT Image*.png
+/image*.png
+web-app/app/*.png
+web-app/ss/
+web-app/public/*.png[0-9]
+
+# Local Claude Code state
+.claude/settings.local.json
+.claude/worktrees/
