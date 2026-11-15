@@ -29,6 +29,8 @@ import { type QuoteCategory } from '@/lib/quotes'
 import { Menu } from 'lucide-react'
 import { AnimatePresence, motion } from 'framer-motion'
 import { usePullToRefresh } from '@/hooks/usePullToRefresh'
+import { useAiSettings } from '@/hooks/useAiSettings'
+import { usePremiumStatus } from '@/hooks/usePremiumStatus'
 import { PullToRefreshIndicator } from '@/components/ui/PullToRefreshIndicator'
 
 function countryToRegionClient(code: string): 'APAC' | 'EMEA' | 'NA' | 'LATAM' {
@@ -69,22 +71,11 @@ export default function DashboardPage() {
   const [success, setSuccess] = useState('')
 
   // Billing / Premium
-  const [premiumStatus, setPremiumStatus] = useState<PremiumStatus | null>(null)
+  const { premiumStatus, setPremiumStatus, fetchPremiumStatus } = usePremiumStatus()
   const [upgradeOpen, setUpgradeOpen] = useState(false)
 
-  // AI Settings (client-side key + model selection) — load from localStorage immediately
-  const [userApiKey, setUserApiKey] = useState(() => {
-    if (typeof window === 'undefined') return ''
-    try { const s = localStorage.getItem('gymbro_ai_settings'); return s ? JSON.parse(s).apiKey || '' : '' } catch { return '' }
-  })
-  const [userModelProvider, setUserModelProvider] = useState<'OpenAI' | 'Anthropic'>(() => {
-    if (typeof window === 'undefined') return 'OpenAI'
-    try { const s = localStorage.getItem('gymbro_ai_settings'); return s ? JSON.parse(s).modelProvider || 'OpenAI' : 'OpenAI' } catch { return 'OpenAI' }
-  })
-  const [userModel, setUserModel] = useState(() => {
-    if (typeof window === 'undefined') return ''
-    try { const s = localStorage.getItem('gymbro_ai_settings'); return s ? JSON.parse(s).model || '' : '' } catch { return '' }
-  })
+  // AI Settings (client-side key + model selection, saved by the sidebar)
+  const { userApiKey, setUserApiKey, userModelProvider, setUserModelProvider, userModel, setUserModel } = useAiSettings()
 
   // Toast notifications
   const showToast = (message: string, type: ToastType) => {
@@ -96,19 +87,6 @@ export default function DashboardPage() {
       default:        toastInfo(message)
     }
   }
-
-  const fetchPremiumStatus = useCallback(async (): Promise<PremiumStatus | null> => {
-    try {
-      const res = await csrfFetch('/api/billing/status', { cache: 'no-store' })
-      if (!res.ok) return null
-      const data = (await res.json()) as PremiumStatus
-      setPremiumStatus(data)
-      return data
-    } catch {
-      // ignore
-      return null
-    }
-  }, [])
 
 
   // Auto-show toast when error/success changes
