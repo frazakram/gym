@@ -1,4 +1,5 @@
-import { Pool } from '@neondatabase/serverless';
+import { Pool as NeonPool } from '@neondatabase/serverless';
+import { Pool as PgPool } from 'pg';
 import bcrypt from 'bcryptjs';
 import { User, Profile, NutritionGoals, FoodEntry, FavoriteFood, FoodSource, MacroSet } from '@/types';
 import { unstable_cache, revalidateTag } from 'next/cache';
@@ -75,6 +76,11 @@ function getSslConfig(): false | { rejectUnauthorized: boolean; checkServerIdent
     rejectUnauthorized,
   };
 }
+
+// Production uses Neon's WebSocket driver. Local Docker Postgres and the
+// integration tests can't speak that protocol, so DATABASE_DRIVER=pg opts into
+// node-postgres (which Neon's Pool is API-compatible with). Unset = Neon, as before.
+const Pool = (process.env.DATABASE_DRIVER === 'pg' ? PgPool : NeonPool) as typeof NeonPool;
 
 const pool = new Pool({
   connectionString,

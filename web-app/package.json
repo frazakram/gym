@@ -11,7 +11,12 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "verify": "npm run lint && npm run typecheck && npm test && npm run build",
-    "hooks:install": "git config core.hooksPath .githooks"
+    "hooks:install": "git config core.hooksPath .githooks",
+    "setup:env": "node scripts/setup-local-env.mjs",
+    "db:up": "docker compose up -d --wait postgres",
+    "db:down": "docker compose down",
+    "db:reset": "docker compose down -v",
+    "dev:local": "npm run setup:env && npm run db:up && next dev"
   },
   "dependencies": {
     "@langchain/anthropic": "^1.3.3",

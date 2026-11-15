@@ -1,0 +1,27 @@
+# Local development + integration-test database.
+#   npm run db:up      start Postgres (waits until healthy)
+#   npm run db:down    stop it (data kept in the gym-pg volume)
+#   npm run db:reset   stop it and delete all local data
+# The app connects with DATABASE_DRIVER=pg (see .env.example).
+name: gym
+
+services:
+  postgres:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_USER: gym
+      POSTGRES_PASSWORD: gym
+      POSTGRES_DB: gym
+    ports:
+      - "127.0.0.1:54329:5432"
+    volumes:
+      - gym-pg:/var/lib/postgresql/data
+      - ./scripts/db-init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U gym -d gym"]
+      interval: 2s
+      timeout: 3s
+      retries: 30
+
+volumes:
+  gym-pg:
