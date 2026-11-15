@@ -136,7 +136,7 @@ web-app/
 
 | File | Purpose | Notes |
 |------|---------|-------|
-| `db.ts` | ALL queries | 3000+ lines. `initializeDatabase()` must be called at start of every API route; once the schema is current it costs one SELECT per cold start. Connection resolves across `POSTGRES_URL`, `DATABASE_URL`, and namespaced variants. |
+| `db.ts` + `db/*` | All queries | `db.ts` only re-exports the public API; code lives per domain in `lib/db/` (`core` pool/mock mode/`initializeDatabase`, `users`, `profiles`, `routines`, `analytics`, `measurements`, `nutrition`, `diets`, `billing`, `coach`, `regions`, `xp`, `communities`). Import from `@/lib/db`; add new queries to the matching domain module and export them from `db.ts`. `initializeDatabase()` must be called at start of every API route; once the schema is current it costs one SELECT per cold start. |
 | `db-schema.ts` | Schema (DDL) | Ordered, idempotent `SCHEMA_STATEMENTS`. Change the schema only here: the hash changes and every instance re-applies the list once, in one transaction under an advisory lock (`app_schema_version`). Never edit the database by hand. |
 | `auth.ts` | JWT sessions | `getSession()`, `createSession()`, `setSessionCookie()`, `deleteSession()`. Tokens expire in 7 days, stored as `httpOnly` cookie. |
 | `csrf.ts` / `useCsrf.ts` | CSRF protection | `csrfFetch` is the client-side fetch wrapper. **Always use this instead of plain `fetch()`.** |
