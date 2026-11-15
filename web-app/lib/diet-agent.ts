@@ -212,6 +212,9 @@ ${proteinDeduction > 0 ? `    - **CRITICAL**: You MUST include a "Protein Shake"
      await awaitAllCallbacks();
      return response as WeeklyDiet;
   } catch (error) {
+      // Provider HTTP errors (rejected key, rate limit, unknown model) are actionable:
+      // rethrow so the route can map them to a user-facing message.
+      if (typeof (error as { status?: unknown } | null)?.status === "number") throw error;
       console.error("Diet generation failed:", error);
       return null;
   }
