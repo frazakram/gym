@@ -60,9 +60,15 @@ export function sevenDayRoutine() {
   };
 }
 
-export async function saveRoutineViaApi(page: Page): Promise<number> {
+/** A 7-day routine of rest days only (every day shows the rest-day controls). */
+export function restWeekRoutine() {
+  const names = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+  return { days: names.map((day) => ({ day: `${day} - Rest Day`, exercises: [] })) };
+}
+
+export async function saveRoutineViaApi(page: Page, routine = sevenDayRoutine()): Promise<number> {
   const res = await page.request.post('/api/routines', {
-    data: { weekNumber: 1, routine: sevenDayRoutine() },
+    data: { weekNumber: 1, routine },
     headers: await csrfHeader(page),
   });
   expect(res.status(), await res.text()).toBe(200);
