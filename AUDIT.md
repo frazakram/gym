@@ -27,7 +27,7 @@ These need a decision from you before Phase 1. I won't pick one myself.
 
 ```mermaid
 flowchart LR
-  subgraph Client["Browser / PWA (78 'use client' files)"]
+  subgraph Client["Browser / PWA (83 'use client' files)"]
     LP[Landing / login / onboarding]
     DC["DashboardClient.tsx<br/>(1,797 lines, tab controller)"]
     V["components/views/*<br/>(10 views, all eagerly imported)"]
@@ -73,8 +73,8 @@ There's no `middleware.ts`/`proxy.ts`, so auth, CSRF and rate limiting are opt-i
 
 | # | Finding | Evidence | Why it matters |
 |---|---|---|---|
-| P0-1 | **Schema DDL runs on every cold start, in the request path.** 95 sequential `CREATE/ALTER` statements include `ALTER TABLE routines ALTER COLUMN archived SET NOT NULL`, `SET DEFAULT`, and `DO $$ ... ALTER COLUMN ... TYPE` blocks. | `lib/db.ts:128-578`, called at the top of nearly every route | `ALTER TABLE` takes `ACCESS EXCLUSIVE` locks. A burst of cold starts (deploy, traffic spike) queues every read and write on `profiles`/`routines` behind it, and `SET NOT NULL` re-scans the table each time. Adds roughly 95 Neon round-trips to every cold request. There's no migration history and no rollback. |
-| P0-2 | **Paid AI endpoints funded by the server key have no rate limit.** `body/analyze`, `gym/analyze` (vision, `detail: 'high'`, up to 6 images), `report`, `nutrition/summary`. Registration is open, and `rateLimit` fails open when Redis is absent. | route matrix: `rl=0` on `body/analyze`, `gym/analyze`, `report`; `lib/rate-limit.ts:27-29` | Any signed-up user (or script) can run up unbounded OpenAI cost. |
+| P0-1 | **Schema DDL runs on every cold start, in the request path.** 95 sequential `CREATE/ALTER` statements include `ALTER TABLE routines ALTER COLUMN archived SET NOT NULL`, `SET DEFAULT`, and `DO $$ ... ALTER COLUMN ... TYPE` blocks. | `lib/db.ts:128-578`, called at the top of nearly every route | `ALTER TABLE` takes `ACCESS EXCLUSIVE` locks. A burst of cold starts (deploy, traffic spike) queues every read and write on `profiles`/`routines` behind it, and `SET NOT NULL` takes that lock each time (the table scan itself is skipped once the column is already NOT NULL). Adds roughly 95 Neon round-trips to every cold request. There's no migration history and no rollback. |
+| P0-2 | **Paid AI endpoints funded by the server key have no rate limit.** `body/analyze`, `gym/analyze` (vision, `detail: 'high'`, up to 6 images), and the `report` coach note. Registration is open, and `rateLimit` fails open when Redis is absent. | route matrix: `rl=0` on `body/analyze`, `gym/analyze`, `report`; `lib/rate-limit.ts:27-29` | Any signed-up user (or script) can run up unbounded OpenAI cost. |
 | P0-3 | **There is no safety net.** No unit or integration tests. CI runs only `lint` + `tsc`, not build, tests or audit. The 6 Playwright specs (14 tests) aren't run in CI, have `webServer` commented out, and need a live DB. | `.github/workflows/ci.yml`, `playwright.config.ts`, `e2e/` | Any refactor is a blind change. This blocks Phases 2-5 by your own rules. |
 
 ### P1
@@ -82,14 +82,14 @@ There's no `middleware.ts`/`proxy.ts`, so auth, CSRF and rate limiting are opt-i
 | # | Finding | Evidence |
 |---|---|---|
 | P1-1 | **SSRF:** `gym/analyze` fetches any user-supplied `imageUrl` server-side, with no scheme, host or IP allow-list and no size cap (whole body buffered into memory). | `app/api/gym/analyze/route.ts:58-66` |
-| P1-2 | **Open redirect after Google login:** `returnTo` is taken from the query string, stored in a cookie, and passed to `new URL(returnTo, origin)`, so an absolute URL redirects off-site. | `auth/google/start/route.ts:17`, `auth/google/callback/route.ts:41,85` |
+| P1-2 | **Open redirect after Google login:** `returnTo` is taken from the query string, stored in a cookie, and passed to `new URL(returnTo, origin)`, so an absolute URL redirects off-site. | `auth/google/start/route.ts:19`, `auth/google/callback/route.ts:36,83` |
 | P1-3 | **Mock-auth backdoor if misconfigured:** with `ALLOW_MOCK_AUTH=true`, `authenticateUser` returns user 999 for *any* unknown user or **wrong password**, and DB failures fall back to mock data everywhere. It's guarded only by an env var, not `NODE_ENV`. | `lib/db.ts:122-126, 604-649` |
 | P1-4 | **Body photos (sensitive) stored unencrypted** as base64 in `profiles.body_photos` JSONB. They come back from `SELECT *` on **every** `GET /api/profile` (fetched ~10x from the dashboard) and are kept in the Next data cache via `unstable_cache`. Field encryption covers only `username` and `name`. This becomes P0 if body photos count as health data under India's DPDP Act. Your call. | `lib/db.ts:252, 700-717, 873-921`; `app/api/profile/route.ts:18-27` |
 | P1-5 | **Part of user-supplied API keys logged** (first 6 + last 4 chars). Users' OpenAI/Anthropic keys sit in `localStorage` and travel in request bodies, while the CSP allows `'unsafe-inline' 'unsafe-eval'`, so any XSS can steal them. | `app/api/routine/generate/route.ts:285-287`; `DashboardClient.tsx:74-77`; `next.config.ts:18` |
 | P1-6 | **Vulnerable dependencies:** `npm audit` reports 48 (3 critical, 17 high). Direct ones: `next` 16.1.1 (critical, fixed in 16.4.6 - patch), `zod`, `undici`, `nodemailer` (fix is a major bump to 10.x). Most transitive highs come through `langchain`/`axios`/`form-data`. | `npm audit` run 2026-11-15 |
 | P1-7 | **Payment webhook isn't idempotent or order-safe:** no event-id dedupe, and the last event processed wins. An out-of-order `subscription.charged`/`halted`/`cancelled` can regress status. `userId` comes from subscription `notes` (signature-verified, so not forgeable, but unvalidated against the DB). | `app/api/billing/webhook/route.ts:85-112`, `db.ts:2785` |
 | P1-8 | **Real-looking personal contact details hardcoded** as fallbacks (phone number + Gmail address), and present in git history. | `lib/coach.ts:20-25` |
-| P1-9 | **Hook-order bugs hidden by a demoted lint rule:** `react-hooks/rules-of-hooks` was downgraded to `warn` and has 23 hits (`AnalyticsView.tsx` 15, `WorkoutView.tsx` 8). Conditional hooks cause intermittent React crashes and state mix-ups. | `eslint.config.mjs`, ESLint run |
+| P1-9 | **Rules-of-Hooks violations hidden by a demoted lint rule:** `react-hooks/rules-of-hooks` was downgraded to `warn` and has 23 hits (`AnalyticsView.tsx` 15, `WorkoutView.tsx` 8). Correction (verified later): not a crash today, because every hook sits after all early returns, so React treats the next full render as a fresh mount and resets local state. It relies on a React implementation detail; adding one hook above an early return would crash. | `eslint.config.mjs`, ESLint run |
 | P1-10 | **Phantom dependency:** `openai` is imported directly but not declared in `package.json` (resolved only through `@langchain/openai`). A LangChain bump can break the build. | `app/api/body/analyze/route.ts:3`, `lib/nutrition/vision-recognize.ts:14` |
 | P1-11 | **Inconsistent CSRF coverage** on state-changing routes (no `requireCsrf`): `billing/subscription/create`, `body/analyze`, `gym/analyze`, `coach/bookings/[id]` (PATCH/DELETE), `coach/me` (PATCH), `admin/coaches/[id]` + `admin/coach/bookings/[id]` (PATCH), `routines/reset` (DELETE), `user-location` (POST), `auth/logout`. `SameSite=Lax` on the session cookie limits real-world exposure, but the policy isn't enforced centrally. | route matrix |
 | P1-12 | **Giant files carrying mixed concerns:** `lib/db.ts` (3,877 lines: DDL + every query for every domain + mock stores) and `DashboardClient.tsx` (1,797 lines, containing the logic `CLAUDE.md` says must not live there). Route handlers hold business rules (e.g. the booking cancellation window in `coach/bookings/[id]`). | file sizes |
@@ -104,7 +104,7 @@ There's no `middleware.ts`/`proxy.ts`, so auth, CSRF and rate limiting are opt-i
 - **Rate-limit key uses the first `X-Forwarded-For` entry.** Probably OK behind Vercel; should use the platform IP.
 - **No server-side request-size or image-count validation** beyond array length; base64 size is unchecked (Vercel's 4.5 MB cap is the only limit).
 - **`revalidateTag('user-profile')` is global:** any user's profile save evicts every user's cached profile. `undefined as any` casts at `db.ts:884,926,2214,3448`.
-- **Unused or redundant deps:** `@vercel/postgres`, `pg`, `undici`, `langchain` have no imports. There are two Postgres drivers. The root `package.json` declares `recharts`/`sonner` for no app.
+- **Unused or redundant deps:** `@vercel/postgres`, `undici`, `langchain` have no imports (`pg` had none at audit time; it now backs the `DATABASE_DRIVER=pg` local/test mode). There are two Postgres drivers. The root `package.json` declares `recharts`/`sonner` for no app.
 - **Lint debt:** 206 warnings (121 `no-explicit-any`, 31 unused vars, 13 `set-state-in-effect`, 8 `<img>`).
 - **Mock-mode branches interleaved in every data function**, doubling the paths to test.
 - **Toolchain drift:** CI uses Node 20, this machine runs Node 26, and `package.json` has no `engines` field. `vercel.json` uses `npm install` (not `npm ci`).
@@ -117,7 +117,7 @@ There's no `middleware.ts`/`proxy.ts`, so auth, CSRF and rate limiting are opt-i
 | `npm ci` | OK, 13.5 s |
 | `tsc --noEmit` (`strict: true` already on) | OK, 0 errors, 7.5 s |
 | `eslint .` | OK, 0 errors / 206 warnings (7 rules demoted from error to warn) |
-| `next build` (Turbopack, Next 16.1.1) | OK, 19.5 s wall, 71 routes (16 pages, 62 API), no warnings besides a Node 26 `module.register()` deprecation notice |
+| `next build` (Turbopack, Next 16.1.1) | OK, 19.5 s wall, 77 routes (15 pages, 62 API). Warnings: a Node 26 `module.register()` deprecation notice, and Next inferring the workspace root from the extra root `package-lock.json` |
 | Unit / integration tests | NONE. None exist. No test runner installed. |
 | E2E | 6 Playwright specs, 14 tests, need a live server + DB, not in CI, not run in this audit. |
 | Coverage on critical paths | **0%** measured. |
@@ -243,3 +243,34 @@ Tool choices follow rule 12 (boring, proven tools; new deps called out).
 3. Is the server's `OPENAI_API_KEY` meant to fund vision features for all users, or should those be premium-gated?
 4. Are you OK with removing tracked `node_modules/`, `.next/`, reports and stray PNGs from git (history preserved, files deleted going forward)?
 5. Are `coach.ts`'s fallback phone/email a real person's? If so, they should be removed, and the person may want to know they're in public history (if the repo is public).
+
+## 7. Remediation status (updated 2026-11-15)
+
+An independent mutation review of Phase 0/1 (39 deliberate breakages) checked 16 claims in this document; the inaccuracies it found and the P1-9 overstatement are corrected in place above.
+
+| Finding | Status | Commit |
+|---|---|---|
+| P0-1 DDL on every cold start | Fixed: hash-versioned schema, applied once per change in one transaction under an advisory lock; cold start = 1 SELECT (local: 95 round-trips p50 44.3 ms -> 1 round-trip p50 0.4 ms) | `dc12055` |
+| P0-2 Unlimited paid AI calls | Fixed: per-user minute/hour limits, fail closed in production | `a2927b7` |
+| P0-3 No safety net | Fixed: 128 unit, 74 integration, 15 e2e tests; CI runs lint, typecheck, tests, build, integration | Phase 1, `phase-1-done` |
+| P1-1 SSRF in gym/analyze | Fixed: client-supplied URL fetch removed | `4f89bbd` |
+| P1-2 Open redirect after Google login | Fixed: same-site return paths only | `d721cbc` |
+| P1-3 Mock auth in production | Fixed: hard-disabled when NODE_ENV=production | `c48cbf3` |
+| P1-5 API key fragments in logs | Fixed | `5ceb392` |
+| P1-7 Webhook not idempotent / order-safe | Fixed: event-id dedupe + last_event_at ordering | `949ec17` |
+| P1-8 Hardcoded coach phone/email | Fixed (values remain in git history) | `9f73805` |
+| P1-9 Rules-of-Hooks violations | Fixed; rule is an error again | `e65507c` |
+| P1-10 Undeclared openai/langsmith | Fixed; lint blocks undeclared imports | `8e7de1b` |
+| P1-11 CSRF gaps | Fixed on all 10 handlers, client calls use csrfFetch | `e218eaf` |
+| P2 Raw error messages to clients | Fixed: UserFacingError / generic 500; AI provider errors mapped | `4905872`, `25ed476` |
+| P1-4 Body photos unencrypted in profile rows | Open | |
+| P1-6 Vulnerable dependencies | Open (next) | |
+| P1-12 / P1-13 Giant files, duplicate AI prompt code | Open (Phase 2) | |
+
+New findings during remediation (open unless noted):
+- `lib/csrf.ts`: the "CSRF token expired" message is unreachable (jose's expiry error text never contains "expired"), so expired tokens get the generic message. P2.
+- Onboarding "Skip for now" routes to /dashboard, which sends a profile-less user straight back to /onboarding, so new users cannot skip. P2 UX.
+- Inactive bottom-nav tabs are icon-only buttons without accessible names. P2 accessibility.
+- TIMESTAMP (without time zone) columns are only read correctly when Node and Postgres share a time zone (true on Vercel, UTC). P2.
+- Pre-commit hook skips checks on delete-only commits; CI runs Node 20 (end of life) with no pinned version; `pg` is loaded on every production cold start even when unused. P2, next.
+
