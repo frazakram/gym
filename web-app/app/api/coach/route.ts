@@ -2,7 +2,7 @@ import { withCors } from "@/lib/corsMiddleware";
 import { NextResponse } from "next/server";
 import { getSession } from "@/lib/auth";
 import { getPremiumStatus, initializeDatabase } from "@/lib/db";
-import { HARD_CODED_COACH } from "@/lib/coach";
+import { getDefaultCoach } from "@/lib/coach";
 
 export const runtime = "nodejs";
 
@@ -16,5 +16,5 @@ export async function GET() {
     return withCors(NextResponse.json({ error: "Personal Coach is a premium feature." }, { status: 403 }));
   }
 
-  return withCors(NextResponse.json({ coach: HARD_CODED_COACH }, { status: 200 }));
+  return withCors(NextResponse.json({ coach: getDefaultCoach() }, { status: 200 }));
 }

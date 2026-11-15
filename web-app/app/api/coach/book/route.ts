@@ -9,7 +9,7 @@ import {
   getPremiumStatus,
   initializeDatabase,
 } from "@/lib/db";
-import { HARD_CODED_COACH } from "@/lib/coach";
+import { getDefaultCoach, hasCoachContactDetails } from "@/lib/coach";
 import { rateLimit, RATE_LIMITS } from "@/lib/rate-limit";
 import { sendEmail } from "@/lib/email";
 import { CoachBookingSchema, safeParseWithError } from "@/lib/validations";
@@ -117,11 +117,17 @@ export async function POST(req: NextRequest) {
           phone: selectedCoach.phone || "",
           email: selectedCoach.email || "",
         }
-      : HARD_CODED_COACH;
+      : getDefaultCoach();
 
-    if (selectedCoach && (!coach.email || !coach.phone)) {
+    if (!hasCoachContactDetails(coach)) {
+      // Without contact details the booking notification can't be delivered;
+      // refuse rather than store a request nobody will see.
       return withCors(NextResponse.json(
-        { error: "Selected coach is missing contact info. Ask the coach to update their profile." },
+        {
+          error: selectedCoach
+            ? "Selected coach is missing contact info. Ask the coach to update their profile."
+            : "Coach booking is temporarily unavailable. Please try again later.",
+        },
         { status: 409 }
       ));
     }
