@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 import { withCors } from '@/lib/corsMiddleware'
+import { requireCsrf } from '@/lib/csrf'
 import { getSession } from '@/lib/auth'
 import { initializeDatabase, countryToRegion, saveNationality } from '@/lib/db'
 import { Pool } from '@neondatabase/serverless'
@@ -99,6 +100,11 @@ export async function POST(request: NextRequest) {
     if (!session) {
       return withCors(NextResponse.json({ error: 'Unauthorized' }, { status: 401 }))
     }
+
+    // CSRF validation for state-changing request
+    const csrfError = await requireCsrf(request, session.userId)
+    if (csrfError) return csrfError
+
     await initializeDatabase()
 
     const parsed = safeParseWithError(

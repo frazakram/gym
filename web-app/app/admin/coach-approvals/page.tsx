@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { GlassCard } from '@/components/ui/GlassCard'
 import { SectionHeader } from '@/components/ui/SectionHeader'
 import { AnimatedButton } from '@/components/ui/AnimatedButton'
+import { csrfFetch } from '@/lib/useCsrf'
 
 type AdminCoachRow = {
   id: number
@@ -102,7 +103,7 @@ export default function AdminCoachApprovalsPage() {
   const setStatus = async (coachId: number, status: (typeof STATUS)[number]) => {
     try {
       const admin_notes = (notesDraft[coachId] || '').trim() || null
-      const res = await fetch(`/api/admin/coaches/${coachId}`, {
+      const res = await csrfFetch(`/api/admin/coaches/${coachId}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ status, admin_notes }),

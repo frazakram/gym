@@ -223,7 +223,7 @@ export function CoachView({
   const cancelBooking = async (id: number) => {
     setMutatingBookingId(id)
     try {
-      const res = await fetch(`/api/coach/bookings/${id}`, {
+      const res = await csrfFetch(`/api/coach/bookings/${id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ action: 'cancel' }),
@@ -250,7 +250,7 @@ export function CoachView({
     if (!ok) return
     setMutatingBookingId(id)
     try {
-      const res = await fetch(`/api/coach/bookings/${id}`, { method: 'DELETE' })
+      const res = await csrfFetch(`/api/coach/bookings/${id}`, { method: 'DELETE' })
       const data = await res.json().catch(() => ({}))
       if (!res.ok) {
         const msg = typeof data?.error === 'string' && data.error.length < 200

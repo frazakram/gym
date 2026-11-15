@@ -91,3 +91,13 @@ export function greeting(page: Page) {
 export async function openProfileTab(page: Page): Promise<void> {
   await page.locator('nav button:has(svg.lucide-user)').first().click();
 }
+
+/** Books the default coach through the real API (user must have premium/trial access). */
+export async function bookDefaultCoachViaApi(page: Page): Promise<number> {
+  const res = await page.request.post('/api/coach/book', {
+    data: { userName: 'E2E Tester', userEmail: 'e2e@example.com', userPhone: '+919800000000', message: 'E2E booking' },
+    headers: await csrfHeader(page),
+  });
+  expect(res.status(), await res.text()).toBe(200);
+  return (await res.json()).bookingId;
+}

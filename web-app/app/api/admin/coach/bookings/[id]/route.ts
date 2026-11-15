@@ -1,4 +1,5 @@
 import { withCors } from "@/lib/corsMiddleware";
+import { requireCsrf } from "@/lib/csrf";
 import { toErrorResponse } from "@/lib/api-errors";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
@@ -17,6 +18,10 @@ export async function PATCH(req: NextRequest, ctx: { params: Promise<{ id: strin
   try {
     const session = await getSession();
     if (!session) return withCors(NextResponse.json({ error: "Unauthorized" }, { status: 401 }));
+
+    // CSRF validation for state-changing request
+    const csrfError = await requireCsrf(req, session.userId);
+    if (csrfError) return csrfError;
 
     const ok = await isAdminUser(session.userId);
     if (!ok) return withCors(NextResponse.json({ error: "Forbidden" }, { status: 403 }));

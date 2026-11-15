@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { withCors } from '@/lib/corsMiddleware';
+import { requireCsrf } from '@/lib/csrf';
 import { asAiProviderError, toErrorResponse, UserFacingError } from "@/lib/api-errors";
 import OpenAI from 'openai';
 import { getSession } from '@/lib/auth';
@@ -45,6 +46,10 @@ export async function POST(req: NextRequest) {
   if (!session) {
     return withCors(NextResponse.json({ error: 'Unauthorized' }, { status: 401 }));
   }
+
+  // CSRF validation for state-changing request
+  const csrfError = await requireCsrf(req, session.userId);
+  if (csrfError) return csrfError;
 
   await initializeDatabase();
 

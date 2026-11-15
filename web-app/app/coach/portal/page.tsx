@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { GlassCard } from '@/components/ui/GlassCard'
 import { SectionHeader } from '@/components/ui/SectionHeader'
 import { AnimatedButton } from '@/components/ui/AnimatedButton'
+import { csrfFetch } from '@/lib/useCsrf'
 
 export default function CoachPortalPage() {
   const router = useRouter()
@@ -101,7 +102,7 @@ export default function CoachPortalPage() {
         phone: phone.trim() || null,
         email: email.trim() || null,
       }
-      const res = await fetch('/api/coach/me', {
+      const res = await csrfFetch('/api/coach/me', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),

@@ -1,4 +1,5 @@
 import { withCors } from "@/lib/corsMiddleware";
+import { requireCsrf } from "@/lib/csrf";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { getSession } from "@/lib/auth";
@@ -22,6 +23,10 @@ function minutesUntil(d: Date): number {
 export async function PATCH(req: NextRequest, ctx: { params: Promise<{ id: string }> }) {
   const session = await getSession();
   if (!session) return withCors(NextResponse.json({ error: "Unauthorized" }, { status: 401 }));
+
+  // CSRF validation for state-changing request
+  const csrfError = await requireCsrf(req, session.userId);
+  if (csrfError) return csrfError;
 
   await initializeDatabase();
 
@@ -61,9 +66,13 @@ export async function PATCH(req: NextRequest, ctx: { params: Promise<{ id: strin
   return withCors(NextResponse.json({ error: "Unsupported action" }, { status: 400 }));
 }
 
-export async function DELETE(_req: NextRequest, ctx: { params: Promise<{ id: string }> }) {
+export async function DELETE(req: NextRequest, ctx: { params: Promise<{ id: string }> }) {
   const session = await getSession();
   if (!session) return withCors(NextResponse.json({ error: "Unauthorized" }, { status: 401 }));
+
+  // CSRF validation for state-changing request
+  const csrfError = await requireCsrf(req, session.userId);
+  if (csrfError) return csrfError;
 
   await initializeDatabase();
 

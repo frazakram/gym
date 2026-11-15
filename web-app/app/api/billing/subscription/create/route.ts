@@ -1,4 +1,5 @@
 import { withCors } from "@/lib/corsMiddleware";
+import { requireCsrf } from "@/lib/csrf";
 import { toErrorResponse } from "@/lib/api-errors";
 import { NextRequest, NextResponse } from "next/server";
 import Razorpay from "razorpay";
@@ -12,6 +13,10 @@ export async function POST(req: NextRequest) {
   try {
     const session = await getSession();
     if (!session) return withCors(NextResponse.json({ error: "Unauthorized" }, { status: 401 }));
+
+    // CSRF validation for state-changing request
+    const csrfError = await requireCsrf(req, session.userId);
+    if (csrfError) return csrfError;
 
     await initializeDatabase();
 
@@ -29,8 +34,6 @@ export async function POST(req: NextRequest) {
     }
 
     const razorpay = new Razorpay({ key_id: keyId, key_secret: keySecret });
-
-    void req; // payload not needed
 
     const params = {
       plan_id: planId,

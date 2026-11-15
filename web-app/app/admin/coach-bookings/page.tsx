@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { GlassCard } from '@/components/ui/GlassCard'
 import { SectionHeader } from '@/components/ui/SectionHeader'
 import { AnimatedButton } from '@/components/ui/AnimatedButton'
+import { csrfFetch } from '@/lib/useCsrf'
 
 type AdminBooking = {
   id: number
@@ -96,7 +97,7 @@ export default function AdminCoachBookingsPage() {
 
   const updateStatus = async (id: number, nextStatus: (typeof STATUS_OPTIONS)[number]) => {
     try {
-      const res = await fetch(`/api/admin/coach/bookings/${id}`, {
+      const res = await csrfFetch(`/api/admin/coach/bookings/${id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ status: nextStatus }),
