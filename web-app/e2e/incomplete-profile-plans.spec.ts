@@ -18,8 +18,10 @@ test('generating a routine with an incomplete profile asks for the profile inste
 
   await page.getByRole('button', { name: 'Generate My Routine' }).first().click();
 
-  // Errors show as a toast and an "Oops!" dialog (existing dashboard behaviour).
-  await expect(page.getByText(/Complete your profile/).first()).toBeVisible();
+  // Shown once, as a toast: the dashboard used to repeat every error in an
+  // "Oops!" dialog as well.
+  await expect(page.getByText(/Complete your profile/)).toBeVisible();
+  await expect(page.getByText('Oops!')).toHaveCount(0);
   await expect(page.getByRole('navigation').getByRole('button', { name: 'Profile', exact: true })).toHaveAttribute('aria-current', 'page');
   expect(generationRequests).toHaveLength(0);
 });

@@ -581,18 +581,6 @@ export default function DashboardPage() {
     }
   }
 
-  useEffect(() => {
-    if (error) {
-      setModalConfig({
-        type: 'error',
-        title: 'Oops!',
-        message: error,
-        emoji: '⚠️',
-        onCancel: () => setModalConfig(null)
-      })
-    }
-  }, [error])
-
   function mondayOfThisWeekLocal(d: Date): Date {
     // Mon=0..Sun=6
     const dayIdx = (d.getDay() + 6) % 7
