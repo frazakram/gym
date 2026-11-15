@@ -264,7 +264,7 @@ An independent mutation review of Phase 0/1 (39 deliberate breakages) checked 16
 | P1-9 Rules-of-Hooks violations | Fixed; rule is an error again | `e65507c` |
 | P1-10 Undeclared openai/langsmith | Fixed; lint blocks undeclared imports | `8e7de1b` |
 | P1-11 CSRF gaps | Fixed on all 10 handlers, client calls use csrfFetch | `e218eaf` |
-| P1-12 / P1-13 Giant files, duplicate AI prompt code | Open (Phase 2) | |
+| P1-12 / P1-13 Giant files, duplicate AI prompt code | Fixed (Phase 2): db.ts split into 13 modules; DashboardClient 1,799 -> 1,402 lines via tested hooks; identical prompt sections shared, both prompts snapshot-tested (the two providers' instruction texts intentionally differ) | `8ecec92`, `6d630e5`, `717a6e0`..`eeb4a46` |
 | P2 Raw error messages to clients | Fixed: UserFacingError / generic 500; AI provider errors mapped; diet route surfaces provider errors | `4905872`, `25ed476`, `d7aa900` |
 | P2 Stateless sessions, no revocation | Fixed: users.session_version checked per request, bumped on logout (local p50 0.38 ms per check) | `aea58a0` |
 | P2 CORS `*` on every response | Fixed: removed (same-origin app and TWA) | `5337578` |
@@ -281,3 +281,20 @@ Still open (P2, scheduled for later phases):
 - eslint-config-next 16.4.x adds React-compiler lint rules that report new errors; adopt deliberately in Phase 2.
 - LangChain family upgrade (clears the last high advisory, langsmith).
 - 179 lint warnings (no errors).
+
+## 8. Phase 2 (architecture) status, closed at `phase-2-done`
+
+Done (behaviour-preserving, each proven):
+- `lib/db.ts` (3,563 lines) split into `lib/db/*` per domain; 144 declarations verified verbatim, public API identical (`8ecec92`).
+- Routine prompts: the identical sections shared in `lib/routine-prompt-sections.ts`; both providers' full prompts snapshot-tested (`6d630e5`).
+- `DashboardClient.tsx` 1,799 -> 1,402 lines: `useAiSettings`, `usePremiumStatus`, `useGymPhotos`, `useBodyPhotos`, `useWorkoutProgress(+Actions)`, each preceded by new e2e characterization tests; dead code removed.
+- Static invariant test: every state-changing API handler must call `getSession()` and `requireCsrf()` (explicit allowlist with reasons) (`ceaec27`).
+- Startup configuration validation (`lib/env.ts`, `instrumentation.ts`) (`9b74f29`).
+
+Deliberately deferred (owner decision 2026-11-15, moving to Phase 4):
+- Service layer: move business rules (coach booking rules, routine generation orchestration) out of route handlers; best done route by route with feature work.
+- One shared route wrapper for ~60 routes (boilerplate; the security part is already enforced by the invariant test).
+- Further `DashboardClient` splitting (remaining code is the orchestration layer: routine history, diet, profile form, generation).
+- Adopting eslint-config-next 16.4 React-compiler rules; 172 lint warnings (0 errors).
+- Unifying the two providers' routine instruction texts (a product decision).
+
