@@ -374,14 +374,19 @@ export function safeParseWithError<T>(
   if (result.success) {
     return { success: true, data: result.data };
   }
-  
-  // Format Zod errors into a readable message
-  const errors = result.error.issues.map((e) => {
-    const path = e.path.length > 0 ? `${e.path.join(".")}: ` : "";
-    return `${path}${e.message}`;
-  });
-  
-  return { success: false, error: errors.join("; ") };
+  return { success: false, error: formatZodError(result.error) };
+}
+
+/**
+ * Formats Zod issues as a readable message: "path: message; path: message".
+ */
+export function formatZodError(error: z.ZodError): string {
+  return error.issues
+    .map((issue) => {
+      const path = issue.path.length > 0 ? `${issue.path.join(".")}: ` : "";
+      return `${path}${issue.message}`;
+    })
+    .join("; ");
 }
 
 /**

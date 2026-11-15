@@ -1,4 +1,5 @@
 import { withCors } from "@/lib/corsMiddleware";
+import { toErrorResponse } from "@/lib/api-errors";
 import { NextRequest, NextResponse } from 'next/server';
 import { initializeDatabase, saveDiet } from '@/lib/db';
 import { getSession } from '@/lib/auth';
@@ -36,8 +37,6 @@ export async function POST(request: NextRequest) {
 
     return withCors(NextResponse.json({ success: true, dietId: savedId }, { status: 200 }));
   } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : String(error);
-    console.error('Error saving diet:', message);
-    return withCors(NextResponse.json({ error: message }, { status: 500 }));
+    return withCors(toErrorResponse(error, "diet/save"));
   }
 }

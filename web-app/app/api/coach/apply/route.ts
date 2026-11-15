@@ -1,4 +1,5 @@
 import { withCors } from "@/lib/corsMiddleware";
+import { toErrorResponse } from "@/lib/api-errors";
 import { NextRequest, NextResponse } from "next/server";
 import { getSession } from "@/lib/auth";
 import { createCoachApplication, initializeDatabase } from "@/lib/db";
@@ -44,7 +45,6 @@ export async function POST(req: NextRequest) {
 
     return withCors(NextResponse.json({ coachId: out.coachId, status: out.status }, { status: 200 }));
   } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : String(error);
-    return withCors(NextResponse.json({ error: message || "Internal server error" }, { status: 500 }));
+    return withCors(toErrorResponse(error, "coach/apply"));
   }
 }

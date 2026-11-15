@@ -1,4 +1,5 @@
 import { withCors } from "@/lib/corsMiddleware";
+import { toErrorResponse } from "@/lib/api-errors";
 import { NextRequest, NextResponse } from 'next/server';
 import { getLatestDiet, getDietByWeek, initializeDatabase } from '@/lib/db';
 import { getSession } from '@/lib/auth';
@@ -35,8 +36,6 @@ export async function GET(request: NextRequest) {
     }, { status: 200 }));
 
   } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : String(error);
-    console.error('Error fetching diet:', message);
-    return withCors(NextResponse.json({ error: message }, { status: 500 }));
+    return withCors(toErrorResponse(error, "diet/get"));
   }
 }

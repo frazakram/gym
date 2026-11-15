@@ -1,4 +1,5 @@
 import { withCors } from "@/lib/corsMiddleware";
+import { toErrorResponse } from "@/lib/api-errors";
 import { NextRequest, NextResponse } from 'next/server';
 import { createUser, initializeDatabase } from '@/lib/db';
 import { createSession } from '@/lib/auth';
@@ -88,11 +89,6 @@ export async function POST(request: NextRequest) {
 
     return withCors(res);
   } catch (error) {
-    console.error('Registration error:', error);
-    const message = error instanceof Error ? error.message : 'Internal server error';
-    return withCors(NextResponse.json(
-      { error: message },
-      { status: 500 }
-    ));
+    return withCors(toErrorResponse(error, "auth/register"));
   }
 }
