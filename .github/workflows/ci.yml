@@ -10,8 +10,10 @@ permissions:
   contents: read
 
 concurrency:
-  group: ci-${{ github.ref }}
-  # Superseded PR/dev runs are cancelled; every main run completes.
+  # Each main commit gets its own group, so every commit on main is fully
+  # checked (GitHub keeps only one pending run per group). Other refs share a
+  # group per ref and superseded runs are cancelled.
+  group: ci-${{ github.ref == 'refs/heads/main' && github.sha || github.ref }}
   cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
 
 jobs:
