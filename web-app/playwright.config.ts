@@ -11,6 +11,8 @@ import { defineConfig, devices } from '@playwright/test';
 /**
  * See https://playwright.dev/docs/test-configuration.
  */
+const BASE_URL = process.env.E2E_BASE_URL || 'http://localhost:3000';
+
 export default defineConfig({
   testDir: './e2e',
   /* Run tests in files in parallel */
@@ -26,7 +28,22 @@ export default defineConfig({
   /* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */
   use: {
     /* Base URL to use in actions like `await page.goto('')`. */
-    baseURL: 'http://localhost:3000',
+    baseURL: BASE_URL,
+
+    /* Start every test as a returning visitor who already answered the cookie
+       banner; otherwise the fixed banner covers the auth form's submit button. */
+    storageState: {
+      cookies: [],
+      origins: [
+        {
+          origin: BASE_URL,
+          localStorage: [
+            { name: 'gymbro-cookie-consent-v1', value: 'accepted' },
+            { name: 'cookiesAccepted', value: 'true' },
+          ],
+        },
+      ],
+    },
 
     /* Collect trace when retrying the failed test. See https://playwright.dev/docs/trace-viewer */
     trace: 'on-first-retry',
