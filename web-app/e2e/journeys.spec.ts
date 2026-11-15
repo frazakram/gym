@@ -14,7 +14,7 @@ import {
 // Deterministic: no AI calls (routines are seeded through the API).
 
 test.describe('Core journeys', () => {
-  test('new user: register in the UI lands on onboarding; "Skip" bounces back (current behaviour)', async ({ page }) => {
+  test('new user: register in the UI lands on onboarding; "Skip" opens the dashboard', async ({ page }) => {
     const username = uniqueUsername('journey');
     await page.goto('/login');
     await page.getByRole('button', { name: 'Register', exact: true }).click();
@@ -25,17 +25,12 @@ test.describe('Core journeys', () => {
     await expect(page).toHaveURL(/\/onboarding/);
     await expect(page.getByText('Your Goal', { exact: true }).first()).toBeVisible();
 
-    // Known UX bug (AUDIT backlog): "Skip for now" routes to /dashboard, which sees no
-    // profile and immediately router.replace()s back to /onboarding, so a new user
-    // cannot actually skip. Pinned here so a fix is a deliberate, visible change.
-    const visited: string[] = [];
-    page.on('framenavigated', (f) => {
-      if (f === page.mainFrame()) visited.push(new URL(f.url()).pathname);
-    });
+    // Skip used to bounce back to /onboarding (fixed in 9af4140; details in
+    // e2e/onboarding-skip.spec.ts).
     await page.getByRole('button', { name: /Skip for now/ }).click();
-    await expect.poll(() => visited).toContain('/dashboard');
-    await expect(page).toHaveURL(/\/onboarding/);
-    await expect(page.getByText('Your Goal', { exact: true }).first()).toBeVisible();
+    await expect(page).toHaveURL(/\/dashboard$/);
+    await page.waitForLoadState('networkidle');
+    await expect(page).toHaveURL(/\/dashboard$/);
   });
 
   test('returning user with a profile: UI login -> dashboard greeting', async ({ page }) => {
