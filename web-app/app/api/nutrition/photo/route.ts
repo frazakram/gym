@@ -1,4 +1,3 @@
-import { withCors } from "@/lib/corsMiddleware";
 import { NextRequest, NextResponse } from "next/server";
 import { getSession } from "@/lib/auth";
 import { requireCsrf } from "@/lib/csrf";
@@ -24,7 +23,7 @@ export const runtime = "nodejs";
 export async function POST(request: NextRequest) {
   try {
     const session = await getSession();
-    if (!session) return withCors(NextResponse.json({ error: "Unauthorized" }, { status: 401 }));
+    if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
     const csrfError = await requireCsrf(request, session.userId);
     if (csrfError) return csrfError;
@@ -34,13 +33,11 @@ export async function POST(request: NextRequest) {
     // Photo recognition is the most expensive call — keep it tightly limited.
     const rl = await rateLimit({ key: `nutri:photo:${session.userId}`, limit: 20, windowSeconds: 3600 });
     if (!rl.allowed) {
-      return withCors(
-        NextResponse.json({ error: "Photo limit reached, try again later" }, { status: 429, headers: { "Retry-After": String(rl.retryAfterSeconds) } })
-      );
+      return NextResponse.json({ error: "Photo limit reached, try again later" }, { status: 429, headers: { "Retry-After": String(rl.retryAfterSeconds) } });
     }
 
     const parsed = safeParseWithError(PhotoRecognizeSchema, await request.json().catch(() => ({})));
-    if (!parsed.success) return withCors(NextResponse.json({ error: parsed.error }, { status: 400 }));
+    if (!parsed.success) return NextResponse.json({ error: parsed.error }, { status: 400 });
 
     const image = parsed.data.image;
     let result: PhotoRecognitionResult = { ok: false, reason: "not_configured", items: [] };
@@ -57,9 +54,9 @@ export async function POST(request: NextRequest) {
 
     // Always 200: the body's `ok`/`reason` tells the client whether to show the
     // draft or fall back to manual search.
-    return withCors(NextResponse.json(result));
+    return NextResponse.json(result);
   } catch (error) {
     console.error("photo recognition failed:", error);
-    return withCors(NextResponse.json({ ok: false, reason: "error", items: [] }, { status: 200 }));
+    return NextResponse.json({ ok: false, reason: "error", items: [] }, { status: 200 });
   }
 }

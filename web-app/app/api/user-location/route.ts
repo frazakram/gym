@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
-import { withCors } from '@/lib/corsMiddleware'
 import { requireCsrf } from '@/lib/csrf'
 import { getSession } from '@/lib/auth'
 import { initializeDatabase, countryToRegion, saveNationality } from '@/lib/db'
@@ -53,13 +52,13 @@ export async function GET() {
   try {
     const session = await getSession()
     if (!session) {
-      return withCors(NextResponse.json({ error: 'Unauthorized' }, { status: 401 }))
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
     await initializeDatabase()
 
     const cacheKey = `location:${session.userId}`
     const cached = await redisGetJson<StoredLocation>(cacheKey)
-    if (cached) return withCors(NextResponse.json(cached))
+    if (cached) return NextResponse.json(cached)
 
     const pool = getPool()
     await ensureLocationColumns(pool)
@@ -85,12 +84,10 @@ export async function GET() {
     }
 
     await redisSetJson(cacheKey, payload, 300)
-    return withCors(NextResponse.json(payload))
+    return NextResponse.json(payload)
   } catch (error) {
     console.error('GET /api/user-location failed:', error)
-    return withCors(
-      NextResponse.json({ lat: null, lng: null, city: null, location_updated_at: null }),
-    )
+    return NextResponse.json({ lat: null, lng: null, city: null, location_updated_at: null })
   }
 }
 
@@ -98,7 +95,7 @@ export async function POST(request: NextRequest) {
   try {
     const session = await getSession()
     if (!session) {
-      return withCors(NextResponse.json({ error: 'Unauthorized' }, { status: 401 }))
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
     // CSRF validation for state-changing request
@@ -112,7 +109,7 @@ export async function POST(request: NextRequest) {
       await request.json().catch(() => ({})),
     )
     if (!parsed.success) {
-      return withCors(NextResponse.json({ error: parsed.error }, { status: 400 }))
+      return NextResponse.json({ error: parsed.error }, { status: 400 })
     }
 
     const { lat, lng } = parsed.data
@@ -168,16 +165,14 @@ export async function POST(request: NextRequest) {
       // ignore cache bust failures
     }
 
-    return withCors(
-      NextResponse.json({
+    return NextResponse.json({
         ok: true,
         city: cleanCity,
         nationality: appliedNationality,
         region: appliedRegion,
-      }),
-    )
+      })
   } catch (error) {
     console.error('POST /api/user-location failed:', error)
-    return withCors(NextResponse.json({ error: 'Failed to save location' }, { status: 500 }))
+    return NextResponse.json({ error: 'Failed to save location' }, { status: 500 })
   }
 }

@@ -1,4 +1,3 @@
-import { withCors } from "@/lib/corsMiddleware";
 import { requireCsrf } from "@/lib/csrf";
 import { NextRequest, NextResponse } from 'next/server';
 import { getSession } from '@/lib/auth';
@@ -46,7 +45,7 @@ export async function POST(request: NextRequest) {
     const session = await getSession();
 
     if (!session) {
-      return withCors(NextResponse.json({ error: 'Unauthorized' }, { status: 401 }));
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     // CSRF validation for state-changing request
@@ -62,33 +61,33 @@ export async function POST(request: NextRequest) {
     // first so a refused request does no further work.
     if (!(typeof api_key === 'string' && api_key.trim())) {
       const costGuard = await checkPaidAiLimit('gym_analyze', session.userId);
-      if (!costGuard.ok) return withCors(paidAiLimitResponse(costGuard));
+      if (!costGuard.ok) return paidAiLimitResponse(costGuard);
     }
 
     // Images arrive inline (base64 / data URLs) from the client. The server never
     // fetches a client-supplied URL: that was an SSRF vector with no caller.
     if (!Array.isArray(images) || images.length === 0) {
-      return withCors(NextResponse.json(
+      return NextResponse.json(
         { error: 'No images provided' },
         { status: 400 }
-      ));
+      );
     }
     const resolvedImages: string[] = images;
 
     if (resolvedImages.length > 6) {
-      return withCors(NextResponse.json(
+      return NextResponse.json(
         { error: 'Maximum 6 images allowed' },
         { status: 400 }
-      ));
+      );
     }
 
     // Get OpenAI API key (prefer client key from AI Settings)
     const apiKey = (typeof api_key === 'string' ? api_key.trim() : '') || process.env.OPENAI_API_KEY;
     if (!apiKey) {
-      return withCors(NextResponse.json(
+      return NextResponse.json(
         { error: 'OpenAI API key not configured. Add it in AI Settings (sidebar menu).' },
         { status: 500 }
-      ));
+      );
     }
 
     // Build vision API request
@@ -130,20 +129,20 @@ export async function POST(request: NextRequest) {
     if (!response.ok) {
       const errorText = await response.text();
       console.error('OpenAI API error:', errorText);
-      return withCors(NextResponse.json(
+      return NextResponse.json(
         { error: 'Failed to analyze images' },
         { status: response.status }
-      ));
+      );
     }
 
     const data = await response.json();
     const content = data.choices?.[0]?.message?.content;
 
     if (!content) {
-      return withCors(NextResponse.json(
+      return NextResponse.json(
         { error: 'No analysis returned from AI' },
         { status: 500 }
-      ));
+      );
     }
 
     // Parse the JSON response
@@ -161,19 +160,19 @@ export async function POST(request: NextRequest) {
       };
     } catch (parseError) {
       console.error('Failed to parse AI response:', parseError);
-      return withCors(NextResponse.json(
+      return NextResponse.json(
         { error: 'Invalid analysis format' },
         { status: 500 }
-      ));
+      );
     }
 
     const hasExistingPhoto = await hasGymPhotos(session.userId);
-    return withCors(NextResponse.json({ analysis, hasExistingPhoto }, { status: 200 }));
+    return NextResponse.json({ analysis, hasExistingPhoto }, { status: 200 });
   } catch (error) {
     console.error('Error analyzing gym equipment:', error);
-    return withCors(NextResponse.json(
+    return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }
-    ));
+    );
   }
 }

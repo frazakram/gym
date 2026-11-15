@@ -1,4 +1,3 @@
-import { withCors } from "@/lib/corsMiddleware";
 import { NextRequest, NextResponse } from "next/server";
 import { initializeDatabase, listApprovedCoachesPublic } from "@/lib/db";
 
@@ -10,5 +9,5 @@ export async function GET(req: NextRequest) {
 
   await initializeDatabase();
   const coaches = await listApprovedCoachesPublic(limit);
-  return withCors(NextResponse.json({ coaches }, { status: 200 }));
+  return NextResponse.json({ coaches }, { status: 200 });
 }

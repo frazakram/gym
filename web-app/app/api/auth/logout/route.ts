@@ -1,4 +1,3 @@
-import { withCors } from "@/lib/corsMiddleware";
 import { NextResponse } from 'next/server';
 
 export async function POST() {
@@ -12,12 +11,12 @@ export async function POST() {
       maxAge: 0,
       path: '/',
     });
-    return withCors(res);
+    return res;
   } catch (error) {
     console.error('Logout error:', error);
-    return withCors(NextResponse.json(
+    return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }
-    ));
+    );
   }
 }

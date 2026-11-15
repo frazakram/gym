@@ -1,4 +1,3 @@
-import { withCors } from "@/lib/corsMiddleware";
 import { requireCsrf } from "@/lib/csrf";
 import { toErrorResponse } from "@/lib/api-errors";
 import { NextRequest, NextResponse } from "next/server";
@@ -17,19 +16,19 @@ const BodySchema = z.object({
 export async function PATCH(req: NextRequest, ctx: { params: Promise<{ id: string }> }) {
   try {
     const session = await getSession();
-    if (!session) return withCors(NextResponse.json({ error: "Unauthorized" }, { status: 401 }));
+    if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
     // CSRF validation for state-changing request
     const csrfError = await requireCsrf(req, session.userId);
     if (csrfError) return csrfError;
 
     const ok = await isAdminUser(session.userId);
-    if (!ok) return withCors(NextResponse.json({ error: "Forbidden" }, { status: 403 }));
+    if (!ok) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
     const { id } = await ctx.params;
     const bookingId = Math.floor(Number(id));
     if (!Number.isFinite(bookingId) || bookingId <= 0) {
-      return withCors(NextResponse.json({ error: "Invalid booking id" }, { status: 400 }));
+      return NextResponse.json({ error: "Invalid booking id" }, { status: 400 });
     }
 
     const raw = await req.json().catch(() => ({}));
@@ -37,7 +36,7 @@ export async function PATCH(req: NextRequest, ctx: { params: Promise<{ id: strin
 
     await initializeDatabase();
     const updated = await updateCoachBookingStatusAdmin({ id: bookingId, status: body.status });
-    if (!updated) return withCors(NextResponse.json({ error: "Not found" }, { status: 404 }));
+    if (!updated) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
     // If booking is confirmed, share contact details with coach + notify user.
     if (body.status === "confirmed") {
@@ -138,9 +137,9 @@ export async function PATCH(req: NextRequest, ctx: { params: Promise<{ id: strin
       }
     }
 
-    return withCors(NextResponse.json({ ok: true }, { status: 200 }));
+    return NextResponse.json({ ok: true }, { status: 200 });
   } catch (error: unknown) {
-    return withCors(toErrorResponse(error, "admin/coach-bookings"));
+    return toErrorResponse(error, "admin/coach-bookings");
   }
 }
 

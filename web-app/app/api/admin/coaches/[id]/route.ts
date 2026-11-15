@@ -1,4 +1,3 @@
-import { withCors } from "@/lib/corsMiddleware";
 import { requireCsrf } from "@/lib/csrf";
 import { toErrorResponse } from "@/lib/api-errors";
 import { NextRequest, NextResponse } from "next/server";
@@ -17,17 +16,17 @@ const BodySchema = z.object({
 export async function PATCH(req: NextRequest, ctx: { params: Promise<{ id: string }> }) {
   try {
     const session = await getSession();
-    if (!session) return withCors(NextResponse.json({ error: "Unauthorized" }, { status: 401 }));
+    if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
     // CSRF validation for state-changing request
     const csrfError = await requireCsrf(req, session.userId);
     if (csrfError) return csrfError;
-    if (!(await isAdminUser(session.userId))) return withCors(NextResponse.json({ error: "Forbidden" }, { status: 403 }));
+    if (!(await isAdminUser(session.userId))) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
     const { id } = await ctx.params;
     const coachId = Math.floor(Number(id));
     if (!Number.isFinite(coachId) || coachId <= 0) {
-      return withCors(NextResponse.json({ error: "Invalid coach id" }, { status: 400 }));
+      return NextResponse.json({ error: "Invalid coach id" }, { status: 400 });
     }
 
     const raw = await req.json().catch(() => ({}));
@@ -39,9 +38,9 @@ export async function PATCH(req: NextRequest, ctx: { params: Promise<{ id: strin
       status: body.status,
       adminNotes: body.admin_notes ?? null,
     });
-    if (!ok) return withCors(NextResponse.json({ error: "Not found" }, { status: 404 }));
-    return withCors(NextResponse.json({ ok: true }, { status: 200 }));
+    if (!ok) return NextResponse.json({ error: "Not found" }, { status: 404 });
+    return NextResponse.json({ ok: true }, { status: 200 });
   } catch (error: unknown) {
-    return withCors(toErrorResponse(error, "admin/coaches"));
+    return toErrorResponse(error, "admin/coaches");
   }
 }

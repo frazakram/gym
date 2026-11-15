@@ -1,4 +1,3 @@
-import { withCors } from "@/lib/corsMiddleware";
 import { requireCsrf } from "@/lib/csrf";
 import { toErrorResponse } from "@/lib/api-errors";
 import { NextRequest, NextResponse } from "next/server";
@@ -12,7 +11,7 @@ export const runtime = "nodejs";
 export async function POST(req: NextRequest) {
   try {
     const session = await getSession();
-    if (!session) return withCors(NextResponse.json({ error: "Unauthorized" }, { status: 401 }));
+    if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
     // CSRF validation for state-changing request
     const csrfError = await requireCsrf(req, session.userId);
@@ -22,7 +21,7 @@ export async function POST(req: NextRequest) {
 
     const current = await getPremiumStatus(session.userId);
     if (current.premium) {
-      return withCors(NextResponse.json({ error: "You already have an active subscription." }, { status: 409 }));
+      return NextResponse.json({ error: "You already have an active subscription." }, { status: 409 });
     }
 
     const keyId = process.env.RAZORPAY_KEY_ID;
@@ -64,15 +63,15 @@ export async function POST(req: NextRequest) {
     // Invalidate cached billing status for this user (if Redis is configured)
     await redisDel(`billing_status:${session.userId}`);
 
-    return withCors(NextResponse.json(
+    return NextResponse.json(
       {
         keyId,
         subscriptionId: subscription.id,
         status: subscription.status,
       },
       { status: 200 }
-    ));
+    );
   } catch (error: unknown) {
-    return withCors(toErrorResponse(error, "billing/subscription/create"));
+    return toErrorResponse(error, "billing/subscription/create");
   }
 }

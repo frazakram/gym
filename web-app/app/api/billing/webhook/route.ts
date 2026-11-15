@@ -1,4 +1,3 @@
-import { withCors } from "@/lib/corsMiddleware";
 import { NextRequest, NextResponse } from "next/server";
 import crypto from "crypto";
 import Razorpay from "razorpay";
@@ -56,7 +55,7 @@ export async function POST(req: NextRequest) {
     const webhookSecret = requireEnv("RAZORPAY_WEBHOOK_SECRET");
 
     if (!verifyWebhookSignature(raw, sig, webhookSecret)) {
-      return withCors(NextResponse.json({ error: "Invalid signature" }, { status: 401 }));
+      return NextResponse.json({ error: "Invalid signature" }, { status: 401 });
     }
 
     await initializeDatabase();
@@ -64,7 +63,7 @@ export async function POST(req: NextRequest) {
     // Razorpay retries and occasionally redelivers events; each carries a unique id.
     const eventId = req.headers.get("x-razorpay-event-id")?.trim().slice(0, MAX_EVENT_ID_LENGTH) || null;
     if (eventId && (await hasProcessedRazorpayEvent(eventId))) {
-      return withCors(NextResponse.json({ ok: true, duplicate: true }, { status: 200 }));
+      return NextResponse.json({ ok: true, duplicate: true }, { status: 200 });
     }
 
     const body: unknown = JSON.parse(raw);
@@ -85,7 +84,7 @@ export async function POST(req: NextRequest) {
     })();
 
     if (!subscriptionId) {
-      return withCors(NextResponse.json({ ok: true, ignored: true }, { status: 200 }));
+      return NextResponse.json({ ok: true, ignored: true }, { status: 200 });
     }
 
     let sub: unknown = subEntity;
@@ -134,12 +133,12 @@ export async function POST(req: NextRequest) {
       await redisDel(`billing_status:${userId}`);
     }
 
-    return withCors(NextResponse.json({ ok: true }, { status: 200 }));
+    return NextResponse.json({ ok: true }, { status: 200 });
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : String(error);
     console.error("Razorpay webhook error:", message);
     // IMPORTANT: Return non-2xx so Razorpay retries the webhook delivery on transient failures.
     // (Signature verification failures are handled above with 401.)
-    return withCors(NextResponse.json({ ok: false, error: "Webhook processing failed" }, { status: 500 }));
+    return NextResponse.json({ ok: false, error: "Webhook processing failed" }, { status: 500 });
   }
 }

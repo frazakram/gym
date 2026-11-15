@@ -1,4 +1,3 @@
-import { withCors } from "@/lib/corsMiddleware";
 export const runtime = "nodejs";
 
 import { NextRequest, NextResponse } from "next/server";
@@ -38,9 +37,9 @@ export async function GET(_request: NextRequest) {
     return response;
   } catch (error) {
     console.error("CSRF token generation error:", error);
-    return withCors(NextResponse.json(
+    return NextResponse.json(
       { error: "Failed to generate CSRF token" },
       { status: 500 }
-    ));
+    );
   }
 }

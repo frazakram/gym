@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { withCors } from '@/lib/corsMiddleware';
 import { requireCsrf } from '@/lib/csrf';
 import { asAiProviderError, toErrorResponse, UserFacingError } from "@/lib/api-errors";
 import OpenAI from 'openai';
@@ -44,7 +43,7 @@ You MUST return a single JSON object (no prose, no markdown fences) with exactly
 export async function POST(req: NextRequest) {
   const session = await getSession();
   if (!session) {
-    return withCors(NextResponse.json({ error: 'Unauthorized' }, { status: 401 }));
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
   // CSRF validation for state-changing request
@@ -58,16 +57,16 @@ export async function POST(req: NextRequest) {
     const { images, api_key } = body;
 
     if (!images || !Array.isArray(images) || images.length === 0) {
-      return withCors(NextResponse.json({ error: 'At least one image is required' }, { status: 400 }));
+      return NextResponse.json({ error: 'At least one image is required' }, { status: 400 });
     }
 
     if (images.length > 2) {
-      return withCors(NextResponse.json({ error: 'Maximum 2 images allowed' }, { status: 400 }));
+      return NextResponse.json({ error: 'Maximum 2 images allowed' }, { status: 400 });
     }
 
     for (const img of images) {
       if (typeof img !== 'string' || !img.startsWith('data:image/')) {
-        return withCors(NextResponse.json({ error: 'Invalid image format. Must be base64 encoded.' }, { status: 400 }));
+        return NextResponse.json({ error: 'Invalid image format. Must be base64 encoded.' }, { status: 400 });
       }
     }
 
@@ -80,7 +79,7 @@ export async function POST(req: NextRequest) {
     // Cost guard: only calls paid with the server key are limited.
     if (!clientKey) {
       const costGuard = await checkPaidAiLimit('body_analyze', session.userId);
-      if (!costGuard.ok) return withCors(paidAiLimitResponse(costGuard));
+      if (!costGuard.ok) return paidAiLimitResponse(costGuard);
     }
     const response = await getOpenAI(clientKey).chat.completions.create({
       model: 'gpt-4o',
@@ -105,10 +104,10 @@ export async function POST(req: NextRequest) {
 
     if (refusal) {
       console.warn('[body/analyze] model refusal:', refusal);
-      return withCors(NextResponse.json(
+      return NextResponse.json(
         { error: 'The AI could not analyze this photo. Try a different photo — a clear, well-lit standing photo works best.' },
         { status: 422 },
-      ));
+      );
     }
     if (!content) throw new Error('No response from AI');
 
@@ -131,15 +130,15 @@ export async function POST(req: NextRequest) {
       };
     } catch (parseErr) {
       console.warn('[body/analyze] JSON parse failed. Raw content:', content?.slice(0, 500), 'err:', parseErr);
-      return withCors(NextResponse.json(
+      return NextResponse.json(
         { error: 'The AI response was not in the expected format. Please try again — if it keeps failing, try a different photo.' },
         { status: 502 },
-      ));
+      );
     }
 
     const hasExistingPhoto = await hasBodyPhotos(session.userId);
-    return withCors(NextResponse.json({ analysis, hasExistingPhoto }));
+    return NextResponse.json({ analysis, hasExistingPhoto });
   } catch (error) {
-    return withCors(toErrorResponse(asAiProviderError(error), 'body/analyze'));
+    return toErrorResponse(asAiProviderError(error), 'body/analyze');
   }
 }

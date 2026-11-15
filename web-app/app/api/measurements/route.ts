@@ -1,4 +1,3 @@
-import { withCors } from "@/lib/corsMiddleware";
 import { NextRequest, NextResponse } from "next/server";
 import { getSession } from "@/lib/auth";
 import { initializeDatabase, getBodyMeasurements, addBodyMeasurement, deleteBodyMeasurement } from "@/lib/db";
@@ -18,7 +17,7 @@ const AddMeasurementSchema = z.object({
 export async function GET(request: NextRequest) {
   try {
     const session = await getSession();
-    if (!session) return withCors(NextResponse.json({ error: "Unauthorized" }, { status: 401 }));
+    if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
     await initializeDatabase();
 
@@ -27,16 +26,16 @@ export async function GET(request: NextRequest) {
     const offset = Math.max(0, Number(searchParams.get("offset") ?? 0) || 0);
 
     const measurements = await getBodyMeasurements(session.userId, limit, offset);
-    return withCors(NextResponse.json({ measurements, limit, offset }));
+    return NextResponse.json({ measurements, limit, offset });
   } catch {
-    return withCors(NextResponse.json({ error: "Failed to fetch measurements" }, { status: 500 }));
+    return NextResponse.json({ error: "Failed to fetch measurements" }, { status: 500 });
   }
 }
 
 export async function POST(request: NextRequest) {
   try {
     const session = await getSession();
-    if (!session) return withCors(NextResponse.json({ error: "Unauthorized" }, { status: 401 }));
+    if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
     const csrfError = await requireCsrf(request, session.userId);
     if (csrfError) return csrfError;
@@ -46,30 +45,30 @@ export async function POST(request: NextRequest) {
     const body = await request.json().catch(() => ({}));
     const parsed = AddMeasurementSchema.safeParse(body);
     if (!parsed.success) {
-      return withCors(NextResponse.json({ error: parsed.error.issues[0]?.message || "Invalid input" }, { status: 400 }));
+      return NextResponse.json({ error: parsed.error.issues[0]?.message || "Invalid input" }, { status: 400 });
     }
 
     // Require at least one measurement value
     const { weight, waist, chest, arms, hips } = parsed.data;
     if (weight == null && waist == null && chest == null && arms == null && hips == null) {
-      return withCors(NextResponse.json({ error: "At least one measurement is required" }, { status: 400 }));
+      return NextResponse.json({ error: "At least one measurement is required" }, { status: 400 });
     }
 
     const measurement = await addBodyMeasurement(session.userId, parsed.data);
     if (!measurement) {
-      return withCors(NextResponse.json({ error: "Failed to save measurement" }, { status: 500 }));
+      return NextResponse.json({ error: "Failed to save measurement" }, { status: 500 });
     }
 
-    return withCors(NextResponse.json({ measurement }, { status: 201 }));
+    return NextResponse.json({ measurement }, { status: 201 });
   } catch {
-    return withCors(NextResponse.json({ error: "Failed to save measurement" }, { status: 500 }));
+    return NextResponse.json({ error: "Failed to save measurement" }, { status: 500 });
   }
 }
 
 export async function DELETE(request: NextRequest) {
   try {
     const session = await getSession();
-    if (!session) return withCors(NextResponse.json({ error: "Unauthorized" }, { status: 401 }));
+    if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
     const csrfError = await requireCsrf(request, session.userId);
     if (csrfError) return csrfError;
@@ -77,16 +76,16 @@ export async function DELETE(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const id = Number(searchParams.get("id"));
     if (!id || isNaN(id)) {
-      return withCors(NextResponse.json({ error: "Invalid measurement ID" }, { status: 400 }));
+      return NextResponse.json({ error: "Invalid measurement ID" }, { status: 400 });
     }
 
     const deleted = await deleteBodyMeasurement(session.userId, id);
     if (!deleted) {
-      return withCors(NextResponse.json({ error: "Measurement not found" }, { status: 404 }));
+      return NextResponse.json({ error: "Measurement not found" }, { status: 404 });
     }
 
-    return withCors(NextResponse.json({ success: true }));
+    return NextResponse.json({ success: true });
   } catch {
-    return withCors(NextResponse.json({ error: "Failed to delete measurement" }, { status: 500 }));
+    return NextResponse.json({ error: "Failed to delete measurement" }, { status: 500 });
   }
 }

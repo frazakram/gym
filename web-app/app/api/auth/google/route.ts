@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from "next/server";
-import { withCors } from "@/lib/corsMiddleware";
 import { createRemoteJWKSet, jwtVerify } from "jose";
 import { createSession } from "@/lib/auth";
 import {
@@ -20,17 +19,13 @@ export async function POST(request: NextRequest) {
   try {
     const clientId = process.env.GOOGLE_CLIENT_ID || "";
     if (!clientId) {
-      return withCors(
-        NextResponse.json({ error: "Authentication failed" }, { status: 401 })
-      );
+      return NextResponse.json({ error: "Authentication failed" }, { status: 401 });
     }
 
     const body = await request.json().catch(() => ({}));
     const idToken: string | undefined = body?.idToken;
     if (!idToken) {
-      return withCors(
-        NextResponse.json({ error: "Authentication failed" }, { status: 401 })
-      );
+      return NextResponse.json({ error: "Authentication failed" }, { status: 401 });
     }
 
     const { payload } = await jwtVerify(idToken, GOOGLE_JWKS, {
@@ -44,9 +39,7 @@ export async function POST(request: NextRequest) {
     const sub = typeof payload.sub === "string" ? payload.sub : "";
 
     if (!email || !emailVerified || !sub) {
-      return withCors(
-        NextResponse.json({ error: "Authentication failed" }, { status: 401 })
-      );
+      return NextResponse.json({ error: "Authentication failed" }, { status: 401 });
     }
 
     await initializeDatabase();
@@ -57,9 +50,7 @@ export async function POST(request: NextRequest) {
       userId = created?.id ?? null;
     }
     if (!userId) {
-      return withCors(
-        NextResponse.json({ error: "Authentication failed" }, { status: 401 })
-      );
+      return NextResponse.json({ error: "Authentication failed" }, { status: 401 });
     }
 
     const [token, dbUser, profile] = await Promise.all([
@@ -70,8 +61,7 @@ export async function POST(request: NextRequest) {
 
     const profileComplete = !!(profile?.name && profile?.goal && profile?.level);
 
-    return withCors(
-      NextResponse.json(
+    return NextResponse.json(
         {
           token,
           user: {
@@ -82,15 +72,12 @@ export async function POST(request: NextRequest) {
           profileComplete,
         },
         { status: 200 }
-      )
-    );
+      );
   } catch {
-    return withCors(
-      NextResponse.json({ error: "Authentication failed" }, { status: 401 })
-    );
+    return NextResponse.json({ error: "Authentication failed" }, { status: 401 });
   }
 }
 
 export async function OPTIONS() {
-  return withCors(new NextResponse(null, { status: 204 }));
+  return new NextResponse(null, { status: 204 });
 }

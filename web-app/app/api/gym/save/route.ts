@@ -1,4 +1,3 @@
-import { withCors } from "@/lib/corsMiddleware";
 import { NextRequest, NextResponse } from "next/server";
 import { getSession } from "@/lib/auth";
 import { initializeDatabase, saveUserGym } from "@/lib/db";
@@ -12,7 +11,7 @@ export async function POST(request: NextRequest) {
   try {
     const session = await getSession();
     if (!session) {
-      return withCors(NextResponse.json({ error: "Unauthorized" }, { status: 401 }));
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     const csrfError = await requireCsrf(request, session.userId);
@@ -23,7 +22,7 @@ export async function POST(request: NextRequest) {
     const rawBody = await request.json().catch(() => ({}));
     const parsed = safeParseWithError(GymSaveSchema, rawBody);
     if (!parsed.success) {
-      return withCors(NextResponse.json({ error: parsed.error }, { status: 400 }));
+      return NextResponse.json({ error: parsed.error }, { status: 400 });
     }
 
     await saveUserGym(session.userId, parsed.data);
@@ -42,9 +41,9 @@ export async function POST(request: NextRequest) {
       // ignore cache bust failures
     }
 
-    return withCors(NextResponse.json({ success: true }));
+    return NextResponse.json({ success: true });
   } catch (error) {
     console.error("POST /api/gym/save error:", error);
-    return withCors(NextResponse.json({ error: "Internal server error" }, { status: 500 }));
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }

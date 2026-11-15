@@ -1,4 +1,3 @@
-import { withCors } from "@/lib/corsMiddleware";
 import { NextRequest, NextResponse } from "next/server";
 import { getSession } from "@/lib/auth";
 import { getDayCompletions, initializeDatabase, toggleDayCompletion, awardXp, awardStreakXpIfFirstToday, XP_VALUES } from "@/lib/db";
@@ -15,25 +14,25 @@ const RoutineIdQuerySchema = z.object({
 
 export async function GET(req: NextRequest) {
   const session = await getSession();
-  if (!session) return withCors(NextResponse.json({ error: "Unauthorized" }, { status: 401 }));
+  if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const { searchParams } = new URL(req.url);
   const parsed = safeParseWithError(RoutineIdQuerySchema, { routineId: searchParams.get("routineId") });
   
   if (!parsed.success) {
-    return withCors(NextResponse.json({ error: parsed.error }, { status: 400 }));
+    return NextResponse.json({ error: parsed.error }, { status: 400 });
   }
 
   const { routineId } = parsed.data;
 
   await initializeDatabase();
   const days = await getDayCompletions(session.userId, routineId);
-  return withCors(NextResponse.json({ days }, { status: 200 }));
+  return NextResponse.json({ days }, { status: 200 });
 }
 
 export async function POST(req: NextRequest) {
   const session = await getSession();
-  if (!session) return withCors(NextResponse.json({ error: "Unauthorized" }, { status: 401 }));
+  if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   // CSRF validation for state-changing request
   const csrfError = await requireCsrf(req, session.userId);
@@ -44,7 +43,7 @@ export async function POST(req: NextRequest) {
   const parsed = safeParseWithError(DayCompletionSchema, rawBody);
   
   if (!parsed.success) {
-    return withCors(NextResponse.json({ error: parsed.error }, { status: 400 }));
+    return NextResponse.json({ error: parsed.error }, { status: 400 });
   }
 
   const { routineId, dayIndex, completed } = parsed.data;
@@ -52,7 +51,7 @@ export async function POST(req: NextRequest) {
   await initializeDatabase();
   const ok = await toggleDayCompletion(session.userId, routineId, dayIndex, completed);
   if (!ok) {
-    return withCors(NextResponse.json({ error: "Failed to update rest-day completion" }, { status: 403 }));
+    return NextResponse.json({ error: "Failed to update rest-day completion" }, { status: 403 });
   }
 
   if (completed === true) {
@@ -63,5 +62,5 @@ export async function POST(req: NextRequest) {
   // Invalidate derived analytics cache for ALL `days=` values (best-effort).
   await redisIncr(`analytics_ver:${session.userId}`);
 
-  return withCors(NextResponse.json({ success: true }, { status: 200 }));
+  return NextResponse.json({ success: true }, { status: 200 });
 }

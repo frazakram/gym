@@ -1,4 +1,3 @@
-import { withCors } from "@/lib/corsMiddleware";
 import { toErrorResponse } from "@/lib/api-errors";
 import { NextRequest, NextResponse } from "next/server";
 import { getSession } from "@/lib/auth";
@@ -11,7 +10,7 @@ export const runtime = "nodejs";
 export async function POST(req: NextRequest) {
   try {
     const session = await getSession();
-    if (!session) return withCors(NextResponse.json({ error: "Unauthorized" }, { status: 401 }));
+    if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
     // CSRF validation for state-changing request
     const csrfError = await requireCsrf(req, session.userId);
@@ -22,7 +21,7 @@ export async function POST(req: NextRequest) {
     const parsed = safeParseWithError(CoachApplySchema, raw);
     
     if (!parsed.success) {
-      return withCors(NextResponse.json({ error: parsed.error }, { status: 400 }));
+      return NextResponse.json({ error: parsed.error }, { status: 400 });
     }
 
     const body = parsed.data;
@@ -43,8 +42,8 @@ export async function POST(req: NextRequest) {
       },
     });
 
-    return withCors(NextResponse.json({ coachId: out.coachId, status: out.status }, { status: 200 }));
+    return NextResponse.json({ coachId: out.coachId, status: out.status }, { status: 200 });
   } catch (error: unknown) {
-    return withCors(toErrorResponse(error, "coach/apply"));
+    return toErrorResponse(error, "coach/apply");
   }
 }

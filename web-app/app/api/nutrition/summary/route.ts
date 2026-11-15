@@ -1,4 +1,3 @@
-import { withCors } from "@/lib/corsMiddleware";
 import { NextRequest, NextResponse } from "next/server";
 import { getSession } from "@/lib/auth";
 import {
@@ -22,7 +21,7 @@ const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
 export async function GET(request: NextRequest) {
   try {
     const session = await getSession();
-    if (!session) return withCors(NextResponse.json({ error: "Unauthorized" }, { status: 401 }));
+    if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
     await initializeDatabase();
 
@@ -39,9 +38,9 @@ export async function GET(request: NextRequest) {
     ]);
 
     const payload: NutritionDaySummary = { date, goals, totals, entries, recent, favorites };
-    return withCors(NextResponse.json(payload));
+    return NextResponse.json(payload);
   } catch (error) {
     console.error("nutrition summary failed:", error);
-    return withCors(NextResponse.json({ error: "Failed to load nutrition summary" }, { status: 500 }));
+    return NextResponse.json({ error: "Failed to load nutrition summary" }, { status: 500 });
   }
 }

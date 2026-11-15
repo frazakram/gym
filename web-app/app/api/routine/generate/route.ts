@@ -1,6 +1,5 @@
 export const runtime = "nodejs";
 
-import { withCors } from "@/lib/corsMiddleware";
 import { asAiProviderError, toErrorResponse, toPublicError } from "@/lib/api-errors";
 import { NextRequest, NextResponse } from 'next/server';
 import { generateRoutine } from '@/lib/ai-agent';
@@ -26,7 +25,7 @@ export async function POST(request: NextRequest) {
     const session = await getSession();
 
     if (!session) {
-      return withCors(NextResponse.json({ error: 'Unauthorized' }, { status: 401 }));
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     // CSRF validation for state-changing request
@@ -44,7 +43,7 @@ export async function POST(request: NextRequest) {
         windowSeconds: 60,
       });
       if (!burst.allowed) {
-        return withCors(NextResponse.json(
+        return NextResponse.json(
           { error: `Too many requests. Try again in ${burst.retryAfterSeconds}s.` },
           {
             status: 429,
@@ -54,7 +53,7 @@ export async function POST(request: NextRequest) {
               'X-RateLimit-Remaining': String(burst.remaining),
             },
           }
-        ));
+        );
       }
 
       const rl = await rateLimit({
@@ -63,7 +62,7 @@ export async function POST(request: NextRequest) {
         windowSeconds: 60 * 60,
       });
       if (!rl.allowed) {
-        return withCors(NextResponse.json(
+        return NextResponse.json(
           { error: `Too many routine generations. Try again in ${rl.retryAfterSeconds}s.` },
           {
             status: 429,
@@ -73,7 +72,7 @@ export async function POST(request: NextRequest) {
               'X-RateLimit-Remaining': String(rl.remaining),
             },
           }
-        ));
+        );
       }
     }
 
@@ -82,10 +81,10 @@ export async function POST(request: NextRequest) {
     const parsed = safeParseWithError(RoutineGenerateSchema, rawBody);
     
     if (!parsed.success) {
-      return withCors(NextResponse.json(
+      return NextResponse.json(
         { error: parsed.error },
         { status: 400 }
-      ));
+      );
     }
 
     const body = parsed.data;
@@ -128,10 +127,10 @@ export async function POST(request: NextRequest) {
 
     // Only require a client key if we don't have a server-side key for the selected provider
     if (!keyFromClient && !hasServerKey) {
-      return withCors(NextResponse.json(
+      return NextResponse.json(
         { error: `${provider} API key is required (enter it in the UI, or set it in server env)` },
         { status: 400 }
-      ));
+      );
     }
 
     const ftInToCm = (ft: number, inches: number) => ft * 30.48 + inches * 2.54;
@@ -362,13 +361,13 @@ export async function POST(request: NextRequest) {
 
           if (!profileChanged) {
             // Profile hasn't changed significantly, return cached routine
-            return withCors(NextResponse.json({
+            return NextResponse.json({
               routine: existing.routine_json,
               source: 'db',
               week_number: existing.week_number,
               week_start_date: existing.week_start_date ?? null,
               routine_id: existing.id
-            }));
+            });
           } else {
             // Profile changed significantly, log and continue to generate new routine
             console.log(`Profile changed significantly for user ${session.userId}, regenerating routine for week ${body.week_number}`);
@@ -385,11 +384,11 @@ export async function POST(request: NextRequest) {
       const cached = await getCachedAIResponse<any>(cacheKey);
       if (cached.hit) {
         console.log(`[Routine] Cache hit for user ${session.userId}, saving AI cost!`);
-        return withCors(NextResponse.json({
+        return NextResponse.json({
           routine: cached.data,
           source: 'cache',
           week_number: typeof body.week_number === 'number' ? body.week_number : null,
-        }));
+        });
       }
     }
 
@@ -400,10 +399,10 @@ export async function POST(request: NextRequest) {
         : await generateRoutine(input, historicalContextStr, equipmentAnalysis, bodyAnalysis, gymEquipmentContext);
 
     if (!routine) {
-      return withCors(NextResponse.json(
+      return NextResponse.json(
         { error: 'Failed to generate routine. Check your API key and provider.' },
         { status: 500 }
-      ));
+      );
     }
 
     // ========== CACHE THE GENERATED ROUTINE ==========
@@ -416,15 +415,15 @@ export async function POST(request: NextRequest) {
       console.warn('[Routine] Failed to cache:', cacheErr);
     }
 
-    return withCors(NextResponse.json(
+    return NextResponse.json(
       {
         routine,
         source: 'ai',
         week_number: typeof body.week_number === 'number' ? body.week_number : null,
       },
       { status: 200 }
-    ));
+    );
   } catch (error: unknown) {
-    return withCors(toErrorResponse(asAiProviderError(error), 'routine/generate'));
+    return toErrorResponse(asAiProviderError(error), 'routine/generate');
   }
 }

@@ -1,4 +1,3 @@
-import { withCors } from "@/lib/corsMiddleware";
 import { toErrorResponse } from "@/lib/api-errors";
 import { NextRequest, NextResponse } from "next/server";
 import { getSession } from "@/lib/auth";
@@ -20,7 +19,7 @@ export const runtime = "nodejs";
 export async function POST(req: NextRequest) {
   try {
     const session = await getSession();
-    if (!session) return withCors(NextResponse.json({ error: "Unauthorized" }, { status: 401 }));
+    if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
     // CSRF validation for state-changing request
     const csrfError = await requireCsrf(req, session.userId);
@@ -29,14 +28,14 @@ export async function POST(req: NextRequest) {
     await initializeDatabase();
     const premium = await getPremiumStatus(session.userId);
     if (!premium.access) {
-      return withCors(NextResponse.json({ error: "Personal Coach is a premium feature." }, { status: 403 }));
+      return NextResponse.json({ error: "Personal Coach is a premium feature." }, { status: 403 });
     }
 
     // Enforce: user can have only ONE active booking at a time (pending/confirmed)
     {
       const active = await getActiveCoachBookingForUser(session.userId);
       if (active) {
-        return withCors(NextResponse.json(
+        return NextResponse.json(
           {
             error: `You already have an active coach booking (#${active.id}, ${active.status}). Cancel it before booking again.`,
             activeBooking: {
@@ -48,7 +47,7 @@ export async function POST(req: NextRequest) {
             },
           },
           { status: 409 }
-        ));
+        );
       }
     }
 
@@ -60,7 +59,7 @@ export async function POST(req: NextRequest) {
         windowSeconds: 60,
       });
       if (!burst.allowed) {
-        return withCors(NextResponse.json(
+        return NextResponse.json(
           { error: `Too many requests. Try again in ${burst.retryAfterSeconds}s.` },
           {
             status: 429,
@@ -70,7 +69,7 @@ export async function POST(req: NextRequest) {
               "X-RateLimit-Remaining": String(burst.remaining),
             },
           }
-        ));
+        );
       }
 
       const dayKey = new Date().toISOString().slice(0, 10); // YYYY-MM-DD UTC
@@ -80,7 +79,7 @@ export async function POST(req: NextRequest) {
         windowSeconds: 60 * 60 * 24,
       });
       if (!rl.allowed) {
-        return withCors(NextResponse.json(
+        return NextResponse.json(
           { error: `Too many booking requests. Try again in ${rl.retryAfterSeconds}s.` },
           {
             status: 429,
@@ -90,7 +89,7 @@ export async function POST(req: NextRequest) {
               "X-RateLimit-Remaining": String(rl.remaining),
             },
           }
-        ));
+        );
       }
     }
 
@@ -99,10 +98,10 @@ export async function POST(req: NextRequest) {
     const parsed = safeParseWithError(CoachBookingSchema, raw);
     
     if (!parsed.success) {
-      return withCors(NextResponse.json(
+      return NextResponse.json(
         { error: parsed.error },
         { status: 400 }
-      ));
+      );
     }
 
     const body = parsed.data;
@@ -122,14 +121,14 @@ export async function POST(req: NextRequest) {
     if (!hasCoachContactDetails(coach)) {
       // Without contact details the booking notification can't be delivered;
       // refuse rather than store a request nobody will see.
-      return withCors(NextResponse.json(
+      return NextResponse.json(
         {
           error: selectedCoach
             ? "Selected coach is missing contact info. Ask the coach to update their profile."
             : "Coach booking is temporarily unavailable. Please try again later.",
         },
         { status: 409 }
-      ));
+      );
     }
 
     const booking = await createCoachBooking({
@@ -209,7 +208,7 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    return withCors(NextResponse.json(
+    return NextResponse.json(
       {
         bookingId: booking.id,
         status: booking.status,
@@ -217,9 +216,9 @@ export async function POST(req: NextRequest) {
         coach,
       },
       { status: 200 }
-    ));
+    );
   } catch (error: unknown) {
-    return withCors(toErrorResponse(error, "coach/book"));
+    return toErrorResponse(error, "coach/book");
   }
 }
 

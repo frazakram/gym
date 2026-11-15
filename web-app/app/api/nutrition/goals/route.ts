@@ -1,4 +1,3 @@
-import { withCors } from "@/lib/corsMiddleware";
 import { NextRequest, NextResponse } from "next/server";
 import { getSession } from "@/lib/auth";
 import { requireCsrf } from "@/lib/csrf";
@@ -13,14 +12,14 @@ export const runtime = "nodejs";
 export async function GET() {
   try {
     const session = await getSession();
-    if (!session) return withCors(NextResponse.json({ error: "Unauthorized" }, { status: 401 }));
+    if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
     await initializeDatabase();
     const goals = await getNutritionGoals(session.userId);
-    return withCors(NextResponse.json({ goals }));
+    return NextResponse.json({ goals });
   } catch (error) {
     console.error("get goals failed:", error);
-    return withCors(NextResponse.json({ error: "Failed to load goals" }, { status: 500 }));
+    return NextResponse.json({ error: "Failed to load goals" }, { status: 500 });
   }
 }
 
@@ -28,7 +27,7 @@ export async function GET() {
 export async function PUT(request: NextRequest) {
   try {
     const session = await getSession();
-    if (!session) return withCors(NextResponse.json({ error: "Unauthorized" }, { status: 401 }));
+    if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
     const csrfError = await requireCsrf(request, session.userId);
     if (csrfError) return csrfError;
@@ -36,7 +35,7 @@ export async function PUT(request: NextRequest) {
     await initializeDatabase();
 
     const parsed = safeParseWithError(NutritionGoalsSchema, await request.json().catch(() => ({})));
-    if (!parsed.success) return withCors(NextResponse.json({ error: parsed.error }, { status: 400 }));
+    if (!parsed.success) return NextResponse.json({ error: parsed.error }, { status: 400 });
 
     const existing = await getNutritionGoals(session.userId);
     const merged: NutritionGoals = {
@@ -50,12 +49,12 @@ export async function PUT(request: NextRequest) {
     };
 
     const goals = await saveNutritionGoals(session.userId, merged);
-    if (!goals) return withCors(NextResponse.json({ error: "Save a profile first" }, { status: 409 }));
+    if (!goals) return NextResponse.json({ error: "Save a profile first" }, { status: 409 });
 
-    return withCors(NextResponse.json({ goals }));
+    return NextResponse.json({ goals });
   } catch (error) {
     console.error("update goals failed:", error);
-    return withCors(NextResponse.json({ error: "Failed to update goals" }, { status: 500 }));
+    return NextResponse.json({ error: "Failed to update goals" }, { status: 500 });
   }
 }
 
@@ -66,7 +65,7 @@ export async function PUT(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const session = await getSession();
-    if (!session) return withCors(NextResponse.json({ error: "Unauthorized" }, { status: 401 }));
+    if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
     const csrfError = await requireCsrf(request, session.userId);
     if (csrfError) return csrfError;
@@ -74,7 +73,7 @@ export async function POST(request: NextRequest) {
     await initializeDatabase();
 
     const parsed = safeParseWithError(GoalCalcSchema, await request.json().catch(() => ({})));
-    if (!parsed.success) return withCors(NextResponse.json({ error: parsed.error }, { status: 400 }));
+    if (!parsed.success) return NextResponse.json({ error: parsed.error }, { status: 400 });
 
     const { age, weight_kg, height_cm, sex, activity_level, goal_type, save } = parsed.data;
 
@@ -92,14 +91,14 @@ export async function POST(request: NextRequest) {
     let saved: NutritionGoals | null = null;
     if (save) {
       saved = await saveNutritionGoals(session.userId, suggested);
-      if (!saved) return withCors(NextResponse.json({ error: "Save a profile first" }, { status: 409 }));
+      if (!saved) return NextResponse.json({ error: "Save a profile first" }, { status: 409 });
       // Remember activity level so the wizard doesn't ask again next time.
       await saveActivityLevel(session.userId, activity_level);
     }
 
-    return withCors(NextResponse.json({ bmr, tdee, goals: saved ?? suggested, saved: Boolean(saved) }));
+    return NextResponse.json({ bmr, tdee, goals: saved ?? suggested, saved: Boolean(saved) });
   } catch (error) {
     console.error("calculate goals failed:", error);
-    return withCors(NextResponse.json({ error: "Failed to calculate goals" }, { status: 500 }));
+    return NextResponse.json({ error: "Failed to calculate goals" }, { status: 500 });
   }
 }

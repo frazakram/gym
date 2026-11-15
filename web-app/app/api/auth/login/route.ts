@@ -1,4 +1,3 @@
-import { withCors } from "@/lib/corsMiddleware";
 import { NextRequest, NextResponse } from 'next/server';
 import { authenticateUser, initializeDatabase } from '@/lib/db';
 import { createSession } from '@/lib/auth';
@@ -25,10 +24,10 @@ export async function POST(request: NextRequest) {
         windowSeconds: 60,
       });
       if (!rl.allowed) {
-        return withCors(NextResponse.json(
+        return NextResponse.json(
           { error: `Too many login attempts. Try again in ${rl.retryAfterSeconds}s.` },
           { status: 429, headers: { 'Retry-After': String(rl.retryAfterSeconds) } }
-        ));
+        );
       }
     }
 
@@ -37,10 +36,10 @@ export async function POST(request: NextRequest) {
     const parsed = safeParseWithError(LoginSchema, rawBody);
     
     if (!parsed.success) {
-      return withCors(NextResponse.json(
+      return NextResponse.json(
         { error: parsed.error },
         { status: 400 }
-      ));
+      );
     }
 
     const { username, password } = parsed.data;
@@ -51,10 +50,10 @@ export async function POST(request: NextRequest) {
     const userId = await authenticateUser(username, password);
 
     if (!userId) {
-      return withCors(NextResponse.json(
+      return NextResponse.json(
         { error: 'Invalid credentials' },
         { status: 401 }
-      ));
+      );
     }
 
     const token = await createSession(userId);
@@ -86,12 +85,12 @@ export async function POST(request: NextRequest) {
       path: '/',
     });
 
-    return withCors(res);
+    return res;
   } catch (error) {
     console.error('Login error:', error);
-    return withCors(NextResponse.json(
+    return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }
-    ));
+    );
   }
 }

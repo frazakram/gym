@@ -1,4 +1,3 @@
-import { withCors } from "@/lib/corsMiddleware";
 import { toErrorResponse } from "@/lib/api-errors";
 import { NextRequest, NextResponse } from 'next/server';
 import { getLatestDiet, getDietByWeek, initializeDatabase } from '@/lib/db';
@@ -8,7 +7,7 @@ export async function GET(request: NextRequest) {
   try {
     const session = await getSession();
     if (!session) {
-      return withCors(NextResponse.json({ error: 'Unauthorized' }, { status: 401 }));
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     await initializeDatabase();
@@ -27,15 +26,15 @@ export async function GET(request: NextRequest) {
 
     if (!dietData) {
       // Not finding a diet is not a 500 error, just empty result
-      return withCors(NextResponse.json({ diet: null }, { status: 200 }));
+      return NextResponse.json({ diet: null }, { status: 200 });
     }
 
     // Wrap in standard structure if needed or just return raw
-    return withCors(NextResponse.json({ 
+    return NextResponse.json({ 
       diet: dietData 
-    }, { status: 200 }));
+    }, { status: 200 });
 
   } catch (error: unknown) {
-    return withCors(toErrorResponse(error, "diet/get"));
+    return toErrorResponse(error, "diet/get");
   }
 }

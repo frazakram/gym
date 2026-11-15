@@ -1,4 +1,3 @@
-import { withCors } from "@/lib/corsMiddleware";
 import { NextRequest, NextResponse } from "next/server";
 import { createHash } from "crypto";
 import { getSession } from "@/lib/auth";
@@ -198,7 +197,7 @@ export async function GET(req: NextRequest) {
   try {
     const session = await getSession();
     if (!session) {
-      return withCors(NextResponse.json({ error: "Unauthorized" }, { status: 401 }));
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     await initializeDatabase();
@@ -213,7 +212,7 @@ export async function GET(req: NextRequest) {
     if (routineIdParam) {
       const id = Number(routineIdParam);
       if (!Number.isFinite(id) || id <= 0) {
-        return withCors(NextResponse.json({ error: "Invalid routineId" }, { status: 400 }));
+        return NextResponse.json({ error: "Invalid routineId" }, { status: 400 });
       }
       routine = await getRoutineById(session.userId, id);
     } else {
@@ -221,7 +220,7 @@ export async function GET(req: NextRequest) {
     }
 
     if (!routine) {
-      return withCors(NextResponse.json({ error: "No routine found" }, { status: 404 }));
+      return NextResponse.json({ error: "No routine found" }, { status: 404 });
     }
 
     // ---- Parallel fetch: current completions, profile, all routines (for history), streak ----
@@ -298,8 +297,7 @@ export async function GET(req: NextRequest) {
       currentStreak: streak?.current ?? 0,
     });
 
-    return withCors(
-      NextResponse.json({
+    return NextResponse.json({
         routine: {
           id: routine.id,
           week_number: routine.week_number,
@@ -334,10 +332,9 @@ export async function GET(req: NextRequest) {
           last_workout_date: streak?.last_workout_date ?? null,
         },
         coachNote,
-      })
-    );
+      });
   } catch (error) {
     console.error("Error fetching report data:", error);
-    return withCors(NextResponse.json({ error: "Internal server error" }, { status: 500 }));
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }

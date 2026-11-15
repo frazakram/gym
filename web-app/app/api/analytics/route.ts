@@ -1,4 +1,3 @@
-import { withCors } from "@/lib/corsMiddleware";
 import { NextRequest, NextResponse } from "next/server";
 import { getSession } from "@/lib/auth";
 import { getPremiumStatus, getUserAnalytics, initializeDatabase } from "@/lib/db";
@@ -8,7 +7,7 @@ export const runtime = "nodejs";
 
 export async function GET(req: NextRequest) {
   const session = await getSession();
-  if (!session) return withCors(NextResponse.json({ error: "Unauthorized" }, { status: 401 }));
+  if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const { searchParams } = new URL(req.url);
   const daysRaw = searchParams.get("days");
@@ -20,7 +19,7 @@ export async function GET(req: NextRequest) {
 
   const premium = await getPremiumStatus(session.userId);
   if (!premium.access) {
-    return withCors(NextResponse.json({ error: "Analytics is a premium feature." }, { status: 403 }));
+    return NextResponse.json({ error: "Analytics is a premium feature." }, { status: 403 });
   }
 
   // Versioned cache key so any `days=` value can be invalidated globally for a user.
@@ -28,10 +27,10 @@ export async function GET(req: NextRequest) {
   const ver = (await redisGetJson<number>(verKey)) ?? 0;
   const cacheKey = `analytics:${session.userId}:${days}:v${ver}`;
   const cached = await redisGetJson<unknown>(cacheKey);
-  if (cached) return withCors(NextResponse.json(cached, { status: 200 }));
+  if (cached) return NextResponse.json(cached, { status: 200 });
 
   const payload = await getUserAnalytics(session.userId, { rangeDays: days });
   // Short TTL is enough; analytics is derived from completions and can change frequently.
   await redisSetJson(cacheKey, payload, 60);
-  return withCors(NextResponse.json(payload, { status: 200 }));
+  return NextResponse.json(payload, { status: 200 });
 }

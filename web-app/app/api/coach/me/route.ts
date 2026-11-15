@@ -1,4 +1,3 @@
-import { withCors } from "@/lib/corsMiddleware";
 import { requireCsrf } from "@/lib/csrf";
 import { toErrorResponse } from "@/lib/api-errors";
 import { NextRequest, NextResponse } from "next/server";
@@ -28,14 +27,14 @@ const PatchSchema = z.object({
 export async function GET(req: NextRequest) {
   void req;
   const session = await getSession();
-  if (!session) return withCors(NextResponse.json({ error: "Unauthorized" }, { status: 401 }));
+  if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   await initializeDatabase();
   const app = await getCoachApplicationByUserId(session.userId);
-  if (!app) return withCors(NextResponse.json({ application: null }, { status: 200 }));
+  if (!app) return NextResponse.json({ application: null }, { status: 200 });
 
   const profile = await getCoachProfileByCoachId(app.id);
-  return withCors(NextResponse.json(
+  return NextResponse.json(
     {
       application: {
         id: app.id,
@@ -48,13 +47,13 @@ export async function GET(req: NextRequest) {
       profile,
     },
     { status: 200 }
-  ));
+  );
 }
 
 export async function PATCH(req: NextRequest) {
   try {
     const session = await getSession();
-    if (!session) return withCors(NextResponse.json({ error: "Unauthorized" }, { status: 401 }));
+    if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
     // CSRF validation for state-changing request
     const csrfError = await requireCsrf(req, session.userId);
@@ -65,10 +64,10 @@ export async function PATCH(req: NextRequest) {
 
     await initializeDatabase();
     const ok = await updateCoachProfileByUser({ userId: session.userId, profile: body });
-    if (!ok) return withCors(NextResponse.json({ error: "No coach application found" }, { status: 404 }));
+    if (!ok) return NextResponse.json({ error: "No coach application found" }, { status: 404 });
 
-    return withCors(NextResponse.json({ ok: true }, { status: 200 }));
+    return NextResponse.json({ ok: true }, { status: 200 });
   } catch (error: unknown) {
-    return withCors(toErrorResponse(error, "coach/me"));
+    return toErrorResponse(error, "coach/me");
   }
 }

@@ -1,4 +1,3 @@
-import { withCors } from "@/lib/corsMiddleware";
 import { toErrorResponse } from "@/lib/api-errors";
 import { NextRequest, NextResponse } from 'next/server';
 import { createUser, initializeDatabase } from '@/lib/db';
@@ -26,10 +25,10 @@ export async function POST(request: NextRequest) {
         windowSeconds: 60,
       });
       if (!rl.allowed) {
-        return withCors(NextResponse.json(
+        return NextResponse.json(
           { error: `Too many registrations. Try again in ${rl.retryAfterSeconds}s.` },
           { status: 429, headers: { 'Retry-After': String(rl.retryAfterSeconds) } }
-        ));
+        );
       }
     }
 
@@ -38,10 +37,10 @@ export async function POST(request: NextRequest) {
     const parsed = safeParseWithError(RegisterSchema, rawBody);
     
     if (!parsed.success) {
-      return withCors(NextResponse.json(
+      return NextResponse.json(
         { error: parsed.error },
         { status: 400 }
-      ));
+      );
     }
 
     const { username, password } = parsed.data;
@@ -52,10 +51,10 @@ export async function POST(request: NextRequest) {
     const user = await createUser(username, password);
 
     if (!user) {
-      return withCors(NextResponse.json(
+      return NextResponse.json(
         { error: 'Username already exists' },
         { status: 409 }
-      ));
+      );
     }
 
     // Auto-login the user after successful registration
@@ -87,8 +86,8 @@ export async function POST(request: NextRequest) {
       path: '/',
     });
 
-    return withCors(res);
+    return res;
   } catch (error) {
-    return withCors(toErrorResponse(error, "auth/register"));
+    return toErrorResponse(error, "auth/register");
   }
 }

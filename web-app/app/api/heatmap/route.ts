@@ -1,4 +1,3 @@
-import { withCors } from "@/lib/corsMiddleware";
 import { NextRequest, NextResponse } from "next/server";
 import { getSession } from "@/lib/auth";
 import { getHeatmapData, initializeDatabase } from "@/lib/db";
@@ -8,7 +7,7 @@ export const runtime = "nodejs";
 export async function GET(req: NextRequest) {
   const session = await getSession();
   if (!session) {
-    return withCors(NextResponse.json({ error: "Unauthorized" }, { status: 401 }));
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
   const { searchParams } = new URL(req.url);
@@ -20,5 +19,5 @@ export async function GET(req: NextRequest) {
 
   const heatmapData = await getHeatmapData(session.userId, days);
 
-  return withCors(NextResponse.json({ heatmap: heatmapData }, { status: 200 }));
+  return NextResponse.json({ heatmap: heatmapData }, { status: 200 });
 }

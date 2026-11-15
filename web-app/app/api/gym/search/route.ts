@@ -1,4 +1,3 @@
-import { withCors } from "@/lib/corsMiddleware";
 import { NextRequest, NextResponse } from "next/server";
 import { getSession } from "@/lib/auth";
 import { initializeDatabase } from "@/lib/db";
@@ -26,7 +25,7 @@ export async function GET(request: NextRequest) {
   try {
     const session = await getSession();
     if (!session) {
-      return withCors(NextResponse.json({ error: "Unauthorized" }, { status: 401 }));
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     await initializeDatabase();
@@ -34,14 +33,14 @@ export async function GET(request: NextRequest) {
     const params = Object.fromEntries(request.nextUrl.searchParams.entries());
     const parsed = safeParseWithError(GymSearchSchema, params);
     if (!parsed.success) {
-      return withCors(NextResponse.json({ error: parsed.error }, { status: 400 }));
+      return NextResponse.json({ error: parsed.error }, { status: 400 });
     }
 
     const { lat, lng } = parsed.data;
 
     // Need coordinates to query Overpass
     if (lat == null || lng == null) {
-      return withCors(NextResponse.json({ results: FALLBACK_GYMS }));
+      return NextResponse.json({ results: FALLBACK_GYMS });
     }
 
     // Overpass API query — 3 tag variants covering most gyms on OSM
@@ -59,7 +58,7 @@ export async function GET(request: NextRequest) {
       clearTimeout(timer);
 
       if (!res.ok) {
-        return withCors(NextResponse.json({ results: FALLBACK_GYMS }));
+        return NextResponse.json({ results: FALLBACK_GYMS });
       }
 
       const data = (await res.json()) as {
@@ -86,13 +85,13 @@ export async function GET(request: NextRequest) {
           lng: el.lon,
         }));
 
-      return withCors(NextResponse.json({ results: results.length > 0 ? results : FALLBACK_GYMS }));
+      return NextResponse.json({ results: results.length > 0 ? results : FALLBACK_GYMS });
     } catch {
       clearTimeout(timer);
-      return withCors(NextResponse.json({ results: FALLBACK_GYMS }));
+      return NextResponse.json({ results: FALLBACK_GYMS });
     }
   } catch (error) {
     console.error("GET /api/gym/search error:", error);
-    return withCors(NextResponse.json({ error: "Internal server error" }, { status: 500 }));
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }

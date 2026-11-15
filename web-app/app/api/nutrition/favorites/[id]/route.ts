@@ -1,4 +1,3 @@
-import { withCors } from "@/lib/corsMiddleware";
 import { NextRequest, NextResponse } from "next/server";
 import { getSession } from "@/lib/auth";
 import { requireCsrf } from "@/lib/csrf";
@@ -10,7 +9,7 @@ export const runtime = "nodejs";
 export async function DELETE(request: NextRequest, ctx: { params: Promise<{ id: string }> }) {
   try {
     const session = await getSession();
-    if (!session) return withCors(NextResponse.json({ error: "Unauthorized" }, { status: 401 }));
+    if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
     const csrfError = await requireCsrf(request, session.userId);
     if (csrfError) return csrfError;
@@ -19,15 +18,15 @@ export async function DELETE(request: NextRequest, ctx: { params: Promise<{ id: 
 
     const id = Number((await ctx.params).id);
     if (!Number.isInteger(id) || id <= 0) {
-      return withCors(NextResponse.json({ error: "Invalid id" }, { status: 400 }));
+      return NextResponse.json({ error: "Invalid id" }, { status: 400 });
     }
 
     const ok = await deleteFavoriteFood(session.userId, id);
-    if (!ok) return withCors(NextResponse.json({ error: "Favorite not found" }, { status: 404 }));
+    if (!ok) return NextResponse.json({ error: "Favorite not found" }, { status: 404 });
 
-    return withCors(NextResponse.json({ success: true }));
+    return NextResponse.json({ success: true });
   } catch (error) {
     console.error("delete favorite failed:", error);
-    return withCors(NextResponse.json({ error: "Failed to delete favorite" }, { status: 500 }));
+    return NextResponse.json({ error: "Failed to delete favorite" }, { status: 500 });
   }
 }
