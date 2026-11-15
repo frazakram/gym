@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createRemoteJWKSet, jwtVerify } from "jose";
 import { createSession } from "@/lib/auth";
-import { createUserWithRandomPassword, getUserIdByUsername, initializeDatabase } from "@/lib/db";
+import { createUserWithRandomPassword, getSessionVersion, getUserIdByUsername, initializeDatabase } from "@/lib/db";
 import { toSafeReturnPath } from "@/lib/safe-redirect";
 
 export const runtime = "nodejs";
@@ -79,7 +79,7 @@ export async function GET(request: NextRequest) {
     }
     if (!userId) throw new Error("Failed to create user");
 
-    const sessionToken = await createSession(userId);
+    const sessionToken = await createSession(userId, (await getSessionVersion(userId)) ?? 0);
 
     const res = NextResponse.redirect(new URL(returnTo, origin));
     // Set session cookie (same options as setSessionCookie)

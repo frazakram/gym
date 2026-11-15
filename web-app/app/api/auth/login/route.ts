@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { authenticateUser, initializeDatabase } from '@/lib/db';
+import { authenticateUser, getSessionVersion, initializeDatabase } from '@/lib/db';
 import { createSession } from '@/lib/auth';
 import { rateLimit, RATE_LIMITS } from '@/lib/rate-limit';
 import { LoginSchema, safeParseWithError } from '@/lib/validations';
@@ -56,7 +56,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const token = await createSession(userId);
+    const token = await createSession(userId, (await getSessionVersion(userId)) ?? 0);
 
     // Generate CSRF token for the authenticated user
     const csrfToken = await generateCsrfToken(userId);

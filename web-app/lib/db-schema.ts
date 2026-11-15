@@ -397,6 +397,9 @@ export const SCHEMA_STATEMENTS: readonly string[] = [
      processed_at TIMESTAMPTZ NOT NULL DEFAULT now()
    )`,
   `ALTER TABLE subscriptions ADD COLUMN IF NOT EXISTS last_event_at TIMESTAMPTZ`,
+  // Session revocation: session tokens carry the version they were issued with;
+  // bumping it (logout) invalidates every outstanding session of the user.
+  `ALTER TABLE users ADD COLUMN IF NOT EXISTS session_version INTEGER NOT NULL DEFAULT 0`,
 ];
 
 /** Fingerprint of the schema definition; stored in app_schema_version. */

@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import { SignJWT, UnsecuredJWT } from "jose";
 import { GET as getProfile } from "@/app/api/profile/route";
 import { createSession } from "@/lib/auth";
+import { getSessionVersion } from "@/lib/db";
 import { asHandler, call, newUser } from "./helpers";
 
 const SERVER_SECRET = () => new TextEncoder().encode(process.env.JWT_SECRET!);
@@ -13,7 +14,7 @@ function requestProfileWithSession(sessionToken: string) {
 describe("session cookie verification", () => {
   it("accepts a genuine session (control)", async () => {
     const { id } = await newUser("sess");
-    const response = await requestProfileWithSession(await createSession(id));
+    const response = await requestProfileWithSession(await createSession(id, (await getSessionVersion(id)) ?? 0));
     expect(response.status).toBe(200);
   });
 
@@ -44,7 +45,7 @@ describe("session cookie verification", () => {
   it("rejects a genuine token whose payload was edited to another user", async () => {
     const victim = await newUser("victim");
     const attacker = await newUser("attacker");
-    const [header, , signature] = (await createSession(attacker.id)).split(".");
+    const [header, , signature] = (await createSession(attacker.id, 0)).split(".");
     const editedPayload = Buffer.from(
       JSON.stringify({ userId: victim.id, exp: Math.floor(Date.now() / 1000) + 3600 }),
     ).toString("base64url");

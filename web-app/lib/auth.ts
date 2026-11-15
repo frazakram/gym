@@ -1,5 +1,6 @@
 import { SignJWT, jwtVerify } from 'jose';
 import { cookies } from 'next/headers';
+import { getSessionVersion } from '@/lib/db';
 
 function getSecretKey(): Uint8Array {
   const secret = process.env.JWT_SECRET;
@@ -9,8 +10,13 @@ function getSecretKey(): Uint8Array {
   return new TextEncoder().encode(secret);
 }
 
-export async function createSession(userId: number): Promise<string> {
-  const token = await new SignJWT({ userId })
+/**
+ * Issues a session token. `sessionVersion` must be the user's current
+ * users.session_version (see getSessionVersion); tokens from an older version
+ * are rejected by getSession().
+ */
+export async function createSession(userId: number, sessionVersion: number): Promise<string> {
+  const token = await new SignJWT({ userId, sv: sessionVersion })
     .setProtectedHeader({ alg: 'HS256' })
     .setExpirationTime('7d')
     .sign(getSecretKey());
@@ -26,12 +32,27 @@ export async function getSession(): Promise<{ userId: number } | null> {
     return null;
   }
 
+  let userId: number;
+  let tokenSessionVersion: number;
   try {
     const { payload } = await jwtVerify(token, getSecretKey());
-    return { userId: payload.userId as number };
-  } catch (error) {
+    if (typeof payload.userId !== 'number') return null;
+    userId = payload.userId;
+    // Tokens issued before versioning carry no claim and count as version 0.
+    tokenSessionVersion = typeof payload.sv === 'number' ? payload.sv : 0;
+  } catch {
     return null;
   }
+
+  // Revocation check. Fails closed: unknown user or database error = no session.
+  try {
+    const currentVersion = await getSessionVersion(userId);
+    if (currentVersion === null || currentVersion !== tokenSessionVersion) return null;
+  } catch (error) {
+    console.error('[auth] session version check failed:', error);
+    return null;
+  }
+  return { userId };
 }
 
 export async function setSessionCookie(token: string) {

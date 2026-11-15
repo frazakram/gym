@@ -58,7 +58,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Auto-login the user after successful registration
-    const token = await createSession(user.id);
+    const token = await createSession(user.id, 0); // new users start at session version 0
     
     // Generate CSRF token for the newly registered user
     const csrfToken = await generateCsrfToken(user.id);

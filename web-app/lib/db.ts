@@ -165,6 +165,29 @@ export async function initializeDatabase() {
   }
 }
 
+/**
+ * Current session version of a user, or null if the user does not exist.
+ * Runs initializeDatabase() first: getSession() can be the first database call
+ * on a new instance, and the column must exist before it is read.
+ */
+export async function getSessionVersion(userId: number): Promise<number | null> {
+  if (allowMockAuth() && userId === MOCK_USER_ID) return 0;
+  await initializeDatabase();
+  const result = await pool.query<{ session_version: number }>(
+    'SELECT session_version FROM users WHERE id = $1',
+    [userId]
+  );
+  const row = result.rows[0];
+  return row ? Number(row.session_version) : null;
+}
+
+/** Invalidates every outstanding session of the user (used on logout). */
+export async function revokeAllSessions(userId: number): Promise<void> {
+  if (allowMockAuth() && userId === MOCK_USER_ID) return;
+  await initializeDatabase();
+  await pool.query('UPDATE users SET session_version = session_version + 1 WHERE id = $1', [userId]);
+}
+
 export async function createUser(username: string, password: string): Promise<User | null> {
   try {
     const hashedPassword = await bcrypt.hash(password, 10);

@@ -1,5 +1,6 @@
 import { NextRequest } from "next/server";
 import { createSession } from "@/lib/auth";
+import { getSessionVersion } from "@/lib/db";
 import { generateCsrfToken } from "@/lib/csrf";
 import { POST as register } from "@/app/api/auth/register/route";
 import { cookieJar } from "./jar";
@@ -32,7 +33,9 @@ export async function call(handler: Handler, opts: CallOptions = {}): Promise<Ca
   const cookies: string[] = [];
 
   cookieJar.clear();
-  const sessionToken = opts.sessionToken ?? (opts.userId !== undefined ? await createSession(opts.userId) : undefined);
+  const sessionToken =
+    opts.sessionToken ??
+    (opts.userId !== undefined ? await createSession(opts.userId, (await getSessionVersion(opts.userId)) ?? 0) : undefined);
   if (sessionToken !== undefined) {
     cookieJar.set("session", sessionToken);
     cookies.push(`session=${sessionToken}`);

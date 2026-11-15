@@ -12,12 +12,13 @@ function req(method: string, path: string, opts: { cookie?: string; header?: str
 }
 
 describe("createSession", () => {
-  it("issues an HS256 JWT carrying userId with a 7-day expiry", async () => {
+  it("issues an HS256 JWT carrying userId and session version with a 7-day expiry", async () => {
     const before = Math.floor(Date.now() / 1000);
-    const token = await createSession(42);
+    const token = await createSession(42, 3);
     expect(decodeProtectedHeader(token).alg).toBe("HS256");
     const payload = decodeJwt(token);
     expect(payload.userId).toBe(42);
+    expect(payload.sv).toBe(3);
     expect(payload.exp! - before).toBeGreaterThanOrEqual(7 * 86400 - 5);
     expect(payload.exp! - before).toBeLessThanOrEqual(7 * 86400 + 5);
     // Current behaviour: no iss/aud/iat claims.
@@ -27,7 +28,7 @@ describe("createSession", () => {
 
   it("throws when JWT_SECRET is missing", async () => {
     vi.stubEnv("JWT_SECRET", "");
-    await expect(createSession(1)).rejects.toThrow("JWT_SECRET environment variable is not defined");
+    await expect(createSession(1, 0)).rejects.toThrow("JWT_SECRET environment variable is not defined");
     vi.unstubAllEnvs();
   });
 });
