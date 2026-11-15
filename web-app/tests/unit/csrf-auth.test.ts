@@ -63,10 +63,7 @@ describe("CSRF tokens", () => {
       .setProtectedHeader({ alg: "HS256" })
       .setExpirationTime(Math.floor(Date.now() / 1000) - 60)
       .sign(new TextEncoder().encode(process.env.JWT_SECRET!));
-    // Current behaviour: jose's expiry error ('"exp" claim timestamp check failed')
-    // never contains "expired", so the dedicated "CSRF token expired" branch in
-    // lib/csrf.ts is unreachable and callers get the generic message.
-    expect(await verifyCsrfToken(expired)).toEqual({ valid: false, error: "Invalid CSRF token" });
+    expect(await verifyCsrfToken(expired)).toEqual({ valid: false, error: "CSRF token expired" });
   });
 
   it("generates unique tokens", async () => {

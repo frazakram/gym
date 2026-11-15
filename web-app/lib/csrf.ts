@@ -1,4 +1,4 @@
-import { SignJWT, jwtVerify } from "jose";
+import { SignJWT, errors as joseErrors, jwtVerify } from "jose";
 import { cookies } from "next/headers";
 import { NextRequest, NextResponse } from "next/server";
 import crypto from "crypto";
@@ -72,16 +72,13 @@ export async function verifyCsrfToken(
 
     return { valid: true };
   } catch (error) {
-    const message = error instanceof Error ? error.message : "Invalid token";
-    
-    // Provide more specific error messages
-    if (message.includes("expired")) {
+    // Classify by jose's error types: their messages don't contain these words.
+    if (error instanceof joseErrors.JWTExpired) {
       return { valid: false, error: "CSRF token expired" };
     }
-    if (message.includes("signature")) {
+    if (error instanceof joseErrors.JWSSignatureVerificationFailed) {
       return { valid: false, error: "Invalid CSRF token signature" };
     }
-    
     return { valid: false, error: "Invalid CSRF token" };
   }
 }
