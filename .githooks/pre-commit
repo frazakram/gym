@@ -1,15 +1,19 @@
 #!/bin/sh
 # Pre-commit gate for web-app. Install once with:  cd web-app && npm run hooks:install
-# Fast checks only (lint on staged files, typecheck, unit tests); the full
-# `npm run verify` (which adds next build) still runs before pushing and in CI.
+# Fast checks only (lint on staged files, typecheck, unit tests). The full gate
+# (npm run verify:all, which adds next build and integration tests) runs in CI.
 set -e
 
-STAGED=$(git diff --cached --name-only --diff-filter=ACMR -- 'web-app/*' || true)
-[ -z "$STAGED" ] && exit 0
+# Any staged change under web-app, including deletions: deleting a file is a
+# common way to break imports, so it must still trigger typecheck and tests.
+CHANGED=$(git diff --cached --name-only --diff-filter=ACMRD -- 'web-app/*' || true)
+[ -z "$CHANGED" ] && exit 0
 
 cd "$(git rev-parse --show-toplevel)/web-app"
 
-LINTABLE=$(printf '%s\n' "$STAGED" | grep -E '\.(ts|tsx|js|jsx|mjs|mts)$' | sed 's#^web-app/##' || true)
+# ESLint only for files that still exist (added, copied, modified, renamed).
+LINTABLE=$(git diff --cached --name-only --diff-filter=ACMR -- . \
+  | grep -E '\.(ts|tsx|js|jsx|mjs|mts)$' | sed 's#^web-app/##' || true)
 if [ -n "$LINTABLE" ]; then
   echo "pre-commit: eslint (staged files)"
   printf '%s\n' "$LINTABLE" | tr '\n' '\0' | xargs -0 npx --no-install eslint
