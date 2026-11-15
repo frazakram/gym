@@ -5,6 +5,7 @@ import { User, Profile, NutritionGoals, FoodEntry, FavoriteFood, FoodSource, Mac
 import { unstable_cache, revalidateTag } from 'next/cache';
 import { encryptDet, encryptRnd, decrypt } from '@/lib/fieldEncryption';
 import { applySchemaIfOutdated } from '@/lib/db-schema';
+import { decodeBodyPhotos, encodeBodyPhotos, isPlaintextBodyPhotos } from '@/lib/body-photos';
 
 function isPostgresUrl(value: string): boolean {
   const v = value.trim();
@@ -309,6 +310,16 @@ export async function createUserWithRandomPassword(username: string): Promise<Us
   return await createUser(username, random);
 }
 
+/**
+ * Profiles are returned without body_photos: the photos are sensitive and large,
+ * so they are served only by getBodyPhotos() (GET /api/body/photos).
+ */
+function withoutBodyPhotos<T extends object>(profile: T): T {
+  const { body_photos: _omitted, ...rest } = profile as T & { body_photos?: unknown };
+  void _omitted;
+  return rest as T;
+}
+
 const getProfileCached = unstable_cache(
   async (userId: number) => {
     try {
@@ -318,7 +329,7 @@ const getProfileCached = unstable_cache(
       );
       const profile = result.rows[0] || null;
       if (profile?.name) profile.name = decrypt(profile.name);
-      return profile;
+      return profile ? withoutBodyPhotos(profile) : null;
     } catch (error) {
       console.error("getProfile DB failed:", error);
       throw error;
@@ -335,7 +346,7 @@ export async function getProfile(userId: number): Promise<Profile | null> {
     if (allowMockAuth()) {
       console.warn("getProfile DB failed, using mock:", error);
       // FALLBACK PROFILE (per-user)
-      return mockProfileStore.get(userId) || { ...MOCK_PROFILE, user_id: userId };
+      return withoutBodyPhotos(mockProfileStore.get(userId) || { ...MOCK_PROFILE, user_id: userId });
     }
     throw error;
   }
@@ -408,7 +419,7 @@ export async function saveProfile(
     // Fallback trigger if user is the mock user
     if (userId === MOCK_USER_ID && allowMockAuth()) {
       mockProfileStore.set(userId, { ...mockReturn, updated_at: new Date() });
-      return mockReturn;
+      return withoutBodyPhotos(mockReturn);
     }
 
     if (existing) {
@@ -443,7 +454,6 @@ export async function saveProfile(
       const effNameRaw = keep(name, existing.name);
       const effGymPhotos = keep(gym_photos, existing.gym_photos as any);
       const effGymEquipmentAnalysis = keep(gym_equipment_analysis, existing.gym_equipment_analysis as any);
-      const effBodyPhotos = keep(body_photos, existing.body_photos as any);
       const effBodyCompositionAnalysis = keep(body_composition_analysis, existing.body_composition_analysis as any);
       const effPreferredRestDays = keep(preferred_rest_days, existing.preferred_rest_days as any);
 
@@ -455,7 +465,8 @@ export async function saveProfile(
              diet_type = $13, cuisine = $14, protein_powder = $15, meals_per_day = $16, allergies = $17,
              cooking_level = $18, budget = $19, protein_powder_amount = $20, specific_food_preferences = $21,
              name = $22, gym_photos = $23, gym_equipment_analysis = $24,
-             body_photos = $25, body_composition_analysis = $26,
+             body_photos = CASE WHEN $28::boolean THEN $25::jsonb ELSE body_photos END,
+             body_composition_analysis = $26,
              preferred_rest_days = $27,
              updated_at = CURRENT_TIMESTAMP
          WHERE user_id = $1
@@ -488,13 +499,16 @@ export async function saveProfile(
           // with "invalid input syntax for type json".
           effGymPhotos != null ? JSON.stringify(effGymPhotos) : null,
           effGymEquipmentAnalysis != null ? JSON.stringify(effGymEquipmentAnalysis) : null,
-          effBodyPhotos != null ? JSON.stringify(effBodyPhotos) : null,
+          // Written only when the caller sent body_photos (null = clear); otherwise
+          // left untouched: profiles are read without photos, so there is no 'existing' value.
+          body_photos !== undefined ? encodeBodyPhotos(body_photos ?? null) : null,
           effBodyCompositionAnalysis != null ? JSON.stringify(effBodyCompositionAnalysis) : null,
           Array.isArray(effPreferredRestDays) && effPreferredRestDays.length > 0 ? effPreferredRestDays : null,
+          body_photos !== undefined,
         ]
       );
       revalidateTag('user-profile', undefined as any);
-      return result.rows[0];
+      return withoutBodyPhotos(result.rows[0]);
     } else {
       const result = await pool.query<Profile>(
         `INSERT INTO profiles (
@@ -530,13 +544,13 @@ export async function saveProfile(
           // See UPDATE path above: JSONB columns must be JSON-stringified.
           gym_photos != null ? JSON.stringify(gym_photos) : null,
           gym_equipment_analysis != null ? JSON.stringify(gym_equipment_analysis) : null,
-          body_photos != null ? JSON.stringify(body_photos) : null,
+          encodeBodyPhotos(body_photos ?? null),
           body_composition_analysis != null ? JSON.stringify(body_composition_analysis) : null,
           preferred_rest_days && preferred_rest_days.length > 0 ? preferred_rest_days : null
         ]
       );
       revalidateTag('user-profile', undefined as any);
-      return result.rows[0];
+      return withoutBodyPhotos(result.rows[0]);
     }
   } catch (error) {
     if (allowMockAuth()) {
@@ -564,7 +578,7 @@ export async function saveProfile(
         budget: budget
       };
       mockProfileStore.set(userId, { ...fallback, user_id: userId, updated_at: new Date() });
-      return { ...fallback, user_id: userId };
+      return withoutBodyPhotos({ ...fallback, user_id: userId });
     }
     console.error("saveProfile DB failed:", error);
     throw error;
@@ -635,13 +649,42 @@ export async function hasGymPhotos(userId: number): Promise<boolean> {
   }
 }
 
+/**
+ * The user's body photos, decrypted. Legacy plaintext rows are re-encrypted on
+ * read when an encryption key is configured.
+ */
+export async function getBodyPhotos(userId: number): Promise<unknown[]> {
+  if (allowMockAuth() && userId === MOCK_USER_ID) {
+    const photos = (mockProfileStore.get(userId) as { body_photos?: unknown } | undefined)?.body_photos;
+    return Array.isArray(photos) ? photos : [];
+  }
+  const result = await pool.query<{ body_photos: unknown }>(
+    'SELECT body_photos FROM profiles WHERE user_id = $1',
+    [userId]
+  );
+  const stored = result.rows[0]?.body_photos ?? null;
+  const photos = decodeBodyPhotos(stored);
+  if (isPlaintextBodyPhotos(stored)) {
+    const encoded = encodeBodyPhotos(photos);
+    if (encoded !== JSON.stringify(stored)) {
+      await pool
+        .query('UPDATE profiles SET body_photos = $2::jsonb WHERE user_id = $1', [userId, encoded])
+        .catch((error) => console.error('[body-photos] re-encryption failed:', error));
+    }
+  }
+  return photos;
+}
+
 export async function hasBodyPhotos(userId: number): Promise<boolean> {
   try {
     const res = await pool.query(
       `SELECT 1 FROM profiles
        WHERE user_id = $1
-         AND body_photos IS NOT NULL
-         AND jsonb_array_length(body_photos) > 0
+         AND CASE jsonb_typeof(body_photos)
+               WHEN 'array' THEN jsonb_array_length(body_photos) > 0
+               WHEN 'string' THEN true -- encrypted list (never stored when empty)
+               ELSE false
+             END
        LIMIT 1`,
       [userId],
     );

@@ -8,6 +8,7 @@ import {
   getRoutinesByUser,
   getCompletionStats,
   getDayCompletions,
+  getBodyPhotos,
   getProfile,
   getStreak,
 } from "@/lib/db";
@@ -224,11 +225,12 @@ export async function GET(req: NextRequest) {
     }
 
     // ---- Parallel fetch: current completions, profile, all routines (for history), streak ----
-    const [currentCompletions, profile, allRoutines, streak] = await Promise.all([
+    const [currentCompletions, profile, allRoutines, streak, bodyPhotos] = await Promise.all([
       buildCompletionMaps(session.userId, routine.id),
       getProfile(session.userId),
       getRoutinesByUser(session.userId, { includeArchived: true }),
       getStreak(session.userId),
+      getBodyPhotos(session.userId),
     ]);
 
     const routineJson = parseRoutineJson(routine.routine_json);
@@ -318,7 +320,7 @@ export async function GET(req: NextRequest) {
               level: profile.level,
               goal_weight: profile.goal_weight,
               goal_duration: profile.goal_duration,
-              body_photos: profile.body_photos,
+              body_photos: bodyPhotos,
               body_composition_analysis: profile.body_composition_analysis,
             }
           : null,

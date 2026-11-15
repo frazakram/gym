@@ -23,6 +23,7 @@ import { compressImage } from '@/lib/image-utils'
 import { OfflineIndicator } from '@/components/OfflineIndicator'
 import { useSessionPersistence, clearSessionIndicator } from '@/lib/useSessionPersistence'
 import { csrfFetch } from '@/lib/useCsrf'
+import { loadBodyPhotos } from '@/lib/body-photos-client'
 import { TabQuote } from '@/components/ui/TabQuote'
 import { type QuoteCategory } from '@/lib/quotes'
 import { Menu } from 'lucide-react'
@@ -275,7 +276,8 @@ export default function DashboardPage() {
             ? data.profile.gym_equipment_analysis
             : null
         )
-        setBodyPhotos(Array.isArray(data.profile.body_photos) ? data.profile.body_photos : [])
+        // Body photos are not part of the profile response; load them separately.
+        loadBodyPhotos().then(setBodyPhotos)
         setBodyAnalysis(
           data.profile.body_composition_analysis && typeof data.profile.body_composition_analysis === 'object' && !Array.isArray(data.profile.body_composition_analysis)
             ? data.profile.body_composition_analysis
