@@ -89,7 +89,8 @@ jobs:
 
   e2e:
     name: End-to-end (Playwright)
-    runs-on: ubuntu-latest
+    # Pinned: ubuntu-latest moved to 26.04, which Playwright 1.57 has no Chromium build for.
+    runs-on: ubuntu-24.04
     defaults:
       run:
         working-directory: web-app
