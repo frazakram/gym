@@ -51,39 +51,24 @@ export async function POST(request: NextRequest) {
     await initializeDatabase();
 
     const body = await request.json();
-    const { images, api_key, imageUrl } = body;
+    const { images, api_key } = body;
 
     // Cost guard: only calls paid with the server key are limited. Checked
-    // before any image download so a blocked request does no work at all.
+    // first so a refused request does no further work.
     if (!(typeof api_key === 'string' && api_key.trim())) {
       const costGuard = await checkPaidAiLimit('gym_analyze', session.userId);
       if (!costGuard.ok) return withCors(paidAiLimitResponse(costGuard));
     }
 
-    // Support analyzing from a URL (used by gym selection flow)
-    let resolvedImages: string[] = [];
-
-    if (typeof imageUrl === 'string' && imageUrl.trim()) {
-      try {
-        const imgRes = await fetch(imageUrl, { signal: AbortSignal.timeout(15000) });
-        if (!imgRes.ok) {
-          return withCors(NextResponse.json({ error: 'Failed to fetch image from URL' }, { status: 400 }));
-        }
-        const buffer = Buffer.from(await imgRes.arrayBuffer());
-        const contentType = imgRes.headers.get('content-type') || 'image/jpeg';
-        const base64 = `data:${contentType};base64,${buffer.toString('base64')}`;
-        resolvedImages = [base64];
-      } catch {
-        return withCors(NextResponse.json({ error: 'Could not download image from URL' }, { status: 400 }));
-      }
-    } else if (images && Array.isArray(images) && images.length > 0) {
-      resolvedImages = images;
-    } else {
+    // Images arrive inline (base64 / data URLs) from the client. The server never
+    // fetches a client-supplied URL: that was an SSRF vector with no caller.
+    if (!Array.isArray(images) || images.length === 0) {
       return withCors(NextResponse.json(
         { error: 'No images provided' },
         { status: 400 }
       ));
     }
+    const resolvedImages: string[] = images;
 
     if (resolvedImages.length > 6) {
       return withCors(NextResponse.json(
