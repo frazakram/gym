@@ -9,6 +9,16 @@ import { createHash } from "crypto";
 
 let _redis: Redis | null | undefined;
 
+/**
+ * Redis is an optional cache and rate limiter, so a slow or unreachable Redis
+ * must never make requests slow. The client's defaults (5 retries with
+ * exponential backoff) made each failed call take ~4.3 s; billing status
+ * (cache read + write) took ~9 s in production. Each request now has a hard
+ * timeout and at most one quick retry: worst case ~1 s per call.
+ */
+const REDIS_REQUEST_TIMEOUT_MS = 500;
+const REDIS_RETRY = { retries: 1, backoff: () => 50 };
+
 function getUpstashEnv(): { url: string; token: string } | null {
   const url = process.env.UPSTASH_REDIS_REST_URL?.trim() || "";
   const token = process.env.UPSTASH_REDIS_REST_TOKEN?.trim() || "";
@@ -22,7 +32,12 @@ export function getRedis(): Redis | null {
   // Try Upstash REST API first
   const upstashEnv = getUpstashEnv();
   if (upstashEnv) {
-    _redis = new Redis({ url: upstashEnv.url, token: upstashEnv.token });
+    _redis = new Redis({
+      url: upstashEnv.url,
+      token: upstashEnv.token,
+      retry: REDIS_RETRY,
+      signal: () => AbortSignal.timeout(REDIS_REQUEST_TIMEOUT_MS),
+    });
     return _redis;
   }
   
