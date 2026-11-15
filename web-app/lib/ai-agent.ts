@@ -6,6 +6,7 @@ import { z } from "zod";
 import { RoutineGenerationInput, WeeklyRoutine } from "@/types";
 import { postProcessRoutine } from "@/lib/routine-postprocess";
 import { wrapUntrustedBlock } from "@/lib/prompt-safety";
+import { buildBodyCompositionSection, buildEquipmentSection, normalizeHeightCm } from "@/lib/routine-prompt-sections";
 import { UserFacingError } from "@/lib/api-errors";
 
 function getLangSmithCallbacks() {
@@ -40,50 +41,9 @@ export async function generateRoutine(
 
   let model;
   // Defensive normalization: height should be cm. If it looks like feet (<= 8), convert to cm.
-  const normalizedHeight =
-    typeof input.height === 'number' && input.height > 0 && input.height <= 8
-      ? Math.round(input.height * 30.48 * 10) / 10
-      : input.height;
-
-  // Build equipment context section if analysis available
-  const equipmentSection = equipmentAnalysis ? `
-
-AVAILABLE GYM EQUIPMENT (CRITICAL - ONLY USE THESE):
-${equipmentAnalysis.equipment_detected?.map((e: string) => `- ${e}`).join('\n') || 'Standard gym equipment'}
-
-Gym Type: ${equipmentAnalysis.gym_type || 'commercial'}
-Space: ${equipmentAnalysis.space_assessment || 'moderate'}
-${equipmentAnalysis.unique_features?.length ? `\nSpecial Equipment: ${equipmentAnalysis.unique_features.join(', ')}` : ''}
-${equipmentAnalysis.limitations?.length ? `\n⚠️ LIMITATIONS: ${equipmentAnalysis.limitations.join('; ')}` : ''}
-
-EQUIPMENT USAGE RULES (CRITICAL):
-- ONLY prescribe exercises that can be performed with the equipment listed above
-- If barbell is not available, use dumbbell or bodyweight alternatives
-- If squat rack is missing, suggest goblet squats, Bulgarian split squats, or lunges instead of back squats
-- If no cable machines, use resistance band alternatives or free weight exercises
-- Be creative with available equipment - suggest compound movements that work
-- NO exercises requiring equipment not in the list above
-` : '';
-
-  // Build body composition context section if available
-  const bodySection = bodyAnalysis ? `
-
-BODY COMPOSITION ANALYSIS (use this to personalize exercise selection and intensity):
-Body Type: ${bodyAnalysis.body_type || 'average'}
-${bodyAnalysis.estimated_body_fat_range ? `Estimated Body Fat: ${bodyAnalysis.estimated_body_fat_range}` : ''}
-Muscle Development: ${bodyAnalysis.muscle_development || 'beginner'}
-${bodyAnalysis.posture_notes?.length ? `\nPosture Observations:\n${bodyAnalysis.posture_notes.map((n: string) => `- ${n}`).join('\n')}` : ''}
-${bodyAnalysis.focus_areas?.length ? `\nFocus Areas:\n${bodyAnalysis.focus_areas.map((a: string) => `- ${a}`).join('\n')}` : ''}
-${bodyAnalysis.realistic_timeline ? `\nRealistic Timeline: ${bodyAnalysis.realistic_timeline}` : ''}
-${bodyAnalysis.exercise_modifications?.length ? `\nExercise Modifications:\n${bodyAnalysis.exercise_modifications.map((m: string) => `- ${m}`).join('\n')}` : ''}
-
-BODY COMPOSITION USAGE RULES:
-- Adjust exercise intensity based on muscle development level
-- Address posture issues by including corrective exercises
-- Prioritize focus areas mentioned in the analysis
-- Consider exercise modifications for safer, more effective training
-- Use realistic timeline to set appropriate progression pace
-` : '';
+  const normalizedHeight = normalizeHeightCm(input.height);
+  const equipmentSection = buildEquipmentSection(equipmentAnalysis);
+  const bodySection = buildBodyCompositionSection(bodyAnalysis);
 
   // Calculate expected exercise count and structure based on explicit session duration
   const sessionDuration = input.session_duration;

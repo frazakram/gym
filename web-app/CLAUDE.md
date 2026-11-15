@@ -140,8 +140,9 @@ web-app/
 | `db-schema.ts` | Schema (DDL) | Ordered, idempotent `SCHEMA_STATEMENTS`. Change the schema only here: the hash changes and every instance re-applies the list once, in one transaction under an advisory lock (`app_schema_version`). Never edit the database by hand. |
 | `auth.ts` | JWT sessions | `getSession()`, `createSession()`, `setSessionCookie()`, `deleteSession()`. Tokens expire in 7 days, stored as `httpOnly` cookie. |
 | `csrf.ts` / `useCsrf.ts` | CSRF protection | `csrfFetch` is the client-side fetch wrapper. **Always use this instead of plain `fetch()`.** |
-| `ai-agent.ts` | Routine gen (Anthropic Claude) | LangChain-based. **Shares duplicate prompt logic with `openai-routine.ts` — edit both when changing prompts.** |
-| `openai-routine.ts` | Routine gen (OpenAI GPT-4) | LangChain-based. **Duplicate of `ai-agent.ts` prompts — edit both.** |
+| `ai-agent.ts` | Routine gen (Anthropic Claude) | LangChain-based. Its instruction text intentionally differs from `openai-routine.ts`; shared prompt sections live in `routine-prompt-sections.ts`. |
+| `openai-routine.ts` | Routine gen (OpenAI) | Direct `fetch` to OpenAI. Own (more detailed) instruction text. |
+| `routine-prompt-sections.ts` | Shared prompt sections | Height normalization, equipment and body-composition sections used by both generators. `tests/unit/routine-prompts.test.ts` snapshots both full prompts: a prompt change shows up as a snapshot diff (update deliberately with `npx vitest run -u`). |
 | `diet-agent.ts` | AI diet plan generation | Separate prompt pipeline for nutrition plans. |
 | `fieldEncryption.ts` | AES-256-GCM encryption | `encryptDet()` for WHERE-clause fields (email/username), `encryptRnd()` for others. No-op when `DB_ENCRYPTION_KEY` unset. `isEncrypted()` guards decrypt calls. |
 | `prompt-safety.ts` | Prompt injection prevention | `sanitizeUntrustedText()` strips zero-width chars, null bytes, normalizes, length-limits. `escapeForPrompt()` wraps for safe insertion. **Call both before any user input enters AI prompts.** |
@@ -245,7 +246,7 @@ Create `.env.local` for local dev. See `ENV_SETUP.md` for full details.
 
 ## Known Bugs (Do Not Repeat)
 
-1. `ai-agent.ts` and `openai-routine.ts` have duplicate prompt-building logic — fix in both when editing either.
+1. `ai-agent.ts` and `openai-routine.ts` have diverged routine prompts (different instruction text per provider). Shared sections are in `routine-prompt-sections.ts`; unifying the instruction text is an open product decision, not a refactor.
 
 Fixed (kept here so they don't regress):
 - `next.config.ts` sets CSP + security headers — keep them when editing the config.
