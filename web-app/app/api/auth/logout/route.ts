@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { getSession } from '@/lib/auth';
 import { revokeAllSessions } from '@/lib/db';
+import { forgetSessionVersion } from '@/lib/session-version-cache';
 
 export async function POST() {
   let response: NextResponse;
@@ -8,7 +9,10 @@ export async function POST() {
     // Server-side revocation: the token stops working everywhere, not just in
     // this browser (a copied or stolen token would otherwise stay valid for 7 days).
     const session = await getSession();
-    if (session) await revokeAllSessions(session.userId);
+    if (session) {
+      await revokeAllSessions(session.userId);
+      forgetSessionVersion(session.userId); // enforce at once on this instance
+    }
     response = NextResponse.json({ message: 'Logged out successfully' }, { status: 200 });
   } catch (error) {
     console.error('Logout error:', error);

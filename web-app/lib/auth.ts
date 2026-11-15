@@ -1,6 +1,6 @@
 import { SignJWT, jwtVerify } from 'jose';
 import { cookies } from 'next/headers';
-import { getSessionVersion } from '@/lib/db';
+import { isCurrentSessionVersion } from '@/lib/session-version-cache';
 
 function getSecretKey(): Uint8Array {
   const secret = process.env.JWT_SECRET;
@@ -46,8 +46,7 @@ export async function getSession(): Promise<{ userId: number } | null> {
 
   // Revocation check. Fails closed: unknown user or database error = no session.
   try {
-    const currentVersion = await getSessionVersion(userId);
-    if (currentVersion === null || currentVersion !== tokenSessionVersion) return null;
+    if (!(await isCurrentSessionVersion(userId, tokenSessionVersion))) return null;
   } catch (error) {
     console.error('[auth] session version check failed:', error);
     return null;
