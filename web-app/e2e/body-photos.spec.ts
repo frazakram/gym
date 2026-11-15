@@ -19,3 +19,20 @@ test('body photos load in the Body view (served separately from the profile)', a
 
   await expect(page.getByText(/1 photo uploaded/)).toBeVisible();
 });
+
+test('opening the dashboard does not download body photos until the Body view is opened', async ({ page }) => {
+  await registerViaApi(page, 'bodylazy');
+  await saveProfileViaApi(page, { body_photos: [PHOTO] });
+  const photoRequests: string[] = [];
+  page.on('request', (request) => {
+    if (new URL(request.url()).pathname === '/api/body/photos') photoRequests.push(request.url());
+  });
+
+  await page.goto('/dashboard', { waitUntil: 'networkidle' });
+  expect(photoRequests).toHaveLength(0);
+
+  await page.locator('nav button:has(svg.lucide-plus)').first().click();
+  await page.getByRole('button', { name: 'Body', exact: true }).click();
+  await expect(page.getByText(/1 photo uploaded/)).toBeVisible();
+  expect(photoRequests).toHaveLength(1);
+});

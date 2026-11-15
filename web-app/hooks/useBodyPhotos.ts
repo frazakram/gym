@@ -1,22 +1,34 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { csrfFetch } from '@/lib/useCsrf'
 import { preparePhotoRecords } from '@/lib/image-utils'
+import { loadBodyPhotos } from '@/lib/body-photos-client'
 import type { BodyCompositionAnalysis } from '@/types'
 
 /**
  * Body photos and their AI body composition analysis (upload, delete, clear all).
  * `userApiKey` is the user's own AI key (empty = server key); `onSuccess`
  * shows a success message.
+ *
+ * Photos are downloaded once, the first time `isBodyViewOpen` is true: they are
+ * the largest data a user has and only the Body view shows them, so loading
+ * them with the dashboard made every visit pay for them.
  */
-export function useBodyPhotos(userApiKey: string, onSuccess: (message: string) => void) {
+export function useBodyPhotos(userApiKey: string, onSuccess: (message: string) => void, isBodyViewOpen: boolean) {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any -- photo/analysis shapes come from loosely typed JSON
   const [bodyPhotos, setBodyPhotos] = useState<any[]>([])
   // eslint-disable-next-line @typescript-eslint/no-explicit-any -- photo/analysis shapes come from loosely typed JSON
   const [bodyAnalysis, setBodyAnalysis] = useState<any>(null)
   const [analyzingBody, setAnalyzingBody] = useState(false)
   const [bodyError, setBodyError] = useState('')
+  const photosRequestedRef = useRef(false)
+
+  useEffect(() => {
+    if (!isBodyViewOpen || photosRequestedRef.current) return
+    photosRequestedRef.current = true
+    loadBodyPhotos().then(setBodyPhotos)
+  }, [isBodyViewOpen])
 
   const handleBodyPhotoClearAll = async () => {
     setBodyPhotos([])
