@@ -452,7 +452,7 @@ export function HomeView({
         <GlassCard className="p-4">
           <SectionHeader
             title="Personal Coach"
-            subtitle="Premium (trial allowed) \u2022 Book a 1:1 session"
+            subtitle={'Premium (trial allowed) \u2022 Book a 1:1 session'}
             right={
               <div className="text-xs text-amber-200 bg-amber-400/10 border border-amber-400/20 inline-flex px-2.5 py-1 rounded-full">
                 Premium
