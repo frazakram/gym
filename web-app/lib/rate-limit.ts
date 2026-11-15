@@ -1,3 +1,4 @@
+import { NextResponse } from "next/server";
 import { getRedis } from "@/lib/redis";
 
 export type RateLimitResult = {
@@ -41,6 +42,87 @@ export async function rateLimit(params: {
   const retryAfterSeconds = allowed ? 0 : Math.max(1, Number(ttl) || windowSeconds);
 
   return { allowed, limit, remaining, retryAfterSeconds };
+}
+
+// ============= PAID AI COST GUARD =============
+
+/** AI features that spend the server's own provider key. */
+export type PaidAiFeature = "body_analyze" | "gym_analyze" | "coach_note";
+
+export type PaidAiLimitDecision =
+  | { ok: true }
+  | { ok: false; status: 429 | 503; error: string; retryAfterSeconds: number };
+
+const PAID_AI_DEFAULT_LIMITS: Record<PaidAiFeature, { perMinute: number; perHour: number }> = {
+  body_analyze: { perMinute: 2, perHour: 10 },
+  gym_analyze: { perMinute: 2, perHour: 10 },
+  coach_note: { perMinute: 5, perHour: 30 },
+};
+
+const LIMITER_UNAVAILABLE_DECISION: PaidAiLimitDecision = {
+  ok: false,
+  status: 503,
+  error: "This AI feature is temporarily unavailable. Please try again shortly.",
+  retryAfterSeconds: 60,
+};
+
+/**
+ * Per-user minute + hour limits for AI calls paid with the server key.
+ *
+ * Unlike rateLimit(), this fails CLOSED in production: if Redis is missing or
+ * erroring we refuse rather than allow unbounded spend. Outside production it
+ * fails open so local development works without Redis.
+ */
+export async function checkPaidAiLimit(feature: PaidAiFeature, userId: number): Promise<PaidAiLimitDecision> {
+  const isProduction = process.env.NODE_ENV === "production";
+  const envPrefix = `RATE_LIMIT_${feature.toUpperCase()}`;
+  const defaultLimits = PAID_AI_DEFAULT_LIMITS[feature];
+  const rateWindows = [
+    { name: "minute", seconds: 60, limit: intFromEnv(`${envPrefix}_PER_MINUTE`, defaultLimits.perMinute) },
+    { name: "hour", seconds: 3600, limit: intFromEnv(`${envPrefix}_PER_HOUR`, defaultLimits.perHour) },
+  ];
+
+  if (!getRedis()) {
+    if (isProduction) {
+      console.error(`[paid-ai-limit] Redis not configured; refusing ${feature} in production`);
+      return LIMITER_UNAVAILABLE_DECISION;
+    }
+    return { ok: true };
+  }
+
+  try {
+    for (const rateWindow of rateWindows) {
+      const windowResult = await rateLimit({
+        key: `rl:ai:${feature}:${rateWindow.name}:${userId}`,
+        limit: rateWindow.limit,
+        windowSeconds: rateWindow.seconds,
+      });
+      if (!windowResult.allowed) {
+        return {
+          ok: false,
+          status: 429,
+          error: `Too many requests. Try again in ${windowResult.retryAfterSeconds}s.`,
+          retryAfterSeconds: windowResult.retryAfterSeconds,
+        };
+      }
+    }
+    return { ok: true };
+  } catch (error) {
+    if (isProduction) {
+      console.error(`[paid-ai-limit] Redis error; refusing ${feature} in production:`, error);
+      return LIMITER_UNAVAILABLE_DECISION;
+    }
+    console.warn(`[paid-ai-limit] Redis error; allowing ${feature} outside production:`, error);
+    return { ok: true };
+  }
+}
+
+/** HTTP response for a refused paid-AI request (429 rate limited, 503 limiter unavailable). */
+export function paidAiLimitResponse(decision: Extract<PaidAiLimitDecision, { ok: false }>): NextResponse {
+  return NextResponse.json(
+    { error: decision.error },
+    { status: decision.status, headers: { "Retry-After": String(decision.retryAfterSeconds) } },
+  );
 }
 
 export const RATE_LIMITS = {

@@ -3,6 +3,7 @@ import { withCors } from '@/lib/corsMiddleware';
 import OpenAI from 'openai';
 import { getSession } from '@/lib/auth';
 import { initializeDatabase, hasBodyPhotos } from '@/lib/db';
+import { checkPaidAiLimit, paidAiLimitResponse } from '@/lib/rate-limit';
 import type { BodyCompositionAnalysis } from '@/types';
 
 export const runtime = "nodejs";
@@ -70,6 +71,11 @@ export async function POST(req: NextRequest) {
     }));
 
     const clientKey = typeof api_key === 'string' ? api_key.trim() : undefined;
+    // Cost guard: only calls paid with the server key are limited.
+    if (!clientKey) {
+      const costGuard = await checkPaidAiLimit('body_analyze', session.userId);
+      if (!costGuard.ok) return withCors(paidAiLimitResponse(costGuard));
+    }
     const response = await getOpenAI(clientKey).chat.completions.create({
       model: 'gpt-4o',
       messages: [

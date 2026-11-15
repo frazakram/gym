@@ -2,6 +2,7 @@ import { withCors } from "@/lib/corsMiddleware";
 import { NextRequest, NextResponse } from 'next/server';
 import { getSession } from '@/lib/auth';
 import { initializeDatabase, hasGymPhotos } from '@/lib/db';
+import { checkPaidAiLimit, paidAiLimitResponse } from '@/lib/rate-limit';
 import type { GymEquipmentAnalysis } from '@/types';
 
 export const runtime = 'nodejs';
@@ -51,6 +52,13 @@ export async function POST(request: NextRequest) {
 
     const body = await request.json();
     const { images, api_key, imageUrl } = body;
+
+    // Cost guard: only calls paid with the server key are limited. Checked
+    // before any image download so a blocked request does no work at all.
+    if (!(typeof api_key === 'string' && api_key.trim())) {
+      const costGuard = await checkPaidAiLimit('gym_analyze', session.userId);
+      if (!costGuard.ok) return withCors(paidAiLimitResponse(costGuard));
+    }
 
     // Support analyzing from a URL (used by gym selection flow)
     let resolvedImages: string[] = [];

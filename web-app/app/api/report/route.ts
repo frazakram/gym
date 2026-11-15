@@ -13,6 +13,7 @@ import {
   getStreak,
 } from "@/lib/db";
 import { redisGetJson, redisSetJson } from "@/lib/redis";
+import { checkPaidAiLimit } from "@/lib/rate-limit";
 import {
   generateWeeklyReportData,
   computeDeltas,
@@ -111,6 +112,10 @@ async function buildCoachNote(opts: {
     return cached;
   }
   console.log(`[Cache MISS] ${cacheKey}`);
+
+  // Cost guard: the note is optional, so when limited the report still loads without it.
+  const costGuard = await checkPaidAiLimit("coach_note", opts.userId);
+  if (!costGuard.ok) return null;
 
   const systemPrompt = `You are a friendly, expert personal trainer writing the closing note of a user's weekly progress report.
 
