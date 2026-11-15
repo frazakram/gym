@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
 import { BrandLogo } from '@/components/BrandLogo'
@@ -8,6 +8,7 @@ import LoginAnimation from '@/components/LoginAnimation'
 import { storeSessionIndicator } from '@/lib/useSessionPersistence'
 import { csrfFetch } from '@/lib/useCsrf'
 import { toastError } from '@/lib/toast'
+import { googleSignInErrorMessage } from '@/lib/google-signin-errors'
 import { Mail, Lock } from 'lucide-react'
 
 const staggerItem = (delay: number) => ({
@@ -17,6 +18,15 @@ const staggerItem = (delay: number) => ({
 })
 
 export default function LoginPage() {
+  // A failed Google sign-in returns here as /login?error=<code>: explain it
+  // once, then drop the code so a refresh does not repeat the message.
+  useEffect(() => {
+    const message = googleSignInErrorMessage(new URLSearchParams(window.location.search).get('error'))
+    if (!message) return
+    toastError(message.title, message.description)
+    window.history.replaceState(null, '', '/login')
+  }, [])
+
   const router = useRouter()
   const [isLogin, setIsLogin] = useState(true)
   const [username, setUsername] = useState('')

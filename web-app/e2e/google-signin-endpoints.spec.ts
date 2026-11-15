@@ -13,3 +13,16 @@ test('Google sign-in redirect flow is still served', async ({ request }) => {
   const response = await request.get('/api/auth/google/start', { maxRedirects: 0 });
   expect([302, 307]).toContain(response.status());
 });
+
+// The Google callback sends failures back as /login?error=<code>; the page
+// used to ignore it, so a failed sign-in looked like nothing happened.
+test('a failed Google sign-in explains itself on the login page', async ({ page }) => {
+  await page.goto('/login?error=google_failed');
+  await expect(page.getByText('Google sign-in failed')).toBeVisible();
+  await expect(page).toHaveURL(/\/login$/);
+});
+
+test('cancelling the Google account picker is reported as cancelled', async ({ page }) => {
+  await page.goto('/login?error=google_access_denied');
+  await expect(page.getByText('Google sign-in was cancelled')).toBeVisible();
+});
