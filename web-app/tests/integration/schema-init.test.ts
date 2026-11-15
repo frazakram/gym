@@ -53,15 +53,21 @@ describe("initializeDatabase schema handling", () => {
 
   it("builds the schema on an empty database and records its version", async () => {
     await withAdminClient((client) => client.query("DROP SCHEMA public CASCADE; CREATE SCHEMA public;"));
-    const { SCHEMA_HASH } = await import("@/lib/db-schema");
+    const { SCHEMA_HASH, SCHEMA_STATEMENTS } = await import("@/lib/db-schema");
+    const declaredTables = SCHEMA_STATEMENTS.flatMap((sql) =>
+      [...sql.matchAll(/CREATE TABLE IF NOT EXISTS (\w+)/gi)].map((match) => match[1]),
+    );
 
     await (await coldStartDb()).initializeDatabase();
 
     const { tables, hash } = await withAdminClient(async (client) => ({
-      tables: Number((await client.query("SELECT count(*) FROM information_schema.tables WHERE table_schema = 'public'")).rows[0].count),
+      tables: (await client.query("SELECT table_name FROM information_schema.tables WHERE table_schema = 'public'")).rows.map(
+        (row) => row.table_name as string,
+      ),
       hash: (await client.query("SELECT hash FROM app_schema_version WHERE id = 1")).rows[0]?.hash,
     }));
-    expect(tables).toBe(21); // 20 application tables + app_schema_version
+    expect(declaredTables.length).toBeGreaterThanOrEqual(20);
+    expect(tables.sort()).toEqual([...declaredTables, "app_schema_version"].sort());
     expect(hash).toBe(SCHEMA_HASH);
   });
 

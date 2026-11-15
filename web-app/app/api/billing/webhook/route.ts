@@ -2,10 +2,17 @@ import { withCors } from "@/lib/corsMiddleware";
 import { NextRequest, NextResponse } from "next/server";
 import crypto from "crypto";
 import Razorpay from "razorpay";
-import { initializeDatabase, upsertSubscriptionFromRazorpay } from "@/lib/db";
+import {
+  hasProcessedRazorpayEvent,
+  initializeDatabase,
+  recordProcessedRazorpayEvent,
+  upsertSubscriptionFromRazorpay,
+} from "@/lib/db";
 import { redisDel } from "@/lib/redis";
 
 export const runtime = "nodejs";
+
+const MAX_EVENT_ID_LENGTH = 100;
 
 type AnyRecord = Record<string, unknown>;
 
@@ -54,9 +61,17 @@ export async function POST(req: NextRequest) {
 
     await initializeDatabase();
 
+    // Razorpay retries and occasionally redelivers events; each carries a unique id.
+    const eventId = req.headers.get("x-razorpay-event-id")?.trim().slice(0, MAX_EVENT_ID_LENGTH) || null;
+    if (eventId && (await hasProcessedRazorpayEvent(eventId))) {
+      return withCors(NextResponse.json({ ok: true, duplicate: true }, { status: 200 }));
+    }
+
     const body: unknown = JSON.parse(raw);
     const eventVal = isRecord(body) ? body["event"] : undefined;
     const event = typeof eventVal === "string" ? eventVal : "";
+    const createdAtVal = isRecord(body) ? body["created_at"] : undefined;
+    const eventCreatedAt = typeof createdAtVal === "number" ? createdAtVal : null;
 
     const subEntity = getNested(body, ["payload", "subscription", "entity"]);
     const payEntity = getNested(body, ["payload", "payment", "entity"]);
@@ -106,7 +121,13 @@ export async function POST(req: NextRequest) {
         const v = isRecord(sub) ? sub["current_end"] : undefined;
         return typeof v === "number" ? v : null;
       })(),
+      eventCreatedAt,
     });
+
+    // Recorded only after successful processing, so a failed attempt (500) is retried.
+    if (eventId) {
+      await recordProcessedRazorpayEvent({ eventId, event, subscriptionId });
+    }
 
     // Invalidate cached billing status for this user (if Redis is configured)
     if (typeof userId === "number") {

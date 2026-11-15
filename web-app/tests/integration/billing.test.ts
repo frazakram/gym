@@ -1,5 +1,6 @@
 import crypto from "node:crypto";
 import { describe, expect, it } from "vitest";
+import { Client } from "pg";
 import { GET as billingStatus } from "@/app/api/billing/status/route";
 import { POST as webhook } from "@/app/api/billing/webhook/route";
 import { asHandler, call, newUser } from "./helpers";
@@ -10,20 +11,35 @@ function sign(raw: string, secret = SECRET) {
   return crypto.createHmac("sha256", secret).update(raw).digest("hex");
 }
 
-function postWebhook(payload: unknown, signature?: string) {
+function postWebhook(payload: unknown, signature?: string, eventId?: string) {
   const raw = JSON.stringify(payload);
+  const headers: Record<string, string> = {
+    "x-razorpay-signature": signature ?? sign(raw),
+    "content-type": "application/json",
+  };
+  if (eventId) headers["x-razorpay-event-id"] = eventId;
   return call(asHandler(webhook), {
     method: "POST",
     path: "/api/billing/webhook",
     rawBody: raw,
-    headers: { "x-razorpay-signature": signature ?? sign(raw), "content-type": "application/json" },
+    headers,
     csrf: false,
   });
 }
 
-function subscriptionEvent(event: string, userId: number, subId: string, status: string, currentEnd: number) {
+const nowSeconds = () => Math.floor(Date.now() / 1000);
+
+function subscriptionEvent(
+  event: string,
+  userId: number,
+  subId: string,
+  status: string,
+  currentEnd: number,
+  createdAt = nowSeconds(),
+) {
   return {
     event,
+    created_at: createdAt,
     payload: {
       subscription: {
         entity: {
@@ -97,12 +113,41 @@ describe("POST /api/billing/webhook", () => {
     expect((await status(past.id)).body.premium).toBe(false);
   });
 
-  it("applies events in arrival order: a late older event overwrites a newer status (current behaviour)", async () => {
+  it("ignores an event that is older than the last one applied (out-of-order delivery)", async () => {
     const { id } = await newUser("bill");
-    const end = Math.floor(Date.now() / 1000) + 30 * 86400;
-    await postWebhook(subscriptionEvent("subscription.activated", id, `sub_o${id}`, "active", end));
-    await postWebhook(subscriptionEvent("subscription.authenticated", id, `sub_o${id}`, "authenticated", end));
-    // Audit P1-7: no event ordering/idempotency, so premium is lost here.
-    expect((await status(id)).body).toMatchObject({ premium: false, status: "authenticated" });
+    const end = nowSeconds() + 30 * 86400;
+    const activatedAt = nowSeconds();
+    await postWebhook(subscriptionEvent("subscription.activated", id, `sub_o${id}`, "active", end, activatedAt));
+    const lateOlderEvent = await postWebhook(
+      subscriptionEvent("subscription.authenticated", id, `sub_o${id}`, "authenticated", end, activatedAt - 60),
+    );
+
+    expect(lateOlderEvent).toMatchObject({ status: 200, body: { ok: true } });
+    expect((await status(id)).body).toMatchObject({ premium: true, status: "active" });
+  });
+
+  it("still applies a newer event (e.g. a later cancellation)", async () => {
+    const { id } = await newUser("bill");
+    const now = nowSeconds();
+    await postWebhook(subscriptionEvent("subscription.activated", id, `sub_n${id}`, "active", now + 86400, now - 120));
+    await postWebhook(subscriptionEvent("subscription.halted", id, `sub_n${id}`, "halted", now + 86400, now));
+    expect((await status(id)).body).toMatchObject({ premium: false, status: "halted" });
+  });
+
+  it("acknowledges a redelivered event (same x-razorpay-event-id) without processing it again", async () => {
+    const { id } = await newUser("bill");
+    const subscriptionId = `sub_d${id}`;
+    const activated = subscriptionEvent("subscription.activated", id, subscriptionId, "active", nowSeconds() + 86400);
+    expect((await postWebhook(activated, undefined, `evt_${id}`)).body).toEqual({ ok: true });
+
+    // Simulate a later, legitimate state change recorded by another event.
+    const db = new Client({ connectionString: process.env.POSTGRES_URL });
+    await db.connect();
+    await db.query("UPDATE subscriptions SET status = 'cancelled', current_end = now() - interval '1 day' WHERE subscription_id = $1", [subscriptionId]);
+    await db.end();
+
+    const redelivery = await postWebhook(activated, undefined, `evt_${id}`);
+    expect(redelivery).toMatchObject({ status: 200, body: { ok: true, duplicate: true } });
+    expect((await status(id)).body).toMatchObject({ premium: false, status: "cancelled" });
   });
 });

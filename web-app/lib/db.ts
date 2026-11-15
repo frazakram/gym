@@ -2364,6 +2364,26 @@ export async function getPremiumStatus(userId: number): Promise<PremiumStatus> {
   }
 }
 
+/** True if this Razorpay webhook event id was already processed successfully. */
+export async function hasProcessedRazorpayEvent(eventId: string): Promise<boolean> {
+  const result = await pool.query('SELECT 1 FROM razorpay_webhook_events WHERE event_id = $1', [eventId]);
+  return result.rows.length > 0;
+}
+
+/** Records a successfully processed Razorpay webhook event (idempotent). */
+export async function recordProcessedRazorpayEvent(input: {
+  eventId: string;
+  event: string;
+  subscriptionId: string | null;
+}): Promise<void> {
+  await pool.query(
+    `INSERT INTO razorpay_webhook_events (event_id, event, subscription_id)
+     VALUES ($1, $2, $3)
+     ON CONFLICT (event_id) DO NOTHING`,
+    [input.eventId, input.event, input.subscriptionId]
+  );
+}
+
 export async function upsertSubscriptionFromRazorpay(input: {
   userId: number | null;
   provider: "razorpay";
@@ -2372,6 +2392,8 @@ export async function upsertSubscriptionFromRazorpay(input: {
   status: string;
   currentStart?: number | null; // unix seconds
   currentEnd?: number | null; // unix seconds
+  /** Webhook event creation time (unix seconds). Older events than the last applied one are ignored. */
+  eventCreatedAt?: number | null;
 }): Promise<void> {
   // Never try to save mock user subscriptions to the real DB
   if (input.userId === MOCK_USER_ID && allowMockAuth()) {
@@ -2382,29 +2404,38 @@ export async function upsertSubscriptionFromRazorpay(input: {
   try {
     const start = typeof input.currentStart === "number" ? new Date(input.currentStart * 1000) : null;
     const end = typeof input.currentEnd === "number" ? new Date(input.currentEnd * 1000) : null;
+    const eventAt = typeof input.eventCreatedAt === "number" ? new Date(input.eventCreatedAt * 1000) : null;
 
+    // An update without an event time (e.g. subscription creation) always applies;
+    // an event only applies if it is not older than the last applied event.
     if (input.userId == null) {
       await pool.query(
         `UPDATE subscriptions
          SET status = $2, plan_id = COALESCE($3, plan_id), current_start = COALESCE($4, current_start), current_end = COALESCE($5, current_end),
+             last_event_at = COALESCE($6, last_event_at),
              updated_at = CURRENT_TIMESTAMP
-         WHERE subscription_id = $1`,
-        [input.subscriptionId, input.status, input.planId ?? null, start, end]
+         WHERE subscription_id = $1
+           AND ($6::timestamptz IS NULL OR last_event_at IS NULL OR last_event_at <= $6::timestamptz)`,
+        [input.subscriptionId, input.status, input.planId ?? null, start, end, eventAt]
       );
       return;
     }
 
     await pool.query(
-      `INSERT INTO subscriptions (user_id, provider, plan_id, subscription_id, status, current_start, current_end)
-       VALUES ($1, $2, $3, $4, $5, $6, $7)
+      `INSERT INTO subscriptions (user_id, provider, plan_id, subscription_id, status, current_start, current_end, last_event_at)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
        ON CONFLICT (subscription_id) DO UPDATE
        SET user_id = EXCLUDED.user_id,
            plan_id = COALESCE(EXCLUDED.plan_id, subscriptions.plan_id),
            status = EXCLUDED.status,
            current_start = COALESCE(EXCLUDED.current_start, subscriptions.current_start),
            current_end = COALESCE(EXCLUDED.current_end, subscriptions.current_end),
-           updated_at = CURRENT_TIMESTAMP`,
-      [input.userId, input.provider, input.planId ?? null, input.subscriptionId, input.status, start, end]
+           last_event_at = COALESCE(EXCLUDED.last_event_at, subscriptions.last_event_at),
+           updated_at = CURRENT_TIMESTAMP
+       WHERE EXCLUDED.last_event_at IS NULL
+          OR subscriptions.last_event_at IS NULL
+          OR subscriptions.last_event_at <= EXCLUDED.last_event_at`,
+      [input.userId, input.provider, input.planId ?? null, input.subscriptionId, input.status, start, end, eventAt]
     );
   } catch (error) {
     console.error("upsertSubscriptionFromRazorpay DB failed:", error);

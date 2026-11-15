@@ -388,6 +388,15 @@ export const SCHEMA_STATEMENTS: readonly string[] = [
           ('Worldwide — LATAM', 'Latin America community', 'worldwide', 'LATAM', NULL)
         ON CONFLICT DO NOTHING;
       `,
+  // Razorpay webhook safety: ids of processed events (idempotent redelivery), and
+  // the creation time of the last applied event so late deliveries can't regress state.
+  `CREATE TABLE IF NOT EXISTS razorpay_webhook_events (
+     event_id TEXT PRIMARY KEY,
+     event TEXT NOT NULL,
+     subscription_id TEXT,
+     processed_at TIMESTAMPTZ NOT NULL DEFAULT now()
+   )`,
+  `ALTER TABLE subscriptions ADD COLUMN IF NOT EXISTS last_event_at TIMESTAMPTZ`,
 ];
 
 /** Fingerprint of the schema definition; stored in app_schema_version. */
