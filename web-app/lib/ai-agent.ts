@@ -1,4 +1,5 @@
 import { ChatAnthropic } from "@langchain/anthropic";
+import { resolveAnthropicModel } from "@/lib/ai-models";
 import { ChatOpenAI } from "@langchain/openai";
 import { LangChainTracer } from "@langchain/core/tracers/tracer_langchain";
 import { awaitAllCallbacks } from "@langchain/core/callbacks/promises";
@@ -94,7 +95,7 @@ ${sessionStructure}
       throw new UserFacingError('Anthropic API key is required');
     }
     model = new ChatAnthropic({
-      model: input.model || "claude-3-5-sonnet-20241022",
+      model: resolveAnthropicModel(input.model),
       temperature: 0.7,
       apiKey: apiKey,
     });

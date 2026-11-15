@@ -1,5 +1,6 @@
 import { asAiProviderError, toErrorResponse } from "@/lib/api-errors";
 import { outboundTimeout } from "@/lib/outbound-timeouts";
+import { DEFAULT_ANTHROPIC_MODEL } from "@/lib/ai-models";
 import { NextRequest, NextResponse } from "next/server";
 import { getSession } from "@/lib/auth";
 import { ChatAnthropic } from "@langchain/anthropic";
@@ -127,7 +128,7 @@ ${wrapUntrustedBlock("ORIGINAL_NOTES", userNotes, { maxChars: 2000 })}`.trim();
       if (keyFromClient) assertAsciiHeaderValue(anthropicKey);
 
       const model = new ChatAnthropic({
-        model: "claude-3-5-sonnet-20241022",
+        model: DEFAULT_ANTHROPIC_MODEL,
         temperature: 0.3,
         apiKey: anthropicKey,
       });

@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { X, Archive, ArchiveRestore, Trash2, Loader2, Key, ChevronDown, Eye, EyeOff, Check } from 'lucide-react'
+import { DEFAULT_ANTHROPIC_MODEL_LABEL } from '@/lib/ai-models'
 
 interface RoutineHistoryItem {
   id: number
@@ -45,10 +46,9 @@ const OPENAI_MODELS = [
 ]
 
 const ANTHROPIC_MODELS = [
-  { id: '', label: 'Default (Claude 3.5 Sonnet)' },
+  { id: '', label: `Default (${DEFAULT_ANTHROPIC_MODEL_LABEL})` },
   { id: 'claude-sonnet-4-6', label: 'Claude Sonnet 4.6' },
   { id: 'claude-haiku-4-5-20251001', label: 'Claude Haiku 4.5' },
-  { id: 'claude-3-5-sonnet-20241022', label: 'Claude 3.5 Sonnet' },
 ]
 
 export function Sidebar({
