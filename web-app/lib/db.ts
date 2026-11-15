@@ -126,9 +126,10 @@ const MOCK_PROFILE: Profile = {
 const mockProfileStore = new Map<number, Profile>();
 
 function allowMockAuth(): boolean {
-  // Industry-ready default: NEVER allow mock authentication in production.
-  // For local dev, you can explicitly enable it with ALLOW_MOCK_AUTH=true.
-  return process.env.ALLOW_MOCK_AUTH === 'true';
+  // Mock mode accepts any password and fakes DB results, so it is hard-disabled in
+  // production even if ALLOW_MOCK_AUTH=true leaks into the environment. For local
+  // dev without a database, enable it explicitly with ALLOW_MOCK_AUTH=true.
+  return process.env.ALLOW_MOCK_AUTH === 'true' && process.env.NODE_ENV !== 'production';
 }
 
 export async function initializeDatabase() {
