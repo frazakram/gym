@@ -15,6 +15,24 @@ const eslintConfig = defineConfig([
     "public/sw.js",
   ]),
   {
+    // Every imported package must be declared in package.json. Packages that
+    // only arrive transitively (e.g. openai via @langchain/openai) silently
+    // break when the parent package changes its dependencies.
+    rules: {
+      "import/no-extraneous-dependencies": [
+        "error",
+        {
+          devDependencies: [
+            "tests/**",
+            "e2e/**",
+            "scripts/**",
+            "**/*.config.{ts,mts,mjs,js}",
+          ],
+        },
+      ],
+    },
+  },
+  {
     // Pre-existing issues across the codebase. Demoted to warnings so
     // CI is unblocked while we backlog cleanups; new code should still
     // avoid these patterns.
