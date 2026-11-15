@@ -32,6 +32,7 @@ import { useAiSettings } from '@/hooks/useAiSettings'
 import { usePremiumStatus } from '@/hooks/usePremiumStatus'
 import { useGymPhotos } from '@/hooks/useGymPhotos'
 import { useBodyPhotos } from '@/hooks/useBodyPhotos'
+import { useWorkoutProgress, useWorkoutProgressActions } from '@/hooks/useWorkoutProgress'
 import { PullToRefreshIndicator } from '@/components/ui/PullToRefreshIndicator'
 
 function countryToRegionClient(code: string): 'APAC' | 'EMEA' | 'NA' | 'LATAM' {
@@ -169,26 +170,11 @@ export default function DashboardPage() {
   // Progress tracking state
   const [currentRoutineId, setCurrentRoutineId] = useState<number | null>(null)
   const [currentWeekNumber, setCurrentWeekNumber] = useState(1)
-  const [exerciseCompletions, setExerciseCompletions] = useState<Map<string, boolean>>(new Map())
-  const [completionDetails, setCompletionDetails] = useState<Map<string, { actual_weight?: number | null; actual_reps?: number | null }>>(new Map())
-  const [dayCompletions, setDayCompletions] = useState<Map<number, boolean>>(new Map())
+  const {
+    exerciseCompletions, setExerciseCompletions, completionDetails, setCompletionDetails,
+    dayCompletions, setDayCompletions, applyCompletions,
+  } = useWorkoutProgress()
   const [userId, setUserId] = useState<number | null>(null)
-
-  // Apply a /api/completions response to both the completed map and the
-  // logged weight/reps map in one place.
-  const applyCompletions = useCallback((completions: any[]) => {
-    const map = new Map<string, boolean>()
-    const dmap = new Map<string, { actual_weight?: number | null; actual_reps?: number | null }>()
-    ;(completions || []).forEach((c: any) => {
-      const key = `${c.day_index}-${c.exercise_index}`
-      map.set(key, c.completed)
-      if (c.actual_weight != null || c.actual_reps != null) {
-        dmap.set(key, { actual_weight: c.actual_weight ?? null, actual_reps: c.actual_reps ?? null })
-      }
-    })
-    setExerciseCompletions(map)
-    setCompletionDetails(dmap)
-  }, [])
 
   // Stale routine detection: true when the loaded routine is from a past week
   const [routineIsStale, setRoutineIsStale] = useState(false)
@@ -1116,153 +1102,20 @@ export default function DashboardPage() {
     }
   }
 
-  const handleToggleExercise = async (
-    dayIndex: number,
-    exerciseIndex: number,
-    completed: boolean,
-    details?: { actual_weight?: number | null; actual_reps?: number | null }
-  ) => {
-    const key = `${dayIndex}-${exerciseIndex}`
-    // Optimistic UI update
-    setExerciseCompletions(prev => {
-      const next = new Map(prev)
-      next.set(key, completed)
-      return next
-    })
-    if (details) {
-      setCompletionDetails(prev => {
-        const next = new Map(prev)
-        next.set(key, { actual_weight: details.actual_weight ?? null, actual_reps: details.actual_reps ?? null })
-        return next
-      })
-    }
-
-    // Persist to server
-    let rid = currentRoutineId
-    if (!rid && routine) {
-      rid = await saveRoutineToDatabase(routine)
-    }
-    if (rid) {
-      try {
-        const res = await csrfFetch('/api/completions', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ routineId: rid, dayIndex, exerciseIndex, completed, ...details }),
-        })
-        if (!res.ok) {
-          const text = await res.text().catch(() => '');
-          throw new Error(`API failed: ${res.status} ${text}`)
-        }
-      } catch (e) {
-        console.error('Failed to save completion:', e)
-        setError(e instanceof Error ? e.message : String(e));
-        // Revert on error
-        setExerciseCompletions(prev => {
-          const next = new Map(prev)
-          next.set(`${dayIndex}-${exerciseIndex}`, !completed)
-          return next
-        })
-        throw e; // Rethrow to let caller know it failed
-      }
-    } else {
-      // Revert if saving the routine failed
-      setExerciseCompletions(prev => {
-        const next = new Map(prev)
-        next.set(`${dayIndex}-${exerciseIndex}`, !completed)
-        return next
-      })
-      throw new Error("Could not save routine context");
-    }
-
-    fetchHeatmapData()
-    fetchStreak()
-  }
-
-  // Log a weight × reps set. Marks the exercise complete and persists the
-  // numbers so they feed the Personal Records card.
-  const handleLogSet = async (
-    dayIndex: number,
-    exerciseIndex: number,
-    details: { actual_weight?: number | null; actual_reps?: number | null }
-  ) => {
-    try {
-      await handleToggleExercise(dayIndex, exerciseIndex, true, details)
-    } catch (e) {
-      console.error('Failed to log set:', e)
-    }
-  }
-
-  const handleToggleRestDay = async (dayIndex: number, completed: boolean) => {
-    let rid = currentRoutineId
-    if (!rid && routine) {
-      rid = await saveRoutineToDatabase(routine)
-    }
-    if (!rid) return
-
-    // Optimistic update
-    setDayCompletions(prev => {
-      const next = new Map(prev)
-      next.set(dayIndex, completed)
-      return next
-    })
-
-    try {
-      const res = await csrfFetch('/api/day-completions', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ routineId: rid, dayIndex, completed }),
-      })
-      if (!res.ok) throw new Error('Failed to update')
-
-      setDayCompletions((prev) => {
-        const next = new Map(prev)
-        next.set(dayIndex, completed)
-        return next
-      })
-
-      // Update completion %
-      // actually, just let next render handle it or we need to recalculate?
-      // simple approach: do nothing or re-evaluate.
-      // DashboardClient does not compute percentage centrally, it's passed to RoutineView?
-      // No, completionPercentage is computed ?
-      // Wait, completionPercentage prop in RoutineView.
-      // Let's check how completionPercentage is passed.
-    } catch (e) {
-      console.error(e)
-    }
-  }
-
-  const handleToggleDayComplete = async (dayIndex: number, completed: boolean) => {
-    let rid = currentRoutineId
-    if (!rid && routine) {
-      rid = await saveRoutineToDatabase(routine)
-    }
-    if (!rid) return
-    
-    // Optimistic
-    setDayCompletions(prev => {
-      const next = new Map(prev)
-      next.set(dayIndex, completed)
-      return next
-    })
-
-    try {
-      const res = await csrfFetch('/api/day-completions', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ routineId: rid, dayIndex, completed }),
-      })
-      if (!res.ok) throw new Error('Failed to update day completion')
-    } catch (e) {
-      console.error(e)
-      // Revert
-      setDayCompletions(prev => {
-        const next = new Map(prev)
-        next.set(dayIndex, !completed)
-        return next
-      })
-    }
-  }
+  const { handleToggleExercise, handleLogSet, handleToggleRestDay, handleToggleDayComplete } =
+    useWorkoutProgressActions(
+      { setExerciseCompletions, setCompletionDetails, setDayCompletions },
+      {
+        routine,
+        currentRoutineId,
+        ensureRoutineSaved: saveRoutineToDatabase,
+        onProgressSaved: () => {
+          fetchHeatmapData()
+          fetchStreak()
+        },
+        onError: setError,
+      },
+    )
 
   // Pull-to-refresh: re-fetch the active view's data
   const handleRefresh = useCallback(async () => {
