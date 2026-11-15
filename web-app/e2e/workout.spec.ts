@@ -1,39 +1,16 @@
 import { test, expect } from '@playwright/test';
+import { registerViaApi, saveProfileViaApi } from './helpers';
 
 test.describe('Workout Tracking', () => {
+  // These specs make real AI calls; they only run when a key is provided.
+  test.skip(!process.env.OPENAI_API_KEY, 'Needs OPENAI_API_KEY (real AI call)');
+
   test.beforeEach(async ({ page }) => {
-    // Setup: Login and Create Profile
-    const username = `work_user_${Date.now()}_${Math.floor(Math.random() * 1000)}`;
-    await page.goto('/login');
-    await page.getByRole('button', { name: 'Register', exact: true }).click();
-    await page.getByPlaceholder('Enter your email or username').fill(username);
-    await page.getByPlaceholder('Enter your password').fill('Test@1234');
-    page.once('dialog', d => d.dismiss());
-    await page.getByRole('button', { name: 'Create Account' }).click();
-    
-    // Wait for switch
-    // await expect(page.getByRole('button', { name: 'Sign In', exact: true })).toBeVisible();
-    
-    await page.reload();
-
-    // Login
-    await page.getByPlaceholder('Enter your email or username').fill(username);
-    await page.getByPlaceholder('Enter your password').fill('Test@1234');
-    await page.getByRole('button', { name: 'Sign In', exact: true }).click();
-
-    // Create minimal profile
-    await page.getByRole('button', { name: 'Profile' }).click();
-    
-    await page.locator('input[min="16"][max="100"]').fill('25');
-    await page.locator('input[min="30"][max="300"]').first().fill('75');
-    await page.getByRole('button', { name: 'cm', exact: true }).click();
-    await page.locator('input[min="100"][max="250"]').fill('175');
-    await page.getByRole('button', { name: 'Male', exact: true }).click();
-    await page.getByRole('button', { name: 'Muscle gain', exact: true }).click();
-    await page.getByRole('button', { name: 'Beginner', exact: true }).click();
-    await page.getByPlaceholder('e.g., Just started, 6 months, 2 years').fill('3 months');
-    await page.getByRole('button', { name: 'Save changes' }).click();
-    await expect(page.getByText('Profile saved successfully')).toBeVisible();
+    // Setup: user + profile through the real API (UI sign-up now goes via /onboarding;
+    // that flow is covered in journeys.spec.ts), then open the dashboard.
+    await registerViaApi(page);
+    await saveProfileViaApi(page);
+    await page.goto('/dashboard');
     
     // Ensure we have a routine to track
     // For consistency, we need to generate one.

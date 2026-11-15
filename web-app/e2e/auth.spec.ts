@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import { greeting, loginViaUi, openProfileTab, registerViaApi, saveProfileViaApi } from './helpers';
 
 test.describe('Authentication', () => {
 
@@ -27,24 +28,13 @@ test.describe('Authentication', () => {
 
   // TC-AUTH-002: Login with valid credentials
   test('Login with valid credentials', async ({ page }) => {
-    // Need a user first.
-    const username = `login_user_${Date.now()}`;
-    await page.goto('/login');
-    await page.getByRole('button', { name: 'Register', exact: true }).click();
-    await page.getByPlaceholder('Enter your email or username').fill(username);
-    await page.getByPlaceholder('Enter your password').fill('Test@1234');
-    await page.getByRole('button', { name: 'Create Account' }).click();
-    
-    await page.reload(); // Ensure fresh
-    
-    await page.getByPlaceholder('Enter your email or username').fill(username);
-    await page.getByPlaceholder('Enter your password').fill('Test@1234');
-    await page.getByRole('button', { name: 'Sign In', exact: true }).click();
-    
-    // Expect Dashboard
-    await expect(page.getByText('Good morning', { exact: false })
-      .or(page.getByText('Good afternoon', { exact: false }))
-      .or(page.getByText('Good evening', { exact: false }))).toBeVisible();
+    // Existing user with a completed profile (new users are sent to /onboarding instead).
+    const { username } = await registerViaApi(page, 'login_user');
+    await saveProfileViaApi(page);
+    await page.context().clearCookies();
+
+    await loginViaUi(page, username);
+    await expect(greeting(page)).toBeVisible();
   });
 
   // TC-AUTH-003: Unregistered user login
@@ -69,24 +59,13 @@ test.describe('Authentication', () => {
   
   // TC-AUTH-005: Logout
   test('User logout', async ({ page }) => {
-      // Login first
-    const username = `logout_user_${Date.now()}`;
-    await page.goto('/login');
-    await page.getByRole('button', { name: 'Register', exact: true }).click();
-    await page.getByPlaceholder('Enter your email or username').fill(username);
-    await page.getByPlaceholder('Enter your password').fill('Test@1234');
-    await page.getByRole('button', { name: 'Create Account' }).click();
-    await page.reload();
-    await page.getByPlaceholder('Enter your email or username').fill(username);
-    await page.getByPlaceholder('Enter your password').fill('Test@1234');
-    await page.getByRole('button', { name: 'Sign In', exact: true }).click();
-    
-    // Logout is usually in Profile or Header?
-    // Assuming simple button or Profile -> Logout.
-    // Based on `BottomNav`, Profile is a view.
-    await page.getByRole('button', { name: 'Profile' }).click();
-    await page.getByRole('button', { name: 'Sign Out' }).click();
-    
+    await registerViaApi(page, 'logout_user');
+    await saveProfileViaApi(page);
+    await page.goto('/dashboard');
+    await expect(greeting(page)).toBeVisible();
+
+    await openProfileTab(page);
+    await page.getByRole('button', { name: 'Logout' }).click();
     await expect(page).toHaveURL(/\/login/);
   });
 
