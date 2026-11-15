@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import { useRouter } from 'next/navigation'
-import { WeeklyRoutine, Profile, WeeklyDiet, PremiumStatus, GymPhoto, GymEquipmentAnalysis, BodyPhoto } from '@/types'
+import { WeeklyRoutine, Profile, WeeklyDiet, PremiumStatus } from '@/types'
 import { BottomNav } from '@/components/BottomNav'
 import { HomeView } from '@/components/views/HomeView'
 import { RoutineView } from '@/components/views/RoutineView'
@@ -586,13 +586,6 @@ export default function DashboardPage() {
     } catch (err) {
       console.error('Error loading history completions:', err)
     }
-  }
-
-  const handleBackToLatest = async () => {
-    setViewingHistory(false)
-    await fetchLatestRoutine()
-    await fetchLatestDiet()
-    setActiveView('home')
   }
 
   useEffect(() => {
