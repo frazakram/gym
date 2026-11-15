@@ -136,7 +136,8 @@ web-app/
 
 | File | Purpose | Notes |
 |------|---------|-------|
-| `db.ts` | PostgreSQL schema + ALL queries | 1000+ lines. Schema defined inline. `initializeDatabase()` is idempotent, must be called at start of every API route. Connection resolves across `POSTGRES_URL`, `DATABASE_URL`, and namespaced variants. |
+| `db.ts` | ALL queries | 3000+ lines. `initializeDatabase()` must be called at start of every API route; once the schema is current it costs one SELECT per cold start. Connection resolves across `POSTGRES_URL`, `DATABASE_URL`, and namespaced variants. |
+| `db-schema.ts` | Schema (DDL) | Ordered, idempotent `SCHEMA_STATEMENTS`. Change the schema only here: the hash changes and every instance re-applies the list once, in one transaction under an advisory lock (`app_schema_version`). Never edit the database by hand. |
 | `auth.ts` | JWT sessions | `getSession()`, `createSession()`, `setSessionCookie()`, `deleteSession()`. Tokens expire in 7 days, stored as `httpOnly` cookie. |
 | `csrf.ts` / `useCsrf.ts` | CSRF protection | `csrfFetch` is the client-side fetch wrapper. **Always use this instead of plain `fetch()`.** |
 | `ai-agent.ts` | Routine gen (Anthropic Claude) | LangChain-based. **Shares duplicate prompt logic with `openai-routine.ts` — edit both when changing prompts.** |
