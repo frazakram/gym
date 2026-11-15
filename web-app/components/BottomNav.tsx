@@ -52,7 +52,10 @@ export function BottomNav({ activeView, onViewChange, gymSheetOpen, onGymSheetCh
     const Icon = item.icon
     return (
       <button
+        type="button"
         onClick={() => pick(item.id)}
+        aria-label={item.label}
+        aria-current={isActive ? 'page' : undefined}
         className="relative flex flex-col items-center justify-center gap-0.5 px-3 py-2 rounded-xl transition-all duration-200 min-w-[56px]"
       >
         {isActive && (
@@ -251,7 +254,10 @@ export function BottomNav({ activeView, onViewChange, gymSheetOpen, onGymSheetCh
               </AnimatePresence>
 
               <motion.button
+                type="button"
                 onClick={() => setOpen(v => !v)}
+                aria-label={open ? 'Close menu' : 'Open menu'}
+                aria-expanded={open}
                 whileTap={{ scale: 0.86 }}
                 animate={{ rotate: open ? 45 : 0 }}
                 transition={{ type: 'spring', stiffness: 480, damping: 26 }}

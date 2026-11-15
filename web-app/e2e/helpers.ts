@@ -90,12 +90,9 @@ export function greeting(page: Page) {
     .or(page.getByText('Good evening', { exact: false }));
 }
 
-/**
- * Opens the Profile tab. Inactive bottom-nav tabs are icon-only buttons with no
- * accessible name (AUDIT backlog), so match the Lucide "user" icon.
- */
+/** Opens the Profile tab from the bottom navigation. */
 export async function openProfileTab(page: Page): Promise<void> {
-  await page.locator('nav button:has(svg.lucide-user)').first().click();
+  await page.getByRole('navigation').getByRole('button', { name: 'Profile', exact: true }).click();
 }
 
 /** Books the default coach through the real API (user must have premium/trial access). */
