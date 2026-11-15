@@ -228,6 +228,27 @@ export default function OnboardingWizard({ isReset = false }: { isReset?: boolea
     }
   }, [step])
 
+  /* ---------- skip ---------- */
+  // The dashboard sends users without a profile back here, so skipping saves an
+  // empty profile (no invented age/weight: the AI must not plan around them).
+  // The user fills it in later from the Profile tab.
+  const handleSkip = async () => {
+    setSaving(true)
+    setError('')
+    try {
+      const response = await csrfFetch('/api/profile', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({}),
+      })
+      if (!response.ok) throw new Error(`HTTP ${response.status}`)
+      router.replace('/dashboard')
+    } catch {
+      setError('Could not skip setup right now. Please try again.')
+      setSaving(false)
+    }
+  }
+
   /* ---------- submit ---------- */
   const handleSubmit = async () => {
     if (!canProceed) return
@@ -734,8 +755,9 @@ export default function OnboardingWizard({ isReset = false }: { isReset?: boolea
         animate={{ opacity: 1 }}
         transition={{ delay: 0.8 }}
         type="button"
-        onClick={() => router.replace('/dashboard')}
-        className="mt-4 text-xs text-muted hover:text-muted transition-colors"
+        onClick={handleSkip}
+        disabled={saving}
+        className="mt-4 text-xs text-muted hover:text-muted transition-colors disabled:opacity-50"
       >
         Skip for now — I&apos;ll fill this in later
       </motion.button>
