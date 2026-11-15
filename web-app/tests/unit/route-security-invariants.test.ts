@@ -15,12 +15,14 @@ const NO_SESSION_REQUIRED: Record<string, string> = {
   "auth/login POST": "creates the session",
   "auth/register POST": "creates the user and session",
   "auth/logout POST": "clears the cookie even without a valid session (revokes when there is one)",
+  "auth/google POST": "Android native sign-in: exchanges a verified Google ID token for a session",
   "billing/webhook POST": "called by Razorpay; authenticated by HMAC signature instead",
 };
 const NO_CSRF_REQUIRED: Record<string, string> = {
   "auth/login POST": "no session to ride yet; rate limited, SameSite=Lax cookies",
   "auth/register POST": "no session to ride yet; rate limited, SameSite=Lax cookies",
   "auth/logout POST": "forced logout is harmless; SameSite=Lax cookies",
+  "auth/google POST": "called by the Android app, not a browser form; requires a Google-signed ID token",
   "billing/webhook POST": "server-to-server call authenticated by HMAC signature",
 };
 
