@@ -324,3 +324,32 @@ Open (needs the owner): Upstash Redis in production is configured but unreachabl
 - Fix: restored with the exact request/response contract (`{ idToken }` to `{ token, user: { id, email, name }, profileComplete }`), with the session version in the token so the app is not signed out immediately. Integration test proves the returned token is accepted by the API.
 - Wider check: since 23bcb04 no other route or method was removed, and the API never accepted any auth other than the session cookie, so in-WebView calls go through the web code covered by the test suite.
 - Rule from now on: the Android app is an API client. Do not remove or change an endpoint's contract without the APK source or explicit confirmation of what the app calls.
+
+## 11. Phase 5 (reliability) status
+
+| Change | Commit | Evidence |
+|---|---|---|
+| Time limits on 7 outbound calls (OpenAI x3, Google OAuth, YouTube x2, geocoding); timeouts become 504 "took too long" | `adb7592` | hung-provider test hung before, 504 after |
+| Android native Google sign-in restored (incident, section 10) | `6fb52b3` | owner confirmed on device |
+| Failed Google sign-in explained on /login; toast bus no longer drops toasts raised on page load | `6eac4c5` | e2e + unit, red before |
+| Retired `claude-3-5-sonnet-20241022` replaced by `claude-sonnet-4-6` (default and saved settings) | `889b9c6` | unit test on the constructed client |
+| `GET /api/health` (database + Redis; 503 when the database is down); UptimeRobot monitor added by the owner | `b50c82e` | production: `{"status":"degraded","checks":{"database":"ok","redis":"down"}}` |
+| `scripts/db-backup.sh` + `scripts/db-restore-check.sh` | `271fdbe` | local: restore matches 22 tables; extra row, truncated file both fail |
+| Onboarding "Skip for now" works | `9af4140`, `e6b35d3` | e2e |
+| Session versions remembered 30 s per instance (approved trade-off) | `eff24a1` | production load test below |
+
+Production load test (20 signed-in users, 60 s, dashboard read endpoints, autocannon 8.0.0; one run each):
+
+| | Before `eff24a1` | After |
+|---|---|---|
+| Throughput | 25 req/s | 69 req/s |
+| p50 / p90 / p99 | 326 / 1,210 / 6,540 ms | 260 / 369 / 680 ms |
+| Max / timeouts | 27.6 s / 1 | 1.6 s / 0 |
+
+For comparison, the database-free `/api/csrf` under the same load: p50 258 ms, p99 698 ms.
+
+Database: Neon, pooled connection string, `us-east` (owner confirmed), same region as the functions (`iad1`).
+
+Process note: `9af4140` was committed with one failing e2e test (a characterization test pinning the old Skip bug) because the local check parsed reporter text; it now uses Playwright's exit code. CI caught it; fixed in `e6b35d3`.
+
+Open: Upstash Redis unreachable in production (owner deferred); routine generation uses display defaults (25 yrs, 70 kg, 170 cm) for empty profile fields; LangChain calls and the Razorpay SDK have no explicit time limit (routine/diet generation is capped by `maxDuration` 60).
