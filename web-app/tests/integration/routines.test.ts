@@ -106,33 +106,82 @@ describe("object-level access control", () => {
     expect(mine.body.routines).toHaveLength(1);
   });
 
-  it("another user cannot record or read completions on my routine", async () => {
-    const owner = await newUser("own");
-    const other = await newUser("oth");
-    const routineId = await save(owner.id);
+  describe("completions on another user's routine", () => {
+    const REST_DAY_INDEX = 1; // ROUTINE day 1 has no exercises
 
-    const write = await call(asHandler(postCompletion), {
-      method: "POST",
-      path: "/api/completions",
-      userId: other.id,
-      body: { routineId, dayIndex: 0, exerciseIndex: 0, completed: true },
-    });
-    expect(write.status).toBe(403);
+    // The owner records real data first, so a missing ownership check would
+    // visibly leak or overwrite it rather than return an empty result anyway.
+    async function routineWithOwnerProgress() {
+      const owner = await newUser("own");
+      const attacker = await newUser("oth");
+      const routineId = await save(owner.id);
+      const recordExercise = await call(asHandler(postCompletion), {
+        method: "POST",
+        path: "/api/completions",
+        userId: owner.id,
+        body: { routineId, dayIndex: 0, exerciseIndex: 0, completed: true, actual_weight: 50, actual_reps: 10 },
+      });
+      expect(recordExercise.status).toBe(200);
+      const recordRestDay = await call(asHandler(postDay), {
+        method: "POST",
+        path: "/api/day-completions",
+        userId: owner.id,
+        body: { routineId, dayIndex: REST_DAY_INDEX, completed: true },
+      });
+      expect(recordRestDay.status).toBe(200);
+      return { owner, attacker, routineId };
+    }
 
-    const read = await call(asHandler(getCompletions), {
-      path: `/api/completions?routineId=${routineId}`,
-      userId: other.id,
+    it("cannot read the owner's exercise completions", async () => {
+      const { attacker, routineId } = await routineWithOwnerProgress();
+      const read = await call(asHandler(getCompletions), {
+        path: `/api/completions?routineId=${routineId}`,
+        userId: attacker.id,
+      });
+      expect(read.status).toBe(200);
+      expect(read.body.completions).toEqual([]);
     });
-    expect(read.status).toBe(200);
-    expect(read.body.completions).toEqual([]);
 
-    const day = await call(asHandler(postDay), {
-      method: "POST",
-      path: "/api/day-completions",
-      userId: other.id,
-      body: { routineId, dayIndex: 0, completed: true },
+    it("cannot read the owner's day completions", async () => {
+      const { attacker, routineId } = await routineWithOwnerProgress();
+      const read = await call(asHandler(getDays), {
+        path: `/api/day-completions?routineId=${routineId}`,
+        userId: attacker.id,
+      });
+      expect(read.status).toBe(200);
+      expect(read.body.days).toEqual([]);
     });
-    expect(day.status).toBeGreaterThanOrEqual(400);
+
+    it("cannot change the owner's exercise or rest-day completions", async () => {
+      const { owner, attacker, routineId } = await routineWithOwnerProgress();
+
+      const exerciseWrite = await call(asHandler(postCompletion), {
+        method: "POST",
+        path: "/api/completions",
+        userId: attacker.id,
+        body: { routineId, dayIndex: 0, exerciseIndex: 0, completed: false },
+      });
+      expect(exerciseWrite.status).toBe(403);
+
+      const restDayWrite = await call(asHandler(postDay), {
+        method: "POST",
+        path: "/api/day-completions",
+        userId: attacker.id,
+        body: { routineId, dayIndex: REST_DAY_INDEX, completed: false },
+      });
+      expect(restDayWrite.status).toBe(403);
+
+      const ownerExercises = await call(asHandler(getCompletions), {
+        path: `/api/completions?routineId=${routineId}`,
+        userId: owner.id,
+      });
+      expect(ownerExercises.body.completions).toEqual([expect.objectContaining({ day_index: 0, exercise_index: 0, completed: true })]);
+      const ownerDays = await call(asHandler(getDays), {
+        path: `/api/day-completions?routineId=${routineId}`,
+        userId: owner.id,
+      });
+      expect(ownerDays.body.days).toEqual([{ day_index: REST_DAY_INDEX, completed: true }]);
+    });
   });
 });
 

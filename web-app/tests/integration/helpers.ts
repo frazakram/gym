@@ -14,6 +14,8 @@ export type CallOptions = {
   headers?: Record<string, string>;
   /** Authenticate as this user (session cookie). Omit for anonymous. */
   userId?: number;
+  /** Send this exact session cookie instead (e.g. a forged or expired token). */
+  sessionToken?: string;
   /** Attach a valid double-submit CSRF token (default: true for non-GET). */
   csrf?: boolean;
   params?: Record<string, string>;
@@ -30,17 +32,17 @@ export async function call(handler: Handler, opts: CallOptions = {}): Promise<Ca
   const cookies: string[] = [];
 
   cookieJar.clear();
-  if (opts.userId !== undefined) {
-    const token = await createSession(opts.userId);
-    cookieJar.set("session", token);
-    cookies.push(`session=${token}`);
+  const sessionToken = opts.sessionToken ?? (opts.userId !== undefined ? await createSession(opts.userId) : undefined);
+  if (sessionToken !== undefined) {
+    cookieJar.set("session", sessionToken);
+    cookies.push(`session=${sessionToken}`);
   }
 
   const wantsCsrf = opts.csrf ?? !["GET", "HEAD", "OPTIONS"].includes(method);
   if (wantsCsrf) {
-    const t = await generateCsrfToken(opts.userId);
-    cookies.push(`csrf_token=${t}`);
-    headers.set("x-csrf-token", t);
+    const csrfToken = await generateCsrfToken(opts.userId);
+    cookies.push(`csrf_token=${csrfToken}`);
+    headers.set("x-csrf-token", csrfToken);
   }
   if (cookies.length) headers.set("cookie", cookies.join("; "));
 
