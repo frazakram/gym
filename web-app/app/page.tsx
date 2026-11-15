@@ -222,16 +222,21 @@ export default function LandingPage() {
                   animate={{ y: [0, -12, 0] }}
                   transition={{ repeat: Infinity, duration: 4.5, ease: 'easeInOut' }}
                 >
-                  <img
-                    src="/app-dark.png"
-                    alt="GymBro app dark mode"
-                    className="hidden dark:block w-full drop-shadow-2xl"
-                  />
-                  <img
-                    src="/app-light.png"
-                    alt="GymBro app light mode"
-                    className="block dark:hidden w-full drop-shadow-2xl"
-                  />
+                  {/* Hero (LCP element): WebP (122 KB) with the PNG as fallback. The app is
+                      light-only, so the former dark-mode image was never visible but was
+                      still downloaded (1.3 MB). */}
+                  <picture>
+                    <source srcSet="/app-light.webp" type="image/webp" />
+                    <img
+                      src="/app-light.png"
+                      alt="GymBro app light mode"
+                      width={1537}
+                      height={1023}
+                      fetchPriority="high"
+                      decoding="async"
+                      className="block w-full h-auto drop-shadow-2xl"
+                    />
+                  </picture>
                 </motion.div>
               </motion.div>
             </div>
