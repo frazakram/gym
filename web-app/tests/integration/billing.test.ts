@@ -70,9 +70,15 @@ describe("GET /api/billing/status", () => {
       subscription_id: null,
       current_end: null,
     });
-    const days = (new Date(r.body.trial_end).getTime() - Date.now()) / 86400000;
-    expect(days).toBeGreaterThan(6.9);
-    expect(days).toBeLessThanOrEqual(7);
+    // Compare with the trial start the database recorded (not Node's clock, which
+    // can drift from the database container's clock).
+    const db = new Client({ connectionString: process.env.POSTGRES_URL });
+    await db.connect();
+    const trialStart: Date = (await db.query("SELECT analytics_trial_start FROM users WHERE id = $1", [id])).rows[0]
+      .analytics_trial_start;
+    await db.end();
+    const SEVEN_DAYS_MS = 7 * 24 * 60 * 60 * 1000;
+    expect(new Date(r.body.trial_end).getTime() - trialStart.getTime()).toBe(SEVEN_DAYS_MS);
   });
 
   it("requires a session", async () => {
