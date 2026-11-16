@@ -14,12 +14,17 @@ const VIEWPORTS = [
 ] as const;
 
 /**
- * Endless framer-motion animations are driven from JS, so Playwright's
- * `animations: 'disabled'` (CSS and Web Animations only) cannot stop them.
- * An !important rule overrides the inline transform framer-motion writes.
- * Currently: the landing hero's floating phone mockup.
+ * Endless JS-driven animations: Playwright's `animations: 'disabled'` only
+ * stops CSS and Web Animations, so these are held by a test-only style
+ * (!important beats inline styles):
+ * - landing hero: framer-motion float (inline transform);
+ * - desktop login panel: typewriter that types and deletes words forever on
+ *   timers; its text is hidden, its box (min-height) keeps the layout.
  */
-const HOLD_JS_ANIMATIONS = `div:has(> picture > img[alt="GymBro app light mode"]) { transform: none !important; }`;
+const HOLD_JS_ANIMATIONS = [
+  'div:has(> picture > img[alt="GymBro app light mode"]) { transform: none !important; }',
+  'div:has(> .login-cursor) { visibility: hidden !important; }',
+].join('\n');
 
 /** `shows` is text unique to the screen: asserted before the screenshot, so a blank or wrong view fails instead of becoming a baseline. */
 type Screen = { name: string; member?: 'new' | 'seeded'; open: (page: Page) => Promise<void>; shows: string };
