@@ -206,7 +206,7 @@ export function HomeView({
             <button type="button" className="gb-press" onClick={onNavigateToNutrition}>
               <Utensils aria-hidden="true" />Log food
             </button>
-            <button type="button" className="gb-press gb-pink" onClick={onNavigateToCoach}>
+            <button type="button" className="gb-press gb-pink" onClick={onNavigateToCoach} aria-label="Book a coach">
               <MessageCircle aria-hidden="true" />Coach
             </button>
           </div>

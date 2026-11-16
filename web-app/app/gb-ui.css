@@ -120,6 +120,32 @@ div.gb-tile { cursor: default; }
 
 /* ---------- Wider screens ---------- */
 
+/* ---------- Bottom navigation (shared by every dashboard screen) ---------- */
+.gb-tabbar-wrap { position: fixed; left: 0; right: 0; bottom: 0; z-index: 50; font-family: var(--font-gb-app), ui-sans-serif, system-ui, sans-serif; }
+.gb-tabbar { background: var(--gb-glass); -webkit-backdrop-filter: blur(20px) saturate(1.4); backdrop-filter: blur(20px) saturate(1.4); border-top: 1px solid var(--gb-line); padding-bottom: env(safe-area-inset-bottom, 0px); }
+.gb-tabbar-row { max-width: 480px; margin: 0 auto; display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); align-items: center; padding: 6px 8px 8px; }
+.gb-tab { position: relative; display: flex; flex-direction: column; align-items: center; gap: 3px; padding: 4px 0; border: 0; background: none; font: inherit; font-size: 11px; font-weight: 600; color: var(--gb-nav-muted); cursor: pointer; }
+.gb-tab[aria-current="page"] { color: var(--gb-lav-text); }
+.gb-tab-icon { position: relative; width: 52px; height: 30px; display: flex; align-items: center; justify-content: center; border-radius: 999px; }
+.gb-tab-icon svg { position: relative; width: 22px; height: 22px; }
+.gb-tab-ind { position: absolute; inset: 0; border-radius: 999px; background: var(--gb-indicator); }
+.gb-fab-slot { position: relative; display: flex; justify-content: center; }
+.gb-fab { width: 52px; height: 52px; margin-top: -22px; border-radius: 999px; border: 4px solid var(--gb-page); background: var(--gb-primary); color: var(--gb-on-primary); display: flex; align-items: center; justify-content: center; box-shadow: var(--gb-shadow-card); cursor: pointer; }
+.gb-fab svg { width: 24px; height: 24px; }
+.gb-xp { position: absolute; top: -44px; left: 50%; transform: translateX(-50%); display: inline-flex; align-items: center; gap: 3px; padding: 2px 8px; border-radius: 999px; background: var(--gb-pink-tint); color: var(--gb-pink-text); font-size: 10px; font-weight: 700; white-space: nowrap; pointer-events: none; }
+.gb-xp svg { width: 10px; height: 10px; }
+.gb-scrim { position: fixed; inset: 0; z-index: 40; background: rgba(16, 20, 60, 0.32); -webkit-backdrop-filter: blur(2px); backdrop-filter: blur(2px); }
+.gb-menu { position: fixed; left: 50%; bottom: calc(84px + env(safe-area-inset-bottom, 0px)); z-index: 50; width: calc(100% - 32px); max-width: 440px; background: var(--gb-surface); border-radius: 22px; box-shadow: var(--gb-shadow-soft); padding: 10px; font-family: var(--font-gb-app), ui-sans-serif, system-ui, sans-serif; color: var(--gb-ink); }
+.gb-menu-grid { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 4px; }
+.gb-menu-item { display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 10px 0; border: 0; border-radius: 14px; background: none; font: inherit; font-size: var(--gb-text-xs); font-weight: 600; color: var(--gb-ink); cursor: pointer; }
+.gb-menu-item[aria-current="page"] { background: var(--gb-soft); }
+.gb-menu-item .gb-chip { width: 40px; height: 40px; box-shadow: none; }
+.gb-menu-foot { margin-top: 8px; padding-top: 8px; border-top: 1px solid var(--gb-line); }
+.gb-menu-foot button { width: 100%; display: flex; align-items: center; justify-content: center; gap: 8px; padding: 10px; border: 0; border-radius: 12px; background: none; font: inherit; font-size: var(--gb-text-sm); font-weight: 600; color: var(--gb-link); cursor: pointer; }
+.gb-menu-foot svg { width: 16px; height: 16px; }
+@media (hover: hover) { .gb-menu-item:hover, .gb-menu-foot button:hover { background: var(--gb-soft); } .gb-tab:hover { color: var(--gb-ink); } }
+.gb-tabbar-wrap :focus-visible, .gb-menu :focus-visible { outline: 3px solid var(--gb-pink-ring); outline-offset: 2px; }
+
 @media (prefers-reduced-motion: reduce) {
   .gb-rise, .gb-blob, .gb-spin { animation: none !important; }
   .gb-press, .gb-press:active, .gb-lift:hover { transition: none; transform: none; }
