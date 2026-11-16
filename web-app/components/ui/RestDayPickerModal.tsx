@@ -131,10 +131,10 @@ export function RestDayPickerModal({ open, onClose, onConfirm, initialDays }: Re
                       className="flex flex-col items-center py-2.5 rounded-xl border transition-all"
                       style={
                         isSelected
-                          ? { background: 'rgba(0,201,167,0.16)', borderColor: 'rgba(0,166,137,0.55)', color: '#00715E' }
+                          ? { background: 'rgba(47,58,143,0.16)', borderColor: 'rgba(47,58,143,0.55)', color: '#00715E' }
                           : isDisabled
-                          ? { background: 'rgba(10,62,52,0.03)', borderColor: 'rgba(10,80,68,0.06)', color: 'rgba(74,106,99,0.4)', cursor: 'not-allowed' }
-                          : { background: 'rgba(10,62,52,0.045)', borderColor: 'rgba(10,80,68,0.10)', color: 'rgba(74,106,99,0.85)' }
+                          ? { background: 'rgba(32, 36, 63,0.03)', borderColor: 'rgba(32, 36, 63,0.06)', color: 'rgba(74,106,99,0.4)', cursor: 'not-allowed' }
+                          : { background: 'rgba(32, 36, 63,0.045)', borderColor: 'rgba(32, 36, 63,0.10)', color: 'rgba(74,106,99,0.85)' }
                       }
                     >
                       <span className="text-[11px] font-semibold">{day}</span>

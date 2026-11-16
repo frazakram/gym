@@ -179,7 +179,7 @@ export default function LoginAnimation() {
         }
         .login-pill:hover {
           transform: translateY(-2px);
-          box-shadow: 0 10px 28px rgba(0, 229, 188, 0.18);
+          box-shadow: 0 10px 28px rgba(47, 58, 143, 0.18);
         }
         .login-pill:nth-child(1) { animation-delay: 0.05s; }
         .login-pill:nth-child(2) { animation-delay: 0.15s; }

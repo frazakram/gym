@@ -28,7 +28,7 @@ function AnimatedNumber({ value }: { value: number }) {
 }
 
 const MACROS = [
-  { key: 'protein_g', label: 'Protein', goalKey: 'protein_goal_g', color: '#00B294', track: 'rgba(0,178,148,0.14)' },
+  { key: 'protein_g', label: 'Protein', goalKey: 'protein_goal_g', color: '#00B294', track: 'rgba(47,58,143,0.14)' },
   { key: 'carb_g', label: 'Carbs', goalKey: 'carb_goal_g', color: '#F59E0B', track: 'rgba(245,158,11,0.14)' },
   { key: 'fat_g', label: 'Fat', goalKey: 'fat_goal_g', color: '#FF6F61', track: 'rgba(255,111,97,0.14)' },
 ] as const
@@ -56,7 +56,7 @@ function CalorieRing({ consumed, goal }: { consumed: number; goal: number | null
   return (
     <motion.div animate={controls} className="relative shrink-0" style={{ width: size, height: size }}>
       <svg width={size} height={size} className="-rotate-90">
-        <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke="rgba(0,178,148,0.12)" strokeWidth={stroke} />
+        <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke="rgba(47,58,143,0.12)" strokeWidth={stroke} />
         <motion.circle
           cx={size / 2}
           cy={size / 2}
@@ -69,7 +69,7 @@ function CalorieRing({ consumed, goal }: { consumed: number; goal: number | null
           initial={{ strokeDashoffset: c }}
           animate={{ strokeDashoffset: c - c * pct }}
           transition={{ duration: 0.7, ease: 'easeOut' }}
-          style={{ filter: 'drop-shadow(0 0 6px rgba(0,178,148,0.35))' }}
+          style={{ filter: 'drop-shadow(0 0 6px rgba(47,58,143,0.35))' }}
         />
       </svg>
       <div className="absolute inset-0 flex flex-col items-center justify-center">

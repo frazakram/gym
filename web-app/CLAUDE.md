@@ -259,9 +259,9 @@ Fixed (kept here so they don't regress):
 
 The app uses a light-only "Liquid Light" liquid-glass design system (`app/globals.css`):
 - No `.dark` class is ever applied; the ThemeToggle component was removed. The `@custom-variant dark` line is kept so legacy `dark:` utilities compile but stay dormant — don't add new ones.
-- Glass primitives: `.glass`, `.glass-soft`, `.glass-menu`, `.panel-solid` are translucent white with backdrop blur.
+- Legacy primitives `.glass`, `.glass-soft`, `.glass-menu`, `.panel-solid` keep their names but now render as solid white cards with a fine navy line (no backdrop blur); the old token names (`--primary`, `--ink`, `--cyan`, ...) carry Navy and Pink values, and Tailwind `teal-*`/`cyan-*` resolve to a navy scale. `text-accent-ink` means text on a navy fill (white).
 - Dark-authored utility vocabulary (`text-white`, `bg-white/5`, `border-white/10`, `bg-slate-900`, pale `text-slate-300`-style text, …) is remapped to light equivalents inside the `.lg-remap {}` scope in `globals.css`. Dashboard/onboarding/coach/admin/report/login roots carry the `lg-remap` class; the landing page and explore page are light-first and intentionally NOT remapped.
-- Fonts: Manrope (`--font-sans-app`) for body, Sora (`--font-display-app`) for display/`font-display`.
+- Font: Plus Jakarta Sans only (`--font-gb-app`); `font-sans`, `font-display` and `font-gb` all resolve to it.
 
 ### Navy and Pink redesign (in progress, screen by screen)
 - Approved redesign replacing Liquid Light. Tokens: `app/design-tokens.css` (`--gb-*`, light on `:root`, dark on `[data-theme=dark]`; Tailwind `bg-gb-*`/`text-gb-*`). Component classes: `app/gb-ui.css` (`gb-` prefix: hero, who-card, action bar, tiles, timeline rows, notices, buttons, motion with reduced-motion fallbacks). Typeface Plus Jakarta Sans (`--font-gb-app`).

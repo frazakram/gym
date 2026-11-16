@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from 'next'
-import { Manrope, Plus_Jakarta_Sans, Sora } from 'next/font/google'
+import { Plus_Jakarta_Sans } from 'next/font/google'
 import './globals.css'
 import './design-tokens.css'
 import './gb-ui.css'
@@ -8,19 +8,8 @@ import { ServiceWorkerRegistration } from '@/components/ServiceWorkerRegistratio
 import { ToastProvider } from '@/components/ui/ToastProvider'
 import { CookieConsent } from '@/components/CookieConsent'
 
-const manrope = Manrope({
-  subsets: ['latin'],
-  display: 'swap',
-  variable: '--font-sans-app',
-})
-
-const sora = Sora({
-  subsets: ['latin'],
-  display: 'swap',
-  variable: '--font-display-app',
-})
-
-// Navy and Pink redesign typeface (font-gb); used by migrated screens only.
+// The app's one typeface (Navy and Pink design): --font-gb-app, used by
+// font-sans, font-display and font-gb alike.
 const plusJakarta = Plus_Jakarta_Sans({
   subsets: ['latin'],
   display: 'swap',
@@ -40,7 +29,7 @@ export const metadata: Metadata = {
 }
 
 export const viewport: Viewport = {
-  themeColor: '#F2FAF7',
+  themeColor: '#F6F7FB',
   width: 'device-width',
   initialScale: 1,
   maximumScale: 1,
@@ -59,7 +48,7 @@ export default function RootLayout({
         {/* Sets data-theme before first paint (no flash). Static string from lib/theme.ts, no user input. */}
         <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
       </head>
-      <body className={`min-h-screen text-gray-900 ${manrope.variable} ${sora.variable} ${plusJakarta.variable}`}>
+      <body className={`min-h-screen text-gray-900 ${plusJakarta.variable}`}>
         <ServiceWorkerRegistration />
         <div className="app-shell" style={{ overflow: 'visible' }}>
           <div className="app-bg" />

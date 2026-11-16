@@ -184,7 +184,7 @@ export default function LandingPage() {
                     className="pointer-events-none absolute"
                     style={{
                       inset: '-50%',
-                      background: 'conic-gradient(from 0deg, transparent 0%, rgba(0,229,188,0.5) 25%, rgba(95,255,224,0.35) 45%, transparent 65%)',
+                      background: 'conic-gradient(from 0deg, transparent 0%, rgba(47,58,143,0.5) 25%, rgba(95,255,224,0.35) 45%, transparent 65%)',
                       animation: 'orbit 4s linear infinite',
                     }}
                   />
@@ -212,7 +212,7 @@ export default function LandingPage() {
             </motion.div>
 
             {/* Right: phone mockup — entrance fade + continuous float */}
-            <div className="flex items-center justify-center scale-[1.5] lg:scale-[1.5]">
+            <div className="flex items-center justify-center scale-[1.1] sm:scale-[1.5]">
               <motion.div
                 initial={{ opacity: 0, y: 40 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -255,18 +255,18 @@ export default function LandingPage() {
             viewport={{ once: true, margin: '-60px' }}
             variants={staggerContainer()}
           >
-            <motion.div variants={fadeUp} className="px-8">
-              <p className="text-4xl font-black text-gray-900 dark:text-white">
+            <motion.div variants={fadeUp} className="px-2 sm:px-8">
+              <p className="text-2xl sm:text-4xl font-black text-gray-900 dark:text-white">
                 <CountUp to={10000} suffix="+" />
               </p>
               <p className="text-sm text-gray-400 mt-1">workout plans generated</p>
             </motion.div>
-            <motion.div variants={fadeUp} className="px-8">
-              <p className="text-4xl font-black text-gray-900 dark:text-white">Week 1</p>
+            <motion.div variants={fadeUp} className="px-2 sm:px-8">
+              <p className="text-2xl sm:text-4xl font-black text-gray-900 dark:text-white">Week 1</p>
               <p className="text-sm text-gray-400 mt-1">when users see first results</p>
             </motion.div>
-            <motion.div variants={fadeUp} className="px-8">
-              <p className="text-4xl font-black text-gray-900 dark:text-white">
+            <motion.div variants={fadeUp} className="px-2 sm:px-8">
+              <p className="text-2xl sm:text-4xl font-black text-gray-900 dark:text-white">
                 <CountUp to={49} prefix="₹" suffix="/mo" duration={1.2} />
               </p>
               <p className="text-sm text-gray-400 mt-1">to unlock everything</p>

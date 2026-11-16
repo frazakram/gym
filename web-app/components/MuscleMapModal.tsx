@@ -38,8 +38,8 @@ interface MuscleMapModalProps {
   } | null
 }
 
-const PRIMARY_FILL = 'rgba(0, 229, 188, 0.92)'
-const SECONDARY_FILL = 'rgba(0, 229, 188, 0.42)'
+const PRIMARY_FILL = 'rgba(47, 58, 143, 0.92)'
+const SECONDARY_FILL = 'rgba(47, 58, 143, 0.42)'
 const BASE_FILL = 'rgba(122, 148, 144, 0.18)'
 const BASE_STROKE = 'rgba(122, 148, 144, 0.45)'
 const SILHOUETTE_FILL = 'rgba(122, 148, 144, 0.08)'

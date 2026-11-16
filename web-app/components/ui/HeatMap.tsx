@@ -53,7 +53,7 @@ export function HeatMap({ data, weeks = 8, onCellClick }: HeatMapProps) {
         if (value === 0) return { backgroundColor: '#252540', border: '1px solid #35355a' }
         if (value < 0.5) return { backgroundColor: '#6d3fc4', border: '1px solid #7d4fd4' }
         if (value < 1) return { backgroundColor: 'var(--primary)', border: '1px solid #9b6cff' }
-        return { backgroundColor: 'var(--primary-light)', border: '1px solid #00A689', boxShadow: '0 0 4px rgba(0,178,148,0.35)' }
+        return { backgroundColor: 'var(--primary-light)', border: '1px solid #232C72', boxShadow: '0 0 4px rgba(47,58,143,0.35)' }
     }
 
     return (

@@ -29,8 +29,8 @@ export function ToastContainer(props?: Record<string, unknown>) {
           background: 'rgba(255, 255, 255, 0.88)',
           backdropFilter: 'blur(16px) saturate(1.5)',
           border: '1px solid rgba(255, 255, 255, 0.85)',
-          color: '#0A2E29',
-          boxShadow: '0 8px 32px rgba(8, 76, 64, 0.14)',
+          color: '#20243F',
+          boxShadow: '0 8px 32px rgba(32, 36, 63, 0.14)',
           borderRadius: '1rem',
         },
       }}

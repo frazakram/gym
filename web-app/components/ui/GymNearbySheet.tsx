@@ -388,7 +388,7 @@ export function GymNearbySheet({ open, onClose, onGymSaved }: GymNearbySheetProp
                       <span
                         className="text-[11px] font-semibold px-2 py-0.5 rounded-full"
                         style={{
-                          background: totalSelected > 0 ? 'rgba(0,229,188,0.2)' : 'rgba(255,255,255,0.06)',
+                          background: totalSelected > 0 ? 'rgba(47,58,143,0.2)' : 'rgba(255,255,255,0.06)',
                           color: totalSelected > 0 ? '#00715E' : 'rgba(74,106,99,0.6)',
                           border: totalSelected > 0 ? '1px solid rgba(95,255,224,0.3)' : '1px solid rgba(255,255,255,0.08)',
                         }}
@@ -416,10 +416,10 @@ export function GymNearbySheet({ open, onClose, onGymSaved }: GymNearbySheetProp
                                   style={
                                     active
                                       ? {
-                                          background: 'rgba(0,229,188,0.22)',
+                                          background: 'rgba(47,58,143,0.22)',
                                           color: '#00715E',
                                           border: '1px solid rgba(95,255,224,0.45)',
-                                          boxShadow: '0 0 8px rgba(0,229,188,0.2)',
+                                          boxShadow: '0 0 8px rgba(47,58,143,0.2)',
                                         }
                                       : {
                                           background: 'rgba(255,255,255,0.04)',
@@ -454,10 +454,10 @@ export function GymNearbySheet({ open, onClose, onGymSaved }: GymNearbySheetProp
                                   style={
                                     active
                                       ? {
-                                          background: 'rgba(0,229,188,0.22)',
+                                          background: 'rgba(47,58,143,0.22)',
                                           color: '#00715E',
                                           border: '1px solid rgba(95,255,224,0.45)',
-                                          boxShadow: '0 0 8px rgba(0,229,188,0.2)',
+                                          boxShadow: '0 0 8px rgba(47,58,143,0.2)',
                                         }
                                       : {
                                           background: 'rgba(255,255,255,0.04)',

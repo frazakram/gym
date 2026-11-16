@@ -32,7 +32,7 @@ export function Chip({
         'transition-all',
         'border',
         selected
-          ? 'border-primary/40 bg-primary/15 text-primary-lighter shadow-[0_0_15px_rgba(0,229,188,0.18)]'
+          ? 'border-primary/40 bg-primary/15 text-primary-lighter shadow-[0_0_15px_rgba(47,58,143,0.18)]'
           : 'border-primary/10 bg-white/5 text-slate-300 hover:bg-primary/8 hover:text-slate-100',
         'ui-focus-ring',
         className,

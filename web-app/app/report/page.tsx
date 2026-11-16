@@ -36,11 +36,11 @@ import {
 
 function heatColor(pct: number): string {
   if (pct <= 0) return 'rgba(122, 148, 144, 0.12)'
-  if (pct <= 5) return 'rgba(0, 229, 188, 0.18)'
-  if (pct <= 10) return 'rgba(0, 229, 188, 0.35)'
-  if (pct <= 18) return 'rgba(0, 229, 188, 0.55)'
-  if (pct <= 25) return 'rgba(0, 229, 188, 0.75)'
-  return 'rgba(0, 229, 188, 0.92)'
+  if (pct <= 5) return 'rgba(47, 58, 143, 0.18)'
+  if (pct <= 10) return 'rgba(47, 58, 143, 0.35)'
+  if (pct <= 18) return 'rgba(47, 58, 143, 0.55)'
+  if (pct <= 25) return 'rgba(47, 58, 143, 0.75)'
+  return 'rgba(47, 58, 143, 0.92)'
 }
 
 function heatBadgeClass(pct: number): string {
@@ -91,8 +91,8 @@ function Sparkline({ points }: { points: TrendPoint[] }) {
     <svg viewBox={`0 0 ${W} ${H}`} className="w-full h-24" aria-label="Weekly completion trend">
       <defs>
         <linearGradient id="sparkArea" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor="rgba(0,229,188,0.35)" />
-          <stop offset="100%" stopColor="rgba(0,229,188,0)" />
+          <stop offset="0%" stopColor="rgba(47,58,143,0.35)" />
+          <stop offset="100%" stopColor="rgba(47,58,143,0)" />
         </linearGradient>
       </defs>
       {/* Grid lines at 0, 50, 100% */}
@@ -109,14 +109,14 @@ function Sparkline({ points }: { points: TrendPoint[] }) {
         />
       ))}
       <path d={areaD} fill="url(#sparkArea)" />
-      <path d={lineD} fill="none" stroke="rgba(0,229,188,0.95)" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" />
+      <path d={lineD} fill="none" stroke="rgba(47,58,143,0.95)" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" />
       {points.map((p, i) => (
         <g key={i}>
           <circle
             cx={xFor(i)}
             cy={yFor(p.completionPercentage)}
             r={3}
-            fill={i === points.length - 1 ? 'rgba(0,229,188,1)' : 'rgba(0,229,188,0.6)'}
+            fill={i === points.length - 1 ? 'rgba(47,58,143,1)' : 'rgba(47,58,143,0.6)'}
             stroke="#0a0a1a"
             strokeWidth={1.5}
           />
@@ -155,7 +155,7 @@ function PushPullDonut({ split }: { split: PushPullSplit }) {
   }
 
   const segments = [
-    { value: split.push, color: 'rgba(0, 229, 188, 0.9)', label: 'Push' },
+    { value: split.push, color: 'rgba(47, 58, 143, 0.9)', label: 'Push' },
     { value: split.pull, color: 'rgba(59, 130, 246, 0.9)', label: 'Pull' },
     { value: split.legs, color: 'rgba(168, 85, 247, 0.9)', label: 'Legs' },
     { value: split.core, color: 'rgba(251, 191, 36, 0.9)', label: 'Core' },
@@ -294,7 +294,7 @@ function RadialProgress({ pct, size = 120, strokeWidth = 10 }: { pct: number; si
       />
       <defs>
         <linearGradient id="reportGrad" x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0%" stopColor="rgba(0,229,188,1)" />
+          <stop offset="0%" stopColor="rgba(47,58,143,1)" />
           <stop offset="100%" stopColor="rgba(59,130,246,1)" />
         </linearGradient>
       </defs>
@@ -762,9 +762,9 @@ export default function ReportPage() {
             <div className="flex items-center gap-2 mt-4 justify-center flex-wrap">
               {[
                 { label: 'Not worked', color: 'rgba(122,148,144,0.12)' },
-                { label: 'Low', color: 'rgba(0,229,188,0.25)' },
-                { label: 'Medium', color: 'rgba(0,229,188,0.55)' },
-                { label: 'High', color: 'rgba(0,229,188,0.92)' },
+                { label: 'Low', color: 'rgba(47,58,143,0.25)' },
+                { label: 'Medium', color: 'rgba(47,58,143,0.55)' },
+                { label: 'High', color: 'rgba(47,58,143,0.92)' },
               ].map((l) => (
                 <div key={l.label} className="flex items-center gap-1.5">
                   <div className="w-3 h-3 rounded-[4px] border border-white/10" style={{ backgroundColor: l.color }} />
