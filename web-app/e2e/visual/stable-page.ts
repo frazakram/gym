@@ -4,32 +4,58 @@ import { DEFAULT_PROFILE, PASSWORD } from '../helpers';
 /**
  * Makes a page render identically on every run, so screenshots only change
  * when the UI changes:
- * - the browser clock is fixed at 09:00 IST on today's date (the server uses
- *   the real date, so dates agree) and only advances when the test says so;
- * - Math.random is seeded (quote shuffle and picks);
- * - the cookie banner is already answered (playwright.config storageState).
+ * - The page's Date starts at 09:00 IST on today's date and then runs
+ *   normally (greetings, weekday; the server uses the real date, so dates
+ *   agree). Playwright's clock API is not used: it also stops the
+ *   high-resolution timer framer-motion animates with, and the dashboard
+ *   only mounts the next view after the previous one's exit animation.
+ * - Math.random is seeded (quote shuffle and picks).
+ * - The cookie banner is already answered (playwright.config storageState).
  */
 export async function preparePage(page: Page): Promise<void> {
   const today = new Date().toISOString().slice(0, 10);
-  const nineAmIst = new Date(`${today}T09:00:00+05:30`);
-  await page.clock.install({ time: nineAmIst });
-  await page.clock.pauseAt(new Date(nineAmIst.getTime() + 1_000));
-  await page.addInitScript(() => {
+  const startMs = new Date(`${today}T09:00:00+05:30`).getTime();
+  await page.addInitScript((fixedStartMs: number) => {
+    const RealDate = Date;
+    const pageStart = performance.now();
+    const now = () => fixedStartMs + (performance.now() - pageStart);
+    class StableDate extends RealDate {
+      constructor(...args: unknown[]) {
+        if (args.length === 0) super(now());
+        else super(...(args as [string | number | Date]));
+      }
+      static now() {
+        return now();
+      }
+    }
+    (globalThis as { Date: DateConstructor }).Date = StableDate as unknown as DateConstructor;
+
     let seed = 20261116;
     Math.random = () => {
       seed = (seed * 1664525 + 1013904223) % 4294967296;
       return seed / 4294967296;
     };
-  });
+  }, startMs);
 }
 
+/** Time for entrance and view-switch animations to finish (longest is 0.8 s + 0.35 s delay). */
+const ANIMATIONS_SETTLE_MS = 1_500;
+
 /**
- * Waits for data, then advances the frozen clock by a fixed amount so
- * entrance animations finish and looping ones stop at the same frame.
+ * Waits for data and animations. Scrolls through the page first so sections
+ * that animate in when scrolled into view are visible in full-page shots.
  */
 export async function settle(page: Page): Promise<void> {
   await page.waitForLoadState('networkidle');
-  await page.clock.runFor(3_000);
+  await page.evaluate(async () => {
+    const step = window.innerHeight / 2;
+    for (let y = 0; y < document.documentElement.scrollHeight; y += step) {
+      window.scrollTo(0, y);
+      await new Promise((resolve) => setTimeout(resolve, 50));
+    }
+    window.scrollTo(0, 0);
+  });
+  await page.waitForTimeout(ANIMATIONS_SETTLE_MS);
   await page.waitForLoadState('networkidle');
   await page.evaluate(() => document.fonts.ready);
 }

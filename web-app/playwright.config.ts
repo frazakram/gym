@@ -67,7 +67,8 @@ export default defineConfig({
       /* Screenshot comparisons: run only in the Linux Playwright container. */
       name: 'visual',
       testDir: './e2e/visual',
-      use: { ...devices['Desktop Chrome'] },
+      /* Users are in India; CI machines run on UTC. */
+      use: { ...devices['Desktop Chrome'], timezoneId: 'Asia/Kolkata' },
     },
 
     // {

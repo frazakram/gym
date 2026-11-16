@@ -13,7 +13,16 @@ const VIEWPORTS = [
   { name: 'desktop', width: 1440, height: 900 },
 ] as const;
 
-type Screen = { name: string; member?: 'new' | 'seeded'; open: (page: Page) => Promise<void> };
+/**
+ * Endless framer-motion animations are driven from JS, so Playwright's
+ * `animations: 'disabled'` (CSS and Web Animations only) cannot stop them.
+ * An !important rule overrides the inline transform framer-motion writes.
+ * Currently: the landing hero's floating phone mockup.
+ */
+const HOLD_JS_ANIMATIONS = `div:has(> picture > img[alt="GymBro app light mode"]) { transform: none !important; }`;
+
+/** `shows` is text unique to the screen: asserted before the screenshot, so a blank or wrong view fails instead of becoming a baseline. */
+type Screen = { name: string; member?: 'new' | 'seeded'; open: (page: Page) => Promise<void>; shows: string };
 
 const openDashboardTab = (tab: string) => async (page: Page) => {
   await page.goto('/dashboard');
@@ -29,20 +38,24 @@ const openDashboardMenuItem = (item: string) => async (page: Page) => {
   await page.getByRole('button', { name: item, exact: true }).first().click();
 };
 
+const goTo = (path: string) => async (page: Page) => {
+  await page.goto(path);
+};
+
 const SCREENS: Screen[] = [
-  { name: 'landing', open: (page) => page.goto('/').then(() => undefined) },
-  { name: 'login', open: (page) => page.goto('/login').then(() => undefined) },
-  { name: 'explore', open: (page) => page.goto('/explore').then(() => undefined) },
-  { name: 'onboarding', member: 'new', open: (page) => page.goto('/onboarding').then(() => undefined) },
-  { name: 'home', member: 'seeded', open: (page) => page.goto('/dashboard').then(() => undefined) },
-  { name: 'routine', member: 'seeded', open: openDashboardTab('Routine') },
-  { name: 'workout', member: 'seeded', open: openDashboardTab('Workout') },
-  { name: 'profile', member: 'seeded', open: openDashboardTab('Profile') },
-  { name: 'nutrition', member: 'seeded', open: openDashboardMenuItem('Nutrition') },
-  { name: 'diet', member: 'seeded', open: openDashboardMenuItem('Diet') },
-  { name: 'body', member: 'seeded', open: openDashboardMenuItem('Body') },
-  { name: 'coach', member: 'seeded', open: openDashboardMenuItem('Coach') },
-  { name: 'community', member: 'seeded', open: openDashboardMenuItem('Community') },
+  { name: 'landing', open: goTo('/'), shows: 'The fitness app that actually knows what you eat.' },
+  { name: 'login', open: goTo('/login'), shows: 'Sign In' },
+  { name: 'explore', open: goTo('/explore'), shows: 'Your day, laid out.' },
+  { name: 'onboarding', member: 'new', open: goTo('/onboarding'), shows: "Let's set you up" },
+  { name: 'home', member: 'seeded', open: goTo('/dashboard'), shows: 'Personal Records' },
+  { name: 'routine', member: 'seeded', open: openDashboardTab('Routine'), shows: 'Workout' },
+  { name: 'workout', member: 'seeded', open: openDashboardTab('Workout'), shows: 'Goblet Squat' },
+  { name: 'profile', member: 'seeded', open: openDashboardTab('Profile'), shows: 'Your Progress' },
+  { name: 'nutrition', member: 'seeded', open: openDashboardMenuItem('Nutrition'), shows: 'Set your daily targets' },
+  { name: 'diet', member: 'seeded', open: openDashboardMenuItem('Diet'), shows: 'Nutrition Plan' },
+  { name: 'body', member: 'seeded', open: openDashboardMenuItem('Body'), shows: 'Body Photos' },
+  { name: 'coach', member: 'seeded', open: openDashboardMenuItem('Coach'), shows: 'Your bookings' },
+  { name: 'community', member: 'seeded', open: openDashboardMenuItem('Community'), shows: 'Communities' },
 ];
 
 for (const viewport of VIEWPORTS) {
@@ -58,6 +71,8 @@ for (const viewport of VIEWPORTS) {
         }
         await screen.open(page);
         await settle(page);
+        await expect(page.getByText(screen.shows, { exact: true }).first()).toBeVisible();
+        await page.addStyleTag({ content: HOLD_JS_ANIMATIONS });
         await expect(page).toHaveScreenshot(`${screen.name}-${viewport.name}.png`, { fullPage: true });
       });
     }
