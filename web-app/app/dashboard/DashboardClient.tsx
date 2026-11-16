@@ -1181,11 +1181,14 @@ export default function DashboardPage() {
             exit={{ opacity: 0, y: -8 }}
             transition={{ duration: 0.2, ease: 'easeInOut' as const }}
           >
-            <TabQuote
-              key={`quote-${activeView}`}
-              category={VIEW_QUOTE_CATEGORY[activeView] || 'general'}
-              triggerKey={activeView}
-            />
+            {/* Redesigned screens open on a full-bleed hero; a banner above it would push it down and then jump. */}
+            {activeView !== 'home' && (
+              <TabQuote
+                key={`quote-${activeView}`}
+                category={VIEW_QUOTE_CATEGORY[activeView] || 'general'}
+                triggerKey={activeView}
+              />
+            )}
 
             {activeView === 'home' && (
               <HomeView

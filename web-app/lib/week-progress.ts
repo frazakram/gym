@@ -3,7 +3,7 @@ import type { WeeklyRoutine } from '@/types'
 /**
  * Week progress for the Home/Today screen and the weekly breakdown sheet,
  * derived from data the dashboard already has (no extra fetch).
- * Moved out of HomeView so the old and the redesigned Today screen share it.
+ * Kept out of the view so the maths is unit-tested on its own.
  */
 
 export interface WeekProgress {
@@ -72,4 +72,12 @@ export function todaysRoutineIndex(now: Date, dayCount: number): number {
 /** The estimate the dashboard has always shown: 8 minutes per exercise plus a 12-minute warm-up. */
 export function estimatedWorkoutMinutes(exerciseCount: number): number {
   return exerciseCount * 8 + 12
+}
+
+const WEEKDAY_PREFIX = /^(mon|tues|wednes|thurs|fri|satur|sun)day\s*[-\u2013\u2014:]\s*/i
+
+/** "Monday - Push (Chest)" -> "Push (Chest)"; names without a weekday prefix are returned unchanged. */
+export function workoutTitle(dayName: string): string {
+  const title = dayName.replace(WEEKDAY_PREFIX, '').trim()
+  return title || dayName
 }

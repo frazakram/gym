@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { buildDayBreakdowns, calculateWeekProgress, estimatedWorkoutMinutes, todaysRoutineIndex } from "@/lib/week-progress";
+import { buildDayBreakdowns, calculateWeekProgress, estimatedWorkoutMinutes, todaysRoutineIndex, workoutTitle } from "@/lib/week-progress";
 import type { WeeklyRoutine } from "@/types";
 
 const exercise = (name: string) => ({ name, sets_reps: "3 sets x 10 reps", youtube_urls: [] });
@@ -45,5 +45,18 @@ describe("todaysRoutineIndex and estimatedWorkoutMinutes", () => {
   it("estimates 8 minutes per exercise plus 12 for warm-up", () => {
     expect(estimatedWorkoutMinutes(3)).toBe(36);
     expect(estimatedWorkoutMinutes(0)).toBe(12);
+  });
+});
+
+describe("workoutTitle", () => {
+  it("drops the leading weekday the AI puts in day names", () => {
+    expect(workoutTitle("Monday - Push (Chest, Shoulders, Triceps)")).toBe("Push (Chest, Shoulders, Triceps)");
+    expect(workoutTitle("Tuesday \u2013 Rest")).toBe("Rest");
+    expect(workoutTitle("wednesday: Legs")).toBe("Legs");
+  });
+
+  it("keeps names without a weekday prefix, and never returns an empty title", () => {
+    expect(workoutTitle("Full Body")).toBe("Full Body");
+    expect(workoutTitle("Monday")).toBe("Monday");
   });
 });

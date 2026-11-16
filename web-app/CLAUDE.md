@@ -263,6 +263,12 @@ The app uses a light-only "Liquid Light" liquid-glass design system (`app/global
 - Dark-authored utility vocabulary (`text-white`, `bg-white/5`, `border-white/10`, `bg-slate-900`, pale `text-slate-300`-style text, …) is remapped to light equivalents inside the `.lg-remap {}` scope in `globals.css`. Dashboard/onboarding/coach/admin/report/login roots carry the `lg-remap` class; the landing page and explore page are light-first and intentionally NOT remapped.
 - Fonts: Manrope (`--font-sans-app`) for body, Sora (`--font-display-app`) for display/`font-display`.
 
+### Navy and Pink redesign (in progress, screen by screen)
+- Approved redesign replacing Liquid Light. Tokens: `app/design-tokens.css` (`--gb-*`, light on `:root`, dark on `[data-theme=dark]`; Tailwind `bg-gb-*`/`text-gb-*`). Component classes: `app/gb-ui.css` (`gb-` prefix: hero, who-card, action bar, tiles, timeline rows, notices, buttons, motion with reduced-motion fallbacks). Typeface Plus Jakarta Sans (`--font-gb-app`).
+- Migrated so far: Home (`HomeView`). Migrated screens use only `--gb-*` tokens; don't mix in Liquid Light classes.
+- Dark mode: `lib/theme.ts` sets `data-theme` before first paint, but `DARK_MODE_AVAILABLE` stays `false` until every screen is migrated.
+- The CI visual comparison is report-only until the redesign ends (see the comment in `.github/workflows/ci.yml`); re-baseline and make it blocking again then.
+
 ## High-Traffic Files
 
 - **`DashboardClient.tsx`** — Tab controller. Do NOT add logic here; extract to `components/views/` or hooks.

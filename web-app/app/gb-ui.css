@@ -1,0 +1,125 @@
+/*
+ * Navy and Pink component styles (the approved prototype), built only on the
+ * --gb-* tokens in design-tokens.css, so light and dark both work.
+ * Every class is prefixed gb- so nothing collides with the older
+ * "Liquid Light" styles while screens migrate one by one.
+ */
+
+.gb-screen {
+  font-family: var(--font-gb-app), ui-sans-serif, system-ui, sans-serif;
+  color: var(--gb-ink);
+  background: var(--gb-page);
+  min-height: 100vh;
+  padding-bottom: 112px; /* clears the bottom navigation */
+  line-height: 1.4;
+}
+.gb-screen h1, .gb-screen h2, .gb-screen h3 { font-family: inherit; color: inherit; letter-spacing: -0.01em; margin: 0; }
+.gb-screen p { line-height: 1.45; margin: 0; }
+.gb-num { font-variant-numeric: tabular-nums; }
+.gb-visually-hidden { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+/* A plain value first: if env() is unsupported the whole max() declaration
+   is dropped, and the gutter must not collapse to zero. */
+.gb-gutter { padding-left: 20px; padding-right: 20px; padding-left: max(20px, env(safe-area-inset-left, 0px)); padding-right: max(20px, env(safe-area-inset-right, 0px)); }
+
+/* ---------- Motion ---------- */
+.gb-rise { animation: gb-rise 460ms var(--gb-ease) both; animation-delay: calc(var(--i, 0) * 60ms); }
+@keyframes gb-rise { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: none; } }
+.gb-press { transition: transform 150ms var(--gb-ease), box-shadow 200ms var(--gb-ease), background-color 150ms var(--gb-ease); -webkit-tap-highlight-color: transparent; }
+.gb-press:active { transform: scale(0.97); }
+@media (hover: hover) { .gb-lift:hover { transform: translateY(-2px); box-shadow: var(--gb-shadow-soft); } }
+.gb-screen :focus-visible { outline: 3px solid var(--gb-pink-ring); outline-offset: 2px; }
+
+/* ---------- Navy hero ---------- */
+.gb-hero { position: relative; background: var(--gb-hero); color: #FFFFFF; overflow: hidden; }
+.gb-blob { position: absolute; border-radius: 999px; background: var(--gb-blob); pointer-events: none; animation: gb-pop 700ms var(--gb-ease) both, gb-drift 9s ease-in-out infinite alternate; animation-delay: calc(var(--i, 0) * 90ms), calc(700ms + var(--i, 0) * 900ms); }
+@keyframes gb-pop { from { opacity: 0; transform: scale(0.7); } to { opacity: 1; transform: scale(1); } }
+@keyframes gb-drift { from { transform: translate(0, 0) scale(1); } to { transform: translate(-10px, 8px) scale(1.04); } }
+/* Top padding leaves room for the dashboard's fixed menu button. */
+.gb-hero-inner { position: relative; padding-top: calc(72px + env(safe-area-inset-top, 0px)); padding-bottom: 120px; display: flex; flex-direction: column; gap: 40px; }
+.gb-hero-short .gb-hero-inner { padding-bottom: 40px; gap: 28px; }
+
+.gb-who { background: var(--gb-surface); color: var(--gb-ink); border-radius: 20px; padding: 14px 12px 14px 16px; display: flex; align-items: center; gap: 12px; box-shadow: var(--gb-shadow-card); }
+.gb-avatar { width: 48px; height: 48px; border-radius: 999px; background: var(--gb-pink-tint); color: var(--gb-lav-text); display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 17px; flex: none; }
+.gb-who-name { font-size: 17px; font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.gb-who-meta { display: flex; align-items: center; flex-wrap: wrap; gap: 2px 8px; font-size: 14px; color: var(--gb-muted); white-space: nowrap; }
+.gb-dot { width: 8px; height: 8px; border-radius: 999px; background: var(--gb-ok); display: inline-block; margin-right: 6px; }
+.gb-sep { width: 1px; height: 12px; background: var(--gb-line); display: inline-block; }
+
+.gb-big { text-align: center; display: flex; flex-direction: column; align-items: center; gap: 10px; }
+.gb-big-num { font-size: 46px; font-weight: 800; letter-spacing: -0.03em; line-height: 1; }
+.gb-big-sub { font-size: 17px; font-weight: 500; color: var(--gb-hero-sub); max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.gb-hero-pills { display: flex; justify-content: center; flex-wrap: wrap; gap: 8px; }
+.gb-hero-pill { display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; border-radius: 999px; font-size: 13px; font-weight: 600; color: #FFFFFF; background: rgba(255, 255, 255, 0.14); border: 1px solid rgba(255, 255, 255, 0.22); max-width: 100%; }
+.gb-hero-pill span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+button.gb-hero-pill { cursor: pointer; font-family: inherit; }
+.gb-hero-pill svg { width: 14px; height: 14px; flex: none; }
+
+/* ---------- Action bar (overlaps the hero) ---------- */
+.gb-overlap { position: relative; margin-top: -88px; }
+.gb-action-bar { background: var(--gb-surface); border-radius: 20px; padding: 16px 6px; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); box-shadow: var(--gb-shadow-soft); }
+.gb-action-bar > button { border: 0; background: transparent; display: flex; flex-direction: column; align-items: center; gap: 10px; padding: 8px 0; font: inherit; font-size: 16px; font-weight: 600; color: var(--gb-ink); cursor: pointer; border-radius: 0; }
+.gb-action-bar > * + * { border-left: 1px solid var(--gb-line) !important; }
+.gb-action-bar svg { width: 30px; height: 30px; color: var(--gb-lav-icon); }
+.gb-action-bar .gb-pink svg { color: var(--gb-pink-ring); }
+
+/* ---------- Content stack ---------- */
+.gb-stack { display: flex; flex-direction: column; gap: 24px; padding-top: 26px; }
+.gb-section { display: flex; flex-direction: column; gap: 14px; }
+.gb-section-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.gb-section-head h2 { font-size: 22px; font-weight: 700; }
+.gb-link { font: inherit; font-size: 16px; font-weight: 600; color: var(--gb-link); background: none; border: 0; padding: 8px 0; cursor: pointer; }
+
+/* ---------- Feature tiles ---------- */
+.gb-tiles { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+.gb-tile { min-height: 176px; border-radius: 22px; padding: 18px; display: flex; flex-direction: column; gap: 8px; color: var(--gb-ink); border: 0; text-align: left; font: inherit; cursor: pointer; }
+div.gb-tile { cursor: default; }
+.gb-chip { width: 46px; height: 46px; border-radius: 999px; background: var(--gb-chip); display: flex; align-items: center; justify-content: center; box-shadow: var(--gb-shadow-chip); flex: none; }
+.gb-chip svg { width: 22px; height: 22px; }
+.gb-tile .gb-chip { margin-bottom: 10px; }
+.gb-tile-title { font-size: 20px; font-weight: 700; line-height: 1.2; }
+.gb-tile-count { font-size: 15px; }
+.gb-tile-count b { font-weight: 700; }
+.gb-tile-detail { font-size: 14px; color: var(--gb-muted); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.gb-tint-pink { background: linear-gradient(160deg, var(--gb-pink-tint-2), var(--gb-pink-tint)); } .gb-tint-pink svg { color: var(--gb-pink-icon); } .gb-tint-pink b { color: var(--gb-pink-text); }
+.gb-tint-peach { background: linear-gradient(160deg, var(--gb-peach-tint-2), var(--gb-peach-tint)); } .gb-tint-peach svg { color: var(--gb-peach-icon); } .gb-tint-peach b { color: var(--gb-peach-text); }
+.gb-tint-lav { background: linear-gradient(160deg, var(--gb-lav-tint-2), var(--gb-lav-tint)); } .gb-tint-lav svg { color: var(--gb-lav-icon); } .gb-tint-lav b { color: var(--gb-lav-text); }
+.gb-tint-mint { background: linear-gradient(160deg, var(--gb-mint-tint-2), var(--gb-mint-tint)); } .gb-tint-mint svg { color: var(--gb-mint-icon); } .gb-tint-mint b { color: var(--gb-mint-text); }
+
+/* ---------- Timeline rows ---------- */
+.gb-timeline { position: relative; }
+.gb-timeline::before { content: ""; position: absolute; left: 6px; top: 34px; bottom: 34px; width: 1px; background: var(--gb-pink-line); }
+.gb-timeline ol { list-style: none; margin: 0; padding: 0 0 0 26px; display: flex; flex-direction: column; gap: 12px; }
+.gb-timeline li { position: relative; }
+.gb-timeline li::before { content: ""; position: absolute; left: -26px; top: 32px; width: 10px; height: 10px; border-radius: 999px; background: var(--gb-page); border: 2px solid var(--gb-pink-ring); }
+.gb-timeline li.gb-done::before { background: var(--gb-pink-ring); }
+.gb-row { display: flex; align-items: center; gap: 14px; padding: 14px; border-radius: 18px; background: var(--gb-soft); color: var(--gb-ink); width: 100%; border: 0; text-align: left; font: inherit; cursor: pointer; }
+.gb-row .gb-chip { width: 48px; height: 48px; }
+.gb-row-main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px; }
+.gb-row-title { font-size: 17px; font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.gb-row-sub { font-size: 15px; font-weight: 500; color: var(--gb-link); }
+.gb-row-time { font-size: 13px; color: var(--gb-muted); white-space: nowrap; }
+.gb-row-chev { width: 18px; height: 18px; color: var(--gb-muted); flex: none; }
+.gb-row-today { box-shadow: inset 0 0 0 2px var(--gb-pink-line); }
+
+/* ---------- Cards, notices and buttons ---------- */
+.gb-card { background: var(--gb-surface); border: 1px solid var(--gb-line); border-radius: 22px; padding: 18px; display: flex; flex-direction: column; gap: 14px; }
+.gb-notice { border-radius: 22px; padding: 18px; display: flex; gap: 14px; align-items: flex-start; }
+.gb-notice-body { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 6px; }
+.gb-notice-title { font-size: 17px; font-weight: 700; }
+.gb-notice-text { font-size: 14px; color: var(--gb-muted); }
+.gb-notice .gb-btn { margin-top: 8px; }
+.gb-btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 48px; padding: 0 20px; border-radius: 14px; border: 0; font: inherit; font-size: 16px; font-weight: 700; cursor: pointer; width: 100%; }
+.gb-btn svg { width: 18px; height: 18px; }
+.gb-btn-primary { background: var(--gb-primary); color: var(--gb-on-primary); }
+.gb-btn-secondary { background: var(--gb-surface); color: var(--gb-link); box-shadow: inset 0 0 0 1px var(--gb-line); }
+.gb-btn:disabled { opacity: 0.6; cursor: progress; }
+.gb-spin { animation: gb-spin 900ms linear infinite; }
+@keyframes gb-spin { to { transform: rotate(360deg); } }
+
+/* ---------- Wider screens ---------- */
+
+@media (prefers-reduced-motion: reduce) {
+  .gb-rise, .gb-blob, .gb-spin { animation: none !important; }
+  .gb-press, .gb-press:active, .gb-lift:hover { transition: none; transform: none; }
+}
