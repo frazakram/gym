@@ -2,6 +2,7 @@
 
 import type { CSSProperties, ReactNode } from 'react'
 import { ChevronLeft } from 'lucide-react'
+import { ThemeToggle } from './ThemeToggle'
 
 export interface HeroPill {
   icon?: ReactNode
@@ -51,6 +52,7 @@ export function PageHero({
             <h1 className="gb-page-title">{title}</h1>
             {subtitle ? <p className="gb-page-sub">{subtitle}</p> : null}
           </div>
+          <ThemeToggle onHero />
           {right}
         </div>
         {progress !== undefined && (

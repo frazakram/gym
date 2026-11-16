@@ -137,6 +137,20 @@ div.gb-tile { cursor: default; }
 .gb-spin { animation: gb-spin 900ms linear infinite; }
 @keyframes gb-spin { to { transform: rotate(360deg); } }
 
+/* ---------- Theme button and circular theme reveal ---------- */
+.gb-theme-btn { width: 40px; height: 40px; flex: none; border-radius: 12px; border: 1px solid var(--gb-line); background: var(--gb-surface); color: var(--gb-ink); display: inline-flex; align-items: center; justify-content: center; cursor: pointer; }
+.gb-theme-btn svg { width: 18px; height: 18px; }
+html.gb-vt-theme::view-transition-old(root),
+html.gb-vt-theme::view-transition-new(root) { animation: none; mix-blend-mode: normal; }
+html.gb-vt-theme::view-transition-new(root) { animation: gb-reveal 560ms var(--gb-ease) both; }
+@keyframes gb-reveal { from { clip-path: circle(0 at var(--gb-vt-x, 50%) var(--gb-vt-y, 0)); } to { clip-path: circle(150vmax at var(--gb-vt-x, 50%) var(--gb-vt-y, 0)); } }
+
+/* ---------- Segmented control (Profile, Appearance) ---------- */
+.gb-seg { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 4px; padding: 4px; border-radius: 14px; background: var(--gb-track); }
+.gb-seg button { display: inline-flex; align-items: center; justify-content: center; gap: 6px; min-height: 40px; border: 0; border-radius: 10px; background: transparent; color: var(--gb-muted); font: inherit; font-size: var(--gb-text-sm); font-weight: 700; cursor: pointer; }
+.gb-seg button svg { width: 15px; height: 15px; }
+.gb-seg button[aria-pressed="true"] { background: var(--gb-surface); color: var(--gb-ink); box-shadow: var(--gb-shadow-chip); }
+
 /* ---------- Wider screens ---------- */
 
 /* ---------- Bottom navigation (shared by every dashboard screen) ---------- */

@@ -52,7 +52,7 @@ export function AnimatedButton({
     secondary: 'bg-white/5 border border-primary/20 text-slate-100 hover:bg-primary/10 hover:border-primary/30 hover:shadow-[0_0_20px_rgba(47,58,143,0.18)]',
     ghost: 'glass-soft text-slate-100 hover:text-white hover:bg-primary/10',
     premium: 'bg-gradient-to-r from-gold to-gold-light text-slate-900 font-bold shadow-lg hover:shadow-[0_0_30px_rgba(245,158,11,0.5)] hover:brightness-110',
-    coral: 'bg-gradient-to-r from-coral to-[#FF8A65] text-white shadow-lg hover:shadow-[0_0_30px_rgba(255,111,97,0.4)] hover:brightness-110',
+    coral: 'bg-gradient-to-r from-coral to-coral-dark text-white shadow-lg hover:shadow-[0_0_30px_rgba(255,111,97,0.4)] hover:brightness-110',
   }
 
   const rippleColors: Record<string, string> = {

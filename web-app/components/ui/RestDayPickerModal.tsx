@@ -166,8 +166,8 @@ export function RestDayPickerModal({ open, onClose, onConfirm, initialDays }: Re
               {/* Confirm */}
               <button
                 onClick={handleConfirm}
-                className="w-full py-3 rounded-xl text-sm font-semibold text-white transition-all active:scale-[0.98]"
-                style={{ background: 'linear-gradient(135deg, #00E5BC 0%, #00B89A 100%)' }}
+                className="w-full py-3 rounded-xl text-sm font-semibold text-accent-ink transition-all active:scale-[0.98]"
+                style={{ background: 'linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%)' }}
               >
                 {selected.size === 0
                   ? 'Generate (AI picks rest days)'

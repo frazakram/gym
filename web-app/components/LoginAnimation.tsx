@@ -71,7 +71,7 @@ function resolveAnimData(): AnimData {
 
 const PILLS = [
   {
-    accent: '#00E5BC',
+    accent: '#2F3A8F',
     title: 'Learns your gym, week by week',
     subtitle: 'Adapts your routine based on your equipment, body type and actual session logs',
     icon: (
@@ -86,7 +86,7 @@ const PILLS = [
     ),
   },
   {
-    accent: '#14B8A6',
+    accent: '#C2546A',
     title: 'Diet built around your food',
     subtitle: 'Custom meal plans using ingredients you actually eat — not generic Western templates',
     icon: (
@@ -201,11 +201,11 @@ export default function LoginAnimation() {
         {/* Typewriter */}
         <div style={{ fontSize: '52px', fontWeight: 700, color: headlineColor, letterSpacing: '-1px', minHeight: '72px', lineHeight: 1.1 }}>
           {displayed}
-          <span className="login-cursor" style={{ color: '#00E5BC', marginLeft: '2px' }}>|</span>
+          <span className="login-cursor" style={{ color: '#E28C99', marginLeft: '2px' }}>|</span>
         </div>
 
         {/* Teal accent underline */}
-        <div className="login-underline" style={{ height: '2px', background: '#00E5BC', margin: '16px 0 28px 0', borderRadius: '1px' }} />
+        <div className="login-underline" style={{ height: '2px', background: '#E28C99', margin: '16px 0 28px 0', borderRadius: '1px' }} />
 
         {/* Personalized streak line for returning users */}
         {showPersonalLine && (

@@ -20,6 +20,7 @@ import { useSessionPersistence, clearSessionIndicator } from '@/lib/useSessionPe
 import { csrfFetch } from '@/lib/useCsrf'
 import { Menu } from 'lucide-react'
 import { AnimatePresence, motion } from 'framer-motion'
+import { useViewSlide, viewSlideVariants } from '@/hooks/useViewSlide'
 import { usePullToRefresh } from '@/hooks/usePullToRefresh'
 import { useAiSettings } from '@/hooks/useAiSettings'
 import { usePremiumStatus } from '@/hooks/usePremiumStatus'
@@ -41,6 +42,7 @@ function countryToRegionClient(code: string): 'APAC' | 'EMEA' | 'NA' | 'LATAM' {
 export default function DashboardPage() {
   const router = useRouter()
   const [activeView, setActiveView] = useState<'home' | 'routine' | 'workout' | 'profile' | 'diet' | 'analytics' | 'coach' | 'measurements' | 'communities' | 'nutrition'>('home')
+  const viewSlide = useViewSlide(activeView)
   const [isSidebarOpen, setIsSidebarOpen] = useState(false)
   const [gymSheetOpen, setGymSheetOpen] = useState(false)
   const [historyRoutines, setHistoryRoutines] = useState<any[]>([])
@@ -1158,13 +1160,15 @@ export default function DashboardPage() {
         </div>
 
         {/* View Rendering */}
-        <AnimatePresence mode="wait">
+        <AnimatePresence mode="wait" custom={viewSlide}>
           <motion.div
             key={activeView}
-            initial={{ opacity: 0, y: 8 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -8 }}
-            transition={{ duration: 0.2, ease: 'easeInOut' as const }}
+            custom={viewSlide}
+            variants={viewSlideVariants}
+            initial="enter"
+            animate="center"
+            exit="exit"
+            transition={{ duration: 0.22, ease: [0.2, 0, 0, 1] }}
           >
             {activeView === 'home' && (
               <HomeView

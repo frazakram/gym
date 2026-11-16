@@ -71,10 +71,10 @@ function CheckIcon({ color = 'teal' }: { color?: 'teal' | 'green' | 'amber' }) {
 
 export default function LandingPage() {
   return (
-    <div className="w-full bg-white dark:bg-[#080c14] transition-colors duration-300">
+    <div className="w-full overflow-x-clip bg-white dark:bg-[#121428] transition-colors duration-300">
 
       {/* ── NAVBAR ── */}
-      <nav className="sticky top-0 z-50 bg-white/90 dark:bg-[#080c14]/90 backdrop-blur-md border-b border-gray-100 dark:border-white/5 transition-colors duration-300">
+      <nav className="sticky top-0 z-50 bg-white/90 dark:bg-[#121428]/90 backdrop-blur-md border-b border-gray-100 dark:border-white/5 transition-colors duration-300">
         <div className="max-w-7xl mx-auto px-8 pr-16 h-16 flex items-center justify-between">
           <Link href="/" className="flex items-center gap-2">
             <img src="/logo.png" alt="GymBro" className="w-8 h-8 rounded-lg" />
@@ -120,7 +120,7 @@ export default function LandingPage() {
       </nav>
 
       {/* ── HERO ── */}
-      <section className="transition-colors duration-300 bg-white dark:bg-[#080c14] min-h-screen flex items-center">
+      <section className="transition-colors duration-300 bg-white dark:bg-[#121428] min-h-screen flex items-center">
         <div className="mx-auto max-w-7xl px-6 md:px-16 lg:px-24 py-20 lg:py-28 w-full">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 items-center">
 
@@ -167,13 +167,13 @@ export default function LandingPage() {
                     className="pointer-events-none absolute"
                     style={{
                       inset: '-50%',
-                      background: 'conic-gradient(from 0deg, transparent 0%, #00E5BC 25%, #5FFFE0 45%, transparent 65%)',
+                      background: 'conic-gradient(from 0deg, transparent 0%, #E8A0AA 25%, #F2C9CF 45%, transparent 65%)',
                       animation: 'orbit 3s linear infinite',
                     }}
                   />
                   <Link
                     href="/login"
-                    className="relative z-10 bg-teal-500 hover:bg-teal-600 text-accent-ink rounded-full px-8 py-4 text-base font-semibold shadow-lg shadow-teal-500/25 transition-colors"
+                    className="relative z-10 bg-primary hover:bg-primary-dark text-accent-ink rounded-full px-8 py-4 text-base font-semibold shadow-lg shadow-teal-500/25 transition-colors"
                   >
                     Start for free
                   </Link>
@@ -190,7 +190,7 @@ export default function LandingPage() {
                   />
                   <Link
                     href="https://finalgym.vercel.app/"
-                    className="relative z-10 bg-white dark:bg-[#080c14] text-gray-700 dark:text-white rounded-full px-8 py-4 text-base hover:bg-gray-50 dark:hover:bg-[#0d1117] transition-colors"
+                    className="relative z-10 bg-white dark:bg-[#121428] text-gray-700 dark:text-white rounded-full px-8 py-4 text-base hover:bg-gray-50 dark:hover:bg-[#0d1117] transition-colors"
                   >
                     Explore free →
                   </Link>
@@ -246,7 +246,7 @@ export default function LandingPage() {
       </section>
 
       {/* ── SOCIAL PROOF STRIP ── */}
-      <section className="transition-colors duration-300 bg-gray-50 dark:bg-[#0d1117] border-y border-gray-100 dark:border-white/5">
+      <section className="transition-colors duration-300 bg-gray-50 dark:bg-[#171A33] border-y border-gray-100 dark:border-white/5">
         <div className="mx-auto max-w-7xl px-6 md:px-16 lg:px-24 py-16">
           <motion.div
             className="grid grid-cols-3 text-center divide-x divide-gray-200 dark:divide-white/10 max-w-3xl mx-auto"
@@ -276,7 +276,7 @@ export default function LandingPage() {
       </section>
 
       {/* ── FEATURE: WORKOUTS ── */}
-      <section id="features" className="transition-colors duration-300 bg-white dark:bg-[#080c14]">
+      <section id="features" className="transition-colors duration-300 bg-white dark:bg-[#121428]">
         <div className="mx-auto max-w-7xl px-6 md:px-16 lg:px-24 py-20 lg:py-28">
 
           {/* Section header */}
@@ -287,7 +287,7 @@ export default function LandingPage() {
             viewport={{ once: true, margin: '-60px' }}
             variants={staggerContainer()}
           >
-            <motion.p variants={fadeUp} className="text-xs font-bold tracking-[0.2em] text-[#00E5BC] uppercase mb-4">
+            <motion.p variants={fadeUp} className="text-xs font-bold tracking-[0.2em] text-primary uppercase mb-4">
               What makes it different
             </motion.p>
             <motion.h2 variants={fadeUp} className="text-4xl md:text-5xl font-black text-gray-900 dark:text-white">
@@ -303,7 +303,7 @@ export default function LandingPage() {
               viewport={{ once: true, margin: '-60px' }}
               variants={staggerContainer()}
             >
-              <motion.p variants={fadeUp} className="text-xs font-bold tracking-[0.2em] text-[#00E5BC] uppercase">
+              <motion.p variants={fadeUp} className="text-xs font-bold tracking-[0.2em] text-primary uppercase">
                 Workouts
               </motion.p>
               <motion.h3 variants={fadeUp} className="mt-3 text-3xl lg:text-5xl font-black text-gray-900 dark:text-white leading-tight">
@@ -328,7 +328,7 @@ export default function LandingPage() {
             </motion.div>
             {/* Visual */}
             <motion.div
-              className="rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#111827] p-6 shadow-sm"
+              className="rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#1B1E38] p-6 shadow-sm"
               initial={{ opacity: 0, x: 40 }}
               whileInView={{ opacity: 1, x: 0 }}
               viewport={{ once: true, margin: '-60px' }}
@@ -353,7 +353,7 @@ export default function LandingPage() {
               <div className="mt-6">
                 <p className="text-xs text-gray-400 mb-2">41% week done</p>
                 <div className="h-2 w-full rounded-full bg-gray-100 dark:bg-white/10">
-                  <div className="h-full rounded-full bg-[#00E5BC]" style={{ width: '41%' }} />
+                  <div className="h-full rounded-full bg-primary" style={{ width: '41%' }} />
                 </div>
               </div>
             </motion.div>
@@ -362,7 +362,7 @@ export default function LandingPage() {
       </section>
 
       {/* ── FEATURE: NUTRITION ── */}
-      <section className="transition-colors duration-300 bg-gray-50 dark:bg-[#0d1117]">
+      <section className="transition-colors duration-300 bg-gray-50 dark:bg-[#171A33]">
         <div className="mx-auto max-w-7xl px-6 md:px-16 lg:px-24 py-20 lg:py-28">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 items-center lg:[&>*:first-child]:order-2">
             {/* Text — first in DOM, goes RIGHT on desktop */}
@@ -372,7 +372,7 @@ export default function LandingPage() {
               viewport={{ once: true, margin: '-60px' }}
               variants={staggerContainer()}
             >
-              <motion.p variants={fadeUp} className="text-xs font-bold tracking-[0.2em] text-[#00E5BC] uppercase">
+              <motion.p variants={fadeUp} className="text-xs font-bold tracking-[0.2em] text-primary uppercase">
                 Nutrition
               </motion.p>
               <motion.h3 variants={fadeUp} className="mt-3 text-3xl lg:text-5xl font-black text-gray-900 dark:text-white leading-tight">
@@ -397,7 +397,7 @@ export default function LandingPage() {
             </motion.div>
             {/* Visual — second in DOM, goes LEFT on desktop */}
             <motion.div
-              className="rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#111827] p-6 shadow-sm"
+              className="rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#1B1E38] p-6 shadow-sm"
               initial={{ opacity: 0, x: -40 }}
               whileInView={{ opacity: 1, x: 0 }}
               viewport={{ once: true, margin: '-60px' }}
@@ -405,7 +405,7 @@ export default function LandingPage() {
             >
               <div className="flex justify-between items-center mb-3">
                 <span className="font-bold text-sm text-gray-900 dark:text-white">Today&apos;s meals</span>
-                <span className="text-xs text-[#00E5BC] font-semibold">2490 kcal</span>
+                <span className="text-xs text-primary font-semibold">2490 kcal</span>
               </div>
               <div className="flex flex-col gap-2">
                 {[
@@ -432,7 +432,7 @@ export default function LandingPage() {
       </section>
 
       {/* ── FEATURE: PROGRESS ── */}
-      <section className="transition-colors duration-300 bg-white dark:bg-[#080c14]">
+      <section className="transition-colors duration-300 bg-white dark:bg-[#121428]">
         <div className="mx-auto max-w-7xl px-6 md:px-16 lg:px-24 py-20 lg:py-28">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 items-center">
             {/* Text */}
@@ -442,7 +442,7 @@ export default function LandingPage() {
               viewport={{ once: true, margin: '-60px' }}
               variants={staggerContainer()}
             >
-              <motion.p variants={fadeUp} className="text-xs font-bold tracking-[0.2em] text-[#00E5BC] uppercase">
+              <motion.p variants={fadeUp} className="text-xs font-bold tracking-[0.2em] text-primary uppercase">
                 Progress
               </motion.p>
               <motion.h3 variants={fadeUp} className="mt-3 text-3xl lg:text-5xl font-black text-gray-900 dark:text-white leading-tight">
@@ -467,7 +467,7 @@ export default function LandingPage() {
             </motion.div>
             {/* Visual */}
             <motion.div
-              className="rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#111827] p-6 shadow-sm"
+              className="rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#1B1E38] p-6 shadow-sm"
               initial={{ opacity: 0, x: 40 }}
               whileInView={{ opacity: 1, x: 0 }}
               viewport={{ once: true, margin: '-60px' }}
@@ -480,7 +480,7 @@ export default function LandingPage() {
                   <div key={day} className="flex flex-col items-center gap-1">
                     <div
                       className={`h-10 w-10 rounded-full flex items-center justify-center text-sm font-semibold ${i < 5
-                        ? 'bg-teal-500 text-accent-ink'
+                        ? 'bg-primary text-accent-ink'
                         : 'bg-gray-100 text-gray-400 dark:bg-[#1a2234] dark:text-gray-500'
                         }`}
                     >
@@ -493,7 +493,7 @@ export default function LandingPage() {
               <div className="mt-6">
                 <p className="text-xs text-gray-400 mb-2">41% this week</p>
                 <div className="h-2 w-full rounded-full bg-gray-100 dark:bg-white/10">
-                  <div className="h-full rounded-full bg-[#00E5BC]" style={{ width: '41%' }} />
+                  <div className="h-full rounded-full bg-primary" style={{ width: '41%' }} />
                 </div>
               </div>
             </motion.div>
@@ -502,7 +502,7 @@ export default function LandingPage() {
       </section>
 
       {/* ── HOW IT WORKS ── */}
-      <section id="how-it-works" className="transition-colors duration-300 bg-gray-50 dark:bg-[#0d1117]">
+      <section id="how-it-works" className="transition-colors duration-300 bg-gray-50 dark:bg-[#171A33]">
         <div className="mx-auto max-w-7xl px-6 md:px-16 lg:px-24 py-20 lg:py-28">
           <motion.div
             className="text-center mb-16"
@@ -511,7 +511,7 @@ export default function LandingPage() {
             viewport={{ once: true, margin: '-60px' }}
             variants={staggerContainer()}
           >
-            <motion.p variants={fadeUp} className="text-xs font-bold tracking-[0.2em] text-[#00E5BC] uppercase mb-4">
+            <motion.p variants={fadeUp} className="text-xs font-bold tracking-[0.2em] text-primary uppercase mb-4">
               Getting started
             </motion.p>
             <motion.h2 variants={fadeUp} className="text-4xl md:text-5xl font-black text-gray-900 dark:text-white">
@@ -543,7 +543,7 @@ export default function LandingPage() {
               },
             ].map(({ num, title, body }) => (
               <motion.div key={num} variants={fadeUp}>
-                <p className="text-8xl font-black text-gray-100 dark:text-white/5 leading-none select-none">
+                <p aria-hidden="true" className="text-8xl font-black text-gray-100 dark:text-white/5 leading-none select-none">
                   {num}
                 </p>
                 <h3 className="text-xl font-bold text-gray-900 dark:text-white mt-2">{title}</h3>
@@ -555,7 +555,7 @@ export default function LandingPage() {
       </section>
 
       {/* ── PRICING ── */}
-      <section id="pricing" className="transition-colors duration-300 bg-white dark:bg-[#080c14]">
+      <section id="pricing" className="transition-colors duration-300 bg-white dark:bg-[#121428]">
         <div className="mx-auto max-w-7xl px-6 md:px-16 lg:px-24 py-20 lg:py-28">
           <motion.div
             className="text-center mb-12"
@@ -577,7 +577,7 @@ export default function LandingPage() {
             variants={staggerContainer()}
           >
             {/* Free tier */}
-            <motion.div variants={fadeUp} className="rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#111827] p-8">
+            <motion.div variants={fadeUp} className="rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#1B1E38] p-8">
               <p className="text-2xl font-black text-gray-900 dark:text-white">Free</p>
               <p className="text-4xl font-black text-gray-900 dark:text-white mt-2">
                 ₹0{' '}
@@ -605,7 +605,7 @@ export default function LandingPage() {
             </motion.div>
 
             {/* Premium tier */}
-            <motion.div variants={fadeUp} className="rounded-2xl border-2 border-primary bg-gradient-to-br from-teal-500 to-teal-600 text-accent-ink p-8 relative">
+            <motion.div variants={fadeUp} className="rounded-2xl border-2 border-primary bg-gradient-to-br from-teal-600 to-teal-700 text-white p-8 relative">
               <div className="flex items-center gap-2 flex-wrap">
                 <p className="text-2xl font-black text-white">Premium</p>
                 <span className="bg-white/20 text-white text-xs rounded-full px-3 py-1">Most popular</span>
@@ -630,7 +630,7 @@ export default function LandingPage() {
               </div>
               <Link
                 href="/login"
-                className="bg-white text-[#00E5BC] hover:bg-gray-100 rounded-full h-11 px-6 font-semibold w-full mt-8 flex items-center justify-center transition-colors"
+                className="bg-white text-primary hover:bg-gray-100 rounded-full h-11 px-6 font-semibold w-full mt-8 flex items-center justify-center transition-colors"
               >
                 Start for ₹49
               </Link>
@@ -675,20 +675,20 @@ export default function LandingPage() {
       </section>
 
       {/* ── FOOTER ── */}
-      <footer className="landing-dark bg-[#060E10] border-t border-white/5">
+      <footer className="landing-dark bg-[#10142F] border-t border-white/5">
         <div className="max-w-7xl mx-auto px-6 md:px-16 lg:px-24 py-12 flex flex-col sm:flex-row justify-between items-center gap-4">
           <div className="flex items-center gap-2">
             <img src="/logo.png" alt="GymBro" className="w-6 h-6 rounded-md" />
             <span className="text-sm text-white">GymBro AI</span>
           </div>
           <div className="flex items-center gap-6">
-            <Link href="/privacy" className="text-sm text-gray-500 hover:text-gray-400 transition-colors">
+            <Link href="/privacy" className="text-sm text-[#A3A7C2] hover:text-white transition-colors">
               Privacy
             </Link>
-            <Link href="/terms" className="text-sm text-gray-500 hover:text-gray-400 transition-colors">
+            <Link href="/terms" className="text-sm text-[#A3A7C2] hover:text-white transition-colors">
               Terms
             </Link>
-            <span className="text-sm text-gray-500">© 2026 GymBro AI</span>
+            <span className="text-sm text-[#A3A7C2]">© 2026 GymBro AI</span>
           </div>
         </div>
       </footer>

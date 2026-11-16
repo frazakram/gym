@@ -6,12 +6,10 @@
  * (themeInitScript) sets the attribute before first paint, so a page never
  * flashes the wrong theme.
  *
- * Dark mode stays unavailable until every screen is migrated to the new
- * tokens; until then everyone sees light, whatever they or their phone prefer.
+ * DARK_MODE_AVAILABLE is a kill switch: false forces light for everyone.
  */
 
-/** Flip to true once every screen uses the design tokens (end of the redesign). */
-export const DARK_MODE_AVAILABLE = false;
+export const DARK_MODE_AVAILABLE = true;
 
 export const THEME_STORAGE_KEY = "gymbro-theme";
 
@@ -34,6 +32,11 @@ export function resolveTheme({
   if (!darkModeAvailable) return "light";
   if (choice === "system") return systemPrefersDark ? "dark" : "light";
   return choice;
+}
+
+/** The sun/moon button: switch to the opposite of what is on screen, as an explicit choice. */
+export function toggledChoice(current: Theme): ThemeChoice {
+  return current === 'dark' ? 'light' : 'dark'
 }
 
 /**

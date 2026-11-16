@@ -34,7 +34,7 @@ export function BrandLogo({
       role="img"
     >
       {/* Fallback badge sits behind the image (prevents “broken image” icon from showing). */}
-      <div className="absolute inset-0 flex items-center justify-center bg-[#22c55e] dark:bg-primary">
+      <div className="absolute inset-0 flex items-center justify-center bg-[#2F3A8F]">
         <span className="text-white font-extrabold tracking-tight">G</span>
       </div>
 

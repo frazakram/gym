@@ -255,18 +255,19 @@ Fixed (kept here so they don't regress):
 - Analytics premium check runs BEFORE the cache/DB lookups in `app/api/analytics/route.ts`.
 - Login page uses `csrfFetch` like the rest of the app.
 
-## Theme (Light mode only)
+## Theme (light and dark, Navy and Pink)
 
-The app uses a light-only "Liquid Light" liquid-glass design system (`app/globals.css`):
-- No `.dark` class is ever applied; the ThemeToggle component was removed. The `@custom-variant dark` line is kept so legacy `dark:` utilities compile but stay dormant — don't add new ones.
+Legacy styles live in `app/globals.css`; the design system is `app/design-tokens.css` + `app/gb-ui.css`.
+- Theme = `data-theme="light"|"dark"` on `<html>`, set before first paint by `themeInitScript` (`lib/theme.ts`) and kept in step by `hooks/useTheme.ts` (one store; `setThemeChoice(choice, origin)` does the circular reveal). Users switch with `ThemeToggle` (every page header and Home's name card) or Profile > Appearance (Light/Dark/System). `DARK_MODE_AVAILABLE` is a kill switch.
+- `dark:` utilities only apply OUTSIDE `.lg-remap`/`.gb-themed` (landing, explore). Inside them, dark comes from tokens: legacy names (`--ink`, `--primary`, ...) have dark values, hard-coded ink/white became `rgb(var(--ink-rgb) / a)` / `rgb(var(--surface-rgb) / a)`, Tailwind gray/slate/zinc/neutral invert, and lg-remap's deep status colours are light-only. On a brand fill use `text-accent-ink` (white on navy; dark ink on the dark theme's pink).
+- Contrast is checked per theme by auditing every page (WCAG 4.5:1 / 3:1 large); keep new colours on tokens so both themes pass.
 - Legacy primitives `.glass`, `.glass-soft`, `.glass-menu`, `.panel-solid` keep their names but now render as solid white cards with a fine navy line (no backdrop blur); the old token names (`--primary`, `--ink`, `--cyan`, ...) carry Navy and Pink values, and Tailwind `teal-*`/`cyan-*` resolve to a navy scale. `text-accent-ink` means text on a navy fill (white).
-- Dark-authored utility vocabulary (`text-white`, `bg-white/5`, `border-white/10`, `bg-slate-900`, pale `text-slate-300`-style text, …) is remapped to light equivalents inside the `.lg-remap {}` scope in `globals.css`. Dashboard/onboarding/coach/admin/report/login roots carry the `lg-remap` class; the landing page and explore page are light-first and intentionally NOT remapped.
+- Dark-authored utility vocabulary (`text-white`, `bg-white/5`, `border-white/10`, `bg-slate-900`, pale `text-slate-300`-style text, ...) is remapped to theme tokens inside the `.lg-remap {}` scope in `globals.css` (the dashboard root carries it). The login root carries `gb-themed` (gray inversion only). Landing and explore are light-first with their own `dark:` variants.
 - Font: Plus Jakarta Sans only (`--font-gb-app`); `font-sans`, `font-display` and `font-gb` all resolve to it.
 
-### Navy and Pink redesign (in progress, screen by screen)
+### Navy and Pink redesign
 - Approved redesign replacing Liquid Light. Tokens: `app/design-tokens.css` (`--gb-*`, light on `:root`, dark on `[data-theme=dark]`; Tailwind `bg-gb-*`/`text-gb-*`). Component classes: `app/gb-ui.css` (`gb-` prefix: hero, who-card, action bar, tiles, timeline rows, notices, buttons, motion with reduced-motion fallbacks). Typeface Plus Jakarta Sans (`--font-gb-app`).
-- Migrated so far: Home (`HomeView`). Migrated screens use only `--gb-*` tokens; don't mix in Liquid Light classes.
-- Dark mode: `lib/theme.ts` sets `data-theme` before first paint, but `DARK_MODE_AVAILABLE` stays `false` until every screen is migrated.
+- Home has its own hero; every other dashboard screen opens on `components/ui/PageHero.tsx` (title, subtitle, pills, back, leading avatar, right action, progress, theme button). Screen changes slide by direction (`hooks/useViewSlide.ts`). Bottom nav: `components/BottomNav.tsx`.
 - The CI visual comparison is report-only until the redesign ends (see the comment in `.github/workflows/ci.yml`); re-baseline and make it blocking again then.
 
 ## High-Traffic Files

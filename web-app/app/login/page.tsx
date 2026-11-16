@@ -117,7 +117,7 @@ export default function LoginPage() {
   const baseDelay = 0.2
 
   return (
-    <div className="login-page relative min-h-screen flex flex-col lg:flex-row items-stretch overflow-hidden">
+    <div className="login-page gb-themed relative min-h-screen flex flex-col lg:flex-row items-stretch overflow-hidden">
       {/* Left Side - LoginAnimation panel (desktop only) */}
       <div className="login-left-panel hidden lg:flex lg:w-1/2 flex-col relative overflow-hidden">
         <div className="login-left-orb login-left-orb--one" aria-hidden="true" />

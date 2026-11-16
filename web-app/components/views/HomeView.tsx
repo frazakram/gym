@@ -12,6 +12,7 @@ import { RestDayCard } from '../ui/RestDayCard'
 import { QuoteLoader } from '../ui/QuoteLoader'
 import { PersonalRecordsCard } from '../ui/PersonalRecordsCard'
 import { WeeklyBreakdownSheet } from '../ui/WeeklyBreakdownSheet'
+import { ThemeToggle } from '../ui/ThemeToggle'
 import { useLocation } from '@/hooks/useLocation'
 import { useTodayNutrition } from '@/hooks/useTodayNutrition'
 import {
@@ -170,6 +171,7 @@ export function HomeView({
                 </span>
               </p>
             </div>
+            <ThemeToggle />
           </div>
 
           <div className="gb-big gb-rise" style={rise(1)}>

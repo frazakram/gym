@@ -201,7 +201,7 @@ export function ImageUploadCard({
         </div>
 
         {/* Mobile hint */}
-        <p className="sm:hidden text-xs text-muted/60 text-center">
+        <p className="sm:hidden text-xs text-muted text-center">
           0/{maxImages} photos • Max {maxSizeMB}MB each
         </p>
 

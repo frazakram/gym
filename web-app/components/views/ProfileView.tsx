@@ -12,6 +12,7 @@ import { AnimatedButton } from '../ui/AnimatedButton'
 import { Collapsible } from '../ui/Collapsible'
 import { getInitials } from '../ui/UserAvatar'
 import { PageHero } from '../ui/PageHero'
+import { AppearanceCard } from '../ui/AppearanceCard'
 import { ImageUploadCard } from '../ui/ImageUploadCard'
 import { csrfFetch } from '@/lib/useCsrf'
 
@@ -260,6 +261,11 @@ export function ProfileView({
         }
       />
       <div className="px-4 pt-5 space-y-4">
+
+      {/* Light / Dark / System */}
+      <motion.div variants={fadeUp}>
+        <AppearanceCard />
+      </motion.div>
 
       {/* Analytics Summary Card */}
       <motion.div variants={fadeUp}>

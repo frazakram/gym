@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { parseThemeChoice, resolveTheme, themeInitScript } from "@/lib/theme";
+import { parseThemeChoice, resolveTheme, themeInitScript, toggledChoice } from "@/lib/theme";
 
 describe("resolveTheme", () => {
-  it("is always light while dark mode is not available yet (redesign in progress)", () => {
+  it("is always light when dark mode is switched off", () => {
     for (const choice of ["light", "dark", "system"] as const) {
       for (const systemPrefersDark of [true, false]) {
         expect(resolveTheme({ choice, systemPrefersDark, darkModeAvailable: false })).toBe("light");
@@ -51,5 +51,12 @@ describe("themeInitScript (runs before first paint, so there is no flash of the 
     const fakeDocument = { documentElement: { setAttribute: () => {} } };
     const brokenStorage = { getItem: () => { throw new Error("blocked"); } };
     expect(() => new Function("window", "document", "localStorage", themeInitScript)({ localStorage: brokenStorage, matchMedia: () => ({ matches: false }) }, fakeDocument, brokenStorage)).not.toThrow();
+  });
+});
+
+describe("toggledChoice (the sun/moon button)", () => {
+  it("switches to the opposite of what is on screen, as an explicit choice", () => {
+    expect(toggledChoice("light")).toBe("dark");
+    expect(toggledChoice("dark")).toBe("light");
   });
 });
