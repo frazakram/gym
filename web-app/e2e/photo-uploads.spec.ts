@@ -1,5 +1,5 @@
 import { test, expect, type Page } from '@playwright/test';
-import { openProfileTab, registerViaApi, saveProfileViaApi } from './helpers';
+import { openFromProfile, openProfileTab, registerViaApi, saveProfileViaApi } from './helpers';
 
 // Characterization of the photo upload flows (dashboard handlers). Only the AI
 // analysis endpoints are stubbed; compression, saving and loading are real.
@@ -17,8 +17,7 @@ async function stubAnalysis(page: Page, path: string, analysis: Record<string, u
 }
 
 async function openBodyView(page: Page) {
-  await page.locator('nav button:has(svg.lucide-plus)').first().click();
-  await page.getByRole('button', { name: 'Body', exact: true }).click();
+  await openFromProfile(page, 'Body');
 }
 
 test('body photo: upload, analysis, persists across reload, remove all', async ({ page }) => {

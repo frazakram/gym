@@ -33,6 +33,10 @@
   --gb-ok: #22A05B;
   --gb-glass: rgba(255, 255, 255, 0.82);
   --gb-indicator: #E4E6F8;
+  /* Chart series (validated: CVD and normal-vision separation, 3:1 on surface) */
+  --gb-series-strength: #4A56B5;
+  --gb-series-cardio: #C2546A;
+  --gb-goal: #62667F;
 
   --gb-pink-tint: #FBE4E4;   --gb-pink-tint-2: #FDECEC;   --gb-pink-text: #A93D52;   --gb-pink-icon: #C2546A;
   --gb-peach-tint: #FCE5CC;  --gb-peach-tint-2: #FEF1E2;  --gb-peach-text: #99520E;  --gb-peach-icon: #C2701E;
@@ -82,6 +86,9 @@
   --gb-ok: #7FD6A6;
   --gb-glass: rgba(27, 30, 56, 0.82);
   --gb-indicator: #2A2E5A;
+  --gb-series-strength: #7C87E0;
+  --gb-series-cardio: #D9677F;
+  --gb-goal: #A3A7C2;
 
   --gb-pink-tint: #3A2433;   --gb-pink-tint-2: #3A2433;   --gb-pink-text: #F2A9B6;   --gb-pink-icon: #F2A9B6;
   --gb-peach-tint: #3A2C1E;  --gb-peach-tint-2: #3A2C1E;  --gb-peach-text: #F2B57A;  --gb-peach-icon: #F2B57A;

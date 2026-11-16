@@ -267,7 +267,9 @@ Legacy styles live in `app/globals.css`; the design system is `app/design-tokens
 
 ### Navy and Pink redesign
 - Approved redesign replacing Liquid Light. Tokens: `app/design-tokens.css` (`--gb-*`, light on `:root`, dark on `[data-theme=dark]`; Tailwind `bg-gb-*`/`text-gb-*`). Component classes: `app/gb-ui.css` (`gb-` prefix: hero, who-card, action bar, tiles, timeline rows, notices, buttons, motion with reduced-motion fallbacks). Typeface Plus Jakarta Sans (`--font-gb-app`).
-- Home has its own hero; every other dashboard screen opens on `components/ui/PageHero.tsx` (title, subtitle, pills, back, leading avatar, right action, progress, theme button). Screen changes slide by direction (`hooks/useViewSlide.ts`). Bottom nav: `components/BottomNav.tsx`.
+- Home has its own hero; every other dashboard screen opens on `components/ui/PageHero.tsx` (title, subtitle, pills, back, leading avatar, right action, progress, theme button). Screen changes slide by direction (`hooks/useViewSlide.ts`).
+- Navigation (prototype): bottom tabs Today / Train / Eat / Profile (`components/BottomNav.tsx`; `TABS[].owns` lists the screens each tab stays marked for). Workout opens from Today or Train; the AI meal plan (`DietView`) from Eat's Meal plan row; Progress, Body, Coach, Community and Find gym nearby from Profile's menu (`components/ui/MenuList.tsx`), each with Back. e2e helpers: `openTab`, `openFromProfile`.
+- Progress (`components/views/ProgressView.tsx`, `GET /api/progress?range=week|month`, `lib/progress.ts`): training minutes estimated at 8 per completed exercise, strength vs cardio by exercise name, UTC days; series colours `--gb-series-*` were validated for colour-blind separation and contrast in both themes.
 - The CI visual comparison is report-only until the redesign ends (see the comment in `.github/workflows/ci.yml`); re-baseline and make it blocking again then.
 
 ## High-Traffic Files

@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { registerViaApi, saveProfileViaApi, errorToast } from './helpers';
+import { openTab, registerViaApi, saveProfileViaApi, errorToast } from './helpers';
 
 test.describe('Diet Planning', () => {
   // These specs make real AI calls; they only run when a key is provided.
@@ -16,7 +16,8 @@ test.describe('Diet Planning', () => {
     await page.reload();
     
     // Navigate to Diet tab
-    await page.getByRole('button', { name: 'Diet' }).click();
+    await openTab(page, 'Eat');
+    await page.getByRole('button', { name: 'Meal plan', exact: true }).click();
 
     
     // Generate Plan
@@ -50,7 +51,8 @@ test.describe('Diet Planning', () => {
 
      // Use reload to ensure clean state
      await page.reload();
-     await page.getByRole('button', { name: 'Diet' }).click();
+     await openTab(page, 'Eat');
+    await page.getByRole('button', { name: 'Meal plan', exact: true }).click();
      
      // Assuming empty state
      if (await page.getByText('No Diet Plan Yet').isVisible()) {

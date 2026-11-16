@@ -532,3 +532,43 @@ export async function getHeatmapData(
     });
   }
 }
+
+/**
+ * Completed exercises since a date, with their names from the routine they
+ * belong to (for the Progress chart). One row per completed exercise.
+ */
+export async function getCompletedExercisesSince(
+  userId: number,
+  since: Date
+): Promise<Array<{ date: string; name: string }>> {
+  if (allowMockAuth()) return [];
+  const res = await pool.query<{
+    day_index: number;
+    exercise_index: number;
+    completed_on: string;
+    routine_json: unknown;
+  }>(
+    `
+    -- to_char, not DATE(): node-postgres turns a DATE into local midnight, which
+    -- shifts the day when the server is not on UTC.
+    SELECT ec.day_index, ec.exercise_index, to_char(ec.completed_at, 'YYYY-MM-DD') AS completed_on, r.routine_json
+    FROM exercise_completions ec
+    JOIN routines r ON r.id = ec.routine_id
+    WHERE r.user_id = $1
+      AND ec.completed = TRUE
+      AND ec.completed_at IS NOT NULL
+      AND ec.completed_at >= $2
+    `,
+    [userId, since]
+  );
+  const rows: Array<{ date: string; name: string }> = [];
+  for (const row of res.rows) {
+    let routine = row.routine_json as { days?: Array<{ exercises?: Array<{ name?: unknown }> }> } | string | null;
+    if (typeof routine === "string") {
+      try { routine = JSON.parse(routine); } catch { routine = null; }
+    }
+    const name = (routine as { days?: Array<{ exercises?: Array<{ name?: unknown }> }> } | null)?.days?.[row.day_index]?.exercises?.[row.exercise_index]?.name;
+    rows.push({ date: row.completed_on, name: typeof name === "string" ? name : "" });
+  }
+  return rows;
+}

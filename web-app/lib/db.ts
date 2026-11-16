@@ -7,7 +7,7 @@ export { getBodyPhotos, getProfile, getUserGym, hasBodyPhotos, hasGymPhotos, has
 export type { UserGym } from './db/profiles';
 export { deleteAllUserRoutines, deleteRoutineById, getCompletionStats, getDayCompletions, getLatestRoutine, getPersonalRecords, getRoutineById, getRoutineByWeek, getRoutinesByUser, saveRoutine, setRoutineArchived, toggleDayCompletion, toggleExerciseCompletion } from './db/routines';
 export type { ExerciseSetDetails, PersonalRecord } from './db/routines';
-export { getHeatmapData, getStreak, getUserAnalytics } from './db/analytics';
+export { getCompletedExercisesSince, getHeatmapData, getStreak, getUserAnalytics } from './db/analytics';
 export type { HeatmapData, StreakData } from './db/analytics';
 export { addBodyMeasurement, deleteBodyMeasurement, getBodyMeasurements } from './db/measurements';
 export type { BodyMeasurement } from './db/measurements';

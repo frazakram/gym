@@ -434,15 +434,17 @@ function MonthlyStreakCalendar({
 interface AnalyticsViewProps {
   premiumStatus: PremiumStatus
   onUpgrade: () => void
+  /** Back to Profile */
+  onBack?: () => void
 }
 
-export function AnalyticsView({ premiumStatus, onUpgrade }: AnalyticsViewProps) {
+export function AnalyticsView({ premiumStatus, onUpgrade, onBack }: AnalyticsViewProps) {
   if (!premiumStatus.access) {
     const trialEndedText =
       premiumStatus.trial_end ? new Date(premiumStatus.trial_end).toLocaleString() : null
     return (
       <div className="pb-24">
-        <PageHero title="Analytics" subtitle="Premium insights from your training" />
+        <PageHero title="Analytics" subtitle="Premium insights from your training" onBack={onBack} />
         <div className="px-4 py-6">
         <div className="glass rounded-2xl p-8 border border-primary/10">
           <div className="flex items-start justify-between gap-4">
@@ -489,14 +491,14 @@ export function AnalyticsView({ premiumStatus, onUpgrade }: AnalyticsViewProps) 
     )
   }
 
-  return <AnalyticsDashboard premiumStatus={premiumStatus} onUpgrade={onUpgrade} />
+  return <AnalyticsDashboard premiumStatus={premiumStatus} onUpgrade={onUpgrade} onBack={onBack} />
 }
 
 /**
  * The analytics dashboard for users with access. Split from AnalyticsView so
  * its hooks always run in the same order: the paywall return happens first.
  */
-function AnalyticsDashboard({ premiumStatus, onUpgrade }: AnalyticsViewProps) {
+function AnalyticsDashboard({ premiumStatus, onUpgrade, onBack }: AnalyticsViewProps) {
   const isTrial = !premiumStatus.premium && premiumStatus.trial_active
   const trialEndsText =
     premiumStatus.trial_end ? new Date(premiumStatus.trial_end).toLocaleString() : null
@@ -629,7 +631,7 @@ function AnalyticsDashboard({ premiumStatus, onUpgrade }: AnalyticsViewProps) {
 
   return (
     <div className="pb-24">
-      <PageHero title="Analytics" subtitle="Your training over time" />
+      <PageHero title="Analytics" subtitle="Your training over time" onBack={onBack} />
       <div className="px-4 py-6">
       <div className="glass rounded-2xl p-5 border border-primary/10">
         <div className="flex items-start justify-between gap-4">

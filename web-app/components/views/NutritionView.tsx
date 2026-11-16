@@ -23,9 +23,12 @@ import { GoalSetupModal } from '@/components/nutrition/GoalSetupModal'
 import { NutritionHistory } from '@/components/nutrition/NutritionHistory'
 import { FoodEntryRow } from '@/components/nutrition/FoodEntryRow'
 import { PageHero } from '@/components/ui/PageHero'
+import { MenuList } from '@/components/ui/MenuList'
 
 interface NutritionViewProps {
   profile: Profile | null
+  /** Opens the AI meal plan (Diet) */
+  onOpenMealPlan?: () => void
 }
 
 function prettyDate(iso: string): string {
@@ -40,7 +43,7 @@ function shiftDate(iso: string, days: number): string {
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`
 }
 
-export function NutritionView({ profile }: NutritionViewProps) {
+export function NutritionView({ profile, onOpenMealPlan }: NutritionViewProps) {
   const n = useNutrition()
   const {
     date, summary, goals, hasGoals, loading, mutating,
@@ -193,6 +196,14 @@ export function NutritionView({ profile }: NutritionViewProps) {
           </div>
         )}
       </GlassCard>
+
+      {/* AI meal plan (the Diet screen) */}
+      {onOpenMealPlan && (
+        <MenuList
+          label="Meal plan"
+          items={[{ label: 'Meal plan', detail: 'Your AI week of meals, built around your goal', icon: Utensils, tint: 'mint', onClick: onOpenMealPlan }]}
+        />
+      )}
 
       {/* Log food CTA */}
       <button

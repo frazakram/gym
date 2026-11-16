@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { bookDefaultCoachViaApi, registerViaApi, saveProfileViaApi } from './helpers';
+import { bookDefaultCoachViaApi, openFromProfile, registerViaApi, saveProfileViaApi } from './helpers';
 
 // Needs the server started with DEFAULT_COACH_PHONE and DEFAULT_COACH_EMAIL set.
 test('coach booking: a user can cancel their booking from the Coach view', async ({ page }) => {
@@ -8,8 +8,7 @@ test('coach booking: a user can cancel their booking from the Coach view', async
   const bookingId = await bookDefaultCoachViaApi(page);
 
   await page.goto('/dashboard');
-  await page.locator('nav button:has(svg.lucide-plus)').first().click();
-  await page.getByRole('button', { name: 'Coach', exact: true }).click();
+  await openFromProfile(page, 'Coach');
 
   const cancelRequest = page.waitForResponse(
     (response) => response.url().endsWith(`/api/coach/bookings/${bookingId}`) && response.request().method() === 'PATCH',

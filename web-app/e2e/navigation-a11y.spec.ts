@@ -1,28 +1,35 @@
 import { test, expect } from '@playwright/test';
-import { registerViaApi, saveProfileViaApi } from './helpers';
+import { openFromProfile, openTab, registerViaApi, saveProfileViaApi, saveRoutineViaApi } from './helpers';
 
-// Inactive bottom-nav tabs and the centre menu button were icon-only with no
-// accessible name: screen readers announced them as just "button".
-test('every bottom navigation button has a name screen readers can announce', async ({ page }) => {
+// The bottom navigation is the Navy and Pink design's four tabs. Every tab has
+// an accessible name, and the current tab stays marked on the screens it owns.
+test('the four tabs are named, and the current one stays marked on its sub-screens', async ({ page }) => {
   await registerViaApi(page, 'a11ynav');
   await saveProfileViaApi(page);
+  await saveRoutineViaApi(page);
   await page.goto('/dashboard', { waitUntil: 'networkidle' });
 
   const nav = page.getByRole('navigation');
-  for (const name of ['Home', 'Routine', 'Workout', 'Profile']) {
+  for (const name of ['Today', 'Train', 'Eat', 'Profile']) {
     await expect(nav.getByRole('button', { name, exact: true })).toBeVisible();
   }
-  await expect(nav.getByRole('button', { name: 'Home', exact: true })).toHaveAttribute('aria-current', 'page');
+  const current = nav.locator('[aria-current="page"]');
+  await expect(current).toHaveCount(1);
+  await expect(current).toHaveText('Today');
 
-  const menuButton = nav.getByRole('button', { name: 'Open menu' });
-  await expect(menuButton).toHaveAttribute('aria-expanded', 'false');
-  await menuButton.click();
-  await expect(nav.getByRole('button', { name: 'Close menu' })).toHaveAttribute('aria-expanded', 'true');
+  // Starting the workout from Today belongs to Train.
+  await page.getByRole('button', { name: 'Start Workout' }).click();
+  await expect(current).toHaveText('Train');
 
-  await nav.getByRole('button', { name: 'Close menu' }).click();
-  await expect(nav.getByRole('button', { name: 'Open menu' })).toHaveAttribute('aria-expanded', 'false');
+  await openTab(page, 'Eat');
+  await expect(current).toHaveText('Eat');
+  await page.getByRole('button', { name: 'Meal plan', exact: true }).click();
+  await expect(page.getByRole('heading', { name: 'Diet plan' })).toBeVisible();
+  await expect(current).toHaveText('Eat');
 
-  // Navigating by name works and moves the "current page" marker.
-  await nav.getByRole('button', { name: 'Profile', exact: true }).click();
-  await expect(nav.getByRole('button', { name: 'Profile', exact: true })).toHaveAttribute('aria-current', 'page');
+  await openFromProfile(page, 'Progress');
+  await expect(page.getByRole('heading', { name: 'Progress' })).toBeVisible();
+  await expect(current).toHaveText('Profile');
+  await page.getByRole('button', { name: 'Go back' }).click();
+  await expect(page.getByRole('list', { name: 'More' })).toBeVisible();
 });

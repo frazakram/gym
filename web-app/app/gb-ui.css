@@ -151,12 +151,56 @@ html.gb-vt-theme::view-transition-new(root) { animation: gb-reveal 560ms var(--g
 .gb-seg button svg { width: 15px; height: 15px; }
 .gb-seg button[aria-pressed="true"] { background: var(--gb-surface); color: var(--gb-ink); box-shadow: var(--gb-shadow-chip); }
 
+/* ---------- Progress chart ---------- */
+.gb-total-row { display: flex; align-items: flex-end; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.gb-total { font-size: 40px; font-weight: 800; letter-spacing: -0.03em; line-height: 1; }
+.gb-total-label { font-size: var(--gb-text-base); font-weight: 600; color: var(--gb-muted); }
+.gb-seg-2 { display: inline-grid; grid-template-columns: repeat(2, minmax(0, 1fr)); min-width: 168px; }
+.gb-chart-card { position: relative; padding: 16px 12px 10px; }
+.gb-chart { width: 100%; height: auto; display: block; overflow: visible; }
+.gb-chart text { fill: var(--gb-muted); font-size: 12px; font-family: var(--font-gb-app), ui-sans-serif, system-ui, sans-serif; }
+.gb-chart .gb-grid { stroke: var(--gb-line); stroke-width: 1; }
+.gb-chart .gb-goal { stroke: var(--gb-goal); stroke-width: 2; stroke-dasharray: 5 5; }
+.gb-chart .gb-strength { fill: var(--gb-series-strength); }
+.gb-chart .gb-cardio { fill: var(--gb-series-cardio); }
+.gb-chart .gb-hit { fill: transparent; cursor: pointer; }
+.gb-chart .gb-col:focus { outline: none; }
+.gb-chart .gb-col:focus-visible .gb-hit, .gb-chart .gb-col.gb-active .gb-hit { fill: var(--gb-track); }
+.gb-bar { transform-box: fill-box; transform-origin: bottom; animation: gb-grow 620ms var(--gb-ease) both; animation-delay: calc(var(--i, 0) * 45ms); }
+@keyframes gb-grow { from { transform: scaleY(0); } to { transform: scaleY(1); } }
+.gb-tip { position: absolute; top: 8px; transform: translateX(-50%); pointer-events: none; background: var(--gb-ink); color: var(--gb-page); border-radius: 12px; padding: 8px 10px; font-size: var(--gb-text-xs); line-height: 1.35; white-space: nowrap; box-shadow: var(--gb-shadow-soft); z-index: 2; }
+.gb-tip b { font-size: var(--gb-text-sm); }
+.gb-tip i { display: inline-block; width: 8px; height: 8px; border-radius: 2px; margin-right: 6px; }
+.gb-legend { display: flex; gap: 16px; flex-wrap: wrap; font-size: var(--gb-text-sm); color: var(--gb-ink); }
+.gb-legend span { display: inline-flex; align-items: center; gap: 8px; }
+.gb-legend i { width: 10px; height: 10px; border-radius: 3px; display: inline-block; }
+.gb-kpis { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+.gb-kpi { background: var(--gb-soft); border-radius: 18px; padding: 14px; display: flex; flex-direction: column; gap: 4px; }
+.gb-kpi-v { font-size: 26px; font-weight: 800; letter-spacing: -0.02em; line-height: 1.1; }
+.gb-kpi-l { font-size: var(--gb-text-sm); color: var(--gb-muted); }
+.gb-table-toggle summary { cursor: pointer; font-size: var(--gb-text-sm); font-weight: 700; color: var(--gb-link); padding: 6px 0; }
+.gb-table { width: 100%; border-collapse: collapse; font-size: var(--gb-text-sm); margin-top: 8px; }
+.gb-table th, .gb-table td { text-align: right; padding: 8px 6px; border-bottom: 1px solid var(--gb-line); }
+.gb-table th:first-child, .gb-table td:first-child { text-align: left; }
+.gb-table th { color: var(--gb-muted); font-weight: 600; }
+.gb-empty-note { font-size: var(--gb-text-sm); color: var(--gb-muted); text-align: center; padding: 4px 8px 8px; }
+
+/* ---------- Menu list (Profile shortcuts, Eat meal plan) ---------- */
+.gb-menu-list { list-style: none; margin: 0; padding: 0; background: var(--gb-surface); border: 1px solid var(--gb-line); border-radius: 22px; overflow: hidden; font-family: var(--font-gb-app), ui-sans-serif, system-ui, sans-serif; }
+.gb-menu-list li + li { border-top: 1px solid var(--gb-line); }
+.gb-menu-list button { width: 100%; display: flex; align-items: center; gap: 14px; padding: 14px 16px; min-height: 56px; border: 0; background: transparent; color: var(--gb-ink); font: inherit; font-size: var(--gb-text-md); font-weight: 600; text-align: left; cursor: pointer; }
+.gb-menu-list .gb-chip { width: 40px; height: 40px; border-radius: 12px; box-shadow: none; }
+.gb-menu-list .gb-grow { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.gb-menu-list .gb-grow small { font-size: var(--gb-text-sm); font-weight: 500; color: var(--gb-muted); }
+@media (hover: hover) { .gb-menu-list button:hover { background: var(--gb-soft); } }
+
 /* ---------- Wider screens ---------- */
 
 /* ---------- Bottom navigation (shared by every dashboard screen) ---------- */
 .gb-tabbar-wrap { position: fixed; left: 0; right: 0; bottom: 0; z-index: 50; font-family: var(--font-gb-app), ui-sans-serif, system-ui, sans-serif; }
 .gb-tabbar { background: var(--gb-glass); -webkit-backdrop-filter: blur(20px) saturate(1.4); backdrop-filter: blur(20px) saturate(1.4); border-top: 1px solid var(--gb-line); padding-bottom: env(safe-area-inset-bottom, 0px); }
 .gb-tabbar-row { max-width: 480px; margin: 0 auto; display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); align-items: center; padding: 6px 8px 8px; }
+.gb-tabbar-row-4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
 .gb-tab { position: relative; display: flex; flex-direction: column; align-items: center; gap: 3px; padding: 4px 0; border: 0; background: none; font: inherit; font-size: 11px; font-weight: 600; color: var(--gb-nav-muted); cursor: pointer; }
 .gb-tab[aria-current="page"] { color: var(--gb-lav-text); }
 .gb-tab-icon { position: relative; width: 52px; height: 30px; display: flex; align-items: center; justify-content: center; border-radius: 999px; }
@@ -180,6 +224,6 @@ html.gb-vt-theme::view-transition-new(root) { animation: gb-reveal 560ms var(--g
 .gb-tabbar-wrap :focus-visible, .gb-menu :focus-visible { outline: 3px solid var(--gb-pink-ring); outline-offset: 2px; }
 
 @media (prefers-reduced-motion: reduce) {
-  .gb-rise, .gb-blob, .gb-spin { animation: none !important; }
+  .gb-rise, .gb-blob, .gb-spin, .gb-bar { animation: none !important; }
   .gb-press, .gb-press:active, .gb-lift:hover { transition: none; transform: none; }
 }

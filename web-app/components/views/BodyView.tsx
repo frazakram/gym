@@ -10,6 +10,8 @@ import { MeasurementsView } from './MeasurementsView'
 import { PageHero } from '../ui/PageHero'
 
 interface BodyViewProps {
+  /** Back to Profile */
+  onBack?: () => void
   bodyPhotos: BodyPhoto[]
   bodyAnalysis: BodyCompositionAnalysis | null
   analyzingBody: boolean
@@ -44,6 +46,7 @@ function weeksSince(iso: string | undefined | null): number | null {
 }
 
 export function BodyView({
+  onBack,
   bodyPhotos,
   bodyAnalysis,
   analyzingBody,
@@ -74,7 +77,7 @@ export function BodyView({
 
   return (
     <div className="pb-24">
-      <PageHero title="Body" subtitle="Track your body composition and measurements over time" />
+      <PageHero title="Body" subtitle="Track your body composition and measurements over time" onBack={onBack} />
       <div className="px-4 py-6">
 
       {/* Tab switcher */}

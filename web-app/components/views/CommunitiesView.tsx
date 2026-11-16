@@ -52,9 +52,11 @@ function fmtXp(n: number): string {
 
 interface CommunitiesViewProps {
   currentUserId?: number
+  /** Back to Profile */
+  onBack?: () => void
 }
 
-export function CommunitiesView({ currentUserId }: CommunitiesViewProps) {
+export function CommunitiesView({ currentUserId, onBack }: CommunitiesViewProps) {
   const [loading, setLoading] = useState(true)
   const [community, setCommunity] = useState<Community | null>(null)
   const [members, setMembers] = useState<Member[]>([])
@@ -217,6 +219,7 @@ export function CommunitiesView({ currentUserId }: CommunitiesViewProps) {
     <div className="pb-24">
       <PageHero
         title="Communities"
+        onBack={onBack}
         subtitle={community ? 'Compete on the leaderboard' : 'Join your tribe'}
         pills={community ? [{ icon: <Users aria-hidden="true" />, label: community.name }] : []}
       />

@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { registerViaApi, saveProfileViaApi } from './helpers';
+import { openFromProfile, registerViaApi, saveProfileViaApi } from './helpers';
 
 const PHOTO = {
   id: 'e2e-photo-1',
@@ -14,8 +14,7 @@ test('body photos load in the Body view (served separately from the profile)', a
   await saveProfileViaApi(page, { body_photos: [PHOTO] });
 
   await page.goto('/dashboard');
-  await page.locator('nav button:has(svg.lucide-plus)').first().click();
-  await page.getByRole('button', { name: 'Body', exact: true }).click();
+  await openFromProfile(page, 'Body');
 
   await expect(page.getByText(/1 photo uploaded/)).toBeVisible();
 });
@@ -31,8 +30,7 @@ test('opening the dashboard does not download body photos until the Body view is
   await page.goto('/dashboard', { waitUntil: 'networkidle' });
   expect(photoRequests).toHaveLength(0);
 
-  await page.locator('nav button:has(svg.lucide-plus)').first().click();
-  await page.getByRole('button', { name: 'Body', exact: true }).click();
+  await openFromProfile(page, 'Body');
   await expect(page.getByText(/1 photo uploaded/)).toBeVisible();
   expect(photoRequests).toHaveLength(1);
 });

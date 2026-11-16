@@ -22,16 +22,18 @@ const fadeUp = {
 }
 
 interface DietViewProps {
+  /** Back to Eat */
+  onBack?: () => void
   diet: WeeklyDiet | null
   onGenerateDiet: (isNextWeek?: boolean) => void
   generating: boolean
 }
 
-export const DietView: React.FC<DietViewProps> = ({ diet, onGenerateDiet, generating }) => {
+export const DietView: React.FC<DietViewProps> = ({ diet, onGenerateDiet, generating, onBack }) => {
   if (!diet) {
     return (
       <div className="pb-24">
-        <PageHero title="Diet plan" subtitle="Meals built around your goal" />
+        <PageHero title="Diet plan" subtitle="Meals built around your goal" onBack={onBack} />
         <div className="px-4 py-6 text-center">
         {generating ? (
           <QuoteLoader mode="full" category="diet" />
@@ -58,6 +60,7 @@ export const DietView: React.FC<DietViewProps> = ({ diet, onGenerateDiet, genera
     <div className="pb-24">
     <PageHero
       title="Diet plan"
+      onBack={onBack}
       subtitle="Weekly plan with calories and protein highlighted"
       right={
         <button type="button" onClick={() => onGenerateDiet()} disabled={generating} className="gb-hero-action gb-press">

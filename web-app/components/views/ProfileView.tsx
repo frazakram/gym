@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
 import { motion } from 'framer-motion'
-import { LogOut, ChevronRight, Settings, Dumbbell, CheckCircle, AlertCircle, Globe, Flame, Lock, BarChart2, Moon } from 'lucide-react'
+import { LogOut, ChevronRight, Settings, Dumbbell, CheckCircle, AlertCircle, Globe, Flame, Lock, BarChart2, Moon, Ruler, MessageCircle, Users, MapPin } from 'lucide-react'
 import { Profile, GymPhoto, GymEquipmentAnalysis, BodyPhoto, BodyCompositionAnalysis, AnalyticsPayload } from '@/types'
 import { GlassCard } from '../ui/GlassCard'
 import { SectionHeader } from '../ui/SectionHeader'
@@ -13,6 +13,7 @@ import { Collapsible } from '../ui/Collapsible'
 import { getInitials } from '../ui/UserAvatar'
 import { PageHero } from '../ui/PageHero'
 import { AppearanceCard } from '../ui/AppearanceCard'
+import { MenuList } from '../ui/MenuList'
 import { ImageUploadCard } from '../ui/ImageUploadCard'
 import { csrfFetch } from '@/lib/useCsrf'
 
@@ -103,6 +104,9 @@ interface ProfileViewProps {
   onOpenCoachApply?: () => void
   onOpenCoachPortal?: () => void
   onNavigateToAnalytics?: () => void
+  /** Opens a screen reached from Profile (Progress, Body, Coach, Community) */
+  onOpenView?: (view: 'progress' | 'measurements' | 'coach' | 'communities') => void
+  onOpenGymSheet?: () => void
   preferredRestDays?: string[]
 }
 
@@ -157,6 +161,8 @@ export function ProfileView({
   onOpenCoachApply,
   onOpenCoachPortal,
   onNavigateToAnalytics,
+  onOpenView,
+  onOpenGymSheet,
   preferredRestDays = [],
 }: ProfileViewProps) {
   const [advancedNutritionOpen, setAdvancedNutritionOpen] = useState(false)
@@ -261,6 +267,20 @@ export function ProfileView({
         }
       />
       <div className="px-4 pt-5 space-y-4">
+
+      {/* Shortcuts (Navy and Pink Profile menu) */}
+      <motion.div variants={fadeUp}>
+        <MenuList
+          label="More"
+          items={[
+            { label: 'Progress', detail: 'Training minutes, week and month', icon: BarChart2, tint: 'lav', onClick: () => onOpenView?.('progress') },
+            { label: 'Body', detail: 'Photos and measurements', icon: Ruler, tint: 'pink', onClick: () => onOpenView?.('measurements') },
+            { label: 'Coach', detail: 'Book a 1:1 session', icon: MessageCircle, tint: 'mint', onClick: () => onOpenView?.('coach') },
+            { label: 'Community', detail: 'Leaderboards and groups', icon: Users, tint: 'peach', onClick: () => onOpenView?.('communities') },
+            { label: 'Find gym nearby', detail: 'Pick your gym for equipment-aware plans', icon: MapPin, tint: 'lav', onClick: onOpenGymSheet },
+          ]}
+        />
+      </motion.div>
 
       {/* Light / Dark / System */}
       <motion.div variants={fadeUp}>

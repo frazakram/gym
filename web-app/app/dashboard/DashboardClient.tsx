@@ -3,11 +3,11 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { WeeklyRoutine, Profile, WeeklyDiet, PremiumStatus } from '@/types'
-import { BottomNav } from '@/components/BottomNav'
+import { BottomNav, type DashboardView } from '@/components/BottomNav'
 import { HomeView } from '@/components/views/HomeView'
 import {
   RoutineView, WorkoutView, ProfileView, DietView, AnalyticsView,
-  CoachView, BodyView, CommunitiesView, NutritionView,
+  CoachView, BodyView, CommunitiesView, NutritionView, ProgressView,
 } from '@/components/views/lazy-views'
 import { Sidebar } from '@/components/Sidebar'
 import { ToastType } from '@/components/ui/Toast'
@@ -41,7 +41,7 @@ function countryToRegionClient(code: string): 'APAC' | 'EMEA' | 'NA' | 'LATAM' {
 
 export default function DashboardPage() {
   const router = useRouter()
-  const [activeView, setActiveView] = useState<'home' | 'routine' | 'workout' | 'profile' | 'diet' | 'analytics' | 'coach' | 'measurements' | 'communities' | 'nutrition'>('home')
+  const [activeView, setActiveView] = useState<DashboardView>('home')
   const viewSlide = useViewSlide(activeView)
   const [isSidebarOpen, setIsSidebarOpen] = useState(false)
   const [gymSheetOpen, setGymSheetOpen] = useState(false)
@@ -345,7 +345,7 @@ export default function DashboardPage() {
   const { markSessionActive, refreshSession } = useSessionPersistence()
 
   // Navigation history stack for back button handling
-  const viewHistoryRef = useRef<Array<'home' | 'routine' | 'workout' | 'profile' | 'diet' | 'analytics' | 'coach' | 'measurements' | 'communities' | 'nutrition'>>(['home'])
+  const viewHistoryRef = useRef<Array<DashboardView>>(['home'])
 
   useEffect(() => {
     fetchProfile()
@@ -421,7 +421,7 @@ export default function DashboardPage() {
     current_end: null,
   }
 
-  const handleViewChange = (view: 'home' | 'routine' | 'workout' | 'profile' | 'diet' | 'analytics' | 'coach' | 'measurements' | 'communities' | 'nutrition') => {
+  const handleViewChange = (view: DashboardView) => {
     // Track view history for back button handling
     const trackViewChange = (newView: typeof view) => {
       viewHistoryRef.current.push(newView)
@@ -1244,22 +1244,25 @@ export default function DashboardPage() {
                 diet={dietPlan}
                 onGenerateDiet={handleGenerateDiet}
                 generating={generatingDiet}
+                onBack={() => handleViewChange('nutrition')}
               />
             )}
 
             {activeView === 'analytics' && (
-              <AnalyticsView premiumStatus={effectivePremium} onUpgrade={() => setUpgradeOpen(true)} />
+              <AnalyticsView premiumStatus={effectivePremium} onUpgrade={() => setUpgradeOpen(true)} onBack={() => handleViewChange('profile')} />
             )}
 
             {activeView === 'coach' && (
               <CoachView
                 onUpgrade={() => setUpgradeOpen(true)}
                 showToast={showToast}
+                onBack={() => handleViewChange('profile')}
               />
             )}
 
             {activeView === 'measurements' && (
               <BodyView
+                onBack={() => handleViewChange('profile')}
                 bodyPhotos={bodyPhotos}
                 bodyAnalysis={bodyAnalysis}
                 analyzingBody={analyzingBody}
@@ -1273,11 +1276,15 @@ export default function DashboardPage() {
             )}
 
             {activeView === 'communities' && (
-              <CommunitiesView currentUserId={userId ?? undefined} />
+              <CommunitiesView currentUserId={userId ?? undefined} onBack={() => handleViewChange('profile')} />
             )}
 
             {activeView === 'nutrition' && (
-              <NutritionView profile={profile} />
+              <NutritionView profile={profile} onOpenMealPlan={() => handleViewChange('diet')} />
+            )}
+
+            {activeView === 'progress' && (
+              <ProgressView onBack={() => handleViewChange('profile')} />
             )}
 
             {activeView === 'profile' && (
@@ -1330,6 +1337,8 @@ export default function DashboardPage() {
                 onLogout={handleLogout}
                 loading={loading}
                 onNavigateToAnalytics={() => setActiveView('analytics')}
+                onOpenView={handleViewChange}
+                onOpenGymSheet={() => setGymSheetOpen(true)}
                 preferredRestDays={preferredRestDays}
               />
             )}

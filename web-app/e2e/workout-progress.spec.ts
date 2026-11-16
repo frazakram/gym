@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { registerViaApi, restWeekRoutine, saveProfileViaApi, saveRoutineViaApi } from './helpers';
+import { openTab, registerViaApi, restWeekRoutine, saveProfileViaApi, saveRoutineViaApi } from './helpers';
 
 // Characterization of the workout-progress handlers in DashboardClient
 // (logging a set, marking a rest day complete), checked against the server.
@@ -40,7 +40,7 @@ test('a rest day can be marked complete from the Routine view and stays complete
   const routineId = await saveRoutineViaApi(page, restWeekRoutine());
 
   await page.goto('/dashboard');
-  await page.locator('nav button:has(svg.lucide-calendar)').first().click();
+  await openTab(page, 'Train');
 
   const saved = page.waitForResponse((r) => r.url().endsWith('/api/day-completions') && r.request().method() === 'POST');
   await page.getByRole('button', { name: 'Mark as Complete' }).click();
@@ -51,6 +51,6 @@ test('a rest day can be marked complete from the Routine view and stays complete
   expect(days).toEqual([expect.objectContaining({ completed: true })]);
 
   await page.reload();
-  await page.locator('nav button:has(svg.lucide-calendar)').first().click();
+  await openTab(page, 'Train');
   await expect(page.getByRole('button', { name: 'Completed', exact: true })).toBeVisible();
 });

@@ -53,8 +53,11 @@ type CoachBooking = {
 export function CoachView({
   onUpgrade,
   showToast,
+  onBack,
 }: {
   onUpgrade: () => void
+  /** Back to Profile */
+  onBack?: () => void
   showToast: (message: string, type: 'success' | 'error' | 'info' | 'warning') => void
 }) {
   const [coach, setCoach] = useState<Coach | null>(null)
@@ -274,6 +277,7 @@ export function CoachView({
     <div className="pb-24">
     <PageHero
       title="Personal Coach"
+      onBack={onBack}
       subtitle="Book a 1:1 coach call or message"
       pills={[{ icon: <Crown aria-hidden="true" />, label: 'Premium, trial allowed' }]}
     />

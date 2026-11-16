@@ -7,7 +7,7 @@ export function uniqueUsername(prefix = 'e2e'): string {
 }
 
 /** Reads the csrf_token cookie the API set on this browser context. */
-async function csrfHeader(page: Page): Promise<Record<string, string>> {
+export async function csrfHeader(page: Page): Promise<Record<string, string>> {
   const cookie = (await page.context().cookies()).find((c) => c.name === 'csrf_token');
   return cookie ? { 'x-csrf-token': cookie.value } : {};
 }
@@ -92,7 +92,18 @@ export function greeting(page: Page) {
 
 /** Opens the Profile tab from the bottom navigation. */
 export async function openProfileTab(page: Page): Promise<void> {
-  await page.getByRole('navigation').getByRole('button', { name: 'Profile', exact: true }).click();
+  await openTab(page, 'Profile');
+}
+
+/** Opens a bottom-navigation tab: Today, Train, Eat or Profile. */
+export async function openTab(page: Page, tab: 'Today' | 'Train' | 'Eat' | 'Profile'): Promise<void> {
+  await page.getByRole('navigation').getByRole('button', { name: tab, exact: true }).click();
+}
+
+/** Opens a screen listed on Profile (Progress, Body, Coach, Community, Find gym nearby). */
+export async function openFromProfile(page: Page, item: 'Progress' | 'Body' | 'Coach' | 'Community' | 'Find gym nearby'): Promise<void> {
+  await openTab(page, 'Profile');
+  await page.getByRole('list', { name: 'More' }).getByRole('button', { name: item, exact: true }).click();
 }
 
 /** Books the default coach through the real API (user must have premium/trial access). */

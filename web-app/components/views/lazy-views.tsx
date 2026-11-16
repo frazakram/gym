@@ -5,7 +5,7 @@ import { CardSkeleton } from '@/components/ui/SkeletonLoader'
 
 /**
  * Dashboard views other than Home, each in its own chunk: the dashboard opens
- * on Home, so the code for the other nine views is downloaded the first time
+ * on Home, so the code for each other view is downloaded the first time
  * the user opens each one instead of with the first page load.
  */
 const loading = () => <CardSkeleton />
@@ -19,3 +19,4 @@ export const CoachView = dynamic(() => import('./CoachView').then((m) => m.Coach
 export const BodyView = dynamic(() => import('./BodyView').then((m) => m.BodyView), { loading })
 export const CommunitiesView = dynamic(() => import('./CommunitiesView').then((m) => m.CommunitiesView), { loading })
 export const NutritionView = dynamic(() => import('./NutritionView').then((m) => m.NutritionView), { loading })
+export const ProgressView = dynamic(() => import('./ProgressView').then((m) => m.ProgressView), { loading })

@@ -228,6 +228,10 @@ export const HeatmapQuerySchema = z.object({
   days: z.coerce.number().int().min(7).max(365).optional().default(56),
 });
 
+export const ProgressQuerySchema = z.object({
+  range: z.enum(["week", "month"]).optional().default("week"),
+});
+
 // ============= NOTES SCHEMAS =============
 
 export const NotesImproveSchema = z.object({

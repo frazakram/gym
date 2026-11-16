@@ -35,12 +35,22 @@ const openDashboardTab = (tab: string) => async (page: Page) => {
   await page.getByRole('navigation').getByRole('button', { name: tab, exact: true }).click();
 };
 
-const openDashboardMenuItem = (item: string) => async (page: Page) => {
+const openFromProfileMenu = (item: string) => async (page: Page) => {
+  await openDashboardTab('Profile')(page);
+  await settle(page);
+  await page.getByRole('list', { name: 'More' }).getByRole('button', { name: item, exact: true }).click();
+};
+
+const openWorkoutFromToday = async (page: Page) => {
   await page.goto('/dashboard');
   await settle(page);
-  await page.getByRole('navigation').getByRole('button', { name: 'Open menu' }).click();
+  await page.getByRole('button', { name: 'Start Workout' }).click();
+};
+
+const openMealPlan = async (page: Page) => {
+  await openDashboardTab('Eat')(page);
   await settle(page);
-  await page.getByRole('button', { name: item, exact: true }).first().click();
+  await page.getByRole('button', { name: 'Meal plan', exact: true }).click();
 };
 
 const goTo = (path: string) => async (page: Page) => {
@@ -53,14 +63,15 @@ const SCREENS: Screen[] = [
   { name: 'explore', open: goTo('/explore'), shows: 'Your day, laid out.' },
   { name: 'onboarding', member: 'new', open: goTo('/onboarding'), shows: "Let's set you up" },
   { name: 'home', member: 'seeded', open: goTo('/dashboard'), shows: 'Personal Records' },
-  { name: 'routine', member: 'seeded', open: openDashboardTab('Routine'), shows: 'Workout' },
-  { name: 'workout', member: 'seeded', open: openDashboardTab('Workout'), shows: 'Goblet Squat' },
+  { name: 'routine', member: 'seeded', open: openDashboardTab('Train'), shows: 'Workout' },
+  { name: 'workout', member: 'seeded', open: openWorkoutFromToday, shows: 'Goblet Squat' },
   { name: 'profile', member: 'seeded', open: openDashboardTab('Profile'), shows: 'Your Progress' },
-  { name: 'nutrition', member: 'seeded', open: openDashboardMenuItem('Nutrition'), shows: 'Set your daily targets' },
-  { name: 'diet', member: 'seeded', open: openDashboardMenuItem('Diet'), shows: 'Nutrition Plan' },
-  { name: 'body', member: 'seeded', open: openDashboardMenuItem('Body'), shows: 'Body Photos' },
-  { name: 'coach', member: 'seeded', open: openDashboardMenuItem('Coach'), shows: 'Your bookings' },
-  { name: 'community', member: 'seeded', open: openDashboardMenuItem('Community'), shows: 'Communities' },
+  { name: 'nutrition', member: 'seeded', open: openDashboardTab('Eat'), shows: 'Set your daily targets' },
+  { name: 'diet', member: 'seeded', open: openMealPlan, shows: 'Nutrition Plan' },
+  { name: 'progress', member: 'seeded', open: openFromProfileMenu('Progress'), shows: 'Active days' },
+  { name: 'body', member: 'seeded', open: openFromProfileMenu('Body'), shows: 'Body Photos' },
+  { name: 'coach', member: 'seeded', open: openFromProfileMenu('Coach'), shows: 'Your bookings' },
+  { name: 'community', member: 'seeded', open: openFromProfileMenu('Community'), shows: 'Communities' },
 ];
 
 for (const viewport of VIEWPORTS) {
