@@ -8,9 +8,10 @@ import { Profile, GymPhoto, GymEquipmentAnalysis, BodyPhoto, BodyCompositionAnal
 import { GlassCard } from '../ui/GlassCard'
 import { SectionHeader } from '../ui/SectionHeader'
 import { Chip } from '../ui/Chip'
-import { AnimatedButton, IconButton } from '../ui/AnimatedButton'
+import { AnimatedButton } from '../ui/AnimatedButton'
 import { Collapsible } from '../ui/Collapsible'
-import { UserAvatar } from '../ui/UserAvatar'
+import { getInitials } from '../ui/UserAvatar'
+import { PageHero } from '../ui/PageHero'
 import { ImageUploadCard } from '../ui/ImageUploadCard'
 import { csrfFetch } from '@/lib/useCsrf'
 
@@ -242,41 +243,23 @@ export function ProfileView({
   const allergyOptions = useMemo(() => ['Dairy', 'Gluten', 'Nuts', 'Shellfish', 'Eggs', 'Soy'], [])
 
   return (
-    <motion.form onSubmit={onSaveProfile} className="pb-24 px-4 pt-5 space-y-4 view-transition" variants={stagger} initial="hidden" animate="visible">
-      {/* Header */}
-      <motion.div variants={fadeUp}>
-      <GlassCard className="p-4">
-        <div className="flex items-center gap-3">
-          <UserAvatar name={name || undefined} username={profile?.username} size={56} />
-          <div className="flex-1 min-w-0">
-            <p className="text-[15px] font-semibold tracking-tight text-white truncate font-display">
-              {name || profile?.username || 'Profile'}
-            </p>
-            <p className="mt-0.5 text-xs text-muted">
-              {age || '—'} yrs • {gender}
-            </p>
-          </div>
-          <IconButton onClick={onLogout} ariaLabel="Logout" className="hover:bg-red-500/10 hover:text-red-200">
-            <LogOut className="w-4 h-4" />
-          </IconButton>
-        </div>
-
-        <div className="mt-4 grid grid-cols-3 gap-2">
-          <div className="glass-soft rounded-2xl border border-primary/10 p-2 text-center">
-            <p className="text-[16px] font-semibold text-white">{weight || '—'}</p>
-            <p className="text-xs text-muted mt-0.5">kg</p>
-          </div>
-          <div className="glass-soft rounded-2xl border border-primary/10 p-2 text-center">
-            <p className="text-[16px] font-semibold text-white">{resolvedHeightCm || '—'}</p>
-            <p className="text-xs text-muted mt-0.5">cm</p>
-          </div>
-          <div className="glass-soft rounded-2xl border border-primary/10 p-2 text-center">
-            <p className="text-[14px] font-semibold text-white">{level}</p>
-            <p className="text-xs text-muted mt-0.5">level</p>
-          </div>
-        </div>
-      </GlassCard>
-      </motion.div>
+    <motion.form onSubmit={onSaveProfile} className="pb-24 view-transition" variants={stagger} initial="hidden" animate="visible">
+      <PageHero
+        leading={<span className="gb-avatar" aria-hidden="true">{getInitials(name || profile?.username || 'U')}</span>}
+        title={name || profile?.username || 'Profile'}
+        subtitle={`${age || '-'} yrs, ${gender}`}
+        pills={[
+          { label: `${weight || '-'} kg` },
+          { label: `${resolvedHeightCm || '-'} cm` },
+          { label: level },
+        ]}
+        right={
+          <button type="button" onClick={onLogout} aria-label="Logout" className="gb-hero-btn gb-press">
+            <LogOut aria-hidden="true" />
+          </button>
+        }
+      />
+      <div className="px-4 pt-5 space-y-4">
 
       {/* Analytics Summary Card */}
       <motion.div variants={fadeUp}>
@@ -1007,6 +990,7 @@ export function ProfileView({
       >
         Reset routine data
       </button>
+      </div>
     </motion.form>
   )
 }

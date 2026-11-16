@@ -7,9 +7,9 @@ import { WeeklyDiet } from '@/types'
 import { DietDisplay } from '@/components/DietDisplay'
 import { Utensils, RefreshCw } from 'lucide-react'
 import { GlassCard } from '../ui/GlassCard'
-import { SectionHeader } from '../ui/SectionHeader'
 import { AnimatedButton } from '../ui/AnimatedButton'
 import { QuoteLoader } from '../ui/QuoteLoader'
+import { PageHero } from '../ui/PageHero'
 
 const stagger = {
   hidden: {},
@@ -30,7 +30,9 @@ interface DietViewProps {
 export const DietView: React.FC<DietViewProps> = ({ diet, onGenerateDiet, generating }) => {
   if (!diet) {
     return (
-      <div className="pb-24 px-4 py-6 text-center">
+      <div className="pb-24">
+        <PageHero title="Diet plan" subtitle="Meals built around your goal" />
+        <div className="px-4 py-6 text-center">
         {generating ? (
           <QuoteLoader mode="full" category="diet" />
         ) : (
@@ -47,33 +49,29 @@ export const DietView: React.FC<DietViewProps> = ({ diet, onGenerateDiet, genera
             </AnimatedButton>
           </GlassCard>
         )}
+        </div>
       </div>
     )
   }
 
   return (
+    <div className="pb-24">
+    <PageHero
+      title="Diet plan"
+      subtitle="Weekly plan with calories and protein highlighted"
+      right={
+        <button type="button" onClick={() => onGenerateDiet()} disabled={generating} className="gb-hero-action gb-press">
+          <RefreshCw className={generating ? 'gb-spin' : undefined} aria-hidden="true" />
+          {generating ? 'Generating...' : 'Regenerate'}
+        </button>
+      }
+    />
     <motion.div
-      className="pb-24 px-4 pt-5 space-y-4 view-transition"
+      className="px-4 pt-5 space-y-4 view-transition"
       variants={stagger}
       initial="hidden"
       animate="visible"
     >
-      <motion.div variants={fadeUp}>
-        <SectionHeader
-          title="Nutrition"
-          subtitle="Weekly plan with calories and protein highlighted"
-          right={
-            <button
-              onClick={() => onGenerateDiet()}
-              disabled={generating}
-              className="text-xs px-3 py-1.5 rounded-full btn-secondary disabled:opacity-50 transition ui-focus-ring inline-flex items-center gap-1"
-            >
-              <RefreshCw className={`w-3 h-3 ${generating ? 'animate-spin' : ''}`} />
-              {generating ? 'Generating…' : 'Regenerate'}
-            </button>
-          }
-        />
-      </motion.div>
 
       <motion.div variants={fadeUp}>
         <DietDisplay diet={diet} />
@@ -107,5 +105,6 @@ export const DietView: React.FC<DietViewProps> = ({ diet, onGenerateDiet, genera
         </GlassCard>
       </motion.div>
     </motion.div>
+    </div>
   )
 };

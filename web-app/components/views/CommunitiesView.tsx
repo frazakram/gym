@@ -4,7 +4,7 @@ import { useEffect, useState, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Users, Globe, Plus, LogOut, Copy, Check, Trophy, Flame, Star, Sparkles, X } from 'lucide-react'
 import { GlassCard } from '../ui/GlassCard'
-import { SectionHeader } from '../ui/SectionHeader'
+import { PageHero } from '../ui/PageHero'
 import { AnimatedButton } from '../ui/AnimatedButton'
 import { csrfFetch } from '@/lib/useCsrf'
 
@@ -214,12 +214,13 @@ export function CommunitiesView({ currentUserId }: CommunitiesViewProps) {
   }
 
   return (
-    <div className="px-4 pt-6 pb-24 max-w-md mx-auto">
-      <SectionHeader
+    <div className="pb-24">
+      <PageHero
         title="Communities"
         subtitle={community ? 'Compete on the leaderboard' : 'Join your tribe'}
-        right={<Users className="w-5 h-5 text-primary-light" />}
+        pills={community ? [{ icon: <Users aria-hidden="true" />, label: community.name }] : []}
       />
+      <div className="px-4 pt-6 max-w-md mx-auto">
 
       <AnimatePresence>
         {error && (
@@ -476,6 +477,7 @@ export function CommunitiesView({ currentUserId }: CommunitiesViewProps) {
           </motion.div>
         )}
       </AnimatePresence>
+      </div>
     </div>
   )
 }

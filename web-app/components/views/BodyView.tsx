@@ -7,6 +7,7 @@ import type { BodyPhoto, BodyCompositionAnalysis } from '@/types'
 import { GlassCard } from '../ui/GlassCard'
 import { ImageUploadCard } from '../ui/ImageUploadCard'
 import { MeasurementsView } from './MeasurementsView'
+import { PageHero } from '../ui/PageHero'
 
 interface BodyViewProps {
   bodyPhotos: BodyPhoto[]
@@ -72,11 +73,9 @@ export function BodyView({
   const showReuploadPrompt = photos.length > 0 && weeks != null && weeks >= 1
 
   return (
-    <div className="pb-24 px-4 py-6">
-      <h1 className="text-2xl font-bold text-white font-display mb-1">Body</h1>
-      <p className="text-xs text-muted mb-4">
-        Track your body composition and measurements over time
-      </p>
+    <div className="pb-24">
+      <PageHero title="Body" subtitle="Track your body composition and measurements over time" />
+      <div className="px-4 py-6">
 
       {/* Tab switcher */}
       <div className="flex gap-1 p-1 rounded-2xl glass-soft border border-primary/10 mb-4">
@@ -249,6 +248,7 @@ export function BodyView({
       ) : (
         <MeasurementsView />
       )}
+      </div>
     </div>
   )
 }

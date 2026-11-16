@@ -22,6 +22,7 @@ import { PhotoLogModal, photoFallbackCopy } from '@/components/nutrition/PhotoLo
 import { GoalSetupModal } from '@/components/nutrition/GoalSetupModal'
 import { NutritionHistory } from '@/components/nutrition/NutritionHistory'
 import { FoodEntryRow } from '@/components/nutrition/FoodEntryRow'
+import { PageHero } from '@/components/ui/PageHero'
 
 interface NutritionViewProps {
   profile: Profile | null
@@ -127,33 +128,30 @@ export function NutritionView({ profile }: NutritionViewProps) {
     profile?.goal === 'Fat loss' ? 'deficit' : profile?.goal === 'Muscle gain' ? 'surplus' : 'maintenance'
 
   return (
-    <div className="pb-28 px-4 py-6 space-y-5">
-      {/* Date navigation */}
-      <div className="flex items-center justify-between">
-        <button
-          onClick={() => goToDate(shiftDate(date, -1))}
-          aria-label="Previous day"
-          className="p-2 rounded-xl glass-soft text-muted hover:text-white transition-colors"
-        >
-          <ChevronLeft className="w-5 h-5" />
-        </button>
-        <button
-          onClick={() => setHistoryOpen(true)}
-          className="flex items-center gap-2 px-4 py-2 rounded-xl glass-soft"
-        >
-          <CalendarDays className="w-4 h-4 text-primary-light" />
-          <span className="text-sm font-semibold text-white">{prettyDate(date)}</span>
-        </button>
-        <button
-          onClick={() => goToDate(shiftDate(date, 1))}
-          aria-label="Next day"
-          disabled={isToday}
-          className="p-2 rounded-xl glass-soft text-muted hover:text-white transition-colors disabled:opacity-30"
-        >
-          <ChevronRight className="w-5 h-5" />
-        </button>
-      </div>
-
+    <div className="pb-28">
+      <PageHero
+        title="Nutrition"
+        subtitle={isToday ? 'What you ate today' : prettyDate(date)}
+        pills={hasGoals && goals?.daily_calorie_goal ? [
+          { icon: <Flame aria-hidden="true" />, label: `${Math.round(summary?.totals?.calories ?? 0).toLocaleString('en-IN')} of ${goals.daily_calorie_goal.toLocaleString('en-IN')} kcal` },
+          { icon: <Utensils aria-hidden="true" />, label: `${summary?.entries?.length ?? 0} logged` },
+        ] : []}
+      >
+        {/* Date navigation */}
+        <div className="gb-hero-date gb-rise">
+          <button type="button" onClick={() => goToDate(shiftDate(date, -1))} aria-label="Previous day" className="gb-hero-btn gb-press">
+            <ChevronLeft aria-hidden="true" />
+          </button>
+          <button type="button" onClick={() => setHistoryOpen(true)} className="gb-hero-action gb-press">
+            <CalendarDays aria-hidden="true" />
+            {prettyDate(date)}
+          </button>
+          <button type="button" onClick={() => goToDate(shiftDate(date, 1))} aria-label="Next day" disabled={isToday} className="gb-hero-btn gb-press">
+            <ChevronRight aria-hidden="true" />
+          </button>
+        </div>
+      </PageHero>
+      <div className="px-4 py-6 space-y-5">
       {/* Daily progress / goal setup */}
       <GlassCard className="p-5">
         {loading ? (
@@ -296,6 +294,7 @@ export function NutritionView({ profile }: NutritionViewProps) {
       />
 
       <NutritionHistory open={historyOpen} onClose={() => setHistoryOpen(false)} goals={goals} onPickDay={goToDate} />
+      </div>
     </div>
   )
 }

@@ -18,8 +18,6 @@ import { UpgradeModal } from '@/components/ui/UpgradeModal'
 import { OfflineIndicator } from '@/components/OfflineIndicator'
 import { useSessionPersistence, clearSessionIndicator } from '@/lib/useSessionPersistence'
 import { csrfFetch } from '@/lib/useCsrf'
-import { TabQuote } from '@/components/ui/TabQuote'
-import { type QuoteCategory } from '@/lib/quotes'
 import { Menu } from 'lucide-react'
 import { AnimatePresence, motion } from 'framer-motion'
 import { usePullToRefresh } from '@/hooks/usePullToRefresh'
@@ -38,19 +36,6 @@ function countryToRegionClient(code: string): 'APAC' | 'EMEA' | 'NA' | 'LATAM' {
   if (NA.includes(code)) return 'NA'
   if (LATAM.includes(code)) return 'LATAM'
   return 'EMEA'
-}
-
-const VIEW_QUOTE_CATEGORY: Record<string, QuoteCategory> = {
-  home: 'general',
-  routine: 'workout',
-  workout: 'workout',
-  diet: 'diet',
-  analytics: 'analytics',
-  coach: 'coach',
-  profile: 'general',
-  measurements: 'analytics',
-  communities: 'general',
-  nutrition: 'diet',
 }
 
 export default function DashboardPage() {
@@ -1181,15 +1166,6 @@ export default function DashboardPage() {
             exit={{ opacity: 0, y: -8 }}
             transition={{ duration: 0.2, ease: 'easeInOut' as const }}
           >
-            {/* Redesigned screens open on a full-bleed hero; a banner above it would push it down and then jump. */}
-            {activeView !== 'home' && (
-              <TabQuote
-                key={`quote-${activeView}`}
-                category={VIEW_QUOTE_CATEGORY[activeView] || 'general'}
-                triggerKey={activeView}
-              />
-            )}
-
             {activeView === 'home' && (
               <HomeView
                 profile={profile}

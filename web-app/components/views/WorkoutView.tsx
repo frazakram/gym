@@ -6,7 +6,9 @@ import { WeeklyRoutine } from '@/types'
 import { ExerciseCard } from '../ExerciseCard'
 import { SwipeableExerciseWrapper } from '../ui/SwipeableExercise'
 import { RestTimer } from '../ui/RestTimer'
-import { ChevronLeft, Moon, PartyPopper, BarChart3, Dumbbell } from 'lucide-react'
+import { Moon, PartyPopper, BarChart3, Dumbbell } from 'lucide-react'
+import { PageHero } from '../ui/PageHero'
+import { workoutTitle } from '@/lib/week-progress'
 
 /** Logged-set details keyed by `${dayIndex}-${exerciseIndex}`. */
 export type CompletionDetail = { actual_weight?: number | null; actual_reps?: number | null }
@@ -46,10 +48,13 @@ export function WorkoutView(props: WorkoutViewProps) {
   const { routine, selectedDayIndex } = props
   if (!routine) {
     return (
-      <div className="pb-24 px-4 py-6">
+      <div className="pb-24">
+        <PageHero title="Workout" subtitle="Pick a day to start training" />
+        <div className="px-4 py-6">
         <div className="glass rounded-2xl p-8 text-center border-primary/10">
           <h2 className="text-2xl font-bold text-white mb-3 font-display">No Workout Selected</h2>
           <p className="text-muted">Go to Routine to select a workout</p>
+        </div>
         </div>
       </div>
     )
@@ -154,35 +159,12 @@ function WorkoutDayView({
   return (
     <div className="pb-24">
       {/* Header */}
-      <div className="sticky top-0 z-10 glass-menu backdrop-blur-xl px-4 py-3 border-b border-primary/10">
-        <div className="flex items-center gap-2">
-          <motion.button
-            whileTap={{ scale: 0.9 }}
-            onClick={onBack}
-            className="p-1.5 rounded-lg glass-soft hover:bg-primary/10 transition"
-            aria-label="Go back"
-          >
-            <ChevronLeft className="w-4 h-4 text-white" />
-          </motion.button>
-          <div className="flex-1 min-w-0">
-            <h1 className="text-base font-bold text-white truncate font-display">{day.day}</h1>
-            <p className="text-xs text-muted">
-              {isRestDay ? (restDone ? 'Rest day completed' : 'Rest day') : `${completedCount}/${totalCount} completed \u2022 ${progressPercentage}%`}
-            </p>
-          </div>
-        </div>
-
-        {/* Progress Bar */}
-        <div className="mt-2 w-full bg-primary/10 rounded-full h-1.5 overflow-hidden">
-          <motion.div
-            className="bg-gradient-to-r from-primary to-brand-cyan h-1.5 rounded-full"
-            initial={{ width: 0 }}
-            animate={{ width: `${isRestDay ? (restDone ? 100 : 0) : progressPercentage}%` }}
-            transition={{ duration: 0.5, ease: 'easeOut' as const }}
-          />
-        </div>
-      </div>
-
+      <PageHero
+        title={workoutTitle(day.day)}
+        subtitle={isRestDay ? (restDone ? 'Rest day completed' : 'Rest day') : `${completedCount}/${totalCount} completed \u2022 ${progressPercentage}%`}
+        onBack={onBack}
+        progress={isRestDay ? (restDone ? 100 : 0) : progressPercentage}
+      />
       {/* Exercise Cards */}
       <motion.div
         className="px-4 pt-4 space-y-4"

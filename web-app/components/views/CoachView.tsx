@@ -4,6 +4,8 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { motion } from 'framer-motion'
 import { GlassCard } from '@/components/ui/GlassCard'
 import { SectionHeader } from '@/components/ui/SectionHeader'
+import { PageHero } from '@/components/ui/PageHero'
+import { Crown } from 'lucide-react'
 import { AnimatedButton } from '@/components/ui/AnimatedButton'
 import { csrfFetch } from '@/lib/useCsrf'
 
@@ -269,24 +271,20 @@ export function CoachView({
   }
 
   return (
+    <div className="pb-24">
+    <PageHero
+      title="Personal Coach"
+      subtitle="Book a 1:1 coach call or message"
+      pills={[{ icon: <Crown aria-hidden="true" />, label: 'Premium, trial allowed' }]}
+    />
     <motion.div
-      className="pb-24 px-4 pt-5 space-y-4 view-transition"
+      className="px-4 pt-5 space-y-4 view-transition"
       variants={stagger}
       initial="hidden"
       animate="visible"
     >
       <motion.div variants={fadeUp}>
       <GlassCard className="p-4">
-        <SectionHeader
-          title="Personal Coach"
-          subtitle="Premium (trial allowed) • Book a 1:1 coach call or message"
-          right={
-            <div className="text-xs text-amber-200 bg-amber-400/10 border border-amber-400/20 inline-flex px-2.5 py-1 rounded-full">
-              Premium
-            </div>
-          }
-        />
-
         {loadingCoach && !coach ? (
           <div className="mt-4 text-sm text-muted">Loading coach…</div>
         ) : coach ? (
@@ -572,6 +570,7 @@ export function CoachView({
       </GlassCard>
       </motion.div>
     </motion.div>
+    </div>
   )
 }
 

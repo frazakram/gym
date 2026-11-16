@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { motion } from 'framer-motion'
-import { ArrowRight, Check, ChevronRight, Sprout, Timer, Loader2 } from 'lucide-react'
+import { ArrowRight, CalendarDays, Check, ChevronRight, Sprout, Timer, Loader2 } from 'lucide-react'
 import { WeeklyRoutine, WeeklyDiet } from '@/types'
 import { DaySelector } from '../DaySelector'
 import { DietDisplay } from '@/components/DietDisplay'
@@ -14,18 +14,8 @@ import { parseSetsReps } from '@/lib/setsReps'
 import { ExerciseListSkeleton } from '../ui/SkeletonLoader'
 import { RestDayCard } from '../ui/RestDayCard'
 import { RestDayPickerModal } from '../ui/RestDayPickerModal'
-
-// Map workout day titles to visual accent colors
-function getDayTypeColors(dayName: string): { pill: string; border: string } {
-  const n = dayName.toLowerCase()
-  if (n.includes('push'))       return { pill: 'bg-primary/20 border-primary/40 text-white font-semibold', border: 'border-primary/25' }
-  if (n.includes('pull'))       return { pill: 'bg-brand-cyan/20 border-brand-cyan/40 text-white font-semibold', border: 'border-brand-cyan/20' }
-  if (n.includes('leg'))        return { pill: 'bg-emerald-500/20 border-emerald-500/40 text-white font-semibold', border: 'border-emerald-500/15' }
-  if (n.includes('full') || n.includes('total')) return { pill: 'bg-amber-400/20 border-amber-400/40 text-white font-semibold', border: 'border-amber-400/15' }
-  if (n.includes('rest') || n.includes('recov')) return { pill: 'bg-white/8 border-white/15 text-muted font-semibold', border: 'border-white/8' }
-  if (n.includes('cardio') || n.includes('hiit')) return { pill: 'bg-coral/20 border-coral/40 text-white font-semibold', border: 'border-coral/15' }
-  return { pill: 'bg-primary/15 border-primary/30 text-white font-semibold', border: 'border-primary/15' }
-}
+import { PageHero } from '../ui/PageHero'
+import { workoutTitle } from '@/lib/week-progress'
 
 const stagger = {
   hidden: {},
@@ -87,6 +77,7 @@ export function RoutineView({
   if (!routine) {
     return (
       <>
+        <PageHero title="Routine" subtitle="Your week of training, day by day" />
         <div className="pb-24 px-4 py-6">
           <div className="glass rounded-2xl p-8 text-center">
             <h2 className="text-2xl font-bold text-white mb-3 font-display">No Routine Yet</h2>
@@ -125,21 +116,15 @@ export function RoutineView({
     <div className="pb-24">
       <motion.div variants={stagger} initial="hidden" animate="visible">
       {/* Header */}
-      <motion.div variants={fadeUp} className="px-4 pt-4 pb-3">
-        <div className="flex items-center gap-2 flex-wrap">
-          <h1 className="text-[18px] font-semibold tracking-tight text-white mb-0.5 font-display">
-            {currentDay?.day || 'Select a Day'}
-          </h1>
-          {currentDay?.day && (
-            <span className={`text-xs px-2.5 py-0.5 rounded-full border font-medium ${getDayTypeColors(currentDay.day).pill}`}>
-              {isRestDay ? 'Rest' : currentDay.day.split(' ').slice(-1)[0]}
-            </span>
-          )}
-        </div>
-        <p className="text-xs text-muted">
-          {isRestDay ? 'Rest & Recovery' : `${currentDay?.exercises?.length || 0} exercises · est. ${estimatedMinutes} min`}
-        </p>
-      </motion.div>
+      <PageHero
+        title={currentDay?.day ? workoutTitle(currentDay.day) : 'Select a Day'}
+        subtitle={isRestDay ? 'Rest & Recovery' : `${currentDay?.exercises?.length || 0} exercises \u00b7 est. ${estimatedMinutes} min`}
+        pills={[
+          { icon: <CalendarDays aria-hidden="true" />, label: `Week ${currentWeekNumber}` },
+          { icon: <Timer aria-hidden="true" />, label: `${completionPercentage}% this week` },
+        ]}
+      />
+      <div className="h-4" aria-hidden="true" />
 
       {/* Day Selector */}
       <motion.div variants={fadeUp}>

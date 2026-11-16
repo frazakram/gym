@@ -56,6 +56,25 @@
 button.gb-hero-pill { cursor: pointer; font-family: inherit; }
 .gb-hero-pill svg { width: 14px; height: 14px; flex: none; }
 
+/* ---------- Page header (every screen except Home) ---------- */
+.gb-page-hero { border-radius: 0 0 28px 28px; }
+.gb-page-hero .gb-hero-inner { padding-top: calc(72px + env(safe-area-inset-top, 0px)); padding-bottom: 26px; gap: 14px; }
+.gb-page-title-row { display: flex; align-items: center; gap: 12px; }
+.gb-page-title-text { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+.gb-page-title { font-family: var(--font-gb-app), ui-sans-serif, system-ui, sans-serif; font-size: var(--gb-text-2xl); font-weight: 800; letter-spacing: -0.02em; line-height: 1.15; color: #FFFFFF; margin: 0; overflow-wrap: anywhere; }
+.gb-page-sub { font-size: var(--gb-text-base); font-weight: 500; color: var(--gb-hero-sub); margin: 0; }
+.gb-page-hero .gb-hero-pills { justify-content: flex-start; }
+.gb-hero-btn { width: 40px; height: 40px; flex: none; border-radius: 12px; border: 1px solid rgba(255, 255, 255, 0.22); background: rgba(255, 255, 255, 0.14); color: #FFFFFF; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; }
+.gb-hero-btn svg { width: 18px; height: 18px; }
+.gb-hero-action { flex: none; display: inline-flex; align-items: center; gap: 6px; min-height: 36px; padding: 0 14px; border-radius: 999px; border: 1px solid rgba(255, 255, 255, 0.22); background: rgba(255, 255, 255, 0.14); color: #FFFFFF; font: inherit; font-size: var(--gb-text-sm); font-weight: 700; cursor: pointer; }
+.gb-hero-action svg { width: 14px; height: 14px; }
+.gb-hero-action:disabled, .gb-hero-btn:disabled { opacity: 0.55; cursor: default; }
+.gb-hero-progress { height: 6px; border-radius: 999px; background: rgba(255, 255, 255, 0.18); overflow: hidden; }
+.gb-hero-progress > span { display: block; height: 100%; border-radius: inherit; background: var(--gb-blob); transition: width 500ms var(--gb-ease); }
+.gb-hero-date { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.gb-page-hero :focus-visible { outline: 3px solid var(--gb-pink-ring); outline-offset: 2px; }
+.gb-page-hero .gb-blob:nth-of-type(2) { top: auto; }
+
 /* ---------- Action bar (overlaps the hero) ---------- */
 .gb-overlap { position: relative; margin-top: -76px; }
 .gb-action-bar { background: var(--gb-surface); border-radius: 20px; padding: 12px 6px; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); box-shadow: var(--gb-shadow-soft); }

@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react'
 import { AnalyticsPayload, PremiumStatus } from '@/types'
+import { PageHero } from '../ui/PageHero'
 
 function clamp(n: number, min: number, max: number) {
   return Math.max(min, Math.min(max, n))
@@ -440,7 +441,9 @@ export function AnalyticsView({ premiumStatus, onUpgrade }: AnalyticsViewProps) 
     const trialEndedText =
       premiumStatus.trial_end ? new Date(premiumStatus.trial_end).toLocaleString() : null
     return (
-      <div className="pb-24 px-4 py-6">
+      <div className="pb-24">
+        <PageHero title="Analytics" subtitle="Premium insights from your training" />
+        <div className="px-4 py-6">
         <div className="glass rounded-2xl p-8 border border-primary/10">
           <div className="flex items-start justify-between gap-4">
             <div>
@@ -480,6 +483,7 @@ export function AnalyticsView({ premiumStatus, onUpgrade }: AnalyticsViewProps) 
               Status: {premiumStatus.status ?? 'not subscribed'}
             </div>
           </div>
+        </div>
         </div>
       </div>
     )
@@ -624,7 +628,9 @@ function AnalyticsDashboard({ premiumStatus, onUpgrade }: AnalyticsViewProps) {
   }, [data])
 
   return (
-    <div className="pb-24 px-4 py-6">
+    <div className="pb-24">
+      <PageHero title="Analytics" subtitle="Your training over time" />
+      <div className="px-4 py-6">
       <div className="glass rounded-2xl p-5 border border-primary/10">
         <div className="flex items-start justify-between gap-4">
           <div>
@@ -897,6 +903,7 @@ function AnalyticsDashboard({ premiumStatus, onUpgrade }: AnalyticsViewProps) {
             )}
           </div>
         </div>
+      </div>
       </div>
     </div>
   )

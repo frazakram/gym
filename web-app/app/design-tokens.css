@@ -50,6 +50,7 @@
   --gb-text-md: 15px;     /* row and card titles */
   --gb-text-lg: 16px;     /* tile titles, buttons */
   --gb-text-xl: 18px;     /* section headings */
+  --gb-text-2xl: 24px;    /* page titles in the navy header */
   --gb-text-display: 38px; /* the one hero number */
 
   --gb-ease: cubic-bezier(0.2, 0, 0, 1);
