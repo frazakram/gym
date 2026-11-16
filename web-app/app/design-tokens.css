@@ -43,6 +43,15 @@
   --gb-shadow-soft: 0 16px 36px -18px rgba(16, 20, 60, 0.30);
   --gb-shadow-chip: 0 4px 12px -6px rgba(16, 20, 60, 0.25);
 
+  /* Type scale: one place for every text size on redesigned screens. */
+  --gb-text-xs: 12px;     /* timestamps, pills */
+  --gb-text-sm: 13px;     /* secondary lines */
+  --gb-text-base: 14px;   /* body, labels */
+  --gb-text-md: 15px;     /* row and card titles */
+  --gb-text-lg: 16px;     /* tile titles, buttons */
+  --gb-text-xl: 18px;     /* section headings */
+  --gb-text-display: 38px; /* the one hero number */
+
   --gb-ease: cubic-bezier(0.2, 0, 0, 1);
   --gb-ease-sheet: cubic-bezier(0.32, 0.72, 0, 1);
   --gb-ease-spring: cubic-bezier(0.34, 1.4, 0.64, 1);
