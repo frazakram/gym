@@ -3,13 +3,8 @@
 import { motion, AnimatePresence } from 'framer-motion'
 import { X, CheckCircle2, XCircle, Moon, Trophy } from 'lucide-react'
 
-export interface DayBreakdown {
-  label: string      // 'Mon', 'Tue', etc.
-  fullName: string   // Full day name from routine, e.g. "Monday - Push (Chest, Shoulders, Triceps)"
-  completed: number
-  total: number
-  isRestDay: boolean
-}
+import type { DayBreakdown } from '@/lib/week-progress'
+export type { DayBreakdown }
 
 interface WeeklyBreakdownSheetProps {
   open: boolean

@@ -17,7 +17,8 @@ import { QuoteLoader } from '../ui/QuoteLoader'
 import { PersonalRecordsCard } from '../ui/PersonalRecordsCard'
 import { ArrowRight, Timer, Percent, MessageCircle, ChevronRight, Flame, Drumstick, CalendarPlus, MapPin, TrendingUp, ChevronDown, Dumbbell, BarChart3 } from 'lucide-react'
 import { useLocation } from '@/hooks/useLocation'
-import { WeeklyBreakdownSheet, type DayBreakdown } from '../ui/WeeklyBreakdownSheet'
+import { WeeklyBreakdownSheet } from '../ui/WeeklyBreakdownSheet'
+import { buildDayBreakdowns, calculateWeekProgress, estimatedWorkoutMinutes, todaysRoutineIndex } from '@/lib/week-progress'
 
 const stagger: Variants = {
   hidden: {},
@@ -93,60 +94,11 @@ export function HomeView({
   }
 
   const todayIndex = (new Date().getDay() + 6) % 7
-  const todaysPlan = routine?.days?.[Math.min(todayIndex, (routine.days?.length || 1) - 1)]
+  const todaysPlan = routine?.days?.[todaysRoutineIndex(new Date(), routine.days?.length || 1)]
   const todaysDiet = diet?.days?.[Math.min(todayIndex, (diet.days?.length || 1) - 1)]
 
-  const calculateProgress = () => {
-    if (!routine) return { completed: 0, total: 0, percentage: 0 }
-    let total = 0
-    let completed = 0
-    routine.days.forEach((day, dIdx) => {
-      if ((day.exercises?.length || 0) === 0) {
-        total++
-        if (dayCompletions.get(dIdx)) completed++
-        return
-      }
-      day.exercises.forEach((_, eIdx) => {
-        total++
-        if (exerciseCompletions.get(`${dIdx}-${eIdx}`)) completed++
-      })
-    })
-    const percentage = total > 0 ? Math.round((completed / total) * 100) : 0
-    return { completed, total, percentage }
-  }
-
-  const progress = calculateProgress()
-
-  // Build per-day breakdown for the sheet — derived from existing props, no extra fetch
-  const buildDayBreakdowns = (): DayBreakdown[] => {
-    if (!routine) return []
-    const SHORT: Record<string, string> = {
-      monday: 'Mon', tuesday: 'Tue', wednesday: 'Wed', thursday: 'Thu',
-      friday: 'Fri', saturday: 'Sat', sunday: 'Sun',
-    }
-    return routine.days.map((day, dIdx) => {
-      const isRestDay = (day.exercises?.length || 0) === 0
-      const firstWord = day.day.split(/[\s\-–]/)[0].toLowerCase()
-      const label = SHORT[firstWord] ?? day.day.slice(0, 3)
-
-      // Derive a cleaner display name: strip the week-number prefix if present
-      // e.g. "Monday - Push (Chest, Shoulders, Triceps)" → keep as-is
-      // but trim very long strings to ~40 chars
-      const fullName = day.day.length > 42 ? day.day.slice(0, 40) + '…' : day.day
-
-      if (isRestDay) {
-        const done = dayCompletions.get(dIdx) === true
-        return { label, fullName, completed: done ? 1 : 0, total: 1, isRestDay: true }
-      }
-
-      const total = day.exercises.length
-      let completed = 0
-      day.exercises.forEach((_, eIdx) => {
-        if (exerciseCompletions.get(`${dIdx}-${eIdx}`)) completed++
-      })
-      return { label, fullName, completed, total, isRestDay: false }
-    })
-  }
+  const progress = calculateWeekProgress(routine, exerciseCompletions, dayCompletions)
+  const dayBreakdowns = () => buildDayBreakdowns(routine, exerciseCompletions, dayCompletions)
 
   return (
     <motion.div
@@ -270,7 +222,7 @@ export function HomeView({
             <div className="mt-3 flex items-center gap-2 text-xs text-muted">
               <span className="inline-flex items-center gap-1.5 rounded-full bg-white/5 px-2.5 py-1 border border-primary/10">
                 <Timer className="w-3 h-3" />
-                Est. {(todaysPlan.exercises?.length || 0) * 8 + 12} min
+                Est. {estimatedWorkoutMinutes(todaysPlan.exercises?.length || 0)} min
               </span>
               <span className="inline-flex items-center gap-1.5 rounded-full bg-white/5 px-2.5 py-1 border border-primary/10">
                 <Percent className="w-3 h-3" />
@@ -535,7 +487,7 @@ export function HomeView({
         open={showBreakdown}
         onClose={() => setShowBreakdown(false)}
         weekNumber={currentWeekNumber}
-        days={buildDayBreakdowns()}
+        days={dayBreakdowns()}
         totalCompleted={progress.completed}
         totalItems={progress.total}
         percentage={progress.percentage}
