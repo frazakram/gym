@@ -202,7 +202,6 @@ jobs:
       NEXT_TELEMETRY_DISABLED: "1"
       E2E_BASE_URL: http://localhost:3000
       UPDATE_BASELINES: ${{ inputs.update_visual_baselines == true }}
-      HAS_BASELINES: ${{ hashFiles('web-app/e2e/visual/__screenshots__/*.png') != '' }}
 
     steps:
       - uses: actions/checkout@v4
@@ -231,7 +230,8 @@ jobs:
             })();' || { cat next-start.log; exit 1; }
 
       - name: Compare screenshots with the baselines
-        if: env.UPDATE_BASELINES != 'true' && env.HAS_BASELINES == 'true'
+        # hashFiles() is only allowed at step level, not in job env.
+        if: env.UPDATE_BASELINES != 'true' && hashFiles('web-app/e2e/visual/__screenshots__/*.png') != ''
         run: npx playwright test --project=visual --reporter=list,html
 
       - name: Regenerate baselines
