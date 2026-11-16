@@ -232,6 +232,11 @@ jobs:
       - name: Compare screenshots with the baselines
         # hashFiles() is only allowed at step level, not in job env.
         if: env.UPDATE_BASELINES != 'true' && hashFiles('web-app/e2e/visual/__screenshots__/*.png') != ''
+        # Report-only while the Navy and Pink redesign lands screen by screen
+        # (approved by the owner on 2026-11-16): each migrated screen is an
+        # intended visual change. Diffs still upload as the visual-report
+        # artifact. Re-baseline and delete this line when the redesign is done.
+        continue-on-error: true
         run: npx playwright test --project=visual --reporter=list,html
 
       - name: Regenerate baselines
