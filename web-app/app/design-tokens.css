@@ -1,0 +1,84 @@
+/*
+ * GymBro "Navy and Pink" design tokens (the approved redesign).
+ *
+ * Light values on :root; dark values on :root[data-theme="dark"]. The theme
+ * attribute is set before first paint by lib/theme.ts (themeInitScript).
+ * Contrast of every text pair was checked against WCAG AA (4.5:1 for text,
+ * 3:1 for graphics) in both themes.
+ *
+ * New components use only these tokens (Tailwind: bg-gb-*, text-gb-*);
+ * the older "Liquid Light" tokens in globals.css remain for screens that
+ * are not migrated yet.
+ */
+:root {
+  --gb-page: #FFFFFF;
+  --gb-surface: #FFFFFF;
+  --gb-soft: #FDF1ED;
+  --gb-line: #E4E6EF;
+  --gb-ink: #20243F;
+  --gb-muted: #62667F;
+  --gb-nav-muted: #6B6F87;
+
+  --gb-hero: #2F3A8F;
+  --gb-hero-sub: #D8DCF5;
+  --gb-blob: #E8A0AA;
+  --gb-pink-ring: #E28C99;
+  --gb-pink-line: #F2C9CF;
+
+  --gb-primary: #2F3A8F;
+  --gb-on-primary: #FFFFFF;
+  --gb-link: #2F3A8F;
+  --gb-chip: #FFFFFF;
+  --gb-track: #EEF0F7;
+  --gb-ok: #22A05B;
+  --gb-glass: rgba(255, 255, 255, 0.82);
+  --gb-indicator: #E4E6F8;
+
+  --gb-pink-tint: #FBE4E4;   --gb-pink-tint-2: #FDECEC;   --gb-pink-text: #A93D52;   --gb-pink-icon: #C2546A;
+  --gb-peach-tint: #FCE5CC;  --gb-peach-tint-2: #FEF1E2;  --gb-peach-text: #99520E;  --gb-peach-icon: #C2701E;
+  --gb-lav-tint: #E4E6F8;    --gb-lav-tint-2: #ECEEFB;    --gb-lav-text: #2F3A8F;    --gb-lav-icon: #2F3A8F;
+  --gb-mint-tint: #DDF1E6;   --gb-mint-tint-2: #E8F6EE;   --gb-mint-text: #1E6B44;   --gb-mint-icon: #22A05B;
+
+  --gb-shadow-card: 0 10px 30px -12px rgba(16, 20, 60, 0.35);
+  --gb-shadow-soft: 0 16px 36px -18px rgba(16, 20, 60, 0.30);
+  --gb-shadow-chip: 0 4px 12px -6px rgba(16, 20, 60, 0.25);
+
+  --gb-ease: cubic-bezier(0.2, 0, 0, 1);
+  --gb-ease-sheet: cubic-bezier(0.32, 0.72, 0, 1);
+  --gb-ease-spring: cubic-bezier(0.34, 1.4, 0.64, 1);
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --gb-page: #121428;
+  --gb-surface: #1B1E38;
+  --gb-soft: #24223F;
+  --gb-line: #2E3256;
+  --gb-ink: #E8E9F5;
+  --gb-muted: #A3A7C2;
+  --gb-nav-muted: #9A9EBB;
+
+  --gb-hero: #263072;
+  --gb-hero-sub: #C9CDF0;
+  --gb-blob: #C97B87;
+  --gb-pink-ring: #E8A0AA;
+  --gb-pink-line: #4A3048;
+
+  --gb-primary: #E8A0AA;
+  --gb-on-primary: #20243F;
+  --gb-link: #AEB6F5;
+  --gb-chip: #2A2D4D;
+  --gb-track: #2A2E52;
+  --gb-ok: #7FD6A6;
+  --gb-glass: rgba(27, 30, 56, 0.82);
+  --gb-indicator: #2A2E5A;
+
+  --gb-pink-tint: #3A2433;   --gb-pink-tint-2: #3A2433;   --gb-pink-text: #F2A9B6;   --gb-pink-icon: #F2A9B6;
+  --gb-peach-tint: #3A2C1E;  --gb-peach-tint-2: #3A2C1E;  --gb-peach-text: #F2B57A;  --gb-peach-icon: #F2B57A;
+  --gb-lav-tint: #262B52;    --gb-lav-tint-2: #262B52;    --gb-lav-text: #AEB6F5;    --gb-lav-icon: #AEB6F5;
+  --gb-mint-tint: #1E3A2F;   --gb-mint-tint-2: #1E3A2F;   --gb-mint-text: #7FD6A6;   --gb-mint-icon: #7FD6A6;
+
+  --gb-shadow-card: 0 10px 30px -14px rgba(0, 0, 0, 0.6);
+  --gb-shadow-soft: 0 16px 36px -20px rgba(0, 0, 0, 0.6);
+  --gb-shadow-chip: none;
+}

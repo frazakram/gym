@@ -126,6 +126,40 @@
   --font-sans: var(--font-sans-app), ui-sans-serif, system-ui, sans-serif;
   --font-display: var(--font-display-app), ui-sans-serif, system-ui, sans-serif;
   --font-mono: ui-monospace, SFMono-Regular, Menlo, monospace;
+
+  /* Navy and Pink redesign (app/design-tokens.css): bg-gb-*, text-gb-*, font-gb */
+  --font-gb: var(--font-gb-app), ui-sans-serif, system-ui, sans-serif;
+  --color-gb-page: var(--gb-page);
+  --color-gb-surface: var(--gb-surface);
+  --color-gb-soft: var(--gb-soft);
+  --color-gb-line: var(--gb-line);
+  --color-gb-ink: var(--gb-ink);
+  --color-gb-muted: var(--gb-muted);
+  --color-gb-nav-muted: var(--gb-nav-muted);
+  --color-gb-hero: var(--gb-hero);
+  --color-gb-hero-sub: var(--gb-hero-sub);
+  --color-gb-blob: var(--gb-blob);
+  --color-gb-pink-ring: var(--gb-pink-ring);
+  --color-gb-pink-line: var(--gb-pink-line);
+  --color-gb-primary: var(--gb-primary);
+  --color-gb-on-primary: var(--gb-on-primary);
+  --color-gb-link: var(--gb-link);
+  --color-gb-chip: var(--gb-chip);
+  --color-gb-track: var(--gb-track);
+  --color-gb-ok: var(--gb-ok);
+  --color-gb-indicator: var(--gb-indicator);
+  --color-gb-pink-tint: var(--gb-pink-tint);
+  --color-gb-pink-text: var(--gb-pink-text);
+  --color-gb-pink-icon: var(--gb-pink-icon);
+  --color-gb-peach-tint: var(--gb-peach-tint);
+  --color-gb-peach-text: var(--gb-peach-text);
+  --color-gb-peach-icon: var(--gb-peach-icon);
+  --color-gb-lav-tint: var(--gb-lav-tint);
+  --color-gb-lav-text: var(--gb-lav-text);
+  --color-gb-lav-icon: var(--gb-lav-icon);
+  --color-gb-mint-tint: var(--gb-mint-tint);
+  --color-gb-mint-text: var(--gb-mint-text);
+  --color-gb-mint-icon: var(--gb-mint-icon);
 }
 
 /* ─────────────────────────────────────────────────────────────
